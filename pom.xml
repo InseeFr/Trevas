@@ -7,6 +7,6 @@
     <version>0.1.0-SNAPSHOT</version>
     <modules>
         <module>java-vtl-parser</module>
-        <module>java-vtl-model</module> 
+        <module>java-vtl-model</module>
     </modules>
 </project>

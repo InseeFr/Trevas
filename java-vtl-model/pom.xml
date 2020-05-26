@@ -10,7 +10,6 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>fr.insee</groupId>
     <artifactId>java-vtl-model</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
