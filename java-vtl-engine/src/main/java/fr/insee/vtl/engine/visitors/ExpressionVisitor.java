@@ -33,6 +33,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
+        // TODO: Maybe extract in its own class?
         return new ResolvableExpression() {
             @Override
             public Object resolve(ScriptContext context) {
@@ -49,5 +50,33 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 }
             }
         };
+    }
+
+    @Override
+    public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
+        ResolvableExpression leftExpression = visit(ctx.left);
+        ResolvableExpression rightExpression = visit(ctx.right);
+        switch (ctx.op.getType()) {
+            case VtlParser.AND:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
+                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
+                    return leftValue && rightValue;
+                });
+            case VtlParser.OR:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
+                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
+                    return leftValue || rightValue;
+                });
+            case VtlParser.XOR:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
+                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
+                    return leftValue ^ rightValue;
+                });
+            default:
+                throw new UnsupportedOperationException("unknown operator " + ctx);
+        }
     }
 }

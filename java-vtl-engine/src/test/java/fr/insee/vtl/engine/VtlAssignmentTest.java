@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.script.*;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +16,32 @@ class VtlAssignmentTest {
     @BeforeEach
     void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    void testBooleans() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        List<Boolean> a = List.of(false, false, true, true);
+        List<Boolean> b = List.of(false, true, false, true);
+
+        List<Boolean> and = List.of(false, false, false, true);
+        List<Boolean> or = List.of(false, true, true, true);
+        List<Boolean> xor = List.of(false, true, true, false);
+
+        for (int i = 0; i < 4; i++) {
+            context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);
+            context.setAttribute("b", b.get(i), ScriptContext.ENGINE_SCOPE);
+
+            engine.eval("" +
+                    "andRes := a and b;" +
+                    "orRes := a or b;" +
+                    "xorRes := a xor b;"
+            );
+            assertThat(context.getAttribute("andRes")).isEqualTo(and.get(i));
+            assertThat(context.getAttribute("orRes")).isEqualTo(or.get(i));
+            assertThat(context.getAttribute("xorRes")).isEqualTo(xor.get(i));
+        }
+
     }
 
     @Test
