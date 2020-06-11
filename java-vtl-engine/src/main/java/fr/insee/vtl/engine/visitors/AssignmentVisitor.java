@@ -7,12 +7,12 @@ import fr.insee.vtl.parser.VtlParser;
 import javax.script.ScriptContext;
 import java.util.Objects;
 
-public class AssignementVisitor extends VtlBaseVisitor<Object> {
+public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     private final ScriptContext context;
     private final ExpressionVisitor expressionVisitor;
 
-    public AssignementVisitor(ScriptContext context) {
+    public AssignmentVisitor(ScriptContext context) {
         this.context = Objects.requireNonNull(context);
         expressionVisitor = new ExpressionVisitor();
     }

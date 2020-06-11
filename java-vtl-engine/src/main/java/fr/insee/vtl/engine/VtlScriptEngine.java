@@ -1,6 +1,6 @@
 package fr.insee.vtl.engine;
 
-import fr.insee.vtl.engine.visitors.AssignementVisitor;
+import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -23,10 +23,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         VtlLexer lexer = new VtlLexer(stream);
         VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-        AssignementVisitor assignementVisitor = new AssignementVisitor(context);
+        AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context);
         Object lastValue = null;
         for (VtlParser.StatementContext stmt : parser.start().statement()) {
-            lastValue = assignementVisitor.visit(stmt);
+            lastValue = assignmentVisitor.visit(stmt);
         }
         return lastValue;
     }
