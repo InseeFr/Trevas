@@ -14,7 +14,6 @@ public class VtlScriptEngineFactoryTest {
     // TODO: Check that this can work with the implementation from Statistics Norway
     //  Name conflict??
 
-
     @Test
     void testGetAttribute() {
         ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");

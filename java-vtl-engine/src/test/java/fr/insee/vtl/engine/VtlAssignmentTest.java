@@ -3,10 +3,7 @@ package fr.insee.vtl.engine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +15,15 @@ class VtlAssignmentTest {
     @BeforeEach
     void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    void testVariableExpression() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("foo", 123, ScriptContext.ENGINE_SCOPE);
+        engine.eval("bar := foo");
+        assertThat(context.getAttribute("bar"))
+                .isSameAs(context.getAttribute("foo"));
     }
 
     @Test

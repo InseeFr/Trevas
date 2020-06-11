@@ -4,6 +4,8 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.ScriptContext;
+
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
@@ -27,5 +29,25 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return ResolvableExpression.withType(Object.class, context -> null);
         }
         throw new UnsupportedOperationException("unknown constant type " + ctx);
+    }
+
+    @Override
+    public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
+        return new ResolvableExpression() {
+            @Override
+            public Object resolve(ScriptContext context) {
+                return context.getAttribute(ctx.getText());
+            }
+
+            @Override
+            public Class<?> getType(ScriptContext context) {
+                Object value = context.getAttribute(ctx.getText());
+                if (value == null) {
+                    return Object.class;
+                } else {
+                    return value.getClass();
+                }
+            }
+        };
     }
 }
