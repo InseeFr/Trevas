@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.visitors;
+package fr.insee.vtl.engine.visitors.expression;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ExpressionTest {
+public class BooleanExprTest {
 
     private ScriptEngine engine;
 
@@ -44,14 +44,5 @@ public class ExpressionTest {
             assertThat(context.getAttribute("xorRes")).isEqualTo(xor.get(i));
         }
 
-    }
-
-    @Test
-    public void testVariableExpression() throws ScriptException {
-        ScriptContext context = engine.getContext();
-        context.setAttribute("foo", 123, ScriptContext.ENGINE_SCOPE);
-        engine.eval("bar := foo");
-        assertThat(context.getAttribute("bar"))
-                .isSameAs(context.getAttribute("foo"));
     }
 }

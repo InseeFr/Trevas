@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.visitors;
+package fr.insee.vtl.engine.visitors.expression;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import javax.script.ScriptException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ArithmeticExprTest {
+public class ParenthesisExprTest {
 
     private ScriptEngine engine;
 
@@ -20,9 +20,11 @@ public class ArithmeticExprTest {
     }
 
     @Test
-    public void testArithmeticExpr() throws ScriptException {
+    public void parenthesisExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("mul := 2 * 3");
-        assertThat(context.getAttribute("mul")).isEqualTo(6L);
+        engine.eval("three := (3);");
+        engine.eval("trueBoolean := (true);");
+        assertThat(context.getAttribute("three")).isEqualTo(3L);
+        assertThat(context.getAttribute("trueBoolean")).isEqualTo(true);
     }
 }

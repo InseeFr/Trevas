@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.visitors;
+package fr.insee.vtl.engine.visitors.expression;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import javax.script.ScriptException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ParenthesisExprTest {
+public class VarIdExprTest {
 
     private ScriptEngine engine;
 
@@ -20,11 +20,11 @@ public class ParenthesisExprTest {
     }
 
     @Test
-    public void parenthesisExpr() throws ScriptException {
+    public void testVariableExpression() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("three := (3);");
-        engine.eval("trueBoolean := (true);");
-        assertThat(context.getAttribute("three")).isEqualTo(3L);
-        assertThat(context.getAttribute("trueBoolean")).isEqualTo(true);
+        context.setAttribute("foo", 123, ScriptContext.ENGINE_SCOPE);
+        engine.eval("bar := foo;");
+        assertThat(context.getAttribute("bar"))
+                .isSameAs(context.getAttribute("foo"));
     }
 }

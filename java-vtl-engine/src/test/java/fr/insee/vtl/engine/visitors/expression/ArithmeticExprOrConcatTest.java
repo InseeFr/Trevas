@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.visitors;
+package fr.insee.vtl.engine.visitors.expression;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class ArithmeticExprOrConcatTest {
     @Test
     public void testArithmeticExprOrConcat() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("plus := 2 + 3; minus := 3 - 2; concat := 3 || 2");
+        engine.eval("plus := 2 + 3; minus := 3 - 2; concat := 3 || 2;");
         assertThat(context.getAttribute("plus")).isEqualTo(5L);
         assertThat(context.getAttribute("minus")).isEqualTo(1L);
         assertThat(context.getAttribute("concat")).isEqualTo(32L);
