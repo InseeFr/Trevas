@@ -8,10 +8,10 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class VtlParserTest {
+public class VtlParserTest {
 
     @Test
-    void testThatParserCanFailToParse() {
+    public void testThatParserCanFailToParse() {
 
         VtlParser parser = lexeAndParse("vtl that fails");
 
@@ -23,7 +23,7 @@ class VtlParserTest {
     }
 
     @Test
-    void testThatParserCanParse() {
+    public void testThatParserCanParse() {
 
         VtlParser parser = lexeAndParse("sumVar := 1 + 1 - -1;");
 

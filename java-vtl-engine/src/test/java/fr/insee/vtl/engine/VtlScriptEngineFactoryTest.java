@@ -15,7 +15,7 @@ public class VtlScriptEngineFactoryTest {
     //  Name conflict??
 
     @Test
-    void testGetAttribute() {
+    public void testGetAttribute() {
         ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");
         ScriptContext context = vtlEngine.getContext();
         context.setAttribute("globalVar", "foo", ScriptContext.GLOBAL_SCOPE);
@@ -25,7 +25,7 @@ public class VtlScriptEngineFactoryTest {
     }
 
     @Test
-    void testEngineIsFound() {
+    public void testEngineIsFound() {
         ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");
         Assertions.assertNotNull(vtlEngine);
     }
