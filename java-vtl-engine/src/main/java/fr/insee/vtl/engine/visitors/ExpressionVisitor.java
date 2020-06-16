@@ -131,4 +131,9 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
     }
+
+    @Override
+    public ResolvableExpression visitParenthesisExpr(VtlParser.ParenthesisExprContext ctx) {
+        return visit(ctx.expr());
+    }
 }
