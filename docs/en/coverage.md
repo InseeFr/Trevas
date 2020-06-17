@@ -24,15 +24,15 @@
 
 #### VTL-ML - String operators
 
-| Name                       | Symbol             | Supported |
-| -------------------------- | :----------------- | :-------: |
-| String concatenation       | &#124;&#124;       |    :x:    |
-| Whitespace removal         | trim, rtrim, ltrim |    :x:    |
-| Character case conversion  | upper/lower        |    :x:    |
-| Sub-string extraction      | substr             |    :x:    |
-| String pattern replacement | replace            |    :x:    |
-| String pattern location    | instr              |    :x:    |
-| String length              | length             |    :x:    |
+| Name                       | Symbol             |     Supported      |
+| -------------------------- | :----------------- | :----------------: |
+| String concatenation       | &#124;&#124;       | :heavy_check_mark: |
+| Whitespace removal         | trim, rtrim, ltrim | :heavy_check_mark: |
+| Character case conversion  | upper/lower        | :heavy_check_mark: |
+| Sub-string extraction      | substr             |        :x:         |
+| String pattern replacement | replace            |        :x:         |
+| String pattern location    | instr              |        :x:         |
+| String length              | length             | :heavy_check_mark: |
 
 #### VTL-ML - Numeric operators
 

@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -34,5 +35,14 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitParenthesisExpr(VtlParser.ParenthesisExprContext ctx) {
         return visit(ctx.expr());
+    }
+
+    /*
+    Functions
+     */
+
+    @Override
+    public ResolvableExpression visitStringFunctions(VtlParser.StringFunctionsContext ctx) {
+        return new StringFunctionsVisitor().visit(ctx.stringOperators());
     }
 }
