@@ -10,7 +10,7 @@ import javax.script.ScriptException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ArithmeticExprTest {
+public class ComparisonExprTest {
 
     private ScriptEngine engine;
 
@@ -20,11 +20,11 @@ public class ArithmeticExprTest {
     }
 
     @Test
-    public void testArithmeticExpr() throws ScriptException {
+    public void testComparisonExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("mul := 2 * 3;");
-        assertThat(context.getAttribute("mul")).isEqualTo(6L);
-        engine.eval("div := 6 / 3;");
-        assertThat(context.getAttribute("div")).isEqualTo(2L);
+        engine.eval("bool := true = true;");
+        assertThat(context.getAttribute("bool")).isEqualTo(true);
+        engine.eval("long := 6 = (3*2);");
+        assertThat(context.getAttribute("long")).isEqualTo(true);
     }
 }
