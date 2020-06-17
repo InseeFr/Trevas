@@ -1,0 +1,9 @@
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn test
+
+after_script:
+  - bash scripts/gitbook.sh
