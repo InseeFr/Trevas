@@ -10,7 +10,6 @@
         <module>java-vtl-parser</module>
         <module>java-vtl-model</module>
         <module>java-vtl-engine</module>
-
     </modules>
 
     <properties>
