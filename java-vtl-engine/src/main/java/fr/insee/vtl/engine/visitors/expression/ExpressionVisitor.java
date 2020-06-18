@@ -42,6 +42,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return new ComparisonVisitor().visit(ctx);
     }
 
+    @Override
+    public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
+        return new IfVisitor().visit(ctx);
+    }
+
     /*
     Functions
      */
