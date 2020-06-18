@@ -15,7 +15,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     public AssignmentVisitor(ScriptContext context) {
         this.context = Objects.requireNonNull(context);
-        expressionVisitor = new ExpressionVisitor();
+        expressionVisitor = new ExpressionVisitor(context);
     }
 
     @Override

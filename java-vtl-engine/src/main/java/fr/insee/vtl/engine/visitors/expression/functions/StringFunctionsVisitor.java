@@ -5,13 +5,19 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.ScriptContext;
 import java.util.regex.Pattern;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final ExpressionVisitor exprVisitor = new ExpressionVisitor();
     private final static Pattern LTRIM = Pattern.compile("^\\s+");
     private final static Pattern RTRIM = Pattern.compile("\\s+$");
+
+    private final ExpressionVisitor exprVisitor;
+
+    public StringFunctionsVisitor(ScriptContext context) {
+        exprVisitor = new ExpressionVisitor(context);;
+    }
 
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
         // TODO: deal with Long & Double dynamically

@@ -6,7 +6,16 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.ScriptContext;
+import java.util.Objects;
+
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
+
+    private final ScriptContext context;
+
+    public ExpressionVisitor(ScriptContext context) {
+        this.context = Objects.requireNonNull(context);
+    }
 
     @Override
     public ResolvableExpression visitConstant(VtlParser.ConstantContext ctx) {
@@ -15,22 +24,22 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
-        return new VarIdVisitor().visit(ctx);
+        return new VarIdVisitor(context).visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        return new BooleanVisitor().visit(ctx);
+        return new BooleanVisitor(context).visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
-        return new ArithmeticVisitor().visit(ctx);
+        return new ArithmeticVisitor(context).visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
-        return new ArithmeticExprOrConcatVisitor().visit(ctx);
+        return new ArithmeticExprOrConcatVisitor(context).visit(ctx);
     }
 
     @Override
@@ -40,12 +49,12 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
-        return new ComparisonVisitor().visit(ctx);
+        return new ComparisonVisitor(context).visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
-        return new IfVisitor().visit(ctx);
+        return new IfVisitor(context).visit(ctx);
     }
 
     /*
@@ -54,11 +63,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitStringFunctions(VtlParser.StringFunctionsContext ctx) {
-        return new StringFunctionsVisitor().visit(ctx.stringOperators());
+        return new StringFunctionsVisitor(context).visit(ctx.stringOperators());
     }
 
     @Override
     public ResolvableExpression visitComparisonFunctions(VtlParser.ComparisonFunctionsContext ctx) {
-        return new ComparisonFunctionsVisitor().visit(ctx.comparisonOperators());
+        return new ComparisonFunctionsVisitor(context).visit(ctx.comparisonOperators());
     }
 }

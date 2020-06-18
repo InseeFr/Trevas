@@ -5,8 +5,15 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
+import java.util.Objects;
 
 public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
+
+    private final ScriptContext context;
+
+    public VarIdVisitor(ScriptContext context) {
+        this.context = Objects.requireNonNull(context);
+    }
 
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
@@ -18,7 +25,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
             }
 
             @Override
-            public Class<?> getType(ScriptContext context) {
+            public Class<?> getType() {
                 Object value = context.getAttribute(ctx.getText());
                 if (value == null) {
                     return Object.class;

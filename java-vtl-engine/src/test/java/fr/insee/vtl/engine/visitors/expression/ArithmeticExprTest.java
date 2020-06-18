@@ -24,7 +24,21 @@ public class ArithmeticExprTest {
         ScriptContext context = engine.getContext();
         engine.eval("mul := 2 * 3;");
         assertThat(context.getAttribute("mul")).isEqualTo(6L);
+
+        engine.eval("mul := 1.5 * 2;");
+        assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+        engine.eval("mul := 2 * 1.5;");
+        assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+        engine.eval("mul := 2.0 * 1.5;");
+        assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+
         engine.eval("div := 6 / 3;");
-        assertThat(context.getAttribute("div")).isEqualTo(2L);
+        assertThat(context.getAttribute("div")).isEqualTo(2.0);
+        engine.eval("div := 1 / 0.5;");
+        assertThat(context.getAttribute("div")).isEqualTo(2.0);
+        engine.eval("div := 2.0 / 1;");
+        assertThat(context.getAttribute("div")).isEqualTo(2.0);
+        engine.eval("div := 3.0 / 1.5;");
+        assertThat(context.getAttribute("div")).isEqualTo(2.0);
     }
 }

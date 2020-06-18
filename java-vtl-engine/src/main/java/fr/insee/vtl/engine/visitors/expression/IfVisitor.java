@@ -4,9 +4,15 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.ScriptContext;
+
 public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final ExpressionVisitor exprVisitor = new ExpressionVisitor();
+    private final ExpressionVisitor exprVisitor;
+
+    public IfVisitor(ScriptContext context) {
+        exprVisitor = new ExpressionVisitor(context);;
+    }
 
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {

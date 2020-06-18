@@ -13,7 +13,7 @@ public interface ResolvableExpression extends TypedExpression {
             }
 
             @Override
-            public Class<?> getType(ScriptContext context) {
+            public Class<?> getType() {
                 return clazz;
             }
         };
