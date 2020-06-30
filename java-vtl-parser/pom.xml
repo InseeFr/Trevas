@@ -38,6 +38,7 @@
                         <configuration>
                             <listener>true</listener>
                             <visitor>true</visitor>
+                            <libDirectory>${basedir}/src/main/antlr4/fr/insee/vtl/parser</libDirectory>
                         </configuration>
                         <id>antlr</id>
                         <goals>
