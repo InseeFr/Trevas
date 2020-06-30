@@ -22,9 +22,24 @@ public class VarIdExprTest {
     @Test
     public void testVariableExpression() throws ScriptException {
         ScriptContext context = engine.getContext();
-        context.setAttribute("foo", 123, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("foo", 123L, ScriptContext.ENGINE_SCOPE);
         engine.eval("bar := foo;");
         assertThat(context.getAttribute("bar"))
                 .isSameAs(context.getAttribute("foo"));
+    }
+
+    @Test
+    void testAutoCastVariables() throws ScriptException {
+        ScriptContext context = engine.getContext();
+
+        context.setAttribute("anInt", 123, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("aFloat", 123.4, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("theInt := anInt; theFloat := aFloat;");
+
+        assertThat(context.getAttribute("theInt"))
+                .isEqualTo(123L);
+        assertThat(context.getAttribute("theFloat"))
+                .isEqualTo(123.4D);
     }
 }

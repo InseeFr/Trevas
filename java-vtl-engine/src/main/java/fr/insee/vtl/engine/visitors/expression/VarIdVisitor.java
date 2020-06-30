@@ -21,7 +21,14 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return new ResolvableExpression() {
             @Override
             public Object resolve(ScriptContext context) {
-                return context.getAttribute(ctx.getText());
+                Object value = context.getAttribute(ctx.getText());
+                if (value instanceof Integer) {
+                    return ((Integer) value).longValue();
+                } else if (value instanceof Float) {
+                    return ((Float) value).doubleValue();
+                } else {
+                    return value;
+                }
             }
 
             @Override
@@ -30,7 +37,14 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 if (value == null) {
                     return Object.class;
                 } else {
-                    return value.getClass();
+                    Class<?> valueClass = value.getClass();
+                    if (valueClass.equals(Integer.class)) {
+                        return Long.class;
+                    } else if (valueClass.equals(Float.class)) {
+                        return Double.class;
+                    } else {
+                        return valueClass;
+                    }
                 }
             }
         };
