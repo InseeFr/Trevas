@@ -41,4 +41,25 @@ public class ArithmeticExprTest {
         engine.eval("div := 3.0 / 1.5;");
         assertThat(context.getAttribute("div")).isEqualTo(2.0);
     }
+
+    @Test
+    void testArithmeticWithVariables() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("two", Integer.valueOf(2), ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("three", Integer.valueOf(3), ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("mul := two * three;");
+        assertThat(context.getAttribute("mul")).isEqualTo(6L);
+
+        context.setAttribute("onePFive", Float.valueOf(1.5F), ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("mul := onePFive * two;");
+        assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+
+        context.setAttribute("twoLong", Long.valueOf(2L), ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("onePFiveDouble", Double.valueOf(1.5D), ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("mul := twoLong * onePFiveDouble;");
+        assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+    }
 }
