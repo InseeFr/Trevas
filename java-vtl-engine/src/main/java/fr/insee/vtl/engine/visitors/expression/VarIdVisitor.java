@@ -1,10 +1,12 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
+import java.util.Map;
 import java.util.Objects;
 
 public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
@@ -17,6 +19,12 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
+
+        // TODO: Fix this.
+        if (context.getAttribute(ctx.getText()) instanceof DatasetExpression) {
+            return (ResolvableExpression) context.getAttribute(ctx.getText());
+        }
+
         // TODO: Maybe extract in its own class?
         return new ResolvableExpression() {
             @Override
@@ -29,6 +37,11 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 } else {
                     return value;
                 }
+            }
+
+            @Override
+            public Object resolve(Map<String, Object> context) {
+                throw new UnsupportedOperationException("TODO: refactor");
             }
 
             @Override

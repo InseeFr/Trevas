@@ -1,6 +1,8 @@
 package fr.insee.vtl.model;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
+import java.util.Map;
 import java.util.function.Function;
 
 public interface ResolvableExpression extends TypedExpression {
@@ -13,12 +15,21 @@ public interface ResolvableExpression extends TypedExpression {
             }
 
             @Override
+            public Object resolve(Map<String, Object> context) {
+                return null;
+            }
+
+            @Override
             public Class<?> getType() {
                 return clazz;
             }
         };
     }
 
+    @Deprecated
     Object resolve(ScriptContext context);
+
+    Object resolve(Map<String, Object> context);
+
 
 }

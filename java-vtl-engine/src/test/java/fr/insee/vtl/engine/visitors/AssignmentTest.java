@@ -1,15 +1,12 @@
 package fr.insee.vtl.engine.visitors;
 
-import org.apache.spark.SparkContext;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StringType;
-import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.*;
-import java.util.List;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,22 +41,4 @@ public class AssignmentTest {
         assertThat(bindings.get("f")).isNull();
     }
 
-    @Test
-    void testDatasetAssignment() {
-        SparkSession session = SparkSession.builder().master("local").appName("VTL").getOrCreate();
-
-        List<Row> data = List.of(
-                RowFactory.create("a string")
-        );
-
-        StructType structure = DataTypes.createStructType(
-                List.of(
-                        DataTypes.createStructField("aString", DataTypes.StringType, true)
-                )
-        );
-
-        Dataset<Row> dataset = session.createDataFrame(data, structure);
-        System.out.println(dataset.count());
-        dataset.show();
-    }
 }

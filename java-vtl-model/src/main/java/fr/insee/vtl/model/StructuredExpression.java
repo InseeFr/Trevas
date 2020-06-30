@@ -6,6 +6,8 @@ public interface StructuredExpression {
 
     Set<String> getColumns();
 
-    TypedExpression getColumn(String cul);
+    Class<?> getType(String col);
+
+    int getIndex(String col);
 
 }

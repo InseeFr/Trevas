@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import javax.script.ScriptContext;
+import java.util.Map;
 import java.util.function.Function;
 
 public abstract class DoubleExpression extends NumberExpression {
@@ -13,6 +14,11 @@ public abstract class DoubleExpression extends NumberExpression {
             @Override
             public Double resolve(ScriptContext context) {
                 return func.apply(context);
+            }
+
+            @Override
+            public Object resolve(Map<String, Object> context) {
+                throw new UnsupportedOperationException("TODO: refactor");
             }
         };
     }
