@@ -11,6 +11,7 @@ import fr.insee.vtl.parser.VtlParser;
 import javax.script.ScriptContext;
 import java.util.Objects;
 
+// TODO: Reuse instance of visitors.
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ScriptContext context;
@@ -51,6 +52,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
+        return new ComparisonVisitor(context).visit(ctx);
+    }
+
+    @Override
+    public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
         return new ComparisonVisitor(context).visit(ctx);
     }
 
