@@ -1,7 +1,7 @@
 package fr.insee.vtl.engine.visitors.component;
 
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.StructuredExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -10,9 +10,9 @@ import java.util.Objects;
 
 public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final StructuredExpression structuredExpression;
+    private final Structured structuredExpression;
 
-    public ComponentExpressionVisitor(StructuredExpression structuredExpression) {
+    public ComponentExpressionVisitor(Structured structuredExpression) {
         this.structuredExpression = Objects.requireNonNull(structuredExpression);
     }
 

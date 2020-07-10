@@ -8,8 +8,8 @@ package fr.insee.vtl.engine.visitors;
 //import org.apache.spark.sql.types.StructType;
 
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.DatasetWrapper;
-import fr.insee.vtl.model.InMemoryDatasetWrapper;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.InMemoryDataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +52,7 @@ public class ClauseVisitorTest {
 //        Dataset<Row> dataset = session.createDataFrame(data, structure);
 //        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        InMemoryDatasetWrapper data = new InMemoryDatasetWrapper(List.of(
+        InMemoryDataset data = new InMemoryDataset(List.of(
                 Map.of("name", "Hadrien", "age", 10L, "weight", 10L),
                 Map.of("name", "Nico", "age", 11L, "weight", 10L)
         ));
@@ -75,7 +75,7 @@ public class ClauseVisitorTest {
             }
 
             @Override
-            public DatasetWrapper resolve(Map<String, Object> context) {
+            public Dataset resolve(Map<String, Object> context) {
                 return data;
             }
         };

@@ -2,8 +2,8 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.visitors.component.ComponentExpressionVisitor;
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.DatasetWrapper;
-import fr.insee.vtl.model.InMemoryDatasetWrapper;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -31,14 +31,14 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         return new DatasetExpression() {
 
             @Override
-            public DatasetWrapper resolve(Map<String, Object> context) {
-                DatasetWrapper resolve = datasetExpression.resolve(context);
+            public Dataset resolve(Map<String, Object> context) {
+                Dataset resolve = datasetExpression.resolve(context);
                 List<Map<String, Object>> result = resolve.stream()
                         .filter(map -> {
                             return (Boolean) filter.resolve(map);
                         }).collect(Collectors.toList());
 
-                return new InMemoryDatasetWrapper(result);
+                return new InMemoryDataset(result);
             }
 
             @Override

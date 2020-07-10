@@ -7,11 +7,11 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-public class InMemoryDatasetWrapper implements DatasetWrapper {
+public class InMemoryDataset implements Dataset {
 
     private final List<Map<String, Object>> delegate;
 
-    public InMemoryDatasetWrapper(List<Map<String, Object>> delegate) {
+    public InMemoryDataset(List<Map<String, Object>> delegate) {
         this.delegate = delegate;
     }
 
