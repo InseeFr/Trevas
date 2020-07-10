@@ -47,6 +47,10 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
         </plugins>
 
         <!-- Needed so that the mvn test goal finds the ANTLR g4 files. -->
