@@ -24,6 +24,7 @@ public class ParenthesisExprTest {
         ScriptContext context = engine.getContext();
         engine.eval("three := (3);");
         engine.eval("trueBoolean := (true);");
+        // TODO: More test with arithmetic
         assertThat(context.getAttribute("three")).isEqualTo(3L);
         assertThat(context.getAttribute("trueBoolean")).isEqualTo(true);
     }
