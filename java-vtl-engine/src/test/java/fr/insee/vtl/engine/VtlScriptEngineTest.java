@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +19,10 @@ public class VtlScriptEngineTest {
     }
 
     @Test
-    void testExceptions() {
-//        assertThatThrownBy(() -> {
-//            engine.eval("var := \"string\" + 42");
-//        }).isInstanceOf(InvalidTypeException.class);
-
+    public void testExceptions() {
         assertThatThrownBy(() -> {
             engine.eval("var := undefinedVariable + 42");
-        }).isInstanceOf(UndefinedVariableException.class);
+        }).isInstanceOf(UndefinedVariableException.class)
+                .hasMessage("undefined variable undefinedVariable");
     }
 }

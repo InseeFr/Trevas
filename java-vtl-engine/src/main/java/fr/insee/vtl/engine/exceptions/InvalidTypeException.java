@@ -9,7 +9,7 @@ public class InvalidTypeException extends VtlScriptException {
 
     public InvalidTypeException(ParseTree tree, Class<?> expectedType, Class<?> receivedType) {
         super(String.format("invalid type %s, expected %s to be %s",
-                receivedType, tree.getText(), expectedType
+                receivedType.getSimpleName(), tree.getText(), expectedType.getSimpleName()
         ), tree);
         this.expectedType = expectedType;
         this.receivedType = receivedType;
