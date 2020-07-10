@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.engine.visitors.VtlRuntimeException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -39,14 +40,14 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-
         try {
             CodePointCharStream stream = CharStreams.fromReader(reader);
             return evalStream(stream, context);
+        } catch (VtlRuntimeException vre) {
+            throw vre.getCause();
         } catch (IOException e) {
             throw new ScriptException(e);
         }
-
     }
 
     @Override
