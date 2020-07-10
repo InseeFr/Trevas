@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -19,34 +21,36 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
-    private Object evalStream(CodePointCharStream stream, ScriptContext context) {
-        VtlLexer lexer = new VtlLexer(stream);
-        VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
+    private Object evalStream(CodePointCharStream stream, ScriptContext context) throws VtlScriptException {
+        try {
+            VtlLexer lexer = new VtlLexer(stream);
+            VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-        AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context);
-        Object lastValue = null;
-        for (VtlParser.StatementContext stmt : parser.start().statement()) {
-            lastValue = assignmentVisitor.visit(stmt);
+            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context);
+            Object lastValue = null;
+            for (VtlParser.StatementContext stmt : parser.start().statement()) {
+                lastValue = assignmentVisitor.visit(stmt);
+            }
+            return lastValue;
+        } catch (VtlRuntimeException vre) {
+            throw vre.getCause();
         }
-        return lastValue;
     }
 
     @Override
-    public Object eval(String script, ScriptContext context) {
+    public Object eval(String script, ScriptContext context) throws VtlScriptException {
         CodePointCharStream stream = CharStreams.fromString(script);
         return evalStream(stream, context);
     }
 
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-
         try {
             CodePointCharStream stream = CharStreams.fromReader(reader);
             return evalStream(stream, context);
         } catch (IOException e) {
             throw new ScriptException(e);
         }
-
     }
 
     @Override
