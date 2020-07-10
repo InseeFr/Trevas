@@ -27,4 +27,13 @@ public class ComparisonExprTest {
         engine.eval("long := 6 = (3*2);");
         assertThat(context.getAttribute("long")).isEqualTo(true);
     }
+
+    @Test
+    void testInNotIn() throws ScriptException {
+
+        engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"string\"}");
+
+        engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"out string\"}");
+
+    }
 }
