@@ -2,13 +2,13 @@ package fr.insee.vtl.model;
 
 import java.util.Map;
 
-public abstract class DatasetExpression implements ResolvableExpression, StructuredExpression {
+public abstract class DatasetExpression implements ResolvableExpression, Structured {
 
     @Override
-    public abstract DatasetWrapper resolve(Map<String, Object> context);
+    public abstract Dataset resolve(Map<String, Object> context);
 
     @Override
     public Class<?> getType() {
-        return DatasetWrapper.class;
+        return Dataset.class;
     }
 }

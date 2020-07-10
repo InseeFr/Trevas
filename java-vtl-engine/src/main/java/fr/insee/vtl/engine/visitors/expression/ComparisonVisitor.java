@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.ResolvableExpression;

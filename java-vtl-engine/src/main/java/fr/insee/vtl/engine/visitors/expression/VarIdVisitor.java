@@ -1,15 +1,18 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
+import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -23,46 +26,80 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
 
         final String variableName = ctx.getText();
-        if (!context.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(variableName)) {
+        final Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+
+        if (!bindings.containsKey(variableName)) {
             throw new VtlRuntimeException(new UndefinedVariableException(ctx));
         }
 
-        // TODO: Fix this.
-        if (context.getAttribute(variableName) instanceof DatasetExpression) {
-            return (ResolvableExpression) context.getAttribute(variableName);
+        Object value = bindings.get(variableName);
+        if (value instanceof Dataset) {
+            Dataset dataset = (Dataset) value;
+            return new DatasetExpression() {
+
+                @Override
+                public List<Dataset.Structure> getDataStructure() {
+                    return dataset.getDataStructure();
+                }
+
+                @Override
+                public Dataset resolve(Map<String, Object> na) {
+                    return dataset;
+                }
+            };
         }
 
-        // TODO: Maybe extract in its own class?
-        return new ResolvableExpression() {
-
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                Object value = context.get(variableName);
-                if (value instanceof Integer) {
-                    return ((Integer) value).longValue();
-                } else if (value instanceof Float) {
-                    return ((Float) value).doubleValue();
-                } else {
-                    return value;
+        if (value instanceof Integer || value instanceof Long) {
+            return new LongExpression() {
+                @Override
+                public Long resolve(Map<String, Object> context) {
+                    return ((Number) value).longValue();
                 }
-            }
+            };
+        }
 
-            @Override
-            public Class<?> getType() {
-                Object value = context.getAttribute(variableName);
-                if (value == null) {
+        if (value instanceof Float || value instanceof Double) {
+            return new DoubleExpression() {
+                @Override
+                public Double resolve(Map<String, Object> context) {
+                    return ((Number) value).doubleValue();
+                }
+            };
+        }
+
+        if (value instanceof Boolean) {
+            return new BooleanExpression() {
+                @Override
+                public Boolean resolve(Map<String, Object> context) {
+                    return (Boolean) value;
+                }
+            };
+        }
+
+        if (value instanceof CharSequence) {
+            return new StringExpression() {
+                @Override
+                public String resolve(Map<String, Object> context) {
+                    return (String) value;
+                }
+            };
+        }
+
+        if (value == null) {
+            return new ResolvableExpression() {
+                @Override
+                public Object resolve(Map<String, Object> context) {
+                    return null;
+                }
+
+                @Override
+                public Class<?> getType() {
                     return Object.class;
-                } else {
-                    Class<?> valueClass = value.getClass();
-                    if (valueClass.equals(Integer.class)) {
-                        return Long.class;
-                    } else if (valueClass.equals(Float.class)) {
-                        return Double.class;
-                    } else {
-                        return valueClass;
-                    }
                 }
-            }
-        };
+            };
+        }
+
+        throw new VtlRuntimeException(new UnsupportedTypeException(ctx, value.getClass()));
+
     }
 }
