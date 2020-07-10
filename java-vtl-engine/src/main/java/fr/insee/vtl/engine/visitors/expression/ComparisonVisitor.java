@@ -8,6 +8,9 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -28,9 +31,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
-        // TODO : improve how to get the type of operand
-        switch (ctx.comparisonOperand().getText()) {
-            case "=":
+        // Get the type of the Token.
+        // TODO: Report this to ANTLR.
+        Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
+        switch (type.getType()) {
+            case VtlParser.EQ:
                 return ResolvableExpression.withType(Boolean.class, context -> {
                     Object leftValue = leftExpression.resolve(context);
                     Object rightValue = rightExpression.resolve(context);
