@@ -39,9 +39,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 Dataset resolve = datasetExpression.resolve(context);
                 List<String> columns = resolve.getColumns();
                 List<List<Object>> result = resolve.getDataAsMap().stream()
-                        .filter(map -> {
-                            return (Boolean) filter.resolve(map);
-                        }).map(map -> Dataset.mapToRowMajor(map, columns)).collect(Collectors.toList());
+                        .filter(map -> (Boolean) filter.resolve(map))
+                        .map(map -> Dataset.mapToRowMajor(map, columns))
+                        .collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
         };
