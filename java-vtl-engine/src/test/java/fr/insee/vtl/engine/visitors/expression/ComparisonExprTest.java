@@ -30,7 +30,7 @@ public class ComparisonExprTest {
     }
 
     @Test
-    void testInNotIn() throws ScriptException {
+    public void testInNotIn() throws ScriptException {
 
         engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"string\"};");
         assertThat(engine.getContext().getAttribute("res")).isEqualTo(true);
