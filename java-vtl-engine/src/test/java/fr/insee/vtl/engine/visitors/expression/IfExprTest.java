@@ -31,7 +31,7 @@ public class IfExprTest {
     }
 
     @Test
-    void testIfTypeExceptions() {
+    public void testIfTypeExceptions() {
         assertThatThrownBy(() -> {
             engine.eval("s := if \"\" then 1 else 2;");
         }).isInstanceOf(InvalidTypeException.class)
