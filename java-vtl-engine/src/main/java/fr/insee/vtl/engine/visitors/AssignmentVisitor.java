@@ -5,6 +5,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import java.util.Objects;
 
@@ -21,9 +22,10 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     @Override
     public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
         ResolvableExpression resolvableExpression = expressionVisitor.visit(ctx.expr());
-        Object assignedObject = resolvableExpression.resolve(context);
+        Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        Object assignedObject = resolvableExpression.resolve(bindings);
         String variableIdentifier = ctx.varID().getText();
-        context.setAttribute(variableIdentifier, assignedObject, ScriptContext.ENGINE_SCOPE);
+        bindings.put(variableIdentifier, assignedObject);
         return assignedObject;
     }
 }

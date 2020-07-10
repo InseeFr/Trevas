@@ -1,7 +1,9 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -69,5 +71,13 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitComparisonFunctions(VtlParser.ComparisonFunctionsContext ctx) {
         return new ComparisonFunctionsVisitor(context).visit(ctx.comparisonOperators());
+    }
+
+    @Override
+    public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+        DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
+
+        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression);
+        return clauseVisitor.visit(ctx.clause);
     }
 }

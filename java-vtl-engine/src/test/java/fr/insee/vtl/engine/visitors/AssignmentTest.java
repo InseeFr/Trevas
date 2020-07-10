@@ -3,7 +3,10 @@ package fr.insee.vtl.engine.visitors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,4 +40,5 @@ public class AssignmentTest {
 
         assertThat(bindings.get("f")).isNull();
     }
+
 }
