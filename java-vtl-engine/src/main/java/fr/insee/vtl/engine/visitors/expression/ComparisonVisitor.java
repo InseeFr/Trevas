@@ -1,6 +1,14 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptException;
+
+import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ListExpression;
@@ -11,13 +19,6 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -94,13 +95,13 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 .collect(Collectors.toList());
 
         // Find the type of the list.
-        Set<? extends Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
+        Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
 
         if (types.size() > 1) {
-            // TODO: Define runtime exception.
-            // TODO: Inject context in exception:
-            throw new RuntimeException(new ScriptException("TODO: incompatible types:"));
+            throw new VtlRuntimeException(
+                    new ConflictingTypesException(ctx, types)
+            );
         }
 
         // The grammar defines list with minimum one constant so the types will never
