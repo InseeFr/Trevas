@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.component;
 
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -54,7 +55,9 @@ public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpress
 
             @Override
             public Class<?> getType() {
-                return structuredExpression.getType(columnName);
+                return structuredExpression.getDataStructure().stream()
+                        .filter(structure -> columnName.equals(structure.getName()))
+                        .map(Dataset.Structure::getType).findFirst().orElseThrow();
             }
         };
     }

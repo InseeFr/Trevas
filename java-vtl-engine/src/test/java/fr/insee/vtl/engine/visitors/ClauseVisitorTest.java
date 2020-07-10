@@ -1,12 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
-//import org.apache.spark.sql.Dataset;
-//import org.apache.spark.sql.Row;
-//import org.apache.spark.sql.RowFactory;
-//import org.apache.spark.sql.SparkSession;
-//import org.apache.spark.sql.types.DataTypes;
-//import org.apache.spark.sql.types.StructType;
-
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +12,7 @@ import javax.script.ScriptException;
 import java.util.List;
 import java.util.Map;
 
-import static fr.insee.vtl.model.Structured.Role;
+import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClauseVisitorTest {
@@ -28,8 +22,6 @@ public class ClauseVisitorTest {
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
-
-
     }
 
     @Test
@@ -49,7 +41,8 @@ public class ClauseVisitorTest {
 
         engine.eval("ds := ds1[filter age = weight];");
 
-        assertThat(engine.getContext().getAttribute("ds")).isEqualTo(List.of(
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
                 Map.of("name", "Hadrien", "age", 10L, "weight", 10L)
         ));
 

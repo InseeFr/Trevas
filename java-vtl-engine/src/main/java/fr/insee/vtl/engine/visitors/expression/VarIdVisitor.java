@@ -9,6 +9,7 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -35,29 +36,15 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (value instanceof Dataset) {
             Dataset dataset = (Dataset) value;
             return new DatasetExpression() {
+
+                @Override
+                public List<Dataset.Structure> getDataStructure() {
+                    return dataset.getDataStructure();
+                }
+
                 @Override
                 public Dataset resolve(Map<String, Object> na) {
                     return dataset;
-                }
-
-                @Override
-                public Set<String> getColumns() {
-                    return dataset.getColumns();
-                }
-
-                @Override
-                public Class<?> getType(String col) {
-                    return dataset.getType(col);
-                }
-
-                @Override
-                public Role getRole(String col) {
-                    return dataset.getRole(col);
-                }
-
-                @Override
-                public int getIndex(String col) {
-                    return 0;
                 }
             };
         }
