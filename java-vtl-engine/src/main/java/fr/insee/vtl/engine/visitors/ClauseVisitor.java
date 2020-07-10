@@ -38,7 +38,13 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                             return (Boolean) filter.resolve(map);
                         }).collect(Collectors.toList());
 
-                return new InMemoryDataset(result);
+                Map<String, Role> roles = datasetExpression.getColumns().stream()
+                        .collect(Collectors.toMap(col -> col, datasetExpression::getRole));
+
+                Map<String, Class<?>> types = datasetExpression.getColumns().stream()
+                        .collect(Collectors.toMap(col -> col, datasetExpression::getType));
+
+                return new InMemoryDataset(result, types, roles);
             }
 
             @Override
@@ -49,6 +55,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             @Override
             public Class<?> getType(String col) {
                 return datasetExpression.getType(col);
+            }
+
+            @Override
+            public Role getRole(String col) {
+                return datasetExpression.getRole(col);
             }
 
             @Override

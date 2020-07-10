@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 public abstract class LongExpression extends NumberExpression {
 
-    private LongExpression() {
+    public LongExpression() {
     }
 
     public static LongExpression withFunction(Function<Map<String, Object>, Long> func) {

@@ -25,12 +25,11 @@ public class VarIdExprTest {
 
         context.setAttribute("foo", 123L, ScriptContext.ENGINE_SCOPE);
         engine.eval("bar := foo;");
-        assertThat(context.getAttribute("bar")).isSameAs(context.getAttribute("foo"));
+        assertThat(context.getAttribute("bar")).isEqualTo(context.getAttribute("foo"));
 
         context.setAttribute("foo", 123D, ScriptContext.ENGINE_SCOPE);
         engine.eval("bar := foo;");
-        assertThat(context.getAttribute("bar")).isSameAs(context.getAttribute("foo"));
-
+        assertThat(context.getAttribute("bar")).isEqualTo(context.getAttribute("foo"));
 
         context.setAttribute("foo", null, ScriptContext.ENGINE_SCOPE);
         engine.eval("bar := foo;");

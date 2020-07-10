@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 public abstract class DoubleExpression extends NumberExpression {
 
-    private DoubleExpression() {
+    public DoubleExpression() {
     }
 
     public static DoubleExpression withFunction(Function<Map<String, Object>, Double> func) {
@@ -17,6 +17,9 @@ public abstract class DoubleExpression extends NumberExpression {
             }
         };
     }
+
+    @Override
+    public abstract Double resolve(Map<String, Object> context);
 
     @Override
     public Class<Double> getType() {

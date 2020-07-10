@@ -10,9 +10,20 @@ import java.util.stream.Stream;
 public class InMemoryDataset implements Dataset {
 
     private final List<Map<String, Object>> delegate;
+    private final Map<String, Class<?>> types;
+    private final Map<String, Role> roles;
 
-    public InMemoryDataset(List<Map<String, Object>> delegate) {
-        this.delegate = delegate;
+    public InMemoryDataset(List<Map<String, Object>> delegate, Map<String, Class<?>> types, Map<String, Role> roles) {
+        this.delegate = Objects.requireNonNull(delegate);
+        this.types = Objects.requireNonNull(types);
+        this.roles = Objects.requireNonNull(roles);
+        if (!types.keySet().equals(roles.keySet())) {
+            throw new IllegalArgumentException("types and role keys differ");
+        }
+    }
+
+    public InMemoryDataset(Map<String, Class<?>> types, Map<String, Role> roles) {
+        this(new ArrayList<>(), types, roles);
     }
 
     @Override
@@ -178,5 +189,25 @@ public class InMemoryDataset implements Dataset {
     @Override
     public void forEach(Consumer<? super Map<String, Object>> action) {
         delegate.forEach(action);
+    }
+
+    @Override
+    public Set<String> getColumns() {
+        return types.keySet();
+    }
+
+    @Override
+    public Class<?> getType(String col) {
+        return types.get(col);
+    }
+
+    @Override
+    public Role getRole(String col) {
+        return roles.get(col);
+    }
+
+    @Override
+    public int getIndex(String col) {
+        return 0;
     }
 }
