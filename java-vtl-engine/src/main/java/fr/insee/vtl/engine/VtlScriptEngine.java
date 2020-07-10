@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.engine.visitors.VtlRuntimeException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.CharStreams;

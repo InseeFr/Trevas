@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.visitors;
+package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.VtlScriptException;
 
