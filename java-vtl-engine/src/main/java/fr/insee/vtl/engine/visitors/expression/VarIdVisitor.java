@@ -27,9 +27,10 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         // TODO: Maybe extract in its own class?
         return new ResolvableExpression() {
+
             @Override
-            public Object resolve(ScriptContext context) {
-                Object value = context.getAttribute(ctx.getText());
+            public Object resolve(Map<String, Object> context) {
+                Object value = context.get(ctx.getText());
                 if (value instanceof Integer) {
                     return ((Integer) value).longValue();
                 } else if (value instanceof Float) {
@@ -37,11 +38,6 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 } else {
                     return value;
                 }
-            }
-
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                throw new UnsupportedOperationException("TODO: refactor");
             }
 
             @Override

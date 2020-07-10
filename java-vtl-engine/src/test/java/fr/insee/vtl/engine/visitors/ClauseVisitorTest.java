@@ -75,11 +75,6 @@ class ClauseVisitorTest {
             }
 
             @Override
-            public DatasetWrapper resolve(ScriptContext context) {
-                return data;
-            }
-
-            @Override
             public DatasetWrapper resolve(Map<String, Object> context) {
                 return data;
             }

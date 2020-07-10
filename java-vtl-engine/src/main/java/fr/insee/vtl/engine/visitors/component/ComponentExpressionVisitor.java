@@ -5,7 +5,6 @@ import fr.insee.vtl.model.StructuredExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
 import java.util.Map;
 import java.util.Objects;
 
@@ -25,10 +24,6 @@ public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpress
 
         if (ctx.comparisonOperand().EQ() != null) {
             return new ResolvableExpression() {
-                @Override
-                public Object resolve(ScriptContext context) {
-                    throw new UnsupportedOperationException("refactor to use context.getBindings");
-                }
 
                 @Override
                 public Object resolve(Map<String, Object> context) {
@@ -51,10 +46,6 @@ public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpress
     public ResolvableExpression visitCompId(VtlParser.CompIdContext ctx) {
         String columnName = ctx.componentID().getText();
         return new ResolvableExpression() {
-            @Override
-            public Object resolve(ScriptContext context) {
-                throw new UnsupportedOperationException("refactor to use context.getBindings");
-            }
 
             @Override
             public Object resolve(Map<String, Object> context) {

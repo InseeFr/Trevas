@@ -8,7 +8,6 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,28 +26,19 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-
         ResolvableExpression filter = componentExpressionVisitor.visit(ctx.exprComponent());
 
-
         return new DatasetExpression() {
-            @Override
-            public DatasetWrapper resolve(ScriptContext context) {
-                return resolve(context.getBindings(ScriptContext.ENGINE_SCOPE));
-            }
 
             @Override
             public DatasetWrapper resolve(Map<String, Object> context) {
                 DatasetWrapper resolve = datasetExpression.resolve(context);
-
-
                 List<Map<String, Object>> result = resolve.stream()
                         .filter(map -> {
                             return (Boolean) filter.resolve(map);
                         }).collect(Collectors.toList());
 
                 return new InMemoryDatasetWrapper(result);
-
             }
 
             @Override
