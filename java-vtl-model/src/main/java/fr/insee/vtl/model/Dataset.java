@@ -1,5 +1,6 @@
 package fr.insee.vtl.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -7,6 +8,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public interface Dataset extends Structured {
+
+    public static List<Object> mapToRowMajor(Map<String, Object> map, List<String> columns) {
+        ArrayList<Object> datum = new ArrayList<>(columns.size());
+        while (datum.size() < columns.size()) {
+            datum.add(null);
+        }
+        for (String column : map.keySet()) {
+            datum.set(columns.indexOf(column), map.get(column));
+        }
+        return datum;
+    }
 
     List<List<Object>> getDataPoints();
 
@@ -16,6 +28,10 @@ public interface Dataset extends Structured {
                     Collectors.toMap(idx -> getDataStructure().get(idx).getName(), objects::get)
             );
         }).collect(Collectors.toList());
+    }
+
+    default List<String> getColumns() {
+        return getDataStructure().stream().map(Structure::getName).collect(Collectors.toList());
     }
 
     enum Role {

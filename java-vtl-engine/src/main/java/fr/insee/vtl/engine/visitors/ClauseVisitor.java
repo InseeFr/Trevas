@@ -37,11 +37,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 Dataset resolve = datasetExpression.resolve(context);
-                List<Map<String, Object>> result = resolve.getDataAsMap().stream()
+                List<String> columns = resolve.getColumns();
+                List<List<Object>> result = resolve.getDataAsMap().stream()
                         .filter(map -> {
                             return (Boolean) filter.resolve(map);
-                        }).collect(Collectors.toList());
-
+                        }).map(map -> Dataset.mapToRowMajor(map, columns)).collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
         };
