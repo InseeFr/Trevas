@@ -3,6 +3,8 @@ package fr.insee.vtl.engine.visitors.expression;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -10,6 +12,7 @@ import javax.script.ScriptException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BooleanExprTest {
 
@@ -43,6 +46,19 @@ public class BooleanExprTest {
             assertThat(context.getAttribute("orRes")).isEqualTo(or.get(i));
             assertThat(context.getAttribute("xorRes")).isEqualTo(xor.get(i));
         }
-
     }
+
+    @Test
+    public void testBooleanTypeExceptions() {
+        assertThatThrownBy(() -> {
+            engine.eval("s := 1 and 2;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 1 to be Boolean");
+
+        assertThatThrownBy(() -> {
+            engine.eval("s := true or 2;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 2 to be Boolean");
+    }
+
 }

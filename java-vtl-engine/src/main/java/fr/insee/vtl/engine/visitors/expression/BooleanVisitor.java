@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -18,6 +20,17 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
+        if (!leftExpression.getType().equals(Boolean.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.left, Boolean.class, leftExpression.getType())
+            );
+        }
+        if (!rightExpression.getType().equals(Boolean.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.right, Boolean.class, rightExpression.getType())
+            );
+        }
+
         switch (ctx.op.getType()) {
             case VtlParser.AND:
                 return ResolvableExpression.withType(Boolean.class, context -> {
