@@ -43,7 +43,7 @@ public class ArithmeticExprTest {
     }
 
     @Test
-    void testArithmeticWithVariables() throws ScriptException {
+    public void testArithmeticWithVariables() throws ScriptException {
         ScriptContext context = engine.getContext();
         context.setAttribute("two", Integer.valueOf(2), ScriptContext.ENGINE_SCOPE);
         context.setAttribute("three", Integer.valueOf(3), ScriptContext.ENGINE_SCOPE);

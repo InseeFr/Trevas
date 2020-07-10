@@ -23,7 +23,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ClauseVisitorTest {
+public class ClauseVisitorTest {
 
     private ScriptEngine engine;
 
@@ -35,7 +35,7 @@ class ClauseVisitorTest {
     }
 
     @Test
-    void testFilterClause() throws ScriptException {
+    public void testFilterClause() throws ScriptException {
 
 //        SparkSession session = SparkSession.builder().master("local").appName("VTL").getOrCreate();
 //

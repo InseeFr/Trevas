@@ -40,7 +40,7 @@ public class VarIdExprTest {
     }
 
     @Test
-    void testAutoCastVariables() throws ScriptException {
+    public void testAutoCastVariables() throws ScriptException {
         ScriptContext context = engine.getContext();
 
         context.setAttribute("anInt", Integer.valueOf(123), ScriptContext.ENGINE_SCOPE);
