@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

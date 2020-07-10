@@ -1,6 +1,4 @@
-package fr.insee.vtl.engine;
-
-import fr.insee.vtl.engine.VtlScriptException;
+package fr.insee.vtl.engine.exceptions;
 
 public class VtlRuntimeException extends RuntimeException {
     public VtlRuntimeException(VtlScriptException cause) {
