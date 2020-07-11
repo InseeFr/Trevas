@@ -1,5 +1,6 @@
 language: java
-jdk: openjdk-11-ea
+jdk: openjdk-11
+group: edge
 
 script:
   - mvn test
