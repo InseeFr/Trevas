@@ -1,6 +1,8 @@
-language: java
-jdk: openjdk-11
-group: edge
+#language: java
+#jdk: openjdk-11
+#Bug giving java 11.0.2
+
+image: openzipkin/jre-full
 
 script:
   - mvn test
