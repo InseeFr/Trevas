@@ -1,5 +1,5 @@
 language: java
-jdk: openjdk-11-ea+LATEST
+jdk: openjdk-11-ea
 
 script:
   - mvn test
