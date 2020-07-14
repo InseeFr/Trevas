@@ -5,6 +5,10 @@ addons:
   sonarcloud:
     organization: "inseefr"
 
+addons:
+  sonarcloud:
+    organization: "inseefr"
+
 script:
   - mvn clean verify sonar:sonar
 
