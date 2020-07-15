@@ -59,17 +59,19 @@
 
 #### VTL-ML - Comparison operators
 
-| Name             | Symbol           | Supported |
-| ---------------- | :--------------- | :-------: |
-| Equal to         | =                |    :x:    |
-| Not equal to     | <>               |    :x:    |
-| Greater than     | > >=             |    :x:    |
-| Less than        | < <=             |    :x:    |
-| Between          | between          |    :x:    |
-| Element of       | in / not_in      |    :x:    |
-| Match characters | match_characters |    :x:    |
-| Is null          | isnull           |    :x:    |
-| Exists in        | exists_in        |    :x:    |
+| Name                  | Symbol           |     Supported      |
+| --------------------- | :--------------- | :----------------: |
+| Equal to              | =                | :heavy_check_mark: |
+| Not equal to          | <>               | :heavy_check_mark: |
+| Greater than          | >                | :heavy_check_mark: |
+| Less than             | <                | :heavy_check_mark: |
+| Greater or equal than | >=               | :heavy_check_mark: |
+| Less or equal than    | <=               | :heavy_check_mark: |
+| Between               | between          |        :x:         |
+| Element of            | in / not_in      | :heavy_check_mark: |
+| Match characters      | match_characters |        :x:         |
+| Is null               | isnull           |        :x:         |
+| Exists in             | exists_in        |        :x:         |
 
 #### VTL-ML - Boolean operators
 
