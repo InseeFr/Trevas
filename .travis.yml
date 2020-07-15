@@ -7,6 +7,6 @@ addons:
 
 script:
 #  - mvn clean verify sonar:sonar -Pcoverage
-  - mvn clean verify
+  - mvn clean test
 after_script:
   - bash scripts/gitbook.sh
