@@ -12,6 +12,45 @@
         <module>vtl-engine</module>
     </modules>
 
+    <name>Trevas</name>
+    <description>Transformation engine and validator for statistics.</description>
+    <url>https://inseefr.github.io/Trevas</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/InseeFr/Trevas.git</connection>
+        <developerConnection>scm:git:https://github.com/InseeFr/Trevas.git</developerConnection>
+        <url>https://github.com/InseeFr/Trevas/tree/${project.scm.tag}</url>
+        <tag>master</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/InseeFr/Trevas/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>Travis</system>
+        <url>https://travis-ci.org/InseeFr/Trevas</url>
+    </ciManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <jdk.version>11</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,4 +100,17 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <developers>
+        <developer>
+            <name>Hadrien Kohl</name>
+        </developer>
+        <developer>
+            <name>Nicolas Laval</name>
+        </developer>
+        <developer>
+            <name>Franck Cotton</name>
+        </developer>
+    </developers>
+
 </project>
