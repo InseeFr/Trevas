@@ -29,9 +29,9 @@
 | String concatenation       | &#124;&#124;       | :heavy_check_mark: |
 | Whitespace removal         | trim, rtrim, ltrim | :heavy_check_mark: |
 | Character case conversion  | upper/lower        | :heavy_check_mark: |
-| Sub-string extraction      | substr             |        :x:         |
-| String pattern replacement | replace            |        :x:         |
-| String pattern location    | instr              |        :x:         |
+| Sub-string extraction      | substr             | :heavy_check_mark: |
+| String pattern replacement | replace            | :heavy_check_mark: |
+| String pattern location    | instr              | :heavy_check_mark: |
 | String length              | length             | :heavy_check_mark: |
 
 #### VTL-ML - Numeric operators
