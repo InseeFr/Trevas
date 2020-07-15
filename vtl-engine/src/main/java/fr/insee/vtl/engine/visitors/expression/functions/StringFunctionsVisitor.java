@@ -116,5 +116,47 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
-    // visitInstrAtom
+    public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
+        ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
+        ResolvableExpression pattern = exprVisitor.visit(ctx.pattern);
+        ResolvableExpression start = null;
+        ResolvableExpression occurence = null;
+
+        if (!pattern.getType().equals(String.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.pattern, String.class, pattern.getType())
+            );
+        }
+
+        if (ctx.startParameter != null) {
+            start = exprVisitor.visit(ctx.startParameter);
+            if (!start.getType().equals(Long.class)) {
+                throw new VtlRuntimeException(
+                        new InvalidTypeException(ctx.startParameter, Long.class, start.getType())
+                );
+            }
+        }
+
+        if (ctx.occurrenceParameter != null) {
+            occurence = exprVisitor.visit(ctx.occurrenceParameter);
+            if (!occurence.getType().equals(Long.class)) {
+                throw new VtlRuntimeException(
+                        new InvalidTypeException(ctx.occurrenceParameter, Long.class, occurence.getType())
+                );
+            }
+        }
+
+        ResolvableExpression finalStart = start;
+        ResolvableExpression finalOccurence = occurence;
+
+        return ResolvableExpression.withType(Long.class, context -> {
+            String value = (String) expression.resolve(context);
+            String patternValue = (String) pattern.resolve(context);
+            int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 1;
+            // TODO: consider occurence param
+            int occurenceValue = finalOccurence != null ? ((Long) finalOccurence.resolve(context)).intValue() : 1;
+            return Long.valueOf(value.indexOf(patternValue, startValue - 1) + 1);
+        });
+    }
+
 }

@@ -76,4 +76,28 @@ public class StringFunctionsTest {
         }).isInstanceOf(InvalidTypeException.class)
                 .hasMessage("invalid type Boolean, expected true to be String");
     }
+
+    @Test
+    public void testInstrAtom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("i1 := instr(\"abcde\", \"c\");");
+        assertThat(context.getAttribute("i1")).isEqualTo(3L);
+        engine.eval("i2 := instr(\"abcde\", \"c\", 4);");
+        assertThat(context.getAttribute("i2")).isEqualTo(0L);
+//        engine.eval("i3 := instr(\"abca\", \"a\", 1, 2);");
+//        assertThat(context.getAttribute("i3")).isEqualTo(4L);
+
+        assertThatThrownBy(() -> {
+            engine.eval("re1 := instr(\"abc\",1);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 1 to be String");
+        assertThatThrownBy(() -> {
+            engine.eval("re2 := instr(\"abc\", \"c\", \"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Long");
+        assertThatThrownBy(() -> {
+            engine.eval("re2 := instr(\"abc\", \"c\", 1, \"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Long");
+    }
 }
