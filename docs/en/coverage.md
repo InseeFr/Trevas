@@ -29,9 +29,9 @@
 | String concatenation       | &#124;&#124;       | :heavy_check_mark: |
 | Whitespace removal         | trim, rtrim, ltrim | :heavy_check_mark: |
 | Character case conversion  | upper/lower        | :heavy_check_mark: |
-| Sub-string extraction      | substr             |        :x:         |
-| String pattern replacement | replace            |        :x:         |
-| String pattern location    | instr              |        :x:         |
+| Sub-string extraction      | substr             | :heavy_check_mark: |
+| String pattern replacement | replace            | :heavy_check_mark: |
+| String pattern location    | instr              | :heavy_check_mark: |
 | String length              | length             | :heavy_check_mark: |
 
 #### VTL-ML - Numeric operators
@@ -59,17 +59,19 @@
 
 #### VTL-ML - Comparison operators
 
-| Name             | Symbol           | Supported |
-| ---------------- | :--------------- | :-------: |
-| Equal to         | =                |    :x:    |
-| Not equal to     | <>               |    :x:    |
-| Greater than     | > >=             |    :x:    |
-| Less than        | < <=             |    :x:    |
-| Between          | between          |    :x:    |
-| Element of       | in / not_in      |    :x:    |
-| Match characters | match_characters |    :x:    |
-| Is null          | isnull           |    :x:    |
-| Exists in        | exists_in        |    :x:    |
+| Name                  | Symbol           |     Supported      |
+| --------------------- | :--------------- | :----------------: |
+| Equal to              | =                | :heavy_check_mark: |
+| Not equal to          | <>               | :heavy_check_mark: |
+| Greater than          | >                | :heavy_check_mark: |
+| Less than             | <                | :heavy_check_mark: |
+| Greater or equal than | >=               | :heavy_check_mark: |
+| Less or equal than    | <=               | :heavy_check_mark: |
+| Between               | between          |        :x:         |
+| Element of            | in / not_in      | :heavy_check_mark: |
+| Match characters      | match_characters |        :x:         |
+| Is null               | isnull           |        :x:         |
+| Exists in             | exists_in        |        :x:         |
 
 #### VTL-ML - Boolean operators
 
