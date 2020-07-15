@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
