@@ -9,7 +9,9 @@ import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -32,15 +34,93 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
+
+        if (!leftExpression.getType().equals(rightExpression.getType())) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+            );
+        }
+
         // Get the type of the Token.
         // TODO: Report this to ANTLR.
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
+
         switch (type.getType()) {
             case VtlParser.EQ:
                 return ResolvableExpression.withType(Boolean.class, context -> {
                     Object leftValue = leftExpression.resolve(context);
                     Object rightValue = rightExpression.resolve(context);
                     return leftValue.equals(rightValue);
+                });
+            case VtlParser.NEQ:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    Object leftValue = leftExpression.resolve(context);
+                    Object rightValue = rightExpression.resolve(context);
+                    return !leftValue.equals(rightValue);
+                });
+            case VtlParser.LT:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                        Long leftValue = (Long) leftExpression.resolve(context);
+                        Long rightValue = (Long) rightExpression.resolve(context);
+                        return leftValue < rightValue;
+                    }
+                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                        Double leftValue = (Double) leftExpression.resolve(context);
+                        Double rightValue = (Double) rightExpression.resolve(context);
+                        return leftValue < rightValue;
+                    }
+                    throw new VtlRuntimeException(
+                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    );
+                });
+            case VtlParser.MT:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                        Long leftValue = (Long) leftExpression.resolve(context);
+                        Long rightValue = (Long) rightExpression.resolve(context);
+                        return leftValue > rightValue;
+                    }
+                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                        Double leftValue = (Double) leftExpression.resolve(context);
+                        Double rightValue = (Double) rightExpression.resolve(context);
+                        return leftValue > rightValue;
+                    }
+                    throw new VtlRuntimeException(
+                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    );
+                });
+            case VtlParser.LE:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                        Long leftValue = (Long) leftExpression.resolve(context);
+                        Long rightValue = (Long) rightExpression.resolve(context);
+                        return leftValue <= rightValue;
+                    }
+                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                        Double leftValue = (Double) leftExpression.resolve(context);
+                        Double rightValue = (Double) rightExpression.resolve(context);
+                        return leftValue <= rightValue;
+                    }
+                    throw new VtlRuntimeException(
+                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    );
+                });
+            case VtlParser.ME:
+                return ResolvableExpression.withType(Boolean.class, context -> {
+                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                        Long leftValue = (Long) leftExpression.resolve(context);
+                        Long rightValue = (Long) rightExpression.resolve(context);
+                        return leftValue >= rightValue;
+                    }
+                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                        Double leftValue = (Double) leftExpression.resolve(context);
+                        Double rightValue = (Double) rightExpression.resolve(context);
+                        return leftValue >= rightValue;
+                    }
+                    throw new VtlRuntimeException(
+                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    );
                 });
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);

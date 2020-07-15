@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,10 +24,60 @@ public class ComparisonExprTest {
     @Test
     public void testComparisonExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
+        // EQ
         engine.eval("bool := true = true;");
         assertThat(context.getAttribute("bool")).isEqualTo(true);
         engine.eval("long := 6 = (3*2);");
         assertThat(context.getAttribute("long")).isEqualTo(true);
+        // NEQ
+        engine.eval("bool := true <> true;");
+        assertThat(context.getAttribute("bool")).isEqualTo(false);
+        engine.eval("long := 6 <> (3*20);");
+        assertThat(context.getAttribute("long")).isEqualTo(true);
+        // LT
+        engine.eval("lt := 2 < 3;");
+        assertThat(context.getAttribute("lt")).isEqualTo(true);
+        engine.eval("lt1 := 2.1 < 1.1;");
+        assertThat(context.getAttribute("lt1")).isEqualTo(false);
+        // MT
+        engine.eval("lt := 2 > 3;");
+        assertThat(context.getAttribute("lt")).isEqualTo(false);
+        engine.eval("lt1 := 2.1 > 1.1;");
+        assertThat(context.getAttribute("lt1")).isEqualTo(true);
+        // LE
+        engine.eval("lt := 3 <= 3;");
+        assertThat(context.getAttribute("lt")).isEqualTo(true);
+        engine.eval("lt1 := 2.1 <= 1.1;");
+        assertThat(context.getAttribute("lt1")).isEqualTo(false);
+        // MT
+        engine.eval("lt := 2 >= 3;");
+        assertThat(context.getAttribute("lt")).isEqualTo(false);
+        engine.eval("lt1 := 2.1 >= 1.1;");
+        assertThat(context.getAttribute("lt1")).isEqualTo(true);
+    }
+
+    @Test
+    public void testComparisonExceptions() {
+        assertThatThrownBy(() -> {
+            engine.eval("s := \"ok\" <> true;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Boolean, expected true to be String");
+        assertThatThrownBy(() -> {
+            engine.eval("s := 2.1 < 3;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 3 to be Double");
+        assertThatThrownBy(() -> {
+            engine.eval("s := 2 > 3.2;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 3.2 to be Long");
+        assertThatThrownBy(() -> {
+            engine.eval("s := 2.1 <= 3;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 3 to be Double");
+        assertThatThrownBy(() -> {
+            engine.eval("s := 2 >= 3.55;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 3.55 to be Long");
     }
 
     @Test
