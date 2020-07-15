@@ -1,9 +1,12 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import javax.script.ScriptContext;
 import java.util.List;
@@ -83,7 +86,35 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
-    // visitReplaceAtom
+    public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
+        ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
+        ResolvableExpression inputPattern = exprVisitor.visit(ctx.param);
+        ResolvableExpression outputPattern = null;
+
+        if (!inputPattern.getType().equals(String.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.param, String.class, inputPattern.getType())
+            );
+        }
+
+        if (ctx.optionalExpr() != null) {
+            outputPattern =  exprVisitor.visit(ctx.optionalExpr());
+            if (!outputPattern.getType().equals(String.class)) {
+                throw new VtlRuntimeException(
+                        new InvalidTypeException(ctx.optionalExpr(), String.class, outputPattern.getType())
+                );
+            }
+        }
+
+        ResolvableExpression finalOutputPattern = outputPattern;
+
+        return ResolvableExpression.withType(String.class, context -> {
+            String value = (String) expression.resolve(context);
+            String inputPatternValue = (String) inputPattern.resolve(context);
+            String outputPatternValue = finalOutputPattern != null ? (String) finalOutputPattern.resolve(context) : "";
+            return value.replaceAll(inputPatternValue, outputPatternValue);
+        });
+    }
 
     // visitInstrAtom
 }

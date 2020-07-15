@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,5 +57,23 @@ public class StringFunctionsTest {
             engine.eval("se2 := substr(\"abc\",1,2,3,4,5,6);");
         }).isInstanceOf(UnsupportedOperationException.class)
                 .hasMessage("too many args (6) for: substr(\"abc\",1,2,3,4,5,6)");
+    }
+
+    @Test
+    public void testReplaceAtom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("r1 := replace(\"abcde\", \"abc\", \"ABC\");");
+        assertThat(context.getAttribute("r1")).isEqualTo("ABCde");
+        engine.eval("r2 := replace(\"abcde\", \"abc\");");
+        assertThat(context.getAttribute("r2")).isEqualTo("de");
+
+        assertThatThrownBy(() -> {
+            engine.eval("re1 := replace(\"abc\",1,\"ok\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 1 to be String");
+        assertThatThrownBy(() -> {
+            engine.eval("re1 := replace(\"abc\",\"ok\",true);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Boolean, expected true to be String");
     }
 }
