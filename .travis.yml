@@ -4,6 +4,8 @@ jdk: openjdk-13
 addons:
   sonarcloud:
     organization: "inseefr"
+    token:
+      secure: "aD9Y1jtDtr9Kuunw7mPcahLvb/vWBPtT/G9wPITZX2m+FT8r/ZGkWtRKD8z6/YRZUnWOSuilHpZVb9GfHPHtqfhPfbC+Y+prPBO58r3YximYY/mgzesD+lSzpPM4appoMZZvJ7SfL58y0EplLRROySgeU9riH13T1l5UB86adIqr+JVzi+A0ajdNdmdXdPOP6nsk/oK1CDSV5gguht6e9KUZ3LYyM03JQJyyMBFzJY7yRRfzPy2uK14PQ5vmrpz7bgQOa/C+UGRZqVy28JYmKTit9puAoavhWNddXaRRA6pHxZcSOeHvWBkEHFEnZpxJgTV924G11/9/zN/pjH7JLL7taH6610YvxSUUUHoNeBSygyAftF97sBpTnuNUD7SnUaXQYZdFPytnSx/9tX7upjQNQqTwIghcUhwbDjw6vpT+XIBboBlWepuvUr2p0HsYnYOYbi9KhMfP/7JI5HU4dm+wnXgG8sHiD2UbQT0ZaNF6ONyVdhiKXZhj6caL6/doLmII3PQPLWWusym0XUAzDosV85DrRwmITruRJVp2/UccRec2L851f4fCsDPeTLtfARgUiNZ1QwvzGwC97abfjCPQiTsldLt/267n6PeTkTfRhPfqs3L2s9tChlzRZ7JJq/m9TWS6J5BgcbC85RBJKeT0tSYZ2GY0gLeBZAIIp2w="
 
 script:
   - mvn clean verify sonar:sonar -Pcoverage
