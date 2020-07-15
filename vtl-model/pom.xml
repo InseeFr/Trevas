@@ -13,4 +13,16 @@
     <artifactId>vtl-model</artifactId>
     <version>0.1.0</version>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.5</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
 </project>
