@@ -6,6 +6,7 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
@@ -58,9 +59,31 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
     }
 
+    public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
+        if (ctx.children.size() > 8) {
+            String args = String.valueOf((ctx.children.size() - 4) / 2);
+            throw new UnsupportedOperationException("too many args (" + args + ") for: " + ctx.getText());
+        }
+        ResolvableExpression startExpression = null;
+        ResolvableExpression endExpression = null;
+        if (ctx.startParameter != null) {
+            startExpression = exprVisitor.visit(ctx.startParameter);
+        }
+        if (ctx.endParameter != null) {
+            endExpression = exprVisitor.visit(ctx.endParameter);
+        }
+        ResolvableExpression expression = exprVisitor.visit(ctx.expr());
+        ResolvableExpression finalStartExpression = startExpression;
+        ResolvableExpression finalEndExpression = endExpression;
+        return ResolvableExpression.withType(String.class, context -> {
+            String value = (String) expression.resolve(context);
+            int startValue = finalStartExpression != null ? ((Long) finalStartExpression.resolve(context)).intValue() : 0;
+            int endValue = finalEndExpression != null ? ((Long) finalEndExpression.resolve(context)).intValue() : value.length();
+            return value.substring(startValue, endValue);
+        });
+    }
+
     // visitReplaceAtom
 
     // visitInstrAtom
-
-    // visitSubstrAtom
 }
