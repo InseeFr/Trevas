@@ -2,14 +2,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>fr.insee</groupId>
-    <artifactId>java-vtl-parent</artifactId>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <modules>
-        <module>java-vtl-parser</module>
-        <module>java-vtl-model</module>
-        <module>java-vtl-engine</module>
+        <module>vtl-parser</module>
+        <module>vtl-model</module>
+        <module>vtl-engine</module>
     </modules>
 
     <properties>
