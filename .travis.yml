@@ -5,12 +5,8 @@ addons:
   sonarcloud:
     organization: "inseefr"
 
-addons:
-  sonarcloud:
-    organization: "inseefr"
-
 script:
-  - mvn clean verify sonar:sonar -Pcoverage
-
+#  - mvn clean verify sonar:sonar -Pcoverage
+  - mvn clean verify
 after_script:
   - bash scripts/gitbook.sh
