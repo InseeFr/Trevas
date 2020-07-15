@@ -21,7 +21,7 @@ public class VtlScriptEngineTest {
     @Test
     public void testExceptions() {
         assertThatThrownBy(() -> {
-            engine.eval("var := undefinedVariable + 42");
+            engine.eval("var := undefinedVariable + 42;");
         }).isInstanceOf(UndefinedVariableException.class)
                 .hasMessage("undefined variable undefinedVariable");
     }
