@@ -6,7 +6,7 @@ addons:
     organization: "inseefr"
 
 script:
-#  - mvn clean verify sonar:sonar -Pcoverage
-  - mvn clean test
+  - mvn clean verify sonar:sonar -Pcoverage
+
 after_script:
   - bash scripts/gitbook.sh
