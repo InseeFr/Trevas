@@ -1,6 +1,9 @@
 language: java
 jdk: openjdk-13
 
+git:
+  depth: false
+
 addons:
   sonarcloud:
     organization: "inseefr"
