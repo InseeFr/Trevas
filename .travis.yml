@@ -8,7 +8,7 @@ addons:
       secure: "mpG3GJPuWOe85HmSMjfObijd6JXsA2uqU7ivLaPUhMA2d3acgIqDG+/9kQpYXxUq+z85XhJHFMjTRUaFUz2E//yB/n0uJeW/xFgZFA7n7Ac3gJmlICDj1stG05FDCkijKOCBNZ4xXgz5sGsOZ+WhD77uxN51cbLH/Q1TWXMbN4zqbFJaXH0xnaN6OE3kcSGKa5CqCm9QuvvKu7HIVE+LJEDR72P+jNGmNo4xf3IPxLYSY1IYsSyXJVwV3/7uI10Gi69RJI1NQho96eZyOwsaDBpMsWyuJ6EuZ4/bxE3enmQArYJbff8kcBDe3cRoXWUH3dqPRqW8bB82YNKfYo3d9aeFhcQWFlYF9jgK3GWj7j7mQ2R14yoJQ6DdyyOkPMh2KK1OGDHq3Vr70JbEP/7KRDT6oF4RdxycSZoXsNIHd6mkGxNn80z/0JAv8FRx41a1T63j1gIKtnkl9rWrBFP8cqoHLoaCPwWsdeS4nxM9hjIKyIUVfhvcw7M8jFL+QU2xJFngk1CFMXm8vT+tvyPk3TmxAZpRtwcBmhsSDl3wrffp3Fg+NFvPFizUG3+6kQnHaGtsoyocWShoj1pCd1HP3fCXUZcTJgEYfPiBCtUG3vIGNlFTbRChQYEWpDdPQbMJ5fS+XDpAyi/ej9lyfXtrnZHclwVN8pV3ZN7Q/ogtEzk="
 
 script:
-  - mvn clean verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas
+  - mvn clean verify sonar:sonar
 
 after_script:
   - bash scripts/gitbook.sh
