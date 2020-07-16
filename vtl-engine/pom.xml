@@ -25,7 +25,12 @@
             <version>0.1.0</version>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-model</artifactId>
+            <version>0.1.0</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -38,12 +43,24 @@
             <version>3.16.1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-model</artifactId>
-            <version>0.1.0</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>report</id>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
