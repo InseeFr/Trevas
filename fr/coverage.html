@@ -1,0 +1,911 @@
+
+<!DOCTYPE HTML>
+<html lang="fr" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Couverture fonctionnelle du moteur d'exécution VTL 2.1 · Java VTL 2.1</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-image-captions/image-captions.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-collapsible-chapters/collapsible-chapters.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-advanced-emoji/emoji-website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+    <link rel="prev" href="getting-started.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Tapez pour rechercher" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">Guide du développeur</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="getting-started.html">
+            
+                <a href="getting-started.html">
+            
+                    
+                    Démarrage
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">Guide utilisateur</li>
+        
+        
+    
+        <li class="chapter active" data-level="2.1" data-path="coverage.html">
+            
+                <a href="coverage.html">
+            
+                    
+                    Couverture fonctionnelle du moteur d'exécution VTL 2.1
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Publié avec GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Couverture fonctionnelle du moteur d'exécution VTL 2.1</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="vtl-tools---engine-coverage">VTL tools - Engine coverage</h1>
+<h2 id="java-interpretor">Java interpretor</h2>
+<h3 id="functional-coverage">Functional coverage</h3>
+<h4 id="vtl-ml---general-purpose-operators">VTL-ML - General purpose operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parentheses</td>
+<td style="text-align:left">( )</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Persistent assignment</td>
+<td style="text-align:left">&lt;-</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Temporary assignment</td>
+<td style="text-align:left">:=</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Membership</td>
+<td style="text-align:left">#</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>User-defined operator call</td>
+<td style="text-align:left"></td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Evaluation of an external routine</td>
+<td style="text-align:left">eval</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Type conversion</td>
+<td style="text-align:left">cast</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---join-operators">VTL-ML - Join operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Join</td>
+<td style="text-align:left">inner_join, left_join, full_join, cross_join</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---string-operators">VTL-ML - String operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String concatenation</td>
+<td style="text-align:left">||</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Whitespace removal</td>
+<td style="text-align:left">trim, rtrim, ltrim</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Character case conversion</td>
+<td style="text-align:left">upper/lower</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Sub-string extraction</td>
+<td style="text-align:left">substr</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>String pattern replacement</td>
+<td style="text-align:left">replace</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>String pattern location</td>
+<td style="text-align:left">instr</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>String length</td>
+<td style="text-align:left">length</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---numeric-operators">VTL-ML - Numeric operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unary plus</td>
+<td style="text-align:left">+</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Unary minus</td>
+<td style="text-align:left">-</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Addition</td>
+<td style="text-align:left">+</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Subtraction</td>
+<td style="text-align:left">-</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Multiplication</td>
+<td style="text-align:left">*</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Division</td>
+<td style="text-align:left">/</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Concatenation</td>
+<td style="text-align:left">\</td>
+<td style="text-align:center">\</td>
+<td></td>
+<td><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Modulo</td>
+<td style="text-align:left">mod</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Rounding</td>
+<td style="text-align:left">round</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Truncation</td>
+<td style="text-align:left">trunc</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Ceiling</td>
+<td style="text-align:left">ceil</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Floor</td>
+<td style="text-align:left">floor</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Absolute value</td>
+<td style="text-align:left">abs</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Exponential</td>
+<td style="text-align:left">exp</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Natural logarithm</td>
+<td style="text-align:left">ln</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Power</td>
+<td style="text-align:left">power</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Logarithm</td>
+<td style="text-align:left">log</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Square root</td>
+<td style="text-align:left">sqrt</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---comparison-operators">VTL-ML - Comparison operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equal to</td>
+<td style="text-align:left">=</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Not equal to</td>
+<td style="text-align:left">&lt;&gt;</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Greater than</td>
+<td style="text-align:left">&gt;</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Less than</td>
+<td style="text-align:left">&lt;</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Greater or equal than</td>
+<td style="text-align:left">&gt;=</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Less or equal than</td>
+<td style="text-align:left">&lt;=</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Between</td>
+<td style="text-align:left">between</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Element of</td>
+<td style="text-align:left">in / not_in</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Match characters</td>
+<td style="text-align:left">match_characters</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Is null</td>
+<td style="text-align:left">isnull</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Exists in</td>
+<td style="text-align:left">exists_in</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---boolean-operators">VTL-ML - Boolean operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Logical conjunction</td>
+<td style="text-align:left">and</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Logical disjunction</td>
+<td style="text-align:left">or</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Exclusive disjunction</td>
+<td style="text-align:left">xor</td>
+<td style="text-align:center"><img align="absmiddle" alt=":heavy_check_mark:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/heavy_check_mark.png" title=":heavy_check_mark:"></td>
+</tr>
+<tr>
+<td>Logical negation</td>
+<td style="text-align:left">not</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---time-operators">VTL-ML - Time operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Period indicator</td>
+<td style="text-align:left">period_indicator</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Fill time series</td>
+<td style="text-align:left">fill_time_series</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Flow to stock</td>
+<td style="text-align:left">flow_to_stock</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Stock to flow</td>
+<td style="text-align:left">stock_to_flow</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Time shift</td>
+<td style="text-align:left">timeshift</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Time aggregation</td>
+<td style="text-align:left">time_agg</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Actual time</td>
+<td style="text-align:left">current_date</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---set-operators">VTL-ML - Set operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Union</td>
+<td style="text-align:left">union</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Intersection</td>
+<td style="text-align:left">intersect</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Set difference</td>
+<td style="text-align:left">setdiff</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Symmetric difference</td>
+<td style="text-align:left">symdiff</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---hierarchical-aggregation">VTL-ML - Hierarchical aggregation</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hierarchical roll-up</td>
+<td style="text-align:left">hierarchy</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---aggregate-and-analytic-operators">VTL-ML - Aggregate and Analytic operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aggregate invocation</td>
+<td style="text-align:left"></td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Analytic invocation</td>
+<td style="text-align:left"></td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Counting the number of data points</td>
+<td style="text-align:left">count</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Minimum value</td>
+<td style="text-align:left">min</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Maximum value</td>
+<td style="text-align:left">max</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Median value</td>
+<td style="text-align:left">median</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Sum</td>
+<td style="text-align:left">sum</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Average value</td>
+<td style="text-align:left">avg</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Population standard deviation</td>
+<td style="text-align:left">stddev_pop</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Sample standard deviation</td>
+<td style="text-align:left">stddev_samp</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Population variance</td>
+<td style="text-align:left">var_pop</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Sample variance</td>
+<td style="text-align:left">var_samp</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>First value</td>
+<td style="text-align:left">first_value</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Last value</td>
+<td style="text-align:left">last_value</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Lag</td>
+<td style="text-align:left">lag</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>lead</td>
+<td style="text-align:left">lead</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Rank</td>
+<td style="text-align:left">rank</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Ratio to report</td>
+<td style="text-align:left">ratio_to_report</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---data-validation-operators">VTL-ML - Data validation operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check datapoint</td>
+<td style="text-align:left">check_datapoint</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Check hierarchy</td>
+<td style="text-align:left">check_hierarchy</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Check</td>
+<td style="text-align:left">check</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---conditional-operators">VTL-ML - Conditional operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>If Then Else</td>
+<td style="text-align:left">if-then-else</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Nvl</td>
+<td style="text-align:left">nvl</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="vtl-ml---clause-operators">VTL-ML - Clause operators</h4>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Symbol</th>
+<th style="text-align:center">Supported</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Filtering Data Points</td>
+<td style="text-align:left">filter</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Calculation of a Component</td>
+<td style="text-align:left">calc</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td style="text-align:left">aggr</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Maintaining Components</td>
+<td style="text-align:left">keep</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Removal of Components</td>
+<td style="text-align:left">drop</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Change of Component name</td>
+<td style="text-align:left">rename</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Pivoting</td>
+<td style="text-align:left">pivot</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Unpivoting</td>
+<td style="text-align:left">unpivot</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+<tr>
+<td>Subspace</td>
+<td style="text-align:left">sub</td>
+<td style="text-align:center"><img align="absmiddle" alt=":x:" class="emoji" src="../gitbook/gitbook-plugin-advanced-emoji/emojis/x.png" title=":x:"></td>
+</tr>
+</tbody>
+</table>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="getting-started.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Démarrage">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Couverture fonctionnelle du moteur d'exécution VTL 2.1","level":"2.1","depth":1,"previous":{"title":"Démarrage","level":"1.2","depth":1,"path":"getting-started.md","ref":"getting-started.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"coverage.md","mtime":"2020-07-16T12:00:17.709Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2020-07-16T12:03:17.749Z"},"basePath":".","book":{"language":"fr"}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-anchorjs/anchor.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-anchorjs/anchor-style.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-collapsible-chapters/collapsible-chapters.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
