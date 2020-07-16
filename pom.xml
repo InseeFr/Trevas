@@ -10,6 +10,7 @@
         <module>vtl-parser</module>
         <module>vtl-model</module>
         <module>vtl-engine</module>
+        <module>tests</module>
     </modules>
 
     <name>Trevas</name>
@@ -55,8 +56,7 @@
         <jdk.version>11</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jacoco.version>0.8.5</jacoco.version>
-        <aggregate.report.dir>vtl-engine/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.dir>
-        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+        <aggregate.report.dir>tests/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.dir>
     </properties>
 
     <build>
