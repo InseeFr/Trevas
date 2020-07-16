@@ -84,8 +84,10 @@ public class StringFunctionsTest {
         assertThat(context.getAttribute("i1")).isEqualTo(3L);
         engine.eval("i2 := instr(\"abcde\", \"c\", 4);");
         assertThat(context.getAttribute("i2")).isEqualTo(0L);
-//        engine.eval("i3 := instr(\"abca\", \"a\", 1, 2);");
-//        assertThat(context.getAttribute("i3")).isEqualTo(4L);
+        engine.eval("i3 := instr (\"abcdecfrxcwsd\", \"c\", 0, 3);");
+        assertThat(context.getAttribute("i3")).isEqualTo(10L);
+        engine.eval("i4 := instr (\"abcdecfrxcwsd\", \"c\", 5, 3)");
+        assertThat(context.getAttribute("i4")).isEqualTo(0L);
 
         assertThatThrownBy(() -> {
             engine.eval("re1 := instr(\"abc\",1);");

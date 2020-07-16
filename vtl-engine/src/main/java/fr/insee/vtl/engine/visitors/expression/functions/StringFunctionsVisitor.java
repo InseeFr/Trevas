@@ -6,11 +6,11 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import javax.script.ScriptContext;
-import java.util.List;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -152,10 +152,9 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         return ResolvableExpression.withType(Long.class, context -> {
             String value = (String) expression.resolve(context);
             String patternValue = (String) pattern.resolve(context);
-            int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 1;
-            // TODO: consider occurence param
+            int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 0;
             int occurenceValue = finalOccurence != null ? ((Long) finalOccurence.resolve(context)).intValue() : 1;
-            return Long.valueOf(value.indexOf(patternValue, startValue - 1) + 1);
+            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue) + 1);
         });
     }
 
