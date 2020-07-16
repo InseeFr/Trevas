@@ -36,26 +36,26 @@
 
 #### VTL-ML - Numeric operators
 
-| Name              | Symbol |     Supported      |
-| ----------------- | :----- | :----------------: |
-| Unary plus        | +      |        :x:         |
-| Unary minus       | -      |        :x:         |
-| Addition          | +      | :heavy_check_mark: |
-| Subtraction       | -      | :heavy_check_mark: |
-| Multiplication    | \*     | :heavy_check_mark: |
-| Division          | /      | :heavy_check_mark: |
-| Concatenation     | \|\|   | :heavy_check_mark: |
-| Modulo            | mod    |        :x:         |
-| Rounding          | round  |        :x:         |
-| Truncation        | trunc  |        :x:         |
-| Ceiling           | ceil   |        :x:         |
-| Floor             | floor  |        :x:         |
-| Absolute value    | abs    |        :x:         |
-| Exponential       | exp    |        :x:         |
-| Natural logarithm | ln     |        :x:         |
-| Power             | power  |        :x:         |
-| Logarithm         | log    |        :x:         |
-| Square root       | sqrt   |        :x:         |
+| Name              | Symbol       |     Supported      |
+| ----------------- | :----------- | :----------------: |
+| Unary plus        | +            |        :x:         |
+| Unary minus       | -            |        :x:         |
+| Addition          | +            | :heavy_check_mark: |
+| Subtraction       | -            | :heavy_check_mark: |
+| Multiplication    | \*           | :heavy_check_mark: |
+| Division          | /            | :heavy_check_mark: |
+| Concatenation     | &#124;&#124; | :heavy_check_mark: |
+| Modulo            | mod          |        :x:         |
+| Rounding          | round        |        :x:         |
+| Truncation        | trunc        |        :x:         |
+| Ceiling           | ceil         |        :x:         |
+| Floor             | floor        |        :x:         |
+| Absolute value    | abs          |        :x:         |
+| Exponential       | exp          |        :x:         |
+| Natural logarithm | ln           |        :x:         |
+| Power             | power        |        :x:         |
+| Logarithm         | log          |        :x:         |
+| Square root       | sqrt         |        :x:         |
 
 #### VTL-ML - Comparison operators
 
