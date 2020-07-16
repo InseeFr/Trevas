@@ -11,7 +11,12 @@
     </parent>
 
     <artifactId>vtl-parser</artifactId>
+    <name>VTL Parser</name>
     <version>0.1.0</version>
+
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -46,11 +51,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
             </plugin>
         </plugins>
 

@@ -11,7 +11,12 @@
     </parent>
 
     <artifactId>vtl-engine</artifactId>
+    <name>VTL Engine</name>
     <version>0.1.0</version>
+
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -40,17 +45,5 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.5</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
 
 </project>
