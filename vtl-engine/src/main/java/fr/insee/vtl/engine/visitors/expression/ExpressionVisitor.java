@@ -46,6 +46,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     @Override
+    public ResolvableExpression visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
+        return new UnaryVisitor(context).visit(ctx);
+    }
+
+    @Override
     public ResolvableExpression visitParenthesisExpr(VtlParser.ParenthesisExprContext ctx) {
         return visit(ctx.expr());
     }

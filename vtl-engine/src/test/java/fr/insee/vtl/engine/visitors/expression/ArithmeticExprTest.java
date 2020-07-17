@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ArithmeticExprTest {
 
@@ -61,5 +63,29 @@ public class ArithmeticExprTest {
 
         engine.eval("mul := twoLong * onePFiveDouble;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+    }
+
+    @Test
+    public void testUnaryExpr() throws  ScriptException {
+        ScriptContext context = engine.getContext();
+
+        engine.eval("plus := +1;");
+        assertThat(context.getAttribute("plus")).isEqualTo(1L);
+        engine.eval("plus := + 1.5;");
+        assertThat(context.getAttribute("plus")).isEqualTo(1.5D);
+
+        engine.eval("plus := -1;");
+        assertThat(context.getAttribute("plus")).isEqualTo(-1L);
+        engine.eval("plus := - 1.5;");
+        assertThat(context.getAttribute("plus")).isEqualTo(-1.5D);
+
+        assertThatThrownBy(() -> {
+            engine.eval("plus := + \"ko\";");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Long or Double");
+        assertThatThrownBy(() -> {
+            engine.eval("minus := - \"ko\";");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Long or Double");
     }
 }

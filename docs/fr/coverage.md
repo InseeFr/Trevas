@@ -38,8 +38,8 @@
 
 | Name              | Symbol       |     Supported      |
 | ----------------- | :----------- | :----------------: |
-| Unary plus        | +            |        :x:         |
-| Unary minus       | -            |        :x:         |
+| Unary plus        | +            | :heavy_check_mark: |
+| Unary minus       | -            | :heavy_check_mark: |
 | Addition          | +            | :heavy_check_mark: |
 | Subtraction       | -            | :heavy_check_mark: |
 | Multiplication    | \*           | :heavy_check_mark: |

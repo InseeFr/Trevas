@@ -20,6 +20,10 @@ public class TypeChecking {
         return Double.class.isAssignableFrom(expression.getType());
     }
 
+    public static boolean isBoolean(TypedExpression expression) {
+        return Boolean.class.isAssignableFrom(expression.getType());
+    }
+
     public static boolean isDataset(TypedExpression expression) {
         return false;
     }

@@ -61,4 +61,21 @@ public class BooleanExprTest {
                 .hasMessage("invalid type Long, expected 2 to be Boolean");
     }
 
+    @Test
+    public void testUnaryNot() throws ScriptException {
+        ScriptContext context = engine.getContext();
+
+        engine.eval("t := not false;");
+        assertThat((Boolean) context.getAttribute("t")).isTrue();
+        engine.eval("f := not true;");
+        assertThat((Boolean) context.getAttribute("f")).isFalse();
+//        engine.eval("n := not null;");
+//        assertThat(context.getAttribute("n")).isNull();
+
+        assertThatThrownBy(() -> {
+            engine.eval("s := not 888;");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected 888 to be Boolean");
+    }
+
 }
