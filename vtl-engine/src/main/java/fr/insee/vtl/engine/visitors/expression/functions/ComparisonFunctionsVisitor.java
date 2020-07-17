@@ -79,11 +79,10 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
     @Override
     public ResolvableExpression visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
-        return super.visitIsNullAtom(ctx);
+        ResolvableExpression operandExpression = exprVisitor.visit(ctx.expr());
+        return ResolvableExpression.withType(Boolean.class, context ->
+                operandExpression.resolve(context) == null
+        );
     }
-
-    @Override
-    public ResolvableExpression visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
-        return super.visitExistInAtom(ctx);
-    }
+    
 }

@@ -55,19 +55,10 @@ public class ComparisonFunctionsTest {
     @Test
     public void testIsNullAtom() throws ScriptException {
         ScriptContext context = engine.getContext();
-//        engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
-//        assertThat((Boolean) context.getAttribute("t")).isTrue();
-//        engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
-//        assertThat((Boolean) context.getAttribute("t")).isFalse();
-    }
-
-    @Test
-    public void testExistInAtom() throws ScriptException {
-        ScriptContext context = engine.getContext();
-//        engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
-//        assertThat((Boolean) context.getAttribute("t")).isTrue();
-//        engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
-//        assertThat((Boolean) context.getAttribute("t")).isFalse();
+        engine.eval("n := isnull(null);");
+        assertThat((Boolean) context.getAttribute("n")).isTrue();
+        engine.eval("n := isnull(\"null\");");
+        assertThat((Boolean) context.getAttribute("n")).isFalse();
     }
 
 }
