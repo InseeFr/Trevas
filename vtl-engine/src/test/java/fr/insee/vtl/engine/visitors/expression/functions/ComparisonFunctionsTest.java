@@ -42,6 +42,14 @@ public class ComparisonFunctionsTest {
         assertThat((Boolean) context.getAttribute("t")).isTrue();
         engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
         assertThat((Boolean) context.getAttribute("t")).isFalse();
+        assertThatThrownBy(() -> {
+            engine.eval("t := match_characters(\"test\", true);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Boolean, expected true to be String");
+        assertThatThrownBy(() -> {
+            engine.eval("t := match_characters(10.5, \"pattern\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 10.5 to be String");
     }
 
     @Test

@@ -36,7 +36,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                     new ConflictingTypesException(ctx, List.of(operandExpression.getType(),
                             fromExpression.getType(), toExpression.getType()))
             );
-        // TODO: handle other types
+        // TODO: handle other types (dates?)
         if (TypeChecking.isLong(operandExpression))
             return ResolvableExpression.withType(Boolean.class, context -> {
                 Long operandValue = (Long) operandExpression.resolve(context);
@@ -56,6 +56,18 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
         ResolvableExpression operandExpression = exprVisitor.visit(ctx.op);
         ResolvableExpression patternExpression = exprVisitor.visit(ctx.pattern);
+
+        if (!operandExpression.getType().equals(String.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.op, String.class, operandExpression.getType())
+            );
+        }
+        if (!patternExpression.getType().equals(String.class)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(ctx.pattern, String.class, patternExpression.getType())
+            );
+        }
+
         return ResolvableExpression.withType(Boolean.class, context -> {
             String operandValue = (String) operandExpression.resolve(context);
             String patternValue = (String) patternExpression.resolve(context);
