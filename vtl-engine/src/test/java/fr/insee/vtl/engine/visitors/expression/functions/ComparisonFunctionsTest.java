@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ComparisonFunctionsTest {
 
@@ -20,6 +23,19 @@ public class ComparisonFunctionsTest {
     }
 
     @Test
+    public void testBetweenAtom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("b := between(10, 1,100);");
+        assertThat((Boolean) context.getAttribute("b")).isTrue();
+        engine.eval("b := between(10, 20,100);");
+        assertThat((Boolean) context.getAttribute("b")).isFalse();
+        assertThatThrownBy(() -> {
+            engine.eval("b := between(10.5, \"ko\", true);");
+        }).isInstanceOf(ConflictingTypesException.class)
+                .hasMessage("conflicting types: [Double, String, Boolean]");
+    }
+
+    @Test
     public void testCharsetMatchAtom() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
@@ -27,4 +43,23 @@ public class ComparisonFunctionsTest {
         engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
         assertThat((Boolean) context.getAttribute("t")).isFalse();
     }
+
+    @Test
+    public void testIsNullAtom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+//        engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
+//        assertThat((Boolean) context.getAttribute("t")).isTrue();
+//        engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
+//        assertThat((Boolean) context.getAttribute("t")).isFalse();
+    }
+
+    @Test
+    public void testExistInAtom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+//        engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
+//        assertThat((Boolean) context.getAttribute("t")).isTrue();
+//        engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
+//        assertThat((Boolean) context.getAttribute("t")).isFalse();
+    }
+
 }

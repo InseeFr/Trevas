@@ -1,11 +1,17 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +24,33 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     }
 
 
-    // betweenAtom
+    @Override
+    public ResolvableExpression visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {
+        ResolvableExpression operandExpression = exprVisitor.visit(ctx.op);
+        ResolvableExpression fromExpression = exprVisitor.visit(ctx.from_);
+        ResolvableExpression toExpression = exprVisitor.visit(ctx.to_);
+
+        if (operandExpression.getType() != fromExpression.getType() &&
+                operandExpression.getType() != toExpression.getType())
+            throw new VtlRuntimeException(
+                    new ConflictingTypesException(ctx, List.of(operandExpression.getType(),
+                            fromExpression.getType(), toExpression.getType()))
+            );
+        // TODO: handle other types
+        if (TypeChecking.isLong(operandExpression))
+            return ResolvableExpression.withType(Boolean.class, context -> {
+                Long operandValue = (Long) operandExpression.resolve(context);
+                Long fromValue = (Long) fromExpression.resolve(context);
+                Long toValue = (Long) toExpression.resolve(context);
+                return operandValue >= fromValue && operandValue <= toValue;
+            });
+        return ResolvableExpression.withType(Boolean.class, context -> {
+            Double operandValue = (Double) operandExpression.resolve(context);
+            Double fromValue = (Double) fromExpression.resolve(context);
+            Double toValue = (Double) toExpression.resolve(context);
+            return operandValue >= fromValue && operandValue <= toValue;
+        });
+    }
 
     @Override
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
@@ -33,7 +65,13 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         });
     }
 
-    // isNullAtom
+    @Override
+    public ResolvableExpression visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
+        return super.visitIsNullAtom(ctx);
+    }
 
-    // existInAtom
+    @Override
+    public ResolvableExpression visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
+        return super.visitExistInAtom(ctx);
+    }
 }
