@@ -67,10 +67,10 @@
 | Less than             | <                | :heavy_check_mark: |
 | Greater or equal than | >=               | :heavy_check_mark: |
 | Less or equal than    | <=               | :heavy_check_mark: |
-| Between               | between          |        :x:         |
+| Between               | between          | :heavy_check_mark: |
 | Element of            | in / not_in      | :heavy_check_mark: |
 | Match characters      | match_characters | :heavy_check_mark: |
-| Is null               | isnull           |        :x:         |
+| Is null               | isnull           | :heavy_check_mark: |
 | Exists in             | exists_in        |        :x:         |
 
 #### VTL-ML - Boolean operators
