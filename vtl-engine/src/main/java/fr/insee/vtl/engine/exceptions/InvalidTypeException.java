@@ -25,7 +25,7 @@ public class InvalidTypeException extends VtlScriptException {
                 receivedType.getSimpleName(), tree.getText(),
                 expectedTypes
                         .stream()
-                        .map(e -> e.getSimpleName())
+                        .map(Class::getSimpleName)
                 .collect(Collectors.joining(" or "))
         ), tree);
         this.expectedType = null;

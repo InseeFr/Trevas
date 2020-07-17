@@ -26,10 +26,13 @@ public class VtlParserTest {
     public void testThatParserCanParse() {
 
         VtlParser parser = lexeAndParse("sumVar := 1 + 1 - -1;");
+        VtlParser.StartContext start = parser.start();
+
         ParseTreeWalker walker = new ParseTreeWalker();
+        FailingListener listener = new FailingListener();
 
         Assertions.assertDoesNotThrow(() ->
-                walker.walk(new FailingListener(), parser.start())
+                walker.walk(listener, start)
         );
     }
 
