@@ -14,9 +14,9 @@ public class VtlParserTest {
     public void testThatParserCanFailToParse() {
 
         VtlParser parser = lexeAndParse("vtl that fails");
+        ParseTreeWalker walker = new ParseTreeWalker();
 
         Assertions.assertThrows(RuntimeException.class, () -> {
-            ParseTreeWalker walker = new ParseTreeWalker();
             walker.walk(new FailingListener(), parser.start());
         });
 
@@ -26,10 +26,11 @@ public class VtlParserTest {
     public void testThatParserCanParse() {
 
         VtlParser parser = lexeAndParse("sumVar := 1 + 1 - -1;");
-
         ParseTreeWalker walker = new ParseTreeWalker();
-        walker.walk(new FailingListener(), parser.start());
 
+        Assertions.assertDoesNotThrow(() ->
+                walker.walk(new FailingListener(), parser.start())
+        );
     }
 
     private VtlParser lexeAndParse(String expression) {

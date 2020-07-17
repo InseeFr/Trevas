@@ -14,7 +14,8 @@ public interface Dataset extends Structured {
         while (datum.size() < columns.size()) {
             datum.add(null);
         }
-        for (String column : map.keySet()) {
+        for (Map.Entry<String,Object> entry : map.entrySet()) {
+            String column = entry.getKey();
             datum.set(columns.indexOf(column), map.get(column));
         }
         return datum;
@@ -23,11 +24,11 @@ public interface Dataset extends Structured {
     List<List<Object>> getDataPoints();
 
     default List<Map<String, Object>> getDataAsMap() {
-        return getDataPoints().stream().map(objects -> {
-            return IntStream.range(0, getDataStructure().size()).boxed().collect(
-                    Collectors.toMap(idx -> getDataStructure().get(idx).getName(), objects::get)
-            );
-        }).collect(Collectors.toList());
+        return getDataPoints().stream().map(objects ->
+                IntStream.range(0, getDataStructure().size())
+                        .boxed()
+                        .collect(Collectors.toMap(idx -> getDataStructure().get(idx).getName(), objects::get))
+        ).collect(Collectors.toList());
     }
 
     default List<String> getColumns() {

@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import javax.script.ScriptContext;
 import java.util.Map;
 import java.util.function.Function;
 
