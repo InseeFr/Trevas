@@ -2,7 +2,6 @@ package fr.insee.vtl.model;
 
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
 
 public abstract class DoubleExpression extends NumberExpression {
 
