@@ -154,7 +154,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             String patternValue = (String) pattern.resolve(context);
             int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 0;
             int occurenceValue = finalOccurence != null ? ((Long) finalOccurence.resolve(context)).intValue() : 1;
-            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue) + 1);
+            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue)) + 1L;
         });
     }
 

@@ -6,7 +6,7 @@ public class VtlRuntimeException extends RuntimeException {
     }
 
     @Override
-    public VtlScriptException getCause() {
+    public synchronized VtlScriptException getCause() {
         return (VtlScriptException) super.getCause();
     }
 }

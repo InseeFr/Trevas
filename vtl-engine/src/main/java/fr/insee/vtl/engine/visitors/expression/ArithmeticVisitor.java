@@ -26,7 +26,7 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         //  NumberExpression, LongExpression etc.
         if (TypeChecking.isNumber(leftExpression) && TypeChecking.isNumber(rightExpression)) {
             return handleNumberArithmeticExpr(leftExpression, rightExpression, ctx);
-        } if (TypeChecking.isDataset(leftExpression) && TypeChecking.isDataset(leftExpression)) {
+        } if (TypeChecking.isDataset(leftExpression) && TypeChecking.isDataset(rightExpression)) {
             throw new UnsupportedOperationException("TODO");
         } else {
             throw new UnsupportedOperationException("unsupported types");
