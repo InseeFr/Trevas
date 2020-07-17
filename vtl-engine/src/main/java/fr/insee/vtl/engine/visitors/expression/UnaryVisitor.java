@@ -76,7 +76,7 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private ResolvableExpression handleUnaryNot(ResolvableExpression rightExpression) {
         return ResolvableExpression.withType(Boolean.class, context -> {
-            if (rightExpression.resolve(context).equals(null)) return null;
+            if (rightExpression.resolve(context) == null) return null;
             Boolean rightValue = (Boolean) rightExpression.resolve(context);
             return !rightValue;
         });
