@@ -14,7 +14,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     private final ExpressionVisitor exprVisitor;
 
     public ComparisonFunctionsVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);;
+        exprVisitor = new ExpressionVisitor(context);
     }
 
 

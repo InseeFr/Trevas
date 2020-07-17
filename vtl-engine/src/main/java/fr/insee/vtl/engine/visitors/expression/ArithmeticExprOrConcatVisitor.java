@@ -11,7 +11,7 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     private final ExpressionVisitor exprVisitor;
 
     public ArithmeticExprOrConcatVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);;
+        exprVisitor = new ExpressionVisitor(context);
     }
 
     @Override

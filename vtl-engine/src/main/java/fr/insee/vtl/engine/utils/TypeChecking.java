@@ -4,6 +4,10 @@ import fr.insee.vtl.model.TypedExpression;
 
 public class TypeChecking {
 
+    private TypeChecking() {
+        throw new IllegalStateException("Type checking utility class");
+    }
+
     public static boolean isNumber(TypedExpression expression) {
         return Number.class.isAssignableFrom(expression.getType());
     }

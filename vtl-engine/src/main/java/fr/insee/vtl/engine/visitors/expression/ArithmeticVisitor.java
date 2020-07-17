@@ -13,7 +13,7 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     public ArithmeticVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);;
+        exprVisitor = new ExpressionVisitor(context);
     }
 
     @Override

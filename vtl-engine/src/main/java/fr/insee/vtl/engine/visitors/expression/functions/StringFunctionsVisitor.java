@@ -20,7 +20,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     private final ExpressionVisitor exprVisitor;
 
     public StringFunctionsVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);;
+        exprVisitor = new ExpressionVisitor(context);
     }
 
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {

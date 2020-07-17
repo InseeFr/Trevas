@@ -13,7 +13,7 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     public BooleanVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);;
+        exprVisitor = new ExpressionVisitor(context);
     }
 
     @Override

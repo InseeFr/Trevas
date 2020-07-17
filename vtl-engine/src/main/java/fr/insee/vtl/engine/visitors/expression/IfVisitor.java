@@ -14,7 +14,6 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     public IfVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
-        ;
     }
 
     @Override

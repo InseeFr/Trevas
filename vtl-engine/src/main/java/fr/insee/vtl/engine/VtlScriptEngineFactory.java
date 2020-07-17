@@ -5,6 +5,7 @@ import javax.script.ScriptEngineFactory;
 import java.util.List;
 
 public class VtlScriptEngineFactory implements ScriptEngineFactory {
+
     @Override
     public String getEngineName() {
         return "Java VTL engine";
@@ -12,7 +13,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
 
     @Override
     public String getEngineVersion() {
-        return "0.0.1";
+        return "0.1.0";
     }
 
     @Override
