@@ -26,7 +26,7 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         //  NumberExpression, LongExpression etc.
         if (TypeChecking.isNumber(leftExpression) && TypeChecking.isNumber(rightExpression)) {
             return handleNumberArithmeticExpr(leftExpression, rightExpression, ctx);
-        } if (TypeChecking.isDataset(leftExpression) && TypeChecking.isDataset(rightExpression)) {
+        } else if (TypeChecking.isDataset(leftExpression) && TypeChecking.isDataset(rightExpression)) {
             throw new UnsupportedOperationException("TODO");
         } else {
             throw new UnsupportedOperationException("unsupported types");
@@ -37,21 +37,17 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private ResolvableExpression handleMultiplication(ResolvableExpression leftExpression,
                                                       ResolvableExpression rightExpression) {
         if (TypeChecking.isLong(leftExpression) && TypeChecking.isDouble(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Long) leftExpression.resolve(context)) * ((Double) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Long) leftExpression.resolve(context)) * ((Double) rightExpression.resolve(context)));
         } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isLong(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Double) leftExpression.resolve(context)) * ((Long) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Double) leftExpression.resolve(context)) * ((Long) rightExpression.resolve(context)));
         } else if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
-            return ResolvableExpression.withType(Long.class, context -> {
-                return ((Long) leftExpression.resolve(context)) * ((Long) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Long.class, context ->
+                    ((Long) leftExpression.resolve(context)) * ((Long) rightExpression.resolve(context)));
         } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Double) leftExpression.resolve(context)) * ((Double) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Double) leftExpression.resolve(context)) * ((Double) rightExpression.resolve(context)));
         } else {
             throw new UnsupportedOperationException("unsupported types " + List.of(leftExpression, rightExpression));
         }
@@ -60,22 +56,17 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private ResolvableExpression handleDivision(ResolvableExpression leftExpression,
                                                 ResolvableExpression rightExpression) {
         if (TypeChecking.isLong(leftExpression) && TypeChecking.isDouble(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Long) leftExpression.resolve(context)) / ((Double) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Long) leftExpression.resolve(context)) / ((Double) rightExpression.resolve(context)));
         } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isLong(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Double) leftExpression.resolve(context)) / ((Long) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Double) leftExpression.resolve(context)) / ((Long) rightExpression.resolve(context)));
         } else if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                // Note the required cast to avoid returning Long type.
-                return ((Long) leftExpression.resolve(context)).doubleValue() / ((Long) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Long) leftExpression.resolve(context)).doubleValue() / ((Long) rightExpression.resolve(context)));
         } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
-            return ResolvableExpression.withType(Double.class, context -> {
-                return ((Double) leftExpression.resolve(context)) / ((Double) rightExpression.resolve(context));
-            });
+            return ResolvableExpression.withType(Double.class, context ->
+                    ((Double) leftExpression.resolve(context)) / ((Double) rightExpression.resolve(context)));
         } else {
             throw new UnsupportedOperationException("unsupported types " + List.of(leftExpression, rightExpression));
         }

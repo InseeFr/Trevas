@@ -35,7 +35,8 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         return ResolvableExpression.withType(Object.class, context -> {
             Boolean conditionalValue = (Boolean) conditionalExpression.resolve(context);
-            return conditionalValue ? thenExpression.resolve(context) : elseExpression.resolve(context);
+            return Boolean.TRUE.equals(conditionalValue) ?
+                    thenExpression.resolve(context) : elseExpression.resolve(context);
         });
     }
 }

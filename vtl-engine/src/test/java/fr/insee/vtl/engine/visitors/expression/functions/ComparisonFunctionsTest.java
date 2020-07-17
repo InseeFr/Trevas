@@ -23,8 +23,8 @@ public class ComparisonFunctionsTest {
     public void testCharsetMatchAtom() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
-        assertThat(context.getAttribute("t")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("t")).isTrue();
         engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
-        assertThat(context.getAttribute("t")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("t")).isFalse();
     }
 }

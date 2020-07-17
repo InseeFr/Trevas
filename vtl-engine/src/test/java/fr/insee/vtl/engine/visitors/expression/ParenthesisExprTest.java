@@ -26,6 +26,6 @@ public class ParenthesisExprTest {
         engine.eval("trueBoolean := (true);");
         // TODO: More test with arithmetic
         assertThat(context.getAttribute("three")).isEqualTo(3L);
-        assertThat(context.getAttribute("trueBoolean")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("trueBoolean")).isTrue();
     }
 }

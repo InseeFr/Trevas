@@ -14,8 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final static Pattern LTRIM = Pattern.compile("^\\s+");
-    private final static Pattern RTRIM = Pattern.compile("\\s+$");
+    private final Pattern LTRIM = Pattern.compile("^\\s+");
+    private final Pattern RTRIM = Pattern.compile("\\s+$");
 
     private final ExpressionVisitor exprVisitor;
 
@@ -23,6 +23,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    @Override
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
         // TODO: deal with Long & Double dynamically
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
@@ -62,6 +63,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
     }
 
+    @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         if (ctx.children.size() > 8) {
             String args = String.valueOf((ctx.children.size() - 4) / 2);
@@ -86,6 +88,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
+    @Override
     public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
         ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
         ResolvableExpression inputPattern = exprVisitor.visit(ctx.param);
@@ -116,6 +119,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
+    @Override
     public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
         ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
         ResolvableExpression pattern = exprVisitor.visit(ctx.pattern);

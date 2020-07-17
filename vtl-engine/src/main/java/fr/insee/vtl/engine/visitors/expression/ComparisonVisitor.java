@@ -20,7 +20,6 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -140,7 +139,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             );
         }
 
-
         switch (ctx.op.getType()) {
             case VtlParser.IN:
                 return new BooleanExpression() {
@@ -152,7 +150,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     }
                 };
             case VtlParser.NOT_IN:
-                new BooleanExpression() {
+                return new BooleanExpression() {
                     @Override
                     public Boolean resolve(Map<String, Object> context) {
                         List<?> list = listExpression.resolve(context);
@@ -189,9 +187,10 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Class<?> type = types.iterator().next();
 
         // Since all expression are constant we don't need any context.
-        List<Object> values = listExpressions.stream().map(expression -> {
-            return expression.resolve(Map.of());
-        }).collect(Collectors.toList());
+        List<Object> values = listExpressions
+                .stream()
+                .map(expression -> expression.resolve(Map.of()))
+                .collect(Collectors.toList());
 
         return new ListExpression() {
             @Override

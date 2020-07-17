@@ -26,34 +26,34 @@ public class ComparisonExprTest {
         ScriptContext context = engine.getContext();
         // EQ
         engine.eval("bool := true = true;");
-        assertThat(context.getAttribute("bool")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("bool")).isTrue();
         engine.eval("long := 6 = (3*2);");
-        assertThat(context.getAttribute("long")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("long")).isTrue();
         // NEQ
         engine.eval("bool := true <> true;");
-        assertThat(context.getAttribute("bool")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("bool")).isFalse();
         engine.eval("long := 6 <> (3*20);");
-        assertThat(context.getAttribute("long")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("long")).isTrue();
         // LT
         engine.eval("lt := 2 < 3;");
-        assertThat(context.getAttribute("lt")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("lt")).isTrue();
         engine.eval("lt1 := 2.1 < 1.1;");
-        assertThat(context.getAttribute("lt1")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("lt1")).isFalse();
         // MT
         engine.eval("lt := 2 > 3;");
-        assertThat(context.getAttribute("lt")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("lt")).isFalse();
         engine.eval("lt1 := 2.1 > 1.1;");
-        assertThat(context.getAttribute("lt1")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("lt1")).isTrue();
         // LE
         engine.eval("lt := 3 <= 3;");
-        assertThat(context.getAttribute("lt")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("lt")).isTrue();
         engine.eval("lt1 := 2.1 <= 1.1;");
-        assertThat(context.getAttribute("lt1")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("lt1")).isFalse();
         // MT
         engine.eval("lt := 2 >= 3;");
-        assertThat(context.getAttribute("lt")).isEqualTo(false);
+        assertThat((Boolean) context.getAttribute("lt")).isFalse();
         engine.eval("lt1 := 2.1 >= 1.1;");
-        assertThat(context.getAttribute("lt1")).isEqualTo(true);
+        assertThat((Boolean) context.getAttribute("lt1")).isTrue();
     }
 
     @Test
@@ -84,15 +84,15 @@ public class ComparisonExprTest {
     public void testInNotIn() throws ScriptException {
 
         engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"string\"};");
-        assertThat(engine.getContext().getAttribute("res")).isEqualTo(true);
+        assertThat((Boolean) engine.getContext().getAttribute("res")).isTrue();
 
         engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"out string\"};");
-        assertThat(engine.getContext().getAttribute("res")).isEqualTo(false);
+        assertThat((Boolean) engine.getContext().getAttribute("res")).isFalse();
 
         engine.getContext().setAttribute("var", 123L, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := var in {1, 2, 3, 123};");
 
-        assertThat(engine.getContext().getAttribute("res")).isEqualTo(true);
+        assertThat((Boolean) engine.getContext().getAttribute("res")).isTrue();
 
         assertThatThrownBy(() -> {
             engine.eval("res := var in {1, 2, 3, \"string is not number\"};");
