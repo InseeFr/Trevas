@@ -52,33 +52,26 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private ResolvableExpression handleUnaryPlus(ResolvableExpression rightExpression) {
         if (TypeChecking.isLong(rightExpression))
-            return ResolvableExpression.withType(Long.class, context -> {
-                Long rightValue = (Long) rightExpression.resolve(context);
-                return rightValue;
-            });
-        return ResolvableExpression.withType(Double.class, context -> {
-            Double rightValue = (Double) rightExpression.resolve(context);
-            return rightValue;
-        });
+            return ResolvableExpression.withType(Long.class, context ->
+                    (Long) rightExpression.resolve(context)
+            );
+        return ResolvableExpression.withType(Double.class, context ->
+                (Double) rightExpression.resolve(context)
+        );
     }
 
     private ResolvableExpression handleUnaryMinus(ResolvableExpression rightExpression) {
         if (TypeChecking.isLong(rightExpression))
-            return ResolvableExpression.withType(Long.class, context -> {
-                Long rightValue = (Long) rightExpression.resolve(context);
-                return - rightValue;
-            });
-        return ResolvableExpression.withType(Double.class, context -> {
-            Double rightValue = (Double) rightExpression.resolve(context);
-            return - rightValue;
-        });
+            return ResolvableExpression.withType(Long.class, context ->
+                    - ((Long) rightExpression.resolve(context))
+            );
+        return ResolvableExpression.withType(Double.class, context ->
+                - ((Double) rightExpression.resolve(context))
+        );
     }
 
     private ResolvableExpression handleUnaryNot(ResolvableExpression rightExpression) {
-        return ResolvableExpression.withType(Boolean.class, context -> {
-            if (rightExpression.resolve(context) == null) return null;
-            Boolean rightValue = (Boolean) rightExpression.resolve(context);
-            return !rightValue;
-        });
+        return ResolvableExpression.withType(Boolean.class, context ->
+                !((Boolean) rightExpression.resolve(context)));
     }
 }
