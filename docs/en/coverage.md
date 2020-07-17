@@ -69,7 +69,7 @@
 | Less or equal than    | <=               | :heavy_check_mark: |
 | Between               | between          |        :x:         |
 | Element of            | in / not_in      | :heavy_check_mark: |
-| Match characters      | match_characters |        :x:         |
+| Match characters      | match_characters | :heavy_check_mark: |
 | Is null               | isnull           |        :x:         |
 | Exists in             | exists_in        |        :x:         |
 
@@ -80,7 +80,7 @@
 | Logical conjunction   | and    | :heavy_check_mark: |
 | Logical disjunction   | or     | :heavy_check_mark: |
 | Exclusive disjunction | xor    | :heavy_check_mark: |
-| Logical negation      | not    |        :x:         |
+| Logical negation      | not    | :heavy_check_mark: |
 
 #### VTL-ML - Time operators
 
@@ -142,21 +142,21 @@
 
 #### VTL-ML - Conditional operators
 
-| Name         | Symbol       | Supported |
-| ------------ | :----------- | :-------: |
-| If Then Else | if-then-else |    :x:    |
-| Nvl          | nvl          |    :x:    |
+| Name         | Symbol       |     Supported      |
+| ------------ | :----------- | :----------------: |
+| If Then Else | if-then-else | :heavy_check_mark: |
+| Nvl          | nvl          |        :x:         |
 
 #### VTL-ML - Clause operators
 
-| Name                       | Symbol  | Supported |
-| -------------------------- | :------ | :-------: |
-| Filtering Data Points      | filter  |    :x:    |
-| Calculation of a Component | calc    |    :x:    |
-| Aggregation                | aggr    |    :x:    |
-| Maintaining Components     | keep    |    :x:    |
-| Removal of Components      | drop    |    :x:    |
-| Change of Component name   | rename  |    :x:    |
-| Pivoting                   | pivot   |    :x:    |
-| Unpivoting                 | unpivot |    :x:    |
-| Subspace                   | sub     |    :x:    |
+| Name                       | Symbol  |     Supported      |
+| -------------------------- | :------ | :----------------: |
+| Filtering Data Points      | filter  | :heavy_check_mark: |
+| Calculation of a Component | calc    |        :x:         |
+| Aggregation                | aggr    |        :x:         |
+| Maintaining Components     | keep    |        :x:         |
+| Removal of Components      | drop    |        :x:         |
+| Change of Component name   | rename  |        :x:         |
+| Pivoting                   | pivot   |        :x:         |
+| Unpivoting                 | unpivot |        :x:         |
+| Subspace                   | sub     |        :x:         |
