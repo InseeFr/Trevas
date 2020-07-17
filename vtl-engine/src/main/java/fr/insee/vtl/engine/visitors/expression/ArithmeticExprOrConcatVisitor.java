@@ -33,10 +33,10 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
                     return leftValue - rightValue;
                 });
             case VtlParser.CONCAT:
-                return ResolvableExpression.withType(Long.class, context -> {
-                    Long leftValue = (Long) leftExpression.resolve(context);
-                    Long rightValue = (Long) rightExpression.resolve(context);
-                    return Long.parseLong((leftValue.toString() + rightValue.toString()));
+                return ResolvableExpression.withType(String.class, context -> {
+                    String leftValue = (String) leftExpression.resolve(context);
+                    String rightValue = (String) rightExpression.resolve(context);
+                    return leftValue + rightValue;
                 });
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
