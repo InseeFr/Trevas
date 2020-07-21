@@ -13,14 +13,30 @@ import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
 
+/**
+ * <code>VtlScriptEngine</code> provides base methods for the VTL script engine.
+ */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
     private final ScriptEngineFactory factory;
 
+    /**
+     * Constructor taking a script engine factory.
+     *
+     * @param factory The script engine factory associated to the script engine to create.
+     */
     public VtlScriptEngine(ScriptEngineFactory factory) {
         this.factory = factory;
     }
 
+    /**
+     * Base method for the evaluation of a script expression in a given context.
+     *
+     * @param stream The script to evaluate represented as a stream of Unicode code points.
+     * @param context The evaluation context (for example: data bindings).
+     * @return The result of the evaluation of the script in the given context.
+     * @throws VtlScriptException In case of error during the evaluation.
+     */
     private Object evalStream(CodePointCharStream stream, ScriptContext context) throws VtlScriptException {
         try {
             VtlLexer lexer = new VtlLexer(stream);
@@ -37,12 +53,28 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         }
     }
 
+    /**
+     * Evaluation of a script expression (represented as a string) in a given context.
+     *
+     * @param script The script to evaluate represented as a string.
+     * @param context The evaluation context (for example: data bindings).
+     * @return The result of the evaluation of the script in the given context.
+     * @throws VtlScriptException In case of error during the evaluation.
+     */
     @Override
     public Object eval(String script, ScriptContext context) throws VtlScriptException {
         CodePointCharStream stream = CharStreams.fromString(script);
         return evalStream(stream, context);
     }
 
+    /**
+     * Evaluation of a script expression (read in a <code>Reader</code>) in a given context.
+     *
+     * @param reader The <code>Reader</code> containing the script to evaluate.
+     * @param context The evaluation context (for example: data bindings).
+     * @return The result of the evaluation of the script in the given context.
+     * @throws ScriptException
+     */
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         try {
@@ -53,11 +85,21 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         }
     }
 
+    /**
+     * Returns an new instance of script context bindings.
+     *
+     * @return A new instance of bindings (<code>SimpleBindings</code> object).
+     */
     @Override
     public Bindings createBindings() {
         return new SimpleBindings();
     }
 
+    /**
+     * Returns the script engine factory associated to the script engine.
+     *
+     * @return The script engine factory associated to the script engine.
+     */
     @Override
     public ScriptEngineFactory getFactory() {
         return factory;
