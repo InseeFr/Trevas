@@ -2,6 +2,9 @@ package fr.insee.vtl.model;
 
 import java.util.Map;
 
+/**
+ * The <code>StringExpression</code> class is an abstract representation of a string expression.
+ */
 public abstract class StringExpression implements ResolvableExpression {
 
     @Override

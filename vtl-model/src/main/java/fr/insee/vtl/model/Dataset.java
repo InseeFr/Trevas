@@ -67,8 +67,11 @@ public interface Dataset extends Structured {
      * The <code>Role</code> <code>Enumeration</code> lists the roles of a component in a dataset structure.
      */
     enum Role {
+        /** The component is an identifier in the data structure */
         IDENTIFIER,
+        /** The component is a measure in the data structure */
         MEASURE,
+        /** The component is an attribute in the data structure */
         ATTRIBUTE
     }
 
@@ -87,7 +90,7 @@ public interface Dataset extends Structured {
          *
          * @param name A string giving the name of the structure component to create.
          * @param type A <code>Class</code> giving the type of the structure component to create.
-         * @param role A <code>Role</code> giving the role of the structure compoenent to create.
+         * @param role A <code>Role</code> giving the role of the structure component to create.
          */
         public Structure(String name, Class<?> type, Role role) {
             this.name = Objects.requireNonNull(name);
