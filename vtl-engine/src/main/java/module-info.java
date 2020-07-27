@@ -2,6 +2,9 @@ import fr.insee.vtl.engine.VtlScriptEngineFactory;
 
 import javax.script.ScriptEngineFactory;
 
+/**
+ * This module contains the actual VTL engine.
+ */
 module fr.insee.vtl.engine {
     requires java.scripting;
     requires transitive fr.insee.vtl.parser;

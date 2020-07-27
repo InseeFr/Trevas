@@ -9,7 +9,8 @@ public interface Structured {
 
     /**
      * Returns the structure associated to the data as a list of structure components.
-     * @return
+     *
+     * @return The structure associated to the data as a list of structure components.
      */
     List<Dataset.Structure> getDataStructure();
 
