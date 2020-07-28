@@ -73,7 +73,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
      * @param reader The <code>Reader</code> containing the script to evaluate.
      * @param context The evaluation context (for example: data bindings).
      * @return The result of the evaluation of the script in the given context.
-     * @throws ScriptException
+     * @throws ScriptException In case of error during the evaluation.
      */
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
