@@ -16,7 +16,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public String getEngineName() {
-        return "Java VTL engine";
+        return "Trevas VTL engine";
     }
 
     /**
@@ -56,7 +56,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public List<String> getNames() {
-        return List.of(getLanguageName());
+        return List.of(getLanguageName(), getEngineName(), "vtl", "Trevas", "trevas");
     }
 
     /**
@@ -66,7 +66,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public String getLanguageName() {
-        return "vtl";
+        return "VTL";
     }
 
     /**
