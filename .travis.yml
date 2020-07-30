@@ -9,7 +9,7 @@ addons:
     organization: "inseefr"
 
 script:
-  - mvn clean verify sonar:sonar
+  - mvn clean verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas
 
 after_script:
   - bash scripts/gitbook.sh
