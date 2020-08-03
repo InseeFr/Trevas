@@ -96,7 +96,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
 
         if (!inputPattern.getType().equals(String.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.param, String.class, inputPattern.getType())
+                    new InvalidTypeException(String.class, inputPattern.getType(), ctx.param)
             );
         }
 
@@ -104,7 +104,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             outputPattern =  exprVisitor.visit(ctx.optionalExpr());
             if (!outputPattern.getType().equals(String.class)) {
                 throw new VtlRuntimeException(
-                        new InvalidTypeException(ctx.optionalExpr(), String.class, outputPattern.getType())
+                        new InvalidTypeException(String.class, outputPattern.getType(), ctx.optionalExpr())
                 );
             }
         }
@@ -128,7 +128,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
 
         if (!pattern.getType().equals(String.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.pattern, String.class, pattern.getType())
+                    new InvalidTypeException(String.class, pattern.getType(), ctx.pattern)
             );
         }
 
@@ -136,7 +136,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             start = exprVisitor.visit(ctx.startParameter);
             if (!start.getType().equals(Long.class)) {
                 throw new VtlRuntimeException(
-                        new InvalidTypeException(ctx.startParameter, Long.class, start.getType())
+                        new InvalidTypeException(Long.class, start.getType(), ctx.startParameter)
                 );
             }
         }
@@ -145,7 +145,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             occurence = exprVisitor.visit(ctx.occurrenceParameter);
             if (!occurence.getType().equals(Long.class)) {
                 throw new VtlRuntimeException(
-                        new InvalidTypeException(ctx.occurrenceParameter, Long.class, occurence.getType())
+                        new InvalidTypeException(Long.class, occurence.getType(), ctx.occurrenceParameter)
                 );
             }
         }

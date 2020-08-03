@@ -9,6 +9,7 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
 import java.util.List;
+import java.util.Set;
 
 public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -27,13 +28,13 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
             case VtlParser.PLUS:
                 if (!TypeChecking.isNumber(rightExpression))
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, List.of(Long.class, Double.class), rightExpression.getType())
+                            new InvalidTypeException(Set.of(Long.class, Double.class), rightExpression.getType(), ctx.right)
                     );
                 return handleUnaryPlus(rightExpression);
             case VtlParser.MINUS:
                 if (!TypeChecking.isNumber(rightExpression)) {
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, List.of(Long.class, Double.class), rightExpression.getType())
+                            new InvalidTypeException(Set.of(Long.class, Double.class), rightExpression.getType(), ctx.right)
                     );
                 }
                 return handleUnaryMinus(rightExpression);
@@ -41,7 +42,7 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 // TODO: handle null right value (not null has to return null)
                 if (!TypeChecking.isBoolean(rightExpression)) {
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, Boolean.class, rightExpression.getType())
+                            new InvalidTypeException(Boolean.class, rightExpression.getType(), ctx.right)
                     );
                 }
                 return handleUnaryNot(rightExpression);

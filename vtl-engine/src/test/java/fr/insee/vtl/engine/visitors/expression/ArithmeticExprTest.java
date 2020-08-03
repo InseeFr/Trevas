@@ -82,10 +82,10 @@ public class ArithmeticExprTest {
         assertThatThrownBy(() -> {
             engine.eval("plus := + \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Long or Double");
+                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
         assertThatThrownBy(() -> {
             engine.eval("minus := - \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Long or Double");
+                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
     }
 }

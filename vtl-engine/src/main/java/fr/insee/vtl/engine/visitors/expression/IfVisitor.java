@@ -21,7 +21,7 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression conditionalExpression = exprVisitor.visit(ctx.conditionalExpr);
         if (!conditionalExpression.getType().equals(Boolean.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.conditionalExpr, Boolean.class, conditionalExpression.getType())
+                    new InvalidTypeException(Boolean.class, conditionalExpression.getType(), ctx.conditionalExpr)
             );
         }
 
@@ -29,7 +29,7 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression elseExpression = exprVisitor.visit(ctx.elseExpr);
         if (!thenExpression.getType().equals(elseExpression.getType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.elseExpr, thenExpression.getType(), elseExpression.getType())
+                    new InvalidTypeException(thenExpression.getType(), elseExpression.getType(), ctx.elseExpr)
             );
         }
 

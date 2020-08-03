@@ -58,12 +58,12 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         if (!operandExpression.getType().equals(String.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.op, String.class, operandExpression.getType())
+                    new InvalidTypeException(String.class, operandExpression.getType(), ctx.op)
             );
         }
         if (!patternExpression.getType().equals(String.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.pattern, String.class, patternExpression.getType())
+                    new InvalidTypeException(String.class, patternExpression.getType(), ctx.pattern)
             );
         }
 

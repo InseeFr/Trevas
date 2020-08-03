@@ -36,7 +36,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (!leftExpression.getType().equals(rightExpression.getType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
             );
         }
 
@@ -70,7 +70,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue < rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.MT:
@@ -86,7 +86,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue > rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.LE:
@@ -102,7 +102,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue <= rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.ME:
@@ -118,7 +118,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue >= rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             default:
