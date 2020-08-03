@@ -16,9 +16,7 @@ public class ConflictingTypesException extends VtlScriptException {
      * @param tree The parsing context where the exception is thrown.
      * @param types The conflicting types.
      */
-    public ConflictingTypesException(ParseTree tree, Collection<Class<?>> types) {
-
-        // TODO Wouldn't it be more logical to invert the parameters of ConflictingTypesException in order to match parent logic?
+    public ConflictingTypesException(Collection<Class<?>> types, ParseTree tree) {
         super(String.format("conflicting types: %s", types.stream().map(Class::getSimpleName)
                 .collect(Collectors.toList())), tree);
     }

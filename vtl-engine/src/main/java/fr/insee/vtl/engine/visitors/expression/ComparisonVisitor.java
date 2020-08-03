@@ -178,7 +178,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (types.size() > 1) {
             throw new VtlRuntimeException(
-                    new ConflictingTypesException(ctx, types)
+                    new ConflictingTypesException(types, ctx)
             );
         }
 
