@@ -30,7 +30,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         return new DatasetExpression() {
 
             @Override
-            public List<Dataset.Structure> getDataStructure() {
+            public List<Dataset.Component> getDataStructure() {
                 return datasetExpression.getDataStructure();
             }
 

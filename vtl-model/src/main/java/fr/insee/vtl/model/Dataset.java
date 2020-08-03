@@ -60,7 +60,7 @@ public interface Dataset extends Structured {
 
         // TODO Shouldn't it be named getColumnNames?
         // TODO Why not define this method in the Structured interface?
-        return getDataStructure().stream().map(Structure::getName).collect(Collectors.toList());
+        return getDataStructure().stream().map(Component::getName).collect(Collectors.toList());
     }
 
     /**
@@ -78,9 +78,8 @@ public interface Dataset extends Structured {
     /**
      * The <code>Structure</code> class represent a structure component with its name, type and role.
      */
-    class Structure {
+    class Component {
 
-        // TODO Rename to Component, or StructureComponent?
         private final String name;
         private final Class<?> type;
         private final Role role;
@@ -92,7 +91,7 @@ public interface Dataset extends Structured {
          * @param type A <code>Class</code> giving the type of the structure component to create.
          * @param role A <code>Role</code> giving the role of the structure component to create.
          */
-        public Structure(String name, Class<?> type, Role role) {
+        public Component(String name, Class<?> type, Role role) {
             this.name = Objects.requireNonNull(name);
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
