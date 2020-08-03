@@ -20,15 +20,15 @@ public interface Dataset extends Structured {
      * @return A <code>List</code> of column contents of the input dataset ordered as specified by the input list of column names.
      */
     static List<Object> mapToRowMajor(Map<String, Object> map, List<String> columns) {
-        ArrayList<Object> datum = new ArrayList<>(columns.size()); // TODO Left part should be simply List, and datum is not appropriate naming.
-        while (datum.size() < columns.size()) {
-            datum.add(null);
+        List<Object> row = new ArrayList<>(columns.size());
+        while (row.size() < columns.size()) {
+            row.add(null);
         }
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String column = entry.getKey();
-            datum.set(columns.indexOf(column), map.get(column));
+            row.set(columns.indexOf(column), map.get(column));
         }
-        return datum;
+        return row;
     }
 
     /**
