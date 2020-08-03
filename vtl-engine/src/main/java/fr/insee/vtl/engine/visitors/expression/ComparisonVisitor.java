@@ -41,7 +41,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
 
         // Get the type of the Token.
-        // TODO: Report this to ANTLR.
+        // TODO(hadrien): Report this to ANTLR
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         switch (type.getType()) {
@@ -132,10 +132,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ListExpression listExpression = (ListExpression) visit(ctx.lists());
 
         if (!operand.getType().equals(listExpression.containedType())) {
-            // TODO: Define runtime exception.
-            // TODO: Inject context in exception:
-            throw new RuntimeException(
-                    new ScriptException("TODO: incompatible types, expected " + listExpression.containedType())
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(operand.getType(), listExpression.containedType(), ctx.lists())
             );
         }
 
