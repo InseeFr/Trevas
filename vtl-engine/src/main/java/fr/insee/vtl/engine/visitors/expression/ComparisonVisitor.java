@@ -41,7 +41,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
 
         // Get the type of the Token.
-        // TODO(hadrien): Report this to ANTLR
+        // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         switch (type.getType()) {
