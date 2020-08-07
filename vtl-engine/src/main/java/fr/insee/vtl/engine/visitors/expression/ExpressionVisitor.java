@@ -11,43 +11,60 @@ import fr.insee.vtl.parser.VtlParser;
 import javax.script.ScriptContext;
 import java.util.Objects;
 
-// TODO: Reuse instance of visitors.
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final ScriptContext context;
+    private static final ConstantVisitor CONSTANT_VISITOR = new ConstantVisitor();
+    private final VarIdVisitor varIdVisitor;
+    private final BooleanVisitor booleanVisitor;
+    private final ArithmeticVisitor arithmeticVisitor;
+    private final ArithmeticExprOrConcatVisitor arithmeticExprOrConcatVisitor;
+    private final UnaryVisitor unaryVisitor;
+    private final ComparisonVisitor comparisonVisitor;
+    private final IfVisitor ifVisitor;
+    private final StringFunctionsVisitor stringFunctionsVisitor;
+    private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
 
     public ExpressionVisitor(ScriptContext context) {
-        this.context = Objects.requireNonNull(context);
+        Objects.requireNonNull(context);
+        varIdVisitor = new VarIdVisitor(context);
+        booleanVisitor = new BooleanVisitor(context);
+        arithmeticVisitor = new ArithmeticVisitor(context);
+        arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(context);
+        unaryVisitor = new UnaryVisitor(context);
+        comparisonVisitor = new ComparisonVisitor(context);
+        ifVisitor = new IfVisitor(context);
+        stringFunctionsVisitor = new StringFunctionsVisitor(context);
+        comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(context);
     }
 
     @Override
     public ResolvableExpression visitConstant(VtlParser.ConstantContext ctx) {
-        return new ConstantVisitor().visit(ctx);
+        return CONSTANT_VISITOR.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
-        return new VarIdVisitor(context).visit(ctx);
+        return varIdVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        return new BooleanVisitor(context).visit(ctx);
+        return booleanVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
-        return new ArithmeticVisitor(context).visit(ctx);
+        return arithmeticVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
-        return new ArithmeticExprOrConcatVisitor(context).visit(ctx);
+        return arithmeticExprOrConcatVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
-        return new UnaryVisitor(context).visit(ctx);
+        return unaryVisitor.visit(ctx);
     }
 
     @Override
@@ -57,17 +74,17 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
-        return new ComparisonVisitor(context).visit(ctx);
+        return comparisonVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
-        return new ComparisonVisitor(context).visit(ctx);
+        return comparisonVisitor.visit(ctx);
     }
 
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
-        return new IfVisitor(context).visit(ctx);
+        return ifVisitor.visit(ctx);
     }
 
     /*
@@ -76,18 +93,17 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitStringFunctions(VtlParser.StringFunctionsContext ctx) {
-        return new StringFunctionsVisitor(context).visit(ctx.stringOperators());
+        return stringFunctionsVisitor.visit(ctx.stringOperators());
     }
 
     @Override
     public ResolvableExpression visitComparisonFunctions(VtlParser.ComparisonFunctionsContext ctx) {
-        return new ComparisonFunctionsVisitor(context).visit(ctx.comparisonOperators());
+        return comparisonFunctionsVisitor.visit(ctx.comparisonOperators());
     }
 
     @Override
     public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
-
         ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression);
         return clauseVisitor.visit(ctx.clause);
     }

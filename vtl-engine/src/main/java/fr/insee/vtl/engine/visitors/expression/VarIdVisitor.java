@@ -37,7 +37,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return new DatasetExpression() {
 
                 @Override
-                public List<Dataset.Structure> getDataStructure() {
+                public List<Dataset.Component> getDataStructure() {
                     return dataset.getDataStructure();
                 }
 

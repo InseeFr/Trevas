@@ -22,12 +22,12 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
         if (!leftExpression.getType().equals(Boolean.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.left, Boolean.class, leftExpression.getType())
+                    new InvalidTypeException(Boolean.class, leftExpression.getType(), ctx.left)
             );
         }
         if (!rightExpression.getType().equals(Boolean.class)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.right, Boolean.class, rightExpression.getType())
+                    new InvalidTypeException(Boolean.class, rightExpression.getType(), ctx.right)
             );
         }
 

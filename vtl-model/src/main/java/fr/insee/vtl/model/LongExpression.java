@@ -9,12 +9,6 @@ import java.util.function.Function;
 public abstract class LongExpression extends NumberExpression {
 
     /**
-     * Default constructor.
-     */
-    public LongExpression() { // TODO Do we need that?
-    }
-
-    /**
      * Returns the result of applying a function of type <code>Long</code> to a given dataset context.
      *
      * @param func A function applicable to a dataset context and yielding a <code>Long</code> result.

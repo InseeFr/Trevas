@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class InMemoryDataset implements Dataset {
 
     private final List<List<Object>> data;
-    private final List<Structure> structures;
+    private final List<Component> components;
     private final List<String> columns;
 
     /**
@@ -29,14 +29,14 @@ public class InMemoryDataset implements Dataset {
         this.columns = new ArrayList<>(types.keySet());
         this.data = Objects.requireNonNull(data).stream().map(map -> Dataset.mapToRowMajor(map, columns))
                 .collect(Collectors.toList());
-        this.structures = new ArrayList<>(data.size());
-        while (structures.size() < columns.size()) {
-            structures.add(null);
+        this.components = new ArrayList<>(data.size());
+        while (components.size() < columns.size()) {
+            components.add(null);
         }
         for (String column : columns) {
-            this.structures.set(
+            this.components.set(
                     columns.indexOf(column),
-                    new Structure(column, types.get(column), roles.get(column))
+                    new Component(column, types.get(column), roles.get(column))
             );
         }
     }
@@ -47,9 +47,9 @@ public class InMemoryDataset implements Dataset {
      * @param data The initial data as a list of list of objects representing data contents.
      * @param structures The list of structure components forming the structure of the dataset.
      */
-    public InMemoryDataset(List<List<Object>> data, List<Structure> structures) {
-        this.structures = Objects.requireNonNull(structures);
-        this.columns = this.structures.stream().map(Structure::getName).collect(Collectors.toList());
+    public InMemoryDataset(List<List<Object>> data, List<Component> structures) {
+        this.components = Objects.requireNonNull(structures);
+        this.columns = this.components.stream().map(Component::getName).collect(Collectors.toList());
         this.data = Objects.requireNonNull(data);
     }
 
@@ -69,7 +69,7 @@ public class InMemoryDataset implements Dataset {
     }
 
     @Override
-    public List<Structure> getDataStructure() {
-        return structures;
+    public List<Component> getDataStructure() {
+        return components;
     }
 }

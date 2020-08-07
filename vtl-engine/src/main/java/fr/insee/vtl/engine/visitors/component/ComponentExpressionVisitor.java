@@ -77,7 +77,7 @@ public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpress
             public Class<?> getType() {
                 return structuredExpression.getDataStructure().stream()
                         .filter(structure -> columnName.equals(structure.getName()))
-                        .map(Dataset.Structure::getType).findFirst().orElseThrow();
+                        .map(Dataset.Component::getType).findFirst().orElseThrow();
             }
         };
     }

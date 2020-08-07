@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.exceptions;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 public class InvalidTypeException extends VtlScriptException {
 
     private final Class<?> expectedType;
-    private final List<Class<?>> expectedTypes;
+    private final Set<Class<?>> expectedTypes;
     private final Class<?> receivedType;
 
     /**
@@ -21,30 +22,28 @@ public class InvalidTypeException extends VtlScriptException {
      * @param expectedType The type supported in the context.
      * @param receivedType The type actually encountered.
      */
-    public InvalidTypeException(ParseTree tree, Class<?> expectedType, Class<?> receivedType) {
+    public InvalidTypeException(Class<?> expectedType, Class<?> receivedType, ParseTree tree) {
         super(String.format("invalid type %s, expected %s to be %s",
                 receivedType.getSimpleName(), tree.getText(), expectedType.getSimpleName()
         ), tree);
         this.expectedType = expectedType;
-        this.expectedTypes = null;
+        this.expectedTypes = Set.of(expectedType);
         this.receivedType = receivedType;
     }
 
     /**
      * Constructor taking the parsing context, a list of expected types and the actual type encountered.
-     *
-     * @param tree The parsing context where the exception is thrown.
+     *  @param tree The parsing context where the exception is thrown.
      * @param expectedTypes The list of types supported in the context.
      * @param receivedType The type actually encountered.
      */
-    public InvalidTypeException(ParseTree tree, List<Class<?>> expectedTypes, Class<?> receivedType) {
-
-        // TODO Change expectedTypes to a Set?
+    public InvalidTypeException(Set<Class<?>> expectedTypes, Class<?> receivedType, ParseTree tree) {
         super(String.format("invalid type %s, expected %s to be %s",
                 receivedType.getSimpleName(), tree.getText(),
                 expectedTypes
                         .stream()
                         .map(Class::getSimpleName)
+                        .sorted()
                 .collect(Collectors.joining(" or "))
         ), tree);
         this.expectedType = null;
@@ -66,7 +65,7 @@ public class InvalidTypeException extends VtlScriptException {
      *
      * @return The types which were expected when the exception was thrown.
      */
-    public List<Class<?>> getExpectedTypes() {
+    public Set<Class<?>> getExpectedTypes() {
         return expectedTypes;
     }
 

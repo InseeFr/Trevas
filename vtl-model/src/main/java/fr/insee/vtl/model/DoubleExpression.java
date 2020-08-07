@@ -9,12 +9,6 @@ import java.util.function.Function;
 public abstract class DoubleExpression extends NumberExpression {
 
     /**
-     * Default constructor.
-     */
-    public DoubleExpression() { // TODO Do we need that?
-    }
-
-    /**
      * Returns the result of applying a function of type <code>Double</code> to a given dataset context.
      *
      * @param func A function applicable to a dataset context and yielding a <code>Double</code> result.

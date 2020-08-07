@@ -36,12 +36,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (!leftExpression.getType().equals(rightExpression.getType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                    new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
             );
         }
 
         // Get the type of the Token.
-        // TODO: Report this to ANTLR.
+        // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         switch (type.getType()) {
@@ -70,7 +70,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue < rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.MT:
@@ -86,7 +86,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue > rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.LE:
@@ -102,7 +102,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue <= rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             case VtlParser.ME:
@@ -118,7 +118,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         return leftValue >= rightValue;
                     }
                     throw new VtlRuntimeException(
-                            new InvalidTypeException(ctx.right, leftExpression.getType(), rightExpression.getType())
+                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
                 });
             default:
@@ -132,10 +132,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ListExpression listExpression = (ListExpression) visit(ctx.lists());
 
         if (!operand.getType().equals(listExpression.containedType())) {
-            // TODO: Define runtime exception.
-            // TODO: Inject context in exception:
-            throw new RuntimeException(
-                    new ScriptException("TODO: incompatible types, expected " + listExpression.containedType())
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(operand.getType(), listExpression.containedType(), ctx.lists())
             );
         }
 
@@ -178,7 +176,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (types.size() > 1) {
             throw new VtlRuntimeException(
-                    new ConflictingTypesException(ctx, types)
+                    new ConflictingTypesException(types, ctx)
             );
         }
 
