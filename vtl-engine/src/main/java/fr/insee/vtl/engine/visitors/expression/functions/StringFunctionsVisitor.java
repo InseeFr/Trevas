@@ -177,7 +177,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             occurrence = exprVisitor.visit(ctx.occurrenceParameter);
             if (!occurrence.getType().equals(Long.class)) {
                 throw new VtlRuntimeException(
-                        new InvalidTypeException(Long.class, occurence.getType(), ctx.occurrenceParameter)
+                        new InvalidTypeException(Long.class, occurrence.getType(), ctx.occurrenceParameter)
                 );
             }
         }
