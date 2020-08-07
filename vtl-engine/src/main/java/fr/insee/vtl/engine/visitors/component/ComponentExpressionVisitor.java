@@ -9,14 +9,28 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * <code>ComponentExpressionVisitor</code> is the base visitor for expressions involving components.
+ */
 public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final Structured structuredExpression;
 
+    /**
+     * Constructor taking a data structure expression.
+     *
+     * @param structuredExpression An data structure expression to which the component expression is attached.
+     */
     public ComponentExpressionVisitor(Structured structuredExpression) {
         this.structuredExpression = Objects.requireNonNull(structuredExpression);
     }
 
+    /**
+     * Visits comparison expressions between components.
+     *
+     * @param ctx The context of the comparison expression.
+     * @return A <code>ResolvableExpression</code> that resolves to the comparison result.
+     */
     @Override
     public ResolvableExpression visitComparisonExprComp(VtlParser.ComparisonExprCompContext ctx) {
 
@@ -43,6 +57,12 @@ public class ComponentExpressionVisitor extends VtlBaseVisitor<ResolvableExpress
         }
     }
 
+    /**
+     * Visits identification expressions for components.
+     *
+     * @param ctx The context of the identification expression.
+     * @return A <code>ResolvableExpression</code> that resolves to the component identifier.
+     */
     @Override
     public ResolvableExpression visitCompId(VtlParser.CompIdContext ctx) {
         String columnName = ctx.componentID().getText();

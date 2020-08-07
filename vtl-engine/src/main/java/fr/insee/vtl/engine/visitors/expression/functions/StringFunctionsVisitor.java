@@ -12,6 +12,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving string functions.
+ */
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final Pattern LTRIM = Pattern.compile("^\\s+");
@@ -19,10 +22,21 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public StringFunctionsVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits expressions corresponding to unary string functions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the string function on the operand.
+     */
     @Override
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
         // TODO: deal with Long & Double dynamically
@@ -63,6 +77,12 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
     }
 
+    /**
+     * Visits expressions corresponding to the substring function on a string operand.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the substring function on the operand.
+     */
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         if (ctx.children.size() > 8) {
@@ -88,6 +108,12 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
+    /**
+     * Visits expressions corresponding to the replace function on a string operand.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the replace function on the operand.
+     */
     @Override
     public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
         ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
@@ -119,12 +145,18 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         });
     }
 
+    /**
+     * Visits expressions corresponding to the pattern location function on a string operand.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the pattern location function on the operand.
+     */
     @Override
     public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
         ResolvableExpression expression = exprVisitor.visit(ctx.expr(0));
         ResolvableExpression pattern = exprVisitor.visit(ctx.pattern);
         ResolvableExpression start = null;
-        ResolvableExpression occurence = null;
+        ResolvableExpression occurrence = null;
 
         if (!pattern.getType().equals(String.class)) {
             throw new VtlRuntimeException(
@@ -142,23 +174,23 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
 
         if (ctx.occurrenceParameter != null) {
-            occurence = exprVisitor.visit(ctx.occurrenceParameter);
-            if (!occurence.getType().equals(Long.class)) {
+            occurrence = exprVisitor.visit(ctx.occurrenceParameter);
+            if (!occurrence.getType().equals(Long.class)) {
                 throw new VtlRuntimeException(
-                        new InvalidTypeException(ctx.occurrenceParameter, Long.class, occurence.getType())
+                        new InvalidTypeException(ctx.occurrenceParameter, Long.class, occurrence.getType())
                 );
             }
         }
 
         ResolvableExpression finalStart = start;
-        ResolvableExpression finalOccurence = occurence;
+        ResolvableExpression finalOccurrence = occurrence;
 
         return ResolvableExpression.withType(Long.class, context -> {
             String value = (String) expression.resolve(context);
             String patternValue = (String) pattern.resolve(context);
             int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 0;
-            int occurenceValue = finalOccurence != null ? ((Long) finalOccurence.resolve(context)).intValue() : 1;
-            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue)) + 1L;
+            int occurrenceValue = finalOccurrence != null ? ((Long) finalOccurrence.resolve(context)).intValue() : 1;
+            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurrenceValue)) + 1L;
         });
     }
 
