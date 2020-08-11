@@ -21,14 +21,28 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
+ */
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public ComparisonVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits expressions with comparisons.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the boolean result of the comparison.
+     */
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
@@ -126,6 +140,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
+    /**
+     * Visits 'element of' ('In' or 'Not in') expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the boolean result of the 'element of' expression.
+     */
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
         ResolvableExpression operand = exprVisitor.visit(ctx.left);
@@ -159,9 +179,14 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             default:
                 throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
         }
-
     }
 
+    /**
+     * Visits list expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ListExpression</code> resolving to the list of given values with the given contained type.
+     */
     @Override
     public ResolvableExpression visitLists(VtlParser.ListsContext ctx) {
 
@@ -170,21 +195,19 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 .map(exprVisitor::visitConstant)
                 .collect(Collectors.toList());
 
-        // Find the type of the list.
+        // Check that all list elements are of the same type
         Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
-
         if (types.size() > 1) {
             throw new VtlRuntimeException(
                     new ConflictingTypesException(types, ctx)
             );
         }
 
-        // The grammar defines list with minimum one constant so the types will never
-        // be empty.
+        // The grammar defines lists with at minimum one constant so list of types will never be empty.
         Class<?> type = types.iterator().next();
 
-        // Since all expression are constant we don't need any context.
+        // Since all expressions are constant we don't need any context.
         List<Object> values = listExpressions
                 .stream()
                 .map(expression -> expression.resolve(Map.of()))

@@ -8,14 +8,28 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
 
+/**
+ * <code>IfVisitor</code> is the base visitor for if-then-else expressions.
+ */
 public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public IfVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits if-then-else expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the if or else clause resolution depending on the condition resolution.
+     */
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
         ResolvableExpression conditionalExpression = exprVisitor.visit(ctx.conditionalExpr);

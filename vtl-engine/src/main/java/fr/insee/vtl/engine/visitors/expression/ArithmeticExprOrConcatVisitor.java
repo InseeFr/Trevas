@@ -6,14 +6,28 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
 
+/**
+ * <code>ArithmeticExprOrConcatVisitor</code> is the base visitor for plus, minus or concatenation expressions.
+ */
 public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public ArithmeticExprOrConcatVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits expressions with plus, minus or concatenation operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the plus, minus or concatenation operation.
+     */
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
         // TODO: deal with Long & Double dynamically

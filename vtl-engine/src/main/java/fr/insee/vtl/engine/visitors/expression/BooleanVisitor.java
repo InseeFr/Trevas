@@ -8,14 +8,28 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.ScriptContext;
 
+/**
+ * <code>BooleanVisitor</code> is the base visitor for expressions involving boolean operations.
+ */
 public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public BooleanVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits expressions with boolean operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the boolean operation.
+     */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);

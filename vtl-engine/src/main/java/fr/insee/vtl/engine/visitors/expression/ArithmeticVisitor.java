@@ -8,14 +8,28 @@ import fr.insee.vtl.parser.VtlParser;
 import javax.script.ScriptContext;
 import java.util.List;
 
+/**
+ * <code>ArithmeticVisitor</code> is the base visitor for multiplication or division expressions.
+ */
 public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public ArithmeticVisitor(ScriptContext context) {
         exprVisitor = new ExpressionVisitor(context);
     }
 
+    /**
+     * Visits expressions with multiplication or division operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the multiplication or division operation.
+     */
     @Override
     public ResolvableExpression visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
         // TODO: deal with Long & Double dynamically
@@ -83,7 +97,6 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
-
-
     }
+
 }

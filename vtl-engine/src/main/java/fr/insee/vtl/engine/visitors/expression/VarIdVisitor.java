@@ -13,14 +13,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * <code>VarIdVisitor</code> is the base visitor for variable identifiers.
+ */
 public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ScriptContext context;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public VarIdVisitor(ScriptContext context) {
         this.context = Objects.requireNonNull(context);
     }
 
+    /**
+     * Visits expressions with variable identifiers.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> or more specialized child resolving to the value of the variable.
+     * @throws VtlRuntimeException If the variable is not found in the context bindings.
+     */
     @Override
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
 
