@@ -5,15 +5,15 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
 import java.util.List;
+import java.util.Objects;
 
 public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
-    public ArithmeticVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public ArithmeticVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
     @Override

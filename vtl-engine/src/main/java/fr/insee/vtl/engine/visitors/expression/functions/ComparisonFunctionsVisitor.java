@@ -9,8 +9,8 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,10 +18,9 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
     private final ExpressionVisitor exprVisitor;
 
-    public ComparisonFunctionsVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public ComparisonFunctionsVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
-
 
     @Override
     public ResolvableExpression visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {

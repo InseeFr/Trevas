@@ -6,11 +6,10 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-
-import javax.script.ScriptContext;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -19,8 +18,8 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
 
     private final ExpressionVisitor exprVisitor;
 
-    public StringFunctionsVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public StringFunctionsVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
     @Override

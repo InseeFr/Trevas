@@ -7,16 +7,15 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
-    public UnaryVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public UnaryVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
     @Override

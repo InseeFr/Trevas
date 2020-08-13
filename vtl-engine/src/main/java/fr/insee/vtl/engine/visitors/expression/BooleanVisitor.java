@@ -6,14 +6,14 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
+import java.util.Objects;
 
 public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
-    public BooleanVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public BooleanVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
     @Override

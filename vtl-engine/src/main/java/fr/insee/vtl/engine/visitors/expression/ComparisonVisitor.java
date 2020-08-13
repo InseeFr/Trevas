@@ -1,13 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptException;
-
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -21,12 +13,18 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
-    public ComparisonVisitor(ScriptContext context) {
-        exprVisitor = new ExpressionVisitor(context);
+    public ComparisonVisitor(ExpressionVisitor expressionVisitor) {
+        exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
     @Override

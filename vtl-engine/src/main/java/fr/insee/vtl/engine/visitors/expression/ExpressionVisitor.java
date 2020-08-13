@@ -27,14 +27,14 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ExpressionVisitor(ScriptContext context) {
         Objects.requireNonNull(context);
         varIdVisitor = new VarIdVisitor(context);
-        booleanVisitor = new BooleanVisitor(context);
-        arithmeticVisitor = new ArithmeticVisitor(context);
-        arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(context);
-        unaryVisitor = new UnaryVisitor(context);
-        comparisonVisitor = new ComparisonVisitor(context);
-        ifVisitor = new IfVisitor(context);
-        stringFunctionsVisitor = new StringFunctionsVisitor(context);
-        comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(context);
+        booleanVisitor = new BooleanVisitor(this);
+        arithmeticVisitor = new ArithmeticVisitor(this);
+        arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this);
+        unaryVisitor = new UnaryVisitor(this);
+        comparisonVisitor = new ComparisonVisitor(this);
+        ifVisitor = new IfVisitor(this);
+        stringFunctionsVisitor = new StringFunctionsVisitor(this);
+        comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
     }
 
     @Override
