@@ -45,25 +45,24 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         switch (type.getType()) {
             case VtlParser.EQ:
-                return ResolvableExpression.withType(Boolean.class, context -> {
+                return BooleanExpression.of(context -> {
                     Object leftValue = leftExpression.resolve(context);
                     Object rightValue = rightExpression.resolve(context);
                     return leftValue.equals(rightValue);
                 });
             case VtlParser.NEQ:
-                return ResolvableExpression.withType(Boolean.class, context -> {
+                return BooleanExpression.of(context -> {
                     Object leftValue = leftExpression.resolve(context);
                     Object rightValue = rightExpression.resolve(context);
                     return !leftValue.equals(rightValue);
                 });
             case VtlParser.LT:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                return BooleanExpression.of(context -> {
+                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue < rightValue;
-                    }
-                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue < rightValue;
@@ -73,13 +72,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     );
                 });
             case VtlParser.MT:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                return BooleanExpression.of(context -> {
+                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue > rightValue;
-                    }
-                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue > rightValue;
@@ -89,13 +87,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     );
                 });
             case VtlParser.LE:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                return BooleanExpression.of(context -> {
+                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue <= rightValue;
-                    }
-                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue <= rightValue;
@@ -105,13 +102,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     );
                 });
             case VtlParser.ME:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    if (TypeChecking.isLong(leftExpression) &&  TypeChecking.isLong(rightExpression)) {
+                return BooleanExpression.of(context -> {
+                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue >= rightValue;
-                    }
-                    else if (TypeChecking.isDouble(leftExpression) &&  TypeChecking.isDouble(rightExpression)) {
+                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue >= rightValue;
@@ -138,23 +134,17 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         switch (ctx.op.getType()) {
             case VtlParser.IN:
-                return new BooleanExpression() {
-                    @Override
-                    public Boolean resolve(Map<String, Object> context) {
-                        List<?> list = listExpression.resolve(context);
-                        Object value = operand.resolve(context);
-                        return list.contains(value);
-                    }
-                };
+                return BooleanExpression.of(context -> {
+                    List<?> list = listExpression.resolve(context);
+                    Object value = operand.resolve(context);
+                    return list.contains(value);
+                });
             case VtlParser.NOT_IN:
-                return new BooleanExpression() {
-                    @Override
-                    public Boolean resolve(Map<String, Object> context) {
-                        List<?> list = listExpression.resolve(context);
-                        Object value = operand.resolve(context);
-                        return !list.contains(value);
-                    }
-                };
+                return BooleanExpression.of(context -> {
+                    List<?> list = listExpression.resolve(context);
+                    Object value = operand.resolve(context);
+                    return !list.contains(value);
+                });
             default:
                 throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
         }
