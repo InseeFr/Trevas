@@ -24,8 +24,16 @@ public class ParenthesisExprTest {
         ScriptContext context = engine.getContext();
         engine.eval("three := (3);");
         engine.eval("trueBoolean := (true);");
-        // TODO: More test with arithmetic
         assertThat(context.getAttribute("three")).isEqualTo(3L);
         assertThat((Boolean) context.getAttribute("trueBoolean")).isTrue();
+    }
+
+    @Test
+    public void testPrecedence() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("withoutParenthesis := 1 + 2 * 3;");
+        engine.eval("withParenthesis := (1 + 2) * 3;");
+        assertThat(context.getAttribute("withoutParenthesis")).isEqualTo(7L);
+        assertThat(context.getAttribute("withParenthesis")).isEqualTo(9L);
     }
 }
