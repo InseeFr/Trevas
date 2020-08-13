@@ -26,5 +26,11 @@ public class ArithmeticExprOrConcatTest {
         assertThat(context.getAttribute("plus")).isEqualTo(5L);
         assertThat(context.getAttribute("minus")).isEqualTo(1L);
         assertThat(context.getAttribute("concat")).isEqualTo("3ok");
+        engine.eval("plus := 2 + 3.0; minus := 3.0 - 2;");
+        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
+        assertThat(context.getAttribute("minus")).isEqualTo(1.0);
+        engine.eval("plus := 2.0 + 3; minus := 3 - 2.0;");
+        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
+        assertThat(context.getAttribute("minus")).isEqualTo(1.0);
     }
 }

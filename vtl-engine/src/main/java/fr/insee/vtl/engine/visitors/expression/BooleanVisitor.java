@@ -1,12 +1,13 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
+
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
 
 public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -18,40 +19,45 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
-        if (!leftExpression.getType().equals(Boolean.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(Boolean.class, leftExpression.getType(), ctx.left)
-            );
-        }
-        if (!rightExpression.getType().equals(Boolean.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(Boolean.class, rightExpression.getType(), ctx.right)
-            );
-        }
-
         switch (ctx.op.getType()) {
             case VtlParser.AND:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
-                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
-                    return leftValue && rightValue;
-                });
+                return handleAnd(ctx.left, ctx.right);
             case VtlParser.OR:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
-                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
-                    return leftValue || rightValue;
-                });
+                return handleOr(ctx.left, ctx.right);
             case VtlParser.XOR:
-                return ResolvableExpression.withType(Boolean.class, context -> {
-                    Boolean leftValue = (Boolean) leftExpression.resolve(context);
-                    Boolean rightValue = (Boolean) rightExpression.resolve(context);
-                    return leftValue ^ rightValue;
-                });
+                return handleXor(ctx.left, ctx.right);
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
+    }
+
+    private ResolvableExpression handleAnd(VtlParser.ExprContext left, VtlParser.ExprContext right) {
+        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
+        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
+        return BooleanExpression.of(context -> {
+            var leftValue = (Boolean) leftExpression.resolve(context);
+            var rightValue = (Boolean) rightExpression.resolve(context);
+            return leftValue && rightValue;
+        });
+    }
+
+    private ResolvableExpression handleOr(VtlParser.ExprContext left, VtlParser.ExprContext right) {
+        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
+        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
+        return BooleanExpression.of(context -> {
+            var leftValue = (Boolean) leftExpression.resolve(context);
+            var rightValue = (Boolean) rightExpression.resolve(context);
+            return leftValue || rightValue;
+        });
+    }
+
+    private ResolvableExpression handleXor(VtlParser.ExprContext left, VtlParser.ExprContext right) {
+        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
+        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
+        return BooleanExpression.of(context -> {
+            var leftValue = (Boolean) leftExpression.resolve(context);
+            var rightValue = (Boolean) rightExpression.resolve(context);
+            return leftValue ^ rightValue;
+        });
     }
 }

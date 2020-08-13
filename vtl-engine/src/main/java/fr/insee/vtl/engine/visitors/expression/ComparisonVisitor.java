@@ -32,6 +32,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
 
+        // TODO: Move to TypeChecking class.
         if (!leftExpression.getType().equals(rightExpression.getType())) {
             throw new VtlRuntimeException(
                     new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)

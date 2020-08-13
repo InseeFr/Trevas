@@ -1,14 +1,14 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
-import java.util.Set;
+
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -20,58 +20,43 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
-
-        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
-
         switch (ctx.op.getType()) {
             case VtlParser.PLUS:
-                if (!TypeChecking.isNumber(rightExpression))
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(Set.of(Long.class, Double.class), rightExpression.getType(), ctx.right)
-                    );
-                return handleUnaryPlus(rightExpression);
+                return handleUnaryPlus(ctx.right);
             case VtlParser.MINUS:
-                if (!TypeChecking.isNumber(rightExpression)) {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(Set.of(Long.class, Double.class), rightExpression.getType(), ctx.right)
-                    );
-                }
-                return handleUnaryMinus(rightExpression);
+                return handleUnaryMinus(ctx.right);
             case VtlParser.NOT:
-                // TODO: handle null right value (not null has to return null)
-                if (!TypeChecking.isBoolean(rightExpression)) {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(Boolean.class, rightExpression.getType(), ctx.right)
-                    );
-                }
-                return handleUnaryNot(rightExpression);
+                return handleUnaryNot(ctx.right);
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
     }
 
-    private ResolvableExpression handleUnaryPlus(ResolvableExpression rightExpression) {
-        if (TypeChecking.isLong(rightExpression))
+    private ResolvableExpression handleUnaryPlus(VtlParser.ExprContext exprContext) {
+        ResolvableExpression expression = assertNumber(exprVisitor.visit(exprContext), exprContext);
+        if (TypeChecking.isLong(expression))
             return ResolvableExpression.withType(Long.class, context ->
-                    (Long) rightExpression.resolve(context)
+                    (Long) expression.resolve(context)
             );
         return ResolvableExpression.withType(Double.class, context ->
-                (Double) rightExpression.resolve(context)
+                (Double) expression.resolve(context)
         );
     }
 
-    private ResolvableExpression handleUnaryMinus(ResolvableExpression rightExpression) {
-        if (TypeChecking.isLong(rightExpression))
+    private ResolvableExpression handleUnaryMinus(VtlParser.ExprContext exprContext) {
+        ResolvableExpression expression = assertNumber(exprVisitor.visit(exprContext), exprContext);
+        if (TypeChecking.isLong(expression))
             return ResolvableExpression.withType(Long.class, context ->
-                    - ((Long) rightExpression.resolve(context))
+                    -((Long) expression.resolve(context))
             );
         return ResolvableExpression.withType(Double.class, context ->
-                - ((Double) rightExpression.resolve(context))
+                -((Double) expression.resolve(context))
         );
     }
 
-    private ResolvableExpression handleUnaryNot(ResolvableExpression rightExpression) {
+    private ResolvableExpression handleUnaryNot(VtlParser.ExprContext exprContext) {
+        ResolvableExpression expression = assertBoolean(exprVisitor.visit(exprContext), exprContext);
         return ResolvableExpression.withType(Boolean.class, context ->
-                !((Boolean) rightExpression.resolve(context)));
+                !((Boolean) expression.resolve(context)));
     }
 }

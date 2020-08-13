@@ -3,13 +3,17 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
+
+import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
@@ -24,48 +28,78 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
 
     @Override
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
-        // TODO: deal with Long & Double dynamically
-        ResolvableExpression expression = exprVisitor.visit(ctx.expr());
+        VtlParser.ExprContext expressionCtx = ctx.expr();
         switch (ctx.op.getType()) {
             case VtlParser.TRIM:
-                return ResolvableExpression.withType(String.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return value.trim();
-                });
+                return handleTrim(expressionCtx);
             case VtlParser.LTRIM:
-                return ResolvableExpression.withType(String.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return LTRIM.matcher(value).replaceAll("");
-                });
+                return handleLTrim(expressionCtx);
             case VtlParser.RTRIM:
-                return ResolvableExpression.withType(String.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return RTRIM.matcher(value).replaceAll("");
-                });
+                return handleRTrim(expressionCtx);
             case VtlParser.UCASE:
-                return ResolvableExpression.withType(String.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return value.toUpperCase();
-                });
+                return handleUCase(expressionCtx);
             case VtlParser.LCASE:
-                return ResolvableExpression.withType(String.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return value.toLowerCase();
-                });
+                return handleLCase(expressionCtx);
             case VtlParser.LEN:
-                return ResolvableExpression.withType(Long.class, context -> {
-                    String value = (String) expression.resolve(context);
-                    return Long.valueOf(value.length());
-                });
+                return handleLen(expressionCtx);
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
+    }
+
+    private ResolvableExpression handleRTrim(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return StringExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return RTRIM.matcher(value).replaceAll("");
+        });
+    }
+
+    private ResolvableExpression handleUCase(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return StringExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return value.toUpperCase();
+        });
+    }
+
+    private ResolvableExpression handleLCase(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return StringExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return value.toLowerCase();
+        });
+    }
+
+    private ResolvableExpression handleLen(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return LongExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return (long) value.length();
+        });
+    }
+
+    private ResolvableExpression handleLTrim(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return StringExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return LTRIM.matcher(value).replaceAll("");
+        });
+    }
+
+    private ResolvableExpression handleTrim(VtlParser.ExprContext expressionCtx) {
+        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
+        return StringExpression.of(context -> {
+            String value = (String) expression.resolve(context);
+            return value.trim();
+        });
     }
 
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         if (ctx.children.size() > 8) {
             String args = String.valueOf((ctx.children.size() - 4) / 2);
+            // TODO: Define subclass of VtlScriptException.
             throw new UnsupportedOperationException("too many args (" + args + ") for: " + ctx.getText());
         }
         ResolvableExpression startExpression = null;
@@ -157,7 +191,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             String patternValue = (String) pattern.resolve(context);
             int startValue = finalStart != null ? ((Long) finalStart.resolve(context)).intValue() : 0;
             int occurenceValue = finalOccurence != null ? ((Long) finalOccurence.resolve(context)).intValue() : 1;
-            return Long.valueOf(StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue)) + 1L;
+            return (long) StringUtils.ordinalIndexOf(value.substring(startValue), patternValue, occurenceValue) + 1L;
         });
     }
 

@@ -34,7 +34,7 @@ public class VtlScriptEngineTest {
                     position.getEndLine().equals(endLine) &&
                     position.getStartColumn().equals(startColumn) &&
                     position.getEndColumn().equals(endColumn);
-        }, "at position <%d,%d;%d,%d>",
+        }, "at position <%d:%d-%d:%d>",
                 startLine, endLine, startColumn, endColumn);
     }
 

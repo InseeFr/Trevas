@@ -9,7 +9,6 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,58 +32,28 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         Object value = bindings.get(variableName);
         if (value instanceof Dataset) {
-            Dataset dataset = (Dataset) value;
-            return new DatasetExpression() {
+            return DatasetExpression.of((Dataset) value);
 
-                @Override
-                public List<Dataset.Component> getDataStructure() {
-                    return dataset.getDataStructure();
-                }
-
-                @Override
-                public Dataset resolve(Map<String, Object> na) {
-                    return dataset;
-                }
-            };
         }
 
         if (value instanceof Integer || value instanceof Long) {
-            return new LongExpression() {
-                @Override
-                public Long resolve(Map<String, Object> context) {
-                    return ((Number) value).longValue();
-                }
-            };
+            return LongExpression.of(((Number) value).longValue());
         }
 
         if (value instanceof Float || value instanceof Double) {
-            return new DoubleExpression() {
-                @Override
-                public Double resolve(Map<String, Object> context) {
-                    return ((Number) value).doubleValue();
-                }
-            };
+            return DoubleExpression.of(((Number) value).doubleValue());
         }
 
         if (value instanceof Boolean) {
-            return new BooleanExpression() {
-                @Override
-                public Boolean resolve(Map<String, Object> context) {
-                    return (Boolean) value;
-                }
-            };
+            return BooleanExpression.of((Boolean) value);
         }
 
         if (value instanceof CharSequence) {
-            return new StringExpression() {
-                @Override
-                public String resolve(Map<String, Object> context) {
-                    return (String) value;
-                }
-            };
+            return StringExpression.of((CharSequence) value);
         }
 
         if (value == null) {
+            // TODO: Should probably be a static value.
             return new ResolvableExpression() {
                 @Override
                 public Object resolve(Map<String, Object> context) {
