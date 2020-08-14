@@ -7,6 +7,7 @@ import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +23,37 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         Map<String, Object> componentMap = datasetExpression.getDataStructure().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
         this.componentExpressionVisitor = new ExpressionVisitor(componentMap);
+    }
+
+    @Override
+    public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
+        // TODO: Should be an expression so we can handle membership better and use the exceptions
+        //  for undefined var etc.
+
+        // Normalize to keep operation.
+        var keep = ctx.op.getType() == VtlParser.KEEP;
+        var componentNames = ctx.componentID().stream().map(RuleContext::getText).collect(Collectors.toSet());
+        var structure = datasetExpression.getDataStructure().stream()
+                .filter(component -> keep == componentNames.contains(component.getName()))
+                .collect(Collectors.toList());
+
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+                var columnNames = getColumnNames();
+                List<List<Object>> result = datasetExpression.resolve(context).getDataAsMap().stream()
+                        .map(data -> {
+                            return data.entrySet().stream().filter(entry -> columnNames.contains(entry.getKey()))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        }).map(map -> Dataset.mapToRowMajor(map, getColumnNames())).collect(Collectors.toList());
+                return new InMemoryDataset(result, getDataStructure());
+            }
+
+            @Override
+            public List<Dataset.Component> getDataStructure() {
+                return structure;
+            }
+        };
     }
 
     @Override
