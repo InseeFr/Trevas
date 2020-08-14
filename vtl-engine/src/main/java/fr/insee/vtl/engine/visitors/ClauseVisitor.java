@@ -7,7 +7,6 @@ import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,14 +24,18 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         this.componentExpressionVisitor = new ExpressionVisitor(componentMap);
     }
 
-    @Override
-    public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
+    private String getName(VtlParser.ComponentIDContext context) {
         // TODO: Should be an expression so we can handle membership better and use the exceptions
         //  for undefined var etc.
+        return context.getText();
+    }
+
+    @Override
+    public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
 
         // Normalize to keep operation.
         var keep = ctx.op.getType() == VtlParser.KEEP;
-        var componentNames = ctx.componentID().stream().map(RuleContext::getText).collect(Collectors.toSet());
+        var componentNames = ctx.componentID().stream().map(this::getName).collect(Collectors.toSet());
         var structure = datasetExpression.getDataStructure().stream()
                 .filter(component -> keep == componentNames.contains(component.getName()))
                 .collect(Collectors.toList());
@@ -63,8 +66,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var expressions = new HashMap<String, ResolvableExpression>();
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
 
-            // TODO: Should be an expression so we can handle membership better.
-            var columnName = calcCtx.componentID().getText();
+
+            var columnName = getName(calcCtx.componentID());
             ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
 
             // We construct a new structure
@@ -119,6 +122,45 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return new InMemoryDataset(result, getDataStructure());
             }
 
+        };
+    }
+
+    @Override
+    public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
+        Map<String, String> fromTo = new LinkedHashMap<>();
+        for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
+            fromTo.put(getName(renameCtx.fromName), getName(renameCtx.toName));
+        }
+
+        var structure = datasetExpression.getDataStructure().stream().map(component -> {
+            return !fromTo.containsKey(component.getName()) ?
+                    component :
+                    new Dataset.Component(fromTo.get(component.getName()), component.getType(), component.getRole());
+        }).collect(Collectors.toList());
+
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+                var result = datasetExpression.resolve(context).getDataAsMap().stream()
+                        .map(map -> {
+                            var newMap = new HashMap<>(map);
+                            for (String fromName : fromTo.keySet()) {
+                                newMap.remove(fromName);
+                            }
+                            for (String fromName : fromTo.keySet()) {
+                                var toName = fromTo.get(fromName);
+                                newMap.put(toName, map.get(fromName));
+                            }
+                            return newMap;
+                        }).map(map -> Dataset.mapToRowMajor(map, getColumnNames()))
+                        .collect(Collectors.toList());
+                return new InMemoryDataset(result, getDataStructure());
+            }
+
+            @Override
+            public List<Dataset.Component> getDataStructure() {
+                return structure;
+            }
         };
     }
 }
