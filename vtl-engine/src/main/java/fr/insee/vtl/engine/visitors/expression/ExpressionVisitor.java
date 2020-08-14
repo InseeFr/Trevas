@@ -8,7 +8,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
+import java.util.Map;
 import java.util.Objects;
 
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
@@ -24,7 +24,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
 
-    public ExpressionVisitor(ScriptContext context) {
+    public ExpressionVisitor(Map<String, Object> context) {
         Objects.requireNonNull(context);
         varIdVisitor = new VarIdVisitor(context);
         booleanVisitor = new BooleanVisitor(this);

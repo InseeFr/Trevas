@@ -1,6 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
-import fr.insee.vtl.engine.visitors.component.ComponentExpressionVisitor;
+import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -16,16 +16,19 @@ import java.util.stream.Collectors;
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final DatasetExpression datasetExpression;
-    private final ComponentExpressionVisitor componentExpressionVisitor;
+    private final ExpressionVisitor componentExpressionVisitor;
 
     public ClauseVisitor(DatasetExpression datasetExpression) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
-        this.componentExpressionVisitor = new ComponentExpressionVisitor(datasetExpression);
+        // Here we "switch" to the dataset context.
+        Map<String, Object> componentMap = datasetExpression.getDataStructure().stream()
+                .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
+        this.componentExpressionVisitor = new ExpressionVisitor(componentMap);
     }
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.exprComponent());
+        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
 
         return new DatasetExpression() {
 
@@ -44,6 +47,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                         .collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
+
         };
     }
 }
