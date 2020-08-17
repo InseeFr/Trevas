@@ -50,7 +50,7 @@ public class ClauseVisitorTest {
     }
 
     @Test
-    void testRenameClause() throws ScriptException {
+    public void testRenameClause() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
                         Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
