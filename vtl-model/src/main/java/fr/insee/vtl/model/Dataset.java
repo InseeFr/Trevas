@@ -117,5 +117,20 @@ public interface Dataset extends Structured {
         public Role getRole() {
             return role;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Component component = (Component) o;
+            return name.equals(component.name) &&
+                    type.equals(component.type) &&
+                    role == component.role;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, type, role);
+        }
     }
 }
