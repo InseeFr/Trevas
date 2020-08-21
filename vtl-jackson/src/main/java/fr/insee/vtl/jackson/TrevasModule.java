@@ -11,5 +11,7 @@ public class TrevasModule extends SimpleModule {
         addDeserializer(Bindings.class, new BindingsDeserializer());
         addDeserializer(Dataset.class, new DatasetDeserializer());
         addDeserializer(Dataset.Component.class, new ComponentDeserializer());
+        addSerializer(Dataset.Component.class, new ComponentSerializer());
+        addSerializer(Dataset.class, new DatasetSerializer());
     }
 }

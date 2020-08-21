@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
 
-    private static final Map<String, Class<?>> types = Map.of(
+    private static final Map<String, Class<?>> TYPES = Map.of(
             "STRING", String.class,
             "INTEGER", Long.class,
             "NUMBER", Double.class,
@@ -24,7 +24,6 @@ public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
 
     @Override
     public Dataset.Component deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-        // TODO: Throw JsonProcessingException with JsonLoc.
         var node = ctxt.readTree(p);
         var name = node.get("name").asText();
         var type = node.get("type").asText();
@@ -33,6 +32,6 @@ public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
     }
 
     private Class<?> asType(String type) {
-        return types.get(type);
+        return TYPES.get(type);
     }
 }
