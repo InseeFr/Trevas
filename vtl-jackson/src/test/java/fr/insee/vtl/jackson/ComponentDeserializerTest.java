@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ComponentDeserializerTest extends AbstractMapperTest {
+public class ComponentDeserializerTest extends AbstractMapperTest {
 
     @Test
-    void testCanDeserialize() throws JsonProcessingException {
+    public void testCanDeserialize() throws JsonProcessingException {
 
         var stringComponent = new Dataset.Component("NAME", String.class, Dataset.Role.IDENTIFIER);
         var measureComponent = new Dataset.Component("NAME", String.class, Dataset.Role.MEASURE);

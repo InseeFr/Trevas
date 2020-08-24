@@ -8,10 +8,10 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class BindingsDeserializerTest extends AbstractMapperTest {
+public class BindingsDeserializerTest extends AbstractMapperTest {
 
     @Test
-    void testSupportsBindinds() throws IOException {
+    public void testSupportsBindinds() throws IOException {
 
         var jsonStream = getClass().getResourceAsStream("/bindings.json");
 

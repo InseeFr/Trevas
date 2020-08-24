@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DatasetDeserializerTest extends AbstractMapperTest {
+public class DatasetDeserializerTest extends AbstractMapperTest {
 
     @Test
-    void testDeserializeDataset() throws IOException {
+    public void testDeserializeDataset() throws IOException {
         var jsonStream = getClass().getResourceAsStream("/dataset.json");
 
         var dataset = mapper.readValue(jsonStream, Dataset.class);
