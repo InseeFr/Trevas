@@ -1,9 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -47,8 +44,8 @@ public interface Dataset extends Structured {
         return getDataPoints().stream().map(objects ->
                 IntStream.range(0, getDataStructure().size())
                         .boxed()
-                        .collect(Collectors.toMap(idx -> getDataStructure().get(idx).getName(), objects::get))
-        ).collect(Collectors.toList());
+                        .collect(HashMap<String, Object>::new, (acc, idx) -> acc.put(getDataStructure().get(idx).getName(), objects.get(idx)), HashMap::putAll))
+                .collect(Collectors.toList());
     }
 
     /**
