@@ -8,7 +8,7 @@ public class AbstractMapperTest {
     protected ObjectMapper mapper;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         mapper = new ObjectMapper();
         mapper.registerModule(new TrevasModule());
     }
