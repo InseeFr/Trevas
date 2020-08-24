@@ -75,7 +75,11 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         return components.stream().map(component -> new PointDeserializer() {
             @Override
             public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-                return ctxt.readValue(p, component.getType());
+                if (p.currentToken() == JsonToken.VALUE_NULL) {
+                    return null;
+                } else {
+                    return ctxt.readValue(p, component.getType());
+                }
             }
         }).collect(Collectors.toList());
     }
