@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,9 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
         // Create a list of functions for each type. This require the structure
         // to be before the data.
-        List<PointDeserializer> deserializers = createDeserializers(components);
+        List<PointDeserializer> deserializers = components.stream()
+                .map(PointDeserializer::new)
+                .collect(Collectors.toList());
 
         List<List<Object>> dataPoints = new ArrayList<>();
         while (p.nextToken() == JsonToken.START_ARRAY) {
@@ -71,19 +75,6 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         return dataPoints;
     }
 
-    private List<PointDeserializer> createDeserializers(List<Dataset.Component> components) {
-        return components.stream().map(component -> new PointDeserializer() {
-            @Override
-            public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-                if (p.currentToken() == JsonToken.VALUE_NULL) {
-                    return null;
-                } else {
-                    return ctxt.readValue(p, component.getType());
-                }
-            }
-        }).collect(Collectors.toList());
-    }
-
     private List<Dataset.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt) throws IOException {
         var fieldName = p.nextFieldName();
         if (!STRUCTURE_NAMES.contains(fieldName)) {
@@ -96,8 +87,28 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         return ctxt.readValue(p, listOfComponentType);
     }
 
-    @FunctionalInterface
-    interface PointDeserializer {
-        Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException;
+    private static class PointDeserializer {
+
+        private final Dataset.Component component;
+
+        PointDeserializer(Dataset.Component component) {
+            this.component = Objects.requireNonNull(component);
+        }
+
+        Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            try {
+                if (p.currentToken() == JsonToken.VALUE_NULL) {
+                    return null;
+                } else {
+                    return ctxt.readValue(p, component.getType());
+                }
+            } catch (IOException ioe) {
+                throw MismatchedInputException.from(
+                        p,
+                        String.format("failed to deserialize column %s", component.getName()),
+                        ioe
+                );
+            }
+        }
     }
 }
