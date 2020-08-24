@@ -24,9 +24,9 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
         );
 
         assertThat(dataset.getDataPoints()).containsExactly(
-                List.of("Europe", "France", 67063703, 643.801),
-                List.of("Europe", "Norway", 5372191, 385.203),
-                List.of("Oceania", "New Zealand", 4917000, 268.021)
+                List.of("Europe", "France", 67063703L, 643.801),
+                List.of("Europe", "Norway", 5372191L, 385.203),
+                List.of("Oceania", "New Zealand", 4917000L, 268.021)
         );
 
     }
