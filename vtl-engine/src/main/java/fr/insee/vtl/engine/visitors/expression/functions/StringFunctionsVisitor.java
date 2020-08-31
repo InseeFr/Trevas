@@ -99,7 +99,9 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         if (ctx.children.size() > 8) {
             String args = String.valueOf((ctx.children.size() - 4) / 2);
-            // TODO: Define subclass of VtlScriptException.
+            // TODO: Define subclass of VtlScriptException. Ideally there should be not distinction between a core
+            //  function and a dynamically defined function. This could be a subclass of InvalidType. Anyways need
+            //  to do some research.
             throw new UnsupportedOperationException("too many args (" + args + ") for: " + ctx.getText());
         }
         ResolvableExpression startExpression = null;

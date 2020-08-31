@@ -7,16 +7,14 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
 import java.util.Map;
 import java.util.Objects;
 
 public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final ScriptContext context;
+    private final Map<String, Object> context;
 
-    public VarIdVisitor(ScriptContext context) {
+    public VarIdVisitor(Map<String, Object> context) {
         this.context = Objects.requireNonNull(context);
     }
 
@@ -24,16 +22,29 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
 
         final String variableName = ctx.getText();
-        final Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
 
-        if (!bindings.containsKey(variableName)) {
+        if (!context.containsKey(variableName)) {
             throw new VtlRuntimeException(new UndefinedVariableException(ctx));
         }
 
-        Object value = bindings.get(variableName);
+        Object value = context.get(variableName);
         if (value instanceof Dataset) {
             return DatasetExpression.of((Dataset) value);
+        }
 
+        if (value instanceof Dataset.Component) {
+            var component = (Dataset.Component) value;
+            return new ResolvableExpression() {
+                @Override
+                public Object resolve(Map<String, Object> context) {
+                    return context.get(component.getName());
+                }
+
+                @Override
+                public Class<?> getType() {
+                    return component.getType();
+                }
+            };
         }
 
         if (value instanceof Integer || value instanceof Long) {

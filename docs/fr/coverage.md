@@ -152,11 +152,11 @@
 | Name                       | Symbol  |     Supported      |
 | -------------------------- | :------ | :----------------: |
 | Filtering Data Points      | filter  | :heavy_check_mark: |
-| Calculation of a Component | calc    |        :x:         |
+| Calculation of a Component | calc    | :heavy_check_mark: |
 | Aggregation                | aggr    |        :x:         |
-| Maintaining Components     | keep    |        :x:         |
-| Removal of Components      | drop    |        :x:         |
-| Change of Component name   | rename  |        :x:         |
+| Maintaining Components     | keep    | :heavy_check_mark: |
+| Removal of Components      | drop    | :heavy_check_mark: |
+| Change of Component name   | rename  | :heavy_check_mark: |
 | Pivoting                   | pivot   |        :x:         |
 | Unpivoting                 | unpivot |        :x:         |
 | Subspace                   | sub     |        :x:         |

@@ -19,6 +19,7 @@ public class ClauseVisitorTest {
 
     private ScriptEngine engine;
 
+
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -29,8 +30,9 @@ public class ClauseVisitorTest {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 10L),
-                        Map.of("name", "Nico", "age", 11L, "weight", 10L)
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
                 Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
@@ -39,12 +41,118 @@ public class ClauseVisitorTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[filter age = weight];");
+        engine.eval("ds := ds1[filter age > 10 and age < 12];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 10L)
+                Map.of("name", "Nico", "age", 11L, "weight", 10L)
         ));
 
+    }
+
+    @Test
+    public void testManyCalc() throws ScriptException {
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[rename age to wisdom][calc wisdom := wisdom * 2];");
+    }
+
+    @Test
+    public void testRenameClause() throws ScriptException {
+        //TODO: add test for duplicate component name after rename
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[rename age to weight, weight to age, name to pseudo];");
+
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+                Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
+                Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
+                Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
+        );
+    }
+
+    @Test
+    public void testCalcClause() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[calc res := age + weight / 2];");
+
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+                Map.of("name", "Hadrien", "res", 15.5, "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "res", 16.0, "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "res", 16.5, "age", 12L, "weight", 9L)
+        );
+
+    }
+
+    @Test
+    public void testKeepDropClause() throws ScriptException {
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[keep name, age];");
+
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+                Map.of("name", "Hadrien", "age", 10L),
+                Map.of("name", "Nico", "age", 11L),
+                Map.of("name", "Franck", "age", 12L)
+        );
+
+        engine.eval("ds := ds1[drop weight];");
+
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+                Map.of("name", "Hadrien", "age", 10L),
+                Map.of("name", "Nico", "age", 11L),
+                Map.of("name", "Franck", "age", 12L)
+        );
     }
 }
