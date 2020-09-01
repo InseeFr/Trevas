@@ -76,7 +76,7 @@ private <T> T processErrors(Throwable ex, ServerRequest request, ServerResponse 
 
 ## Dataset serialization
 
-Instead of dealing yourself with Dataset objects, defined into Trevas Model module, a dedicated module based on Jackson is avaiable into Trevas.
+Instead of dealing yourself with Dataset objects, defined into Trevas Model module, a dedicated module based on Jackson is available into Trevas.
 
 ### Dependencies
 
@@ -107,7 +107,7 @@ Giving it to your webserver, `Dataset`, `Component`, `Bindings` will be serializ
 
 ### Bindings JSON model
 
-Scalar objects & datasets are enable into JSON bindings.
+Scalar objects & datasets are enabled into JSON bindings.
 
 To include a Dataset, you have to respect the following model:
 
