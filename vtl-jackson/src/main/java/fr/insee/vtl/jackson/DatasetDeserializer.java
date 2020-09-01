@@ -26,7 +26,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
     }
 
     @Override
-    public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
         // Json is an object.
         var token = p.currentToken();

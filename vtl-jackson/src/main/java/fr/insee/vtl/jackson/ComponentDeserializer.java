@@ -23,7 +23,7 @@ public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
     }
 
     @Override
-    public Dataset.Component deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public Dataset.Component deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         var node = ctxt.readTree(p);
         var name = node.get("name").asText();
         var type = node.get("type").asText();

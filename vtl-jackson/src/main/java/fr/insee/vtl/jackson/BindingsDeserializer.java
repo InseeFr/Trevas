@@ -1,7 +1,6 @@
 package fr.insee.vtl.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -18,7 +17,7 @@ public class BindingsDeserializer extends StdDeserializer<Bindings> {
     }
 
     @Override
-    public Bindings deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public Bindings deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
         var bindings = new SimpleBindings();
         var token = p.currentToken();
