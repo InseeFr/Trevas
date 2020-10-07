@@ -1,7 +1,6 @@
 module fr.insee.vtl.processing {
 
     requires fr.insee.vtl.model;
-    requires fr.insee.vtl.parser;
 
     exports fr.insee.vtl.processing;
 

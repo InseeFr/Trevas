@@ -66,6 +66,8 @@ public class ClauseVisitorTest {
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("ds := ds1[rename age to wisdom][calc wisdom := wisdom * 2];");
+
+        // TODO: add assertions.
     }
 
     @Test

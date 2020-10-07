@@ -4,36 +4,25 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.parser.VtlBaseVisitor;
-import fr.insee.vtl.parser.VtlParser;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class InMemoryProcessingEngine implements ProcessingEngine {
 
-    private String getName(VtlParser.ComponentIDContext context) {
-        // TODO: Should be an expression so we can handle membership better and use the exceptions
-        //  for undefined var etc.
-        return context.getText();
-    }
-
     @Override
-    public DatasetExpression executeCalc(DatasetExpression expression, VtlBaseVisitor<ResolvableExpression> componentVisitor, VtlParser.CalcClauseContext ctx) {
+    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions) {
 
         var structure = new ArrayList<>(expression.getDataStructure());
-        var expressions = new HashMap<String, ResolvableExpression>();
-        for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
 
-
-            var columnName = calcCtx.componentID().getText();
-            ResolvableExpression calc = componentVisitor.visit(calcCtx);
-
+        for (String columnName : expressions.keySet()) {
             // We construct a new structure
             // TODO: Handle role. Ie: Optional.ofNullable(calcCtx.componentRole());
-            structure.add(new Dataset.Component(columnName, calc.getType(), Dataset.Role.MEASURE));
-
-            expressions.put(columnName, calc);
+            structure.add(new Dataset.Component(columnName, expressions.get(columnName).getType(),
+                    Dataset.Role.MEASURE));
         }
 
         return new DatasetExpression() {
@@ -60,8 +49,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, VtlBaseVisitor<ResolvableExpression> componentVisitor, VtlParser.FilterClauseContext ctx) {
-        ResolvableExpression filter = componentVisitor.visit(ctx.expr());
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
 
         return new DatasetExpression() {
 
@@ -85,12 +73,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeRename(DatasetExpression expression, VtlParser.RenameClauseContext ctx) {
-        Map<String, String> fromTo = new LinkedHashMap<>();
-        for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-            fromTo.put(getName(renameCtx.fromName), getName(renameCtx.toName));
-        }
-
+    public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         var structure = expression.getDataStructure().stream().map(component -> {
             return !fromTo.containsKey(component.getName()) ?
                     component :
@@ -124,12 +107,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeProject(DatasetExpression expression, VtlParser.KeepOrDropClauseContext ctx) {
-        // Normalize to keep operation.
-        var keep = ctx.op.getType() == VtlParser.KEEP;
-        var componentNames = ctx.componentID().stream().map(this::getName).collect(Collectors.toSet());
+    public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
+
         var structure = expression.getDataStructure().stream()
-                .filter(component -> keep == componentNames.contains(component.getName()))
+                .filter(component -> columnNames.contains(component.getName()))
                 .collect(Collectors.toList());
 
         return new DatasetExpression() {
