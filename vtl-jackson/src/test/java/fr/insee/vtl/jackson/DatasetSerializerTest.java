@@ -24,7 +24,7 @@ public class DatasetSerializerTest extends AbstractMapperTest {
     }
 
     @Test
-    void testDatasetSerialization() throws IOException {
+    public void testDatasetSerialization() throws IOException {
         ByteArrayOutputStream serializedOutputStream = new ByteArrayOutputStream();
         mapper.writeValue(serializedOutputStream, dataset);
 
