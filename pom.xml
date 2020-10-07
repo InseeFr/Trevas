@@ -11,6 +11,7 @@
         <module>vtl-model</module>
         <module>vtl-engine</module>
         <module>vtl-jackson</module>
+        <module>vtl-processor</module>
         <module>tests</module>
     </modules>
 
