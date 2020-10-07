@@ -3,6 +3,7 @@
 ## Developer guide
 
 - [Getting started](getting-started.md)
+- [Usage](usage.md)
 
 ## User guide
 

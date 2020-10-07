@@ -40,6 +40,10 @@ public class ComparisonFunctionsTest {
         ScriptContext context = engine.getContext();
         engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
         assertThat((Boolean) context.getAttribute("t")).isTrue();
+        engine.eval("t := match_characters(\"test\", \"tes.\");");
+        assertThat((Boolean) context.getAttribute("t")).isTrue();
+        engine.eval("t := match_characters(\"test\", \"tes\");");
+        assertThat((Boolean) context.getAttribute("t")).isFalse();
         engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
         assertThat((Boolean) context.getAttribute("t")).isFalse();
         assertThatThrownBy(() -> {

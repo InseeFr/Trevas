@@ -1,0 +1,50 @@
+{
+  "structure": [
+    {
+      "name": "CONTINENT",
+      "type": "STRING",
+      "role": "IDENTIFIER"
+    },
+    {
+      "name": "COUNTRY",
+      "type": "STRING",
+      "role": "IDENTIFIER"
+    },
+    {
+      "name": "POP",
+      "type": "INTEGER",
+      "role": "MEASURE"
+    },
+    {
+      "name": "AREA",
+      "type": "NUMBER",
+      "role": "MEASURE"
+    }
+  ],
+  "data": [
+    [
+      "Europe",
+      "France",
+      67063703,
+      643.801
+    ],
+    [
+      "Europe",
+      "Norway",
+      5372191,
+      385.203
+    ],
+    [
+      "Oceania",
+      "New Zealand",
+      4917000,
+      268.021
+    ],
+    [
+      null,
+      null,
+      null,
+      null
+    ]
+  ]
+}

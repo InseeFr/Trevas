@@ -1,9 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -47,8 +44,8 @@ public interface Dataset extends Structured {
         return getDataPoints().stream().map(objects ->
                 IntStream.range(0, getDataStructure().size())
                         .boxed()
-                        .collect(Collectors.toMap(idx -> getDataStructure().get(idx).getName(), objects::get))
-        ).collect(Collectors.toList());
+                        .collect(HashMap<String, Object>::new, (acc, idx) -> acc.put(getDataStructure().get(idx).getName(), objects.get(idx)), HashMap::putAll))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -116,6 +113,21 @@ public interface Dataset extends Structured {
          */
         public Role getRole() {
             return role;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Component component = (Component) o;
+            return name.equals(component.name) &&
+                    type.equals(component.type) &&
+                    role == component.role;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, type, role);
         }
     }
 }

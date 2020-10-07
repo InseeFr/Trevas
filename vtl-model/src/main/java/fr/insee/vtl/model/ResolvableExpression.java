@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -27,6 +28,30 @@ public interface ResolvableExpression extends TypedExpression {
             public Class<?> getType() {
                 return clazz;
             }
+
+        };
+    }
+
+    /**
+     * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
+     * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
+     * @param func The resolution function for the expression to create.
+     * @param <T> The type of the expression to create.
+     * @return An instance of <code>ResolvableExpression</code> with the given type and resolution function.
+     */
+    static <T> ResolvableExpression withTypeCasting(Class<T> clazz, BiFunction<Class<T>, Map<String, Object>, T> func) {
+        return new ResolvableExpression() {
+
+            @Override
+            public Object resolve(Map<String, Object> context) {
+                return func.apply(clazz, context);
+            }
+
+            @Override
+            public Class<T> getType() {
+                return clazz;
+            }
+
         };
     }
 

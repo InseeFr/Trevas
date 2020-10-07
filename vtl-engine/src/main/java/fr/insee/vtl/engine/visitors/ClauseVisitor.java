@@ -45,10 +45,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             public Dataset resolve(Map<String, Object> context) {
                 var columnNames = getColumnNames();
                 List<List<Object>> result = datasetExpression.resolve(context).getDataAsMap().stream()
-                        .map(data -> {
-                            return data.entrySet().stream().filter(entry -> columnNames.contains(entry.getKey()))
-                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                        }).map(map -> Dataset.mapToRowMajor(map, getColumnNames())).collect(Collectors.toList());
+                        .map(data -> data.entrySet().stream().filter(entry -> columnNames.contains(entry.getKey()))
+                                .collect(HashMap<String, Object>::new, (acc, entry) -> acc.put(entry.getKey(), entry.getValue()), HashMap::putAll))
+                        .map(map -> Dataset.mapToRowMajor(map, getColumnNames())).collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
 
