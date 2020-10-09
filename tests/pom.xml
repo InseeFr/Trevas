@@ -32,11 +32,6 @@
             <artifactId>vtl-jackson</artifactId>
             <version>0.1.0</version>
         </dependency>
-        <dependency>
-            <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-processor</artifactId>
-            <version>0.1.0</version>
-        </dependency>
     </dependencies>
 
     <build>

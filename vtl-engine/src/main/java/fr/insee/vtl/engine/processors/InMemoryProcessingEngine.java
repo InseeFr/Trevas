@@ -1,9 +1,6 @@
-package fr.insee.vtl.processing;
+package fr.insee.vtl.engine.processors;
 
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;

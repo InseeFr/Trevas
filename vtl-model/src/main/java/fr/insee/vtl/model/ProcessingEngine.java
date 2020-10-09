@@ -1,7 +1,4 @@
-package fr.insee.vtl.processing;
-
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ResolvableExpression;
+package fr.insee.vtl.model;
 
 import java.util.List;
 import java.util.Map;

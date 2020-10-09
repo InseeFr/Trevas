@@ -6,8 +6,8 @@ import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.processing.InMemoryProcessingEngine;
-import fr.insee.vtl.processing.ProcessingEngine;
+import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngine;
 
 import java.util.LinkedHashMap;
 import java.util.List;
