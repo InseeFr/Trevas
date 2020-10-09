@@ -10,14 +10,28 @@ import java.util.Objects;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
+/**
+ * <code>UnaryVisitor</code> is the base visitor for unary expressions (plus, minus, not).
+ */
 public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The expression visitor.
+     */
     public UnaryVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    /**
+     * Visits unary expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the unary operation.
+     */
     @Override
     public ResolvableExpression visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
         switch (ctx.op.getType()) {

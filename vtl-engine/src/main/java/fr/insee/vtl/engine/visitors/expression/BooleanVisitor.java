@@ -9,14 +9,28 @@ import java.util.Objects;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
 
+/**
+ * <code>BooleanVisitor</code> is the base visitor for expressions involving boolean operations.
+ */
 public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public BooleanVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    /**
+     * Visits expressions with boolean operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the boolean operation.
+     */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         switch (ctx.op.getType()) {

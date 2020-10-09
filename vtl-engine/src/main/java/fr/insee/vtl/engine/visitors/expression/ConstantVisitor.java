@@ -4,8 +4,17 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+/**
+ * <code>ConstantVisitor</code> is the base visitor for constant expressions.
+ */
 public class ConstantVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    /**
+     * Visits constants expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the constant value with the expected type.
+     */
     @Override
     public ResolvableExpression visitConstant(VtlParser.ConstantContext ctx) {
         if (ctx.INTEGER_CONSTANT() != null) {

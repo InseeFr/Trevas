@@ -11,14 +11,28 @@ import java.util.Objects;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
 
+/**
+ * <code>ArithmeticVisitor</code> is the base visitor for multiplication or division expressions.
+ */
 public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public ArithmeticVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    /**
+     * Visits expressions with multiplication or division operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the multiplication or division operation.
+     */
     @Override
     public ResolvableExpression visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
 

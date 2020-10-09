@@ -14,14 +14,29 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving comparison functions.
+ */
 public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The expression visitor.
+     */
     public ComparisonFunctionsVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+
+    /**
+     * Visits a 'between' expression with scalar operand and delimiters.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a boolean (<code>true</code> if the operand is between the delimiters).
+     */
     @Override
     public ResolvableExpression visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {
         ResolvableExpression operandExpression = exprVisitor.visit(ctx.op);
@@ -50,6 +65,12 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         });
     }
 
+    /**
+     * Visits a pattern matching expression with string operand and regular expression.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a boolean (<code>true</code> if the operand matches the pattern).
+     */
     @Override
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
         ResolvableExpression operandExpression = exprVisitor.visit(ctx.op);
@@ -75,6 +96,12 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         });
     }
 
+    /**
+     * Visits a null testing expression with scalar operand.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a boolean (<code>true</code> if the operand is null).
+     */
     @Override
     public ResolvableExpression visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
         ResolvableExpression operandExpression = exprVisitor.visit(ctx.expr());

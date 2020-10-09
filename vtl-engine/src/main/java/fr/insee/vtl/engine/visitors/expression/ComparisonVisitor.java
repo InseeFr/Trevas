@@ -19,14 +19,28 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
+ */
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    /**
+     * Constructor taking a scripting context.
+     *
+     * @param context The scripting context for the visitor.
+     */
     public ComparisonVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    /**
+     * Visits expressions with comparisons.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the boolean result of the comparison.
+     */
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
@@ -121,6 +135,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
+    /**
+     * Visits 'element of' ('In' or 'Not in') expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the boolean result of the 'element of' expression.
+     */
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
         ResolvableExpression operand = exprVisitor.visit(ctx.left);
@@ -151,6 +171,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     }
 
+    /**
+     * Visits list expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ListExpression</code> resolving to the list of given values with the given contained type.
+     */
     @Override
     public ResolvableExpression visitLists(VtlParser.ListsContext ctx) {
 
