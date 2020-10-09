@@ -27,5 +27,8 @@
     <artifactId>vtl-processor</artifactId>
     <version>0.1.0</version>
 
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>${basedir}/../${aggregate.report.dir}</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
 
 </project>
