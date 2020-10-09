@@ -3,11 +3,10 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngine;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,14 +19,15 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     private final DatasetExpression datasetExpression;
     private final ExpressionVisitor componentExpressionVisitor;
 
-    private final ProcessingEngine processingEngine = new InMemoryProcessingEngine();
+    private final ProcessingEngine processingEngine;
 
-    public ClauseVisitor(DatasetExpression datasetExpression) {
+    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
         Map<String, Object> componentMap = datasetExpression.getDataStructure().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-        this.componentExpressionVisitor = new ExpressionVisitor(componentMap);
+        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine);
+        this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
     private static String getName(VtlParser.ComponentIDContext context) {

@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -14,9 +15,12 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     private final ScriptContext context;
     private final ExpressionVisitor expressionVisitor;
 
-    public AssignmentVisitor(ScriptContext context) {
+    public AssignmentVisitor(ScriptContext context, ProcessingEngine processingEngine) {
         this.context = Objects.requireNonNull(context);
-        expressionVisitor = new ExpressionVisitor(context.getBindings(ScriptContext.ENGINE_SCOPE));
+        expressionVisitor = new ExpressionVisitor(
+                context.getBindings(ScriptContext.ENGINE_SCOPE),
+                processingEngine
+        );
     }
 
     @Override
