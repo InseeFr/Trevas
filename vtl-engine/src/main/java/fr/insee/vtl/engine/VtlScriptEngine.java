@@ -2,6 +2,7 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.parser.VtlLexer;
@@ -13,6 +14,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 /**
  * <code>VtlScriptEngine</code> provides base methods for the VTL script engine.
@@ -20,6 +24,11 @@ import java.io.Reader;
 public class VtlScriptEngine extends AbstractScriptEngine {
 
     private final ScriptEngineFactory factory;
+
+    public List<ProcessingEngine> findProcessingEngines() {
+        ServiceLoader<ProcessingEngine> loader = ServiceLoader.load(ProcessingEngine.class);
+        return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
+    }
 
     public ProcessingEngine getProcessingEngine() {
         return processingEngine;
@@ -29,7 +38,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.processingEngine = processingEngine;
     }
 
-    private ProcessingEngine processingEngine;
+    private ProcessingEngine processingEngine = new InMemoryProcessingEngine();
 
 
     /**

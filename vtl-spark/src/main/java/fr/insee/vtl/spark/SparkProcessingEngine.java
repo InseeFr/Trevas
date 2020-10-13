@@ -23,6 +23,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         this.spark = Objects.requireNonNull(spark);
     }
 
+    public SparkProcessingEngine() {
+        this.spark = SparkSession.active();
+    }
+
     @Override
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions) {
         return null;

@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.ProcessingEngine;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,9 +35,15 @@ public class SparkProcessingEngineTest {
     }
 
     @AfterEach
-    void tearDown() throws InterruptedException {
-        Thread.sleep(1000000);
+    void tearDown() {
         spark.close();
+    }
+
+    @Test
+    void testServiceLoader() {
+        // TODO: Figure out why ImMemoryProcessingEngine is not found here.
+        List<ProcessingEngine> processingEngines = engine.findProcessingEngines();
+        assertThat(processingEngines).isNotEmpty();
     }
 
     @Test

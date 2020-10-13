@@ -11,11 +11,16 @@ module fr.insee.vtl.engine {
 
     requires transitive java.scripting;
     requires transitive fr.insee.vtl.parser;
+
     requires transitive fr.insee.vtl.model;
+    uses ProcessingEngine;
+
+    exports fr.insee.vtl.engine.processors;
+    provides ProcessingEngine with fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 
     requires org.antlr.antlr4.runtime;
     requires org.apache.commons.lang3;
 
     provides ScriptEngineFactory with VtlScriptEngineFactory;
-    provides ProcessingEngine with fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+
 }
