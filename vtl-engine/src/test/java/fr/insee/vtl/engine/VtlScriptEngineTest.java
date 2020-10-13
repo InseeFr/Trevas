@@ -3,13 +3,16 @@ package fr.insee.vtl.engine;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.model.ProcessingEngine;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class VtlScriptEngineTest {
@@ -36,6 +39,13 @@ public class VtlScriptEngineTest {
                     position.getEndColumn().equals(endColumn);
         }, "at position <%d:%d-%d:%d>",
                 startLine, endLine, startColumn, endColumn);
+    }
+
+    @Test
+    void testProcessingEngines() {
+        VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
+        List<ProcessingEngine> processingEngines = vtlScriptEngine.findProcessingEngines();
+        assertThat(processingEngines).isNotEmpty();
     }
 
     @Test

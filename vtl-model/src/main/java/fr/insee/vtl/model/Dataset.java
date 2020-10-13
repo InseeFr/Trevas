@@ -129,5 +129,13 @@ public interface Dataset extends Structured {
         public int hashCode() {
             return Objects.hash(name, type, role);
         }
+
+        @Override
+        public String toString() {
+            return "Component{" + name +
+                    ", type=" + type +
+                    ", role=" + role +
+                    '}';
+        }
     }
 }

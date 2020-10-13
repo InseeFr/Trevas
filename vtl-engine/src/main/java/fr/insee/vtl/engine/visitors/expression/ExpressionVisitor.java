@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -27,13 +28,14 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final IfVisitor ifVisitor;
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
+    private final ProcessingEngine processingEngine;
 
     /**
      * Constructor taking a scripting context.
      *
      * @param context The map
      */
-    public ExpressionVisitor(Map<String, Object> context) {
+    public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
         Objects.requireNonNull(context);
         varIdVisitor = new VarIdVisitor(context);
         booleanVisitor = new BooleanVisitor(this);
@@ -44,6 +46,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ifVisitor = new IfVisitor(this);
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
+        this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
     /**
@@ -203,7 +206,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
-        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression);
+        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine);
         return clauseVisitor.visit(ctx.clause);
     }
 }

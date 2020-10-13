@@ -2,7 +2,9 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -12,6 +14,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 /**
  * <code>VtlScriptEngine</code> provides base methods for the VTL script engine.
@@ -19,6 +24,22 @@ import java.io.Reader;
 public class VtlScriptEngine extends AbstractScriptEngine {
 
     private final ScriptEngineFactory factory;
+
+    public List<ProcessingEngine> findProcessingEngines() {
+        ServiceLoader<ProcessingEngine> loader = ServiceLoader.load(ProcessingEngine.class);
+        return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
+    }
+
+    public ProcessingEngine getProcessingEngine() {
+        return processingEngine;
+    }
+
+    public void setProcessingEngine(ProcessingEngine processingEngine) {
+        this.processingEngine = processingEngine;
+    }
+
+    private ProcessingEngine processingEngine = new InMemoryProcessingEngine();
+
 
     /**
      * Constructor taking a script engine factory.
@@ -42,7 +63,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             VtlLexer lexer = new VtlLexer(stream);
             VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context);
+            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context, processingEngine);
             Object lastValue = null;
             for (VtlParser.StatementContext stmt : parser.start().statement()) {
                 lastValue = assignmentVisitor.visit(stmt);
