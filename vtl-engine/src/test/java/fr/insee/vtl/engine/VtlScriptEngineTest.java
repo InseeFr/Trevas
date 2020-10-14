@@ -42,7 +42,7 @@ public class VtlScriptEngineTest {
     }
 
     @Test
-    void testProcessingEngines() {
+    public void testProcessingEngines() {
         VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
         List<ProcessingEngine> processingEngines = vtlScriptEngine.findProcessingEngines();
         assertThat(processingEngines).isNotEmpty();
