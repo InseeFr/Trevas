@@ -157,4 +157,39 @@ public class ClauseVisitorTest {
                 Map.of("name", "Franck", "age", 12L)
         );
     }
+
+    @Test
+    public void testAggregate() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        // name, country, age, weight
+        // xx  , yy     , XX , YY
+        // xx  , yy     , XX , YY
+        // xx  , yy     , XX , YY
+        // xx  , yy     , XX , YY
+
+        // group by
+
+        // country, avgAge
+        // yy     ,
+        // yy     ,
+
+        engine.eval("test := ds1[aggr avgAge := avg(age group by country];");
+//        engine.eval("test := ds1[aggr avgAge := avg(age) group by country];");
+//        engine.eval("test := ds1[aggr avgAge := avg(age group by country), totalWeight := sum(weight group by country)];");
+//        engine.eval("test := ds1[aggr avgAge := avg(age), totalWeight := sum(weight) group by country];");
+
+    }
 }
