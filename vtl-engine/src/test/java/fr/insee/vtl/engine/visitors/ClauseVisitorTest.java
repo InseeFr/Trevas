@@ -186,8 +186,8 @@ public class ClauseVisitorTest {
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("country", "france", "sumAge", 23L),
-                Map.of("country", "norway", "sumAge", 10L)
+                Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5, "countVal", 2L),
+                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0, "countVal", 1L)
         );
 
 
