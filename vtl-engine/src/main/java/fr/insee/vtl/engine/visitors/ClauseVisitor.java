@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -12,6 +14,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
@@ -79,71 +83,70 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitAggrClause(VtlParser.AggrClauseContext ctx) {
 
-        Set<String> groupBy = Set.of("country");
-        ResolvableExpression expression = LongExpression.of(map -> {
-            return (Long) map.get("age");
-        });
+        // Get a set of columns we are grouping by.
+        var groupByCtx = ctx.groupingClause();
+        Set<String> groupBy = Set.of();
+        if (groupByCtx instanceof VtlParser.GroupByOrExceptContext) {
+            groupBy = ((VtlParser.GroupByOrExceptContext) groupByCtx).componentID()
+                    .stream().map(ClauseVisitor::getName).collect(Collectors.toSet());
+        }
 
+        // Create a keyExtractor with the columns we group by.
+        // TODO: Extract.
+        Set<String> finalGroupBy = groupBy;
         Function<Map<String, Object>, Map<String, Object>> keyExtractor = map -> {
-            var key = new LinkedHashMap<String, Object>();
-            for (String column : groupBy) {
-                key.put(column, map.get(column));
-            }
-            return key;
+            return map.entrySet().stream().filter(entry -> finalGroupBy.contains(entry.getKey()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         };
 
-        List<Map<String, Object>> data = datasetExpression.resolve(Map.of()).getDataAsMap();
-        AggregationCollector collector = new AggregationCollector(Map.of(
-                "avgAge", new AggregationExpression<List<Object>, Object, Object>() {
+        // Create a
+        Map<String, AggregationExpression> aggregationExpressions = new LinkedHashMap<>();
+        for (VtlParser.AggrFunctionClauseContext functionCtx : ctx.aggregateClause().aggrFunctionClause()) {
+            String name = getName(functionCtx.componentID());
+            var groupFunctionCtx = (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping();
+            var expression = componentExpressionVisitor.visit(groupFunctionCtx.expr());
+            if (groupFunctionCtx.SUM() != null) {
+                aggregationExpressions.put(name, new SumExpression(assertNumber(expression, groupFunctionCtx.expr())));
+            } else {
+                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+            }
+        }
 
-                    @Override
-                    public Class<?> getType() {
-                        return expression.getType();
-                    }
+        // Compute the new data structure.
+        Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
+        for (Dataset.Component component : datasetExpression.getDataStructure()) {
+            if (groupBy.contains(component.getName())) {
+                newStructure.put(component.getName(), component);
+            }
+        }
+        for (Map.Entry<String, AggregationExpression> entry : aggregationExpressions.entrySet()) {
+            newStructure.put(entry.getKey(), new Dataset.Component(
+                    entry.getKey(),
+                    entry.getValue().getType(),
+                    Dataset.Role.MEASURE)
+            );
+        }
 
-                    @Override
-                    public Object resolve(Map<String, Object> context) {
-                        return expression.resolve(context);
-                    }
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
 
-                    @Override
-                    public List<Object> init() {
-                        return new ArrayList<>();
-                    }
+                List<Map<String, Object>> data = datasetExpression.resolve(Map.of()).getDataAsMap();
+                AggregationCollector collector = new AggregationCollector(aggregationExpressions);
+                Map<Map<String, Object>, Map<String, Object>> collect =
+                        data.stream().collect(Collectors.groupingBy(keyExtractor, collector));
 
-                    @Override
-                    public void accept(List<Object> objects, Object o) {
-                        objects.add(o);
-                    }
+                return new InMemoryDataset(collect.entrySet().stream().map(e -> {
+                    e.getValue().putAll(e.getKey());
+                    return Dataset.mapToRowMajor(e.getValue(), newStructure.keySet());
+                }).collect(Collectors.toList()), newStructure.values());
+            }
 
-                    @Override
-                    public List<Object> combine(List<Object> c1, List<Object> c2) {
-                        c1.addAll(c2);
-                        return c1;
-                    }
-
-                    @Override
-                    public Object finish(List<Object> objects) {
-                        return objects.toString();
-                    }
-                }
-        ));
-        Map<Map<String, Object>, Map<String, Object>> collect =
-                data.stream().collect(Collectors.groupingBy(keyExtractor, collector));
-
-        return null;
-    }
-
-    interface AggregationExpression<C, T, V> extends ResolvableExpression {
-
-        C init();
-
-        void accept(C c, T o);
-
-        C combine(C c1, C c2);
-
-        V finish(C c);
-
+            @Override
+            public List<Dataset.Component> getDataStructure() {
+                return new ArrayList<>(newStructure.values());
+            }
+        };
     }
 
     static class AggregationCollector implements Collector<Map<String, Object>, Map<String, Object>, Map<String, Object>> {
@@ -172,7 +175,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 for (Map.Entry<String, AggregationExpression> entry : expressions.entrySet()) {
                     String column = entry.getKey();
                     AggregationExpression aggregation = entry.getValue();
-                    Object value = aggregation.resolve(group);
+                    Object value = aggregation.getExpression().resolve(group);
                     aggregation.accept(map.get(column), value);
                 }
             };

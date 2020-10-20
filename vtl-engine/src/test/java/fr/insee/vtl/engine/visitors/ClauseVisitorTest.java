@@ -174,22 +174,18 @@ public class ClauseVisitorTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        // name, country, age, weight
-        // xx  , yy     , XX , YY
-        // xx  , yy     , XX , YY
-        // xx  , yy     , XX , YY
-        // xx  , yy     , XX , YY
+        // test := ds1[aggr sumAge := sum(age) group by country];
+        // test := ds1[aggr sumAge := sum(age group by country)];
+        // test := ds1[aggr sumAge := sum(age group by country), totalWeight := sum(weight group by country)];
+        // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
-        // group by
+        engine.eval("res := ds1[aggr sumAge := sum(age), sumAge2 := sum(age) group by country];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("country", "france", "sumAge", 23L),
+                Map.of("country", "norway", "sumAge", 10L)
+        );
 
-        // country, avgAge
-        // yy     ,
-        // yy     ,
-
-        engine.eval("test := ds1[aggr avgAge := avg(age group by country];");
-//        engine.eval("test := ds1[aggr avgAge := avg(age) group by country];");
-//        engine.eval("test := ds1[aggr avgAge := avg(age group by country), totalWeight := sum(weight group by country)];");
-//        engine.eval("test := ds1[aggr avgAge := avg(age), totalWeight := sum(weight) group by country];");
 
     }
 }
