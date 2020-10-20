@@ -1,9 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,11 +41,11 @@ public class InMemoryDataset implements Dataset {
     /**
      * Constructor taking initial data and a list of structure components.
      *
-     * @param data The initial data as a list of list of objects representing data contents.
+     * @param data       The initial data as a list of list of objects representing data contents.
      * @param structures The list of structure components forming the structure of the dataset.
      */
-    public InMemoryDataset(List<List<Object>> data, List<Component> structures) {
-        this.components = Objects.requireNonNull(structures);
+    public InMemoryDataset(List<List<Object>> data, Collection<Component> structures) {
+        this.components = new LinkedList<>(Objects.requireNonNull(structures));
         this.columns = this.components.stream().map(Component::getName).collect(Collectors.toList());
         this.data = Objects.requireNonNull(data);
     }
