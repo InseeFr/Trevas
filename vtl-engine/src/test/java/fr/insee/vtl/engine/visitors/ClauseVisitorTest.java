@@ -71,6 +71,31 @@ public class ClauseVisitorTest {
     }
 
     @Test
+    public void testCalcRoleModifier() throws ScriptException {
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[calc identifier id := name];");
+
+        Dataset ds = (Dataset) context.getAttribute("ds");
+        Dataset.Component idComponent = ds.getDataStructure().stream().filter(component ->
+                component.getName().equals("id")
+        ).findFirst().orElse(null);
+
+        assertThat(idComponent.getRole()).isEqualTo(Role.IDENTIFIER);
+    }
+
+    @Test
     public void testRenameClause() throws ScriptException {
         //TODO: add test for duplicate component name after rename
 
