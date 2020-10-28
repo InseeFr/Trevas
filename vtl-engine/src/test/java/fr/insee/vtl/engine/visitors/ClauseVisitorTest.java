@@ -85,14 +85,22 @@ public class ClauseVisitorTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc identifier id := name];");
+        engine.eval("ds := ds1[calc new_age := age + 1, identifier id := name, attribute unit := \"year\"];");
 
         Dataset ds = (Dataset) context.getAttribute("ds");
         Dataset.Component idComponent = ds.getDataStructure().stream().filter(component ->
                 component.getName().equals("id")
         ).findFirst().orElse(null);
+        Dataset.Component ageComponent = ds.getDataStructure().stream().filter(component ->
+                component.getName().equals("new_age")
+        ).findFirst().orElse(null);
+        Dataset.Component unitComponent = ds.getDataStructure().stream().filter(component ->
+                component.getName().equals("unit")
+        ).findFirst().orElse(null);
 
+        assertThat(ageComponent.getRole()).isEqualTo(Role.MEASURE);
         assertThat(idComponent.getRole()).isEqualTo(Role.IDENTIFIER);
+        assertThat(unitComponent.getRole()).isEqualTo(Role.ATTRIBUTE);
     }
 
     @Test

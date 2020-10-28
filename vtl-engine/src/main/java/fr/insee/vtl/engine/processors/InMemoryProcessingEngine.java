@@ -11,15 +11,15 @@ import java.util.stream.Collectors;
 public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
-    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions) {
+    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
+                                         Map<String, Dataset.Role> roles) {
 
         var structure = new ArrayList<>(expression.getDataStructure());
 
         for (String columnName : expressions.keySet()) {
             // We construct a new structure
-            // TODO: Handle role. Ie: Optional.ofNullable(calcCtx.componentRole());
             structure.add(new Dataset.Component(columnName, expressions.get(columnName).getType(),
-                    Dataset.Role.MEASURE));
+                    roles.get(columnName)));
         }
 
         return new DatasetExpression() {
