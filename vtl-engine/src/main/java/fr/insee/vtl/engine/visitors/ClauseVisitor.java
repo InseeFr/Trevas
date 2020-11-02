@@ -24,7 +24,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
-        Map<String, Object> componentMap = datasetExpression.getDataStructure().stream()
+        Map<String, Object> componentMap = datasetExpression.getDataStructure().values().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
         this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
@@ -42,7 +42,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var keep = ctx.op.getType() == VtlParser.KEEP;
         var names = ctx.componentID().stream().map(ClauseVisitor::getName)
                 .collect(Collectors.toSet());
-        List<String> columnNames = datasetExpression.getDataStructure().stream().map(Dataset.Component::getName)
+        List<String> columnNames = datasetExpression.getDataStructure().values().stream().map(Dataset.Component::getName)
                 .filter(name -> keep == names.contains(name))
                 .collect(Collectors.toList());
 

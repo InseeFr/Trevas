@@ -1,8 +1,10 @@
 package fr.insee.vtl.model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * <code>Dataset</code> is the base interface for structured datasets conforming to the VTL data model.
@@ -33,7 +35,11 @@ public interface Dataset extends Structured {
      *
      * @return The data contained in the dataset as a list of list of objects.
      */
-    List<List<Object>> getDataPoints();
+    List<DataPoint> getDataPoints();
+
+    default List<List<Object>> getDataAsList() {
+        return getDataPoints().stream().map(objects -> (List<Object>) objects).collect(Collectors.toList());
+    }
 
     /**
      * Returns the data contained in the dataset as a list of mappings between column names and column contents.
@@ -42,10 +48,12 @@ public interface Dataset extends Structured {
      */
     default List<Map<String, Object>> getDataAsMap() {
         return getDataPoints().stream().map(objects ->
-                IntStream.range(0, getDataStructure().size())
-                        .boxed()
-                        .collect(HashMap<String, Object>::new, (acc, idx) -> acc.put(getDataStructure().get(idx).getName(), objects.get(idx)), HashMap::putAll))
-                .collect(Collectors.toList());
+                getDataStructure().keySet()
+                        .stream().collect(
+                        HashMap<String, Object>::new,
+                        (acc, column) -> acc.put(column, objects.get(column)),
+                        HashMap::putAll)
+        ).collect(Collectors.toList());
     }
 
     /**
@@ -64,78 +72,5 @@ public interface Dataset extends Structured {
          * The component is an attribute in the data structure
          */
         ATTRIBUTE
-    }
-
-    /**
-     * The <code>Structure</code> class represent a structure component with its name, type and role.
-     */
-    class Component {
-
-        private final String name;
-        private final Class<?> type;
-        private final Role role;
-
-        /**
-         * Constructor taking the name, type and role of the component.
-         *
-         * @param name A string giving the name of the structure component to create.
-         * @param type A <code>Class</code> giving the type of the structure component to create.
-         * @param role A <code>Role</code> giving the role of the structure component to create.
-         */
-        public Component(String name, Class<?> type, Role role) {
-            this.name = Objects.requireNonNull(name);
-            this.type = Objects.requireNonNull(type);
-            this.role = Objects.requireNonNull(role);
-        }
-
-        /**
-         * Returns the name of the component.
-         *
-         * @return The name of the component as a string.
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * Returns the type of the component.
-         *
-         * @return The type of the component as an instance of <code>Class</code>.
-         */
-        public Class<?> getType() {
-            return type;
-        }
-
-        /**
-         * Returns the role of component.
-         *
-         * @return The role of the component as a value of the <code>Role</code> enumeration.
-         */
-        public Role getRole() {
-            return role;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Component component = (Component) o;
-            return name.equals(component.name) &&
-                    type.equals(component.type) &&
-                    role == component.role;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name, type, role);
-        }
-
-        @Override
-        public String toString() {
-            return "Component{" + name +
-                    ", type=" + type +
-                    ", role=" + role +
-                    '}';
-        }
     }
 }

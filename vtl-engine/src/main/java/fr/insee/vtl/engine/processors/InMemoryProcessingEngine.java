@@ -14,7 +14,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
                                          Map<String, Dataset.Role> roles) {
 
-        var structure = new ArrayList<>(expression.getDataStructure());
+        var structure = new ArrayList<>(expression.getDataStructure().values());
 
         for (String columnName : expressions.keySet()) {
             // We construct a new structure
@@ -38,8 +38,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
-                return structure;
+            public DataStructure getDataStructure() {
+                return new DataStructure(structure);
             }
         };
 
@@ -51,7 +51,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return new DatasetExpression() {
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
+            public DataStructure getDataStructure() {
                 return expression.getDataStructure();
             }
 
@@ -71,7 +71,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
-        var structure = expression.getDataStructure().stream().map(component -> {
+        var structure = expression.getDataStructure().values().stream().map(component -> {
             return !fromTo.containsKey(component.getName()) ?
                     component :
                     new Dataset.Component(fromTo.get(component.getName()), component.getType(), component.getRole());
@@ -97,8 +97,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
-                return structure;
+            public DataStructure getDataStructure() {
+                return new DataStructure(structure);
             }
         };
     }
@@ -106,7 +106,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
 
-        var structure = expression.getDataStructure().stream()
+        var structure = expression.getDataStructure().values().stream()
                 .filter(component -> columnNames.contains(component.getName()))
                 .collect(Collectors.toList());
 
@@ -122,8 +122,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
-                return structure;
+            public DataStructure getDataStructure() {
+                return new DataStructure(structure);
             }
         };
     }
