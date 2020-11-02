@@ -5,7 +5,8 @@ import java.util.Map;
 
 public interface ProcessingEngine {
 
-    DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions);
+    DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
+                                  Map<String, Dataset.Role> roles);
 
     DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter);
 
