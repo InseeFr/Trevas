@@ -148,12 +148,6 @@ public interface Structured {
 
         private final DataStructure dataStructure;
 
-        private void grow(int size) {
-            while (size() < size) {
-                add(null);
-            }
-        }
-
         public DataPoint(DataStructure dataStructure, Map<String, Object> map) {
             super();
             grow(dataStructure.size());
@@ -169,6 +163,12 @@ public interface Structured {
             addAll(collection);
         }
 
+        private void grow(int size) {
+            while (size() < size) {
+                add(null);
+            }
+        }
+
         Object get(String column) {
             return get(dataStructure.indexOf(column));
         }
@@ -177,6 +177,34 @@ public interface Structured {
             return set(dataStructure.indexOf(column), object);
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DataPoint objects = (DataPoint) o;
+            for (Component component : dataStructure.values()) {
+                if (!Dataset.Role.IDENTIFIER.equals(component.getRole())) {
+                    continue;
+                }
+                if (!get(component.getName()).equals(objects.get(component.getName()))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hashCode = 1;
+            for (Component component : dataStructure.values()) {
+                if (!Dataset.Role.IDENTIFIER.equals(component.getRole())) {
+                    continue;
+                }
+                Object e = get(component.getName());
+                hashCode = 31 * hashCode + (e == null ? 0 : e.hashCode());
+            }
+            return hashCode;
+        }
     }
 
 }

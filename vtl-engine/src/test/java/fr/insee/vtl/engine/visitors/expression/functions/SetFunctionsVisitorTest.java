@@ -12,7 +12,7 @@ import javax.script.ScriptException;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SetFunctionsVisitorTest {
 
@@ -39,9 +39,12 @@ public class SetFunctionsVisitorTest {
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset);
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", dataset);
 
-        assertThatThrownBy(() -> engine.eval("result := union(ds1, ds2);"))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("TODO");
+        engine.eval("result := union(ds1, ds2);");
+        Object result = engine.getContext().getAttribute("result");
+        assertThat(result).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) result).getDataAsMap()).containsAll(
+                dataset.getDataAsMap()
+        );
 
     }
 }
