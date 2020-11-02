@@ -29,8 +29,6 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitUnionAtom(VtlParser.UnionAtomContext ctx) {
 
         List<DatasetExpression> datasets = new ArrayList<>();
-        ResolvableExpression first = assertTypeExpression(expressionVisitor.visit(ctx.left), Dataset.class, ctx.left);
-        datasets.add((DatasetExpression) first);
         for (VtlParser.ExprContext expr : ctx.expr()) {
             ResolvableExpression rest = assertTypeExpression(expressionVisitor.visit(expr), Dataset.class, expr);
             datasets.add((DatasetExpression) rest);
@@ -52,7 +50,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             @Override
             public DataStructure getDataStructure() {
-                return ((DatasetExpression) first).getDataStructure();
+                return (datasets.get(0)).getDataStructure();
             }
         };
 
