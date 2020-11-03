@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.Structured;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class ComponentSerializer extends StdSerializer<Dataset.Component> {
     );
 
     protected ComponentSerializer() {
-        super(Dataset.Component.class);
+        super(Structured.Component.class);
     }
 
     @Override

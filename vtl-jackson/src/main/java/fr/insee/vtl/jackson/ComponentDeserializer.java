@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.Structured;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
     );
 
     protected ComponentDeserializer() {
-        super(Dataset.Component.class);
+        super(Structured.Component.class);
     }
 
     @Override

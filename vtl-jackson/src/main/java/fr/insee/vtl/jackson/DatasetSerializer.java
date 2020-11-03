@@ -15,7 +15,7 @@ public class DatasetSerializer extends StdSerializer<Dataset> {
     @Override
     public void serialize(Dataset value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
-        gen.writeObjectField("dataStructure", value.getDataStructure());
+        gen.writeObjectField("dataStructure", value.getDataStructure().values());
         gen.writeObjectField("dataPoints", value.getDataPoints());
         gen.writeEndObject();
     }
