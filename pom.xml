@@ -12,7 +12,6 @@
         <module>vtl-engine</module>
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
-        <module>tests</module>
     </modules>
 
     <name>Trevas</name>

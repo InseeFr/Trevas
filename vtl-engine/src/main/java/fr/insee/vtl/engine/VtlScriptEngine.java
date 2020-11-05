@@ -40,6 +40,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
     private ProcessingEngine processingEngine = new InMemoryProcessingEngine();
 
+    public void justForTest() {
+        System.out.println("rrrrr");
+    }
+
 
     /**
      * Constructor taking a script engine factory.

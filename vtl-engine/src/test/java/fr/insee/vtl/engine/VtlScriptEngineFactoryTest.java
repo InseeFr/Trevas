@@ -14,15 +14,15 @@ public class VtlScriptEngineFactoryTest {
     // TODO: Check that this can work with the implementation from Statistics Norway
     //  Name conflict??
 
-//    @Test
-//    public void testGetAttribute() {
-//        ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");
-//        ScriptContext context = vtlEngine.getContext();
-//        context.setAttribute("globalVar", "foo", ScriptContext.GLOBAL_SCOPE);
-//        assertThat(context.getAttribute("globalVar")).isEqualTo("foo");
-//        context.setAttribute("globalVar", "bar", ScriptContext.ENGINE_SCOPE);
-//        assertThat(context.getAttribute("globalVar")).isEqualTo("bar");
-//    }
+    @Test
+    public void testGetAttribute() {
+        ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");
+        ScriptContext context = vtlEngine.getContext();
+        context.setAttribute("globalVar", "foo", ScriptContext.GLOBAL_SCOPE);
+        assertThat(context.getAttribute("globalVar")).isEqualTo("foo");
+        context.setAttribute("globalVar", "bar", ScriptContext.ENGINE_SCOPE);
+        assertThat(context.getAttribute("globalVar")).isEqualTo("bar");
+    }
 
     @Test
     public void testEngineIsFound() {
