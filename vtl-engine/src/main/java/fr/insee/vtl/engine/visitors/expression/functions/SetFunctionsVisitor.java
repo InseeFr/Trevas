@@ -1,12 +1,12 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,22 +29,39 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitUnionAtom(VtlParser.UnionAtomContext ctx) {
 
         List<DatasetExpression> datasets = new ArrayList<>();
+        Structured.DataStructure structure = null;
         for (VtlParser.ExprContext expr : ctx.expr()) {
-            ResolvableExpression rest = assertTypeExpression(expressionVisitor.visit(expr), Dataset.class, expr);
-            datasets.add((DatasetExpression) rest);
-        }
+            DatasetExpression rest = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(expr),
+                    Dataset.class, expr);
+            datasets.add(rest);
 
-        // TODO: Check that the structure is the same.
+            // Check that all the structures are the same.
+            if (structure == null) {
+                structure = rest.getDataStructure();
+            } else if (!structure.equals(rest.getDataStructure())) {
+                // TODO: Create exception
+                throw new VtlRuntimeException(new VtlScriptException(
+                        String.format(
+                                "dataset structure of %s is incompatible with %s",
+                                expr.getText(),
+                                ctx.expr().stream().map(RuleContext::getText)
+                                        .collect(Collectors.joining(", "))
+                        ),
+                        ctx
+                ));
+            }
+
+        }
 
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {
-                Dataset ds1 = datasets.get(0).resolve(context);
-                Dataset ds2 = datasets.get(1).resolve(context);
-                List<DataPoint> data = Stream.concat(
-                        ds1.getDataPoints().stream(),
-                        ds2.getDataPoints().stream()
-                ).distinct().collect(Collectors.toList());
+                Stream<DataPoint> stream = Stream.empty();
+                for (DatasetExpression datasetExpression : datasets) {
+                    var dataset = datasetExpression.resolve(context);
+                    stream = Stream.concat(stream, dataset.getDataPoints().stream());
+                }
+                List<DataPoint> data = stream.distinct().collect(Collectors.toList());
                 return new InMemoryDataset(data, getDataStructure());
             }
 

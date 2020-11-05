@@ -135,13 +135,26 @@ public interface Structured {
         }
 
         public int indexOf(String column) {
-            return get(column).getIndex();
+            return indexOf(get(column));
         }
 
         public int indexOf(Dataset.Component component) {
             return component.getIndex();
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DataStructure objects = (DataStructure) o;
+            // TODO: Optimize
+            return Objects.equals(new HashSet<>(values()), new HashSet<>(objects.values()));
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(values());
+        }
     }
 
     class DataPoint extends ArrayList<Object> {
