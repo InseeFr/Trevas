@@ -28,13 +28,17 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
     public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
         // Json is an object.
-        var token = p.currentToken();
-        if (!token.isStructStart()) {
+        if (p.currentToken() != JsonToken.START_OBJECT) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
         }
 
         List<Dataset.Component> structure = deserializeStructure(p, ctxt);
         List<List<Object>> dataPoints = deserializeDataPoints(p, ctxt, structure);
+
+        if (p.nextToken() != JsonToken.END_OBJECT) {
+            ctxt.handleUnexpectedToken(Dataset.class, p);
+        }
+
         return new InMemoryDataset(dataPoints, structure);
     }
 

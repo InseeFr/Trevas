@@ -31,8 +31,6 @@ public class BindingsDeserializer extends StdDeserializer<Bindings> {
             if (value.isStructStart()) {
                 // Dataset
                 bindings.put(name, ctxt.readValue(p, Dataset.class));
-                // To ignore dataPoints key and directly go to next root field
-                p.nextToken();
             } else {
                 // Scalar
                 bindings.put(name, ctxt.readValue(p, Object.class));
