@@ -163,7 +163,7 @@ public interface Structured {
 
         public DataPoint(DataStructure dataStructure, Map<String, Object> map) {
             super();
-            grow(dataStructure.size());
+            growSize(dataStructure.size());
             this.dataStructure = Objects.requireNonNull(dataStructure);
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 this.set(entry.getKey(), entry.getValue());
@@ -176,7 +176,7 @@ public interface Structured {
             addAll(collection);
         }
 
-        private void grow(int size) {
+        private void growSize(int size) {
             while (size() < size) {
                 add(null);
             }
