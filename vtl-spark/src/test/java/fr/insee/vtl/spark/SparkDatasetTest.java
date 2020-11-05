@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.Dataset.Component;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static fr.insee.vtl.model.Structured.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkDatasetTest {

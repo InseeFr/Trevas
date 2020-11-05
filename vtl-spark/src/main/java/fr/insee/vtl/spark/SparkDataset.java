@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
@@ -22,7 +23,7 @@ import static org.apache.spark.sql.types.DataTypes.*;
 public class SparkDataset implements Dataset {
 
     private final org.apache.spark.sql.Dataset<Row> sparkDataset;
-    private List<Component> components = null;
+    private DataStructure dataStructure = null;
 
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
         this.sparkDataset = sparkDataset;
@@ -31,7 +32,7 @@ public class SparkDataset implements Dataset {
     public SparkDataset(Dataset vtlDataset, SparkSession spark) {
 
         List<StructField> schema = new ArrayList<>();
-        for (Component component : vtlDataset.getDataStructure()) {
+        for (Component component : vtlDataset.getDataStructure().values()) {
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
@@ -83,21 +84,23 @@ public class SparkDataset implements Dataset {
     }
 
     @Override
-    public List<List<Object>> getDataPoints() {
+    public List<DataPoint> getDataPoints() {
         List<Row> rows = sparkDataset.collectAsList();
         return rows.stream().map(row -> JavaConverters.seqAsJavaList(row.toSeq()))
+                .map(row -> new DataPoint(getDataStructure(), row))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Component> getDataStructure() {
-        if (components == null) {
+    public Structured.DataStructure getDataStructure() {
+        if (dataStructure == null) {
             StructType schema = sparkDataset.schema();
-            components = new ArrayList<>();
+            List<Component> components = new ArrayList<>();
             for (StructField field : JavaConverters.asJavaCollection(schema)) {
                 components.add(new Component(field.name(), toVtlType(field.dataType()), Role.MEASURE));
             }
+            dataStructure = new DataStructure(components);
         }
-        return components;
+        return dataStructure;
     }
 }

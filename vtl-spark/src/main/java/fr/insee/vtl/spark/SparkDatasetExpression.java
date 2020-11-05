@@ -1,9 +1,8 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.Structured;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,7 +20,7 @@ public class SparkDatasetExpression extends DatasetExpression {
     }
 
     @Override
-    public List<Dataset.Component> getDataStructure() {
+    public Structured.DataStructure  getDataStructure() {
         return dataset.getDataStructure();
     }
 }
