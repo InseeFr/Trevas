@@ -1,9 +1,9 @@
 package fr.insee.vtl.engine.exceptions;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+
 import java.util.Collection;
 import java.util.stream.Collectors;
-
-import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * The <code>ConflictingTypesException</code> indicates a conflict between the types of elements used in an expression.

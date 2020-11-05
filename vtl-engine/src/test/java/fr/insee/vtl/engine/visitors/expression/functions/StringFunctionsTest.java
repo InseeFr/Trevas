@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
-import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
