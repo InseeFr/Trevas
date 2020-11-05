@@ -39,13 +39,12 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         List<List<Object>> dataPoints = null;
 
         while (p.nextToken() != JsonToken.END_OBJECT) {
-            String currentName = p.nextFieldName();
-            if (STRUCTURE_NAMES.contains(currentName)) {
+            if (STRUCTURE_NAMES.contains(p.currentName())) {
                 structure = deserializeStructure(p, ctxt);
                 if (dataPoints != null) {
                     convertDataPoints(p, dataPoints, structure);
                 }
-            } else if (DATAPOINT_NAMES.contains(currentName)) {
+            } else if (DATAPOINT_NAMES.contains(p.currentName())) {
                 if (structure != null) {
                     dataPoints = deserializeDataPoints(p, ctxt, structure);
                 } else {
