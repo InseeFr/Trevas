@@ -49,10 +49,6 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
-    public String justForTest() {
-        return "ok";
-    }
-
     /**
      * Base method for the evaluation of a script expression in a given context.
      *
