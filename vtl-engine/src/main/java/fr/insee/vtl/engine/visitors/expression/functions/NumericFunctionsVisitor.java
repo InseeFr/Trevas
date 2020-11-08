@@ -24,10 +24,42 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
 
     /**
-     * Visits a 'between' expression with scalar operand and delimiters.
+     * Visits a 'unaryNumeric' expression.
      *
      * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a boolean (<code>true</code> if the operand is between the delimiters).
+     * @return A <code>ResolvableExpression</code> resolving to a double).
+     */
+    @Override
+    public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
+
+        switch (ctx.op.getType()) {
+            default:
+                throw new UnsupportedOperationException("unknown operator " + ctx);
+        }
+
+    }
+
+    /**
+     * Visits a 'unaryWithOptionalNumeric' expression.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a double).
+     */
+    @Override
+    public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
+
+        switch (ctx.op.getType()) {
+            default:
+                throw new UnsupportedOperationException("unknown operator " + ctx);
+        }
+
+    }
+
+    /**
+     * Visits a 'binaryNumeric' expression.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a double).
      */
     @Override
     public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
