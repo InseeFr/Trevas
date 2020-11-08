@@ -42,11 +42,6 @@ public class VtlScriptEngineTest {
     }
 
     @Test
-    public void testP() {
-        assertThat(((VtlScriptEngine) engine).justForTest()).isEqualTo("ok");
-    }
-
-    @Test
     public void testProcessingEngines() {
         VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
         List<ProcessingEngine> processingEngines = vtlScriptEngine.findProcessingEngines();
