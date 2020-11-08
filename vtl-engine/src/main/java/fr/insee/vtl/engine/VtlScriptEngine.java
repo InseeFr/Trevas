@@ -40,7 +40,6 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
     private ProcessingEngine processingEngine = new InMemoryProcessingEngine();
 
-
     /**
      * Constructor taking a script engine factory.
      *
