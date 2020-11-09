@@ -154,12 +154,14 @@ public class NumericFunctionsTest {
     @Test
     public void testSqrt() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("a := sqrt(5);");
-        assertThat(context.getAttribute("a")).isEqualTo(25D);
-        engine.eval("b := sqrt(-5);");
-        assertThat(context.getAttribute("b")).isEqualTo(25D);
+        engine.eval("a := sqrt(25);");
+        assertThat(context.getAttribute("a")).isEqualTo(5D);
         engine.eval("c := sqrt(0);");
         assertThat(context.getAttribute("c")).isEqualTo(0D);
+        assertThatThrownBy(() -> {
+            engine.eval("e := sqrt(-25);");
+        }).isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("Sqrt operand has to be 0 or positive");
         assertThatThrownBy(() -> {
             engine.eval("e := sqrt(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)

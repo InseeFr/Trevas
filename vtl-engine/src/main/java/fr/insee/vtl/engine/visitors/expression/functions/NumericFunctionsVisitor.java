@@ -107,6 +107,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return DoubleExpression.of(context -> {
             Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            if (exprDouble < 0)
+                throw new VtlRuntimeException(new InvalidArgumentException("Sqrt operand has to be 0 or positive", expr));
             return Math.sqrt(exprDouble);
         });
     }
