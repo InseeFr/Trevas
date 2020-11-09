@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DoubleExpression;
+import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -35,10 +36,76 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
 
         switch (ctx.op.getType()) {
+            case VtlParser.CEIL:
+                // TODO: Support dataset.
+                return handleCeil(ctx.expr());
+            case VtlParser.FLOOR:
+                // TODO: Support dataset.
+                return handleFloor(ctx.expr());
+            case VtlParser.ABS:
+                // TODO: Support dataset.
+                return handleAbs(ctx.expr());
+            case VtlParser.EXP:
+                // TODO: Support dataset.
+                return handleExp(ctx.expr());
+            case VtlParser.LN:
+                // TODO: Support dataset.
+                return handleLn(ctx.expr());
+            case VtlParser.SQRT:
+                // TODO: Support dataset.
+                return handleSqrt(ctx.expr());
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
 
+    }
+
+    private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return LongExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return ((Double) (Math.ceil(exprDouble))).longValue();
+        });
+    }
+
+    private ResolvableExpression handleFloor(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return LongExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return ((Double) (Math.floor(exprDouble))).longValue();
+        });
+    }
+
+    private ResolvableExpression handleAbs(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.abs(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleExp(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.exp(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleLn(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.log(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleSqrt(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.sqrt(exprDouble);
+        });
     }
 
     /**
