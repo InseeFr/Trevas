@@ -12,11 +12,14 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
                                          Map<String, Dataset.Role> roles) {
 
-        var newStructure = new Structured.DataStructure(expression.getDataStructure().values());
+        // Copy the structure and mutate based on the expressions.
+        var newStructure = new Structured.DataStructure(expression.getDataStructure());
         for (String columnName : expressions.keySet()) {
-            // We construct a new structure
-            newStructure.put(columnName, new Dataset.Component(columnName, expressions.get(columnName).getType(),
-                    roles.get(columnName)));
+            newStructure.put(columnName, new Dataset.Component(
+                    columnName,
+                    expressions.get(columnName).getType(),
+                    roles.get(columnName))
+            );
         }
 
         return new DatasetExpression() {
@@ -43,7 +46,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
-
         return new DatasetExpression() {
 
             @Override
@@ -67,9 +69,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         var structure = expression.getDataStructure().values().stream()
                 .map(component -> {
-                    return !fromTo.containsKey(component.getName()) ?
-                            component :
-                            new Dataset.Component(fromTo.get(component.getName()), component.getType(), component.getRole());
+                    return !fromTo.containsKey(component.getName())
+                            ? component
+                            : new Dataset.Component(
+                            fromTo.get(component.getName()),
+                            component.getType(),
+                            component.getRole());
                 }).collect(Collectors.toList());
         Structured.DataStructure renamedStructure = new Structured.DataStructure(structure);
         return new DatasetExpression() {

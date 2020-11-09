@@ -127,6 +127,10 @@ public interface Structured {
             }
         }
 
+        public DataStructure(DataStructure dataStructure) {
+            super(dataStructure);
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -163,7 +167,6 @@ public interface Structured {
 
         public DataPoint(DataStructure dataStructure, Collection<Object> collection) {
             super(dataStructure.size());
-            //growSize(dataStructure.size());
             this.dataStructure = Objects.requireNonNull(dataStructure);
             addAll(collection);
         }

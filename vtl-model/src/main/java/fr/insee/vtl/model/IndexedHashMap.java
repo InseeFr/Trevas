@@ -2,6 +2,9 @@ package fr.insee.vtl.model;
 
 import java.util.*;
 
+/**
+ * Delegated LinkedHashMap that has indexOf methods.
+ */
 public class IndexedHashMap<K, V> implements Map<K, V> {
 
     private final Map<K, Integer> indices;
@@ -17,6 +20,10 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
         this.delegate = new LinkedHashMap<>(initialCapacity);
     }
 
+    public IndexedHashMap(IndexedHashMap<K, V> map) {
+        this.indices = new HashMap<>(map.indices);
+        this.delegate = new LinkedHashMap<>(map.delegate);
+    }
 
     @Override
     public int size() {
