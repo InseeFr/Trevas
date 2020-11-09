@@ -9,8 +9,11 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
@@ -118,10 +121,40 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
 
         switch (ctx.op.getType()) {
+            case VtlParser.ROUND:
+                // TODO: Support dataset.
+                return handleRound(ctx.expr(), ctx.optionalExpr());
+            case VtlParser.TRUNC:
+                // TODO: Support dataset.
+                return handleTrunc(ctx.expr(), ctx.optionalExpr());
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
 
+    }
+
+    private ResolvableExpression handleRound(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
+            bd = bd.setScale(decimalLong.intValue(), RoundingMode.HALF_UP);
+            return bd.doubleValue();
+        });
+    }
+
+    private ResolvableExpression handleTrunc(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
+            bd = bd.setScale(decimalLong.intValue(), RoundingMode.DOWN);
+            return bd.doubleValue();
+        });
     }
 
     /**

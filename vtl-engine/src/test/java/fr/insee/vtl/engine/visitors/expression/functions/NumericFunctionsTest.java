@@ -106,6 +106,52 @@ public class NumericFunctionsTest {
     }
 
     @Test
+    public void testRound() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("a := round(3.14159, 2);");
+        assertThat(context.getAttribute("a")).isEqualTo(3.14D);
+        engine.eval("b := round(3.14159, 4);");
+        assertThat(context.getAttribute("b")).isEqualTo(3.1416D);
+        engine.eval("c := round(12345.6, 0);");
+        assertThat(context.getAttribute("c")).isEqualTo(12346D);
+        engine.eval("d := round(12345.6);");
+        assertThat(context.getAttribute("d")).isEqualTo(12346D);
+        engine.eval("e := round(12345.6, -1);");
+        assertThat(context.getAttribute("e")).isEqualTo(12350D);
+        assertThatThrownBy(() -> {
+            engine.eval("f := round(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+        assertThatThrownBy(() -> {
+            engine.eval("f := round(2.22222, 2.3);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 2.3 to be Long");
+    }
+
+    @Test
+    public void testTrunc() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("a := trunc(3.14159, 2);");
+        assertThat(context.getAttribute("a")).isEqualTo(3.14D);
+        engine.eval("b := trunc(3.14159, 4);");
+        assertThat(context.getAttribute("b")).isEqualTo(3.1415D);
+        engine.eval("c := trunc(12345.6, 0);");
+        assertThat(context.getAttribute("c")).isEqualTo(12345D);
+        engine.eval("d := trunc(12345.6);");
+        assertThat(context.getAttribute("d")).isEqualTo(12345D);
+        engine.eval("e := trunc(12345.6, -1);");
+        assertThat(context.getAttribute("e")).isEqualTo(12340D);
+        assertThatThrownBy(() -> {
+            engine.eval("f := trunc(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+        assertThatThrownBy(() -> {
+            engine.eval("f := trunc(2.22222, 2.3);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 2.3 to be Long");
+    }
+
+    @Test
     public void testSqrt() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := sqrt(5);");
