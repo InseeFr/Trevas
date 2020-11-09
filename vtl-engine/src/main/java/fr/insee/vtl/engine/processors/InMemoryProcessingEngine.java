@@ -2,8 +2,6 @@ package fr.insee.vtl.engine.processors;
 
 import fr.insee.vtl.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,11 +12,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
                                          Map<String, Dataset.Role> roles) {
 
-        var structure = new ArrayList<>(expression.getDataStructure().values());
-
+        var newStructure = new Structured.DataStructure(expression.getDataStructure().values());
         for (String columnName : expressions.keySet()) {
             // We construct a new structure
-            structure.add(new Dataset.Component(columnName, expressions.get(columnName).getType(),
+            newStructure.put(columnName, new Dataset.Component(columnName, expressions.get(columnName).getType(),
                     roles.get(columnName)));
         }
 
@@ -26,20 +23,19 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var dataset = expression.resolve(context);
-                var columns = getColumnNames();
-                List<List<Object>> result = dataset.getDataAsMap().stream().map(map -> {
-                    var newMap = new HashMap<>(map);
+                List<List<Object>> result = dataset.getDataPoints().stream().map(dataPoint -> {
+                    var newDataPoint = new DataPoint(newStructure, dataPoint);
                     for (String columnName : expressions.keySet()) {
-                        newMap.put(columnName, expressions.get(columnName).resolve(newMap));
+                        newDataPoint.set(columnName, expressions.get(columnName).resolve(dataPoint));
                     }
-                    return newMap;
-                }).map(map -> Dataset.mapToRowMajor(map, columns)).collect(Collectors.toList());
-                return new InMemoryDataset(result, structure);
+                    return newDataPoint;
+                }).collect(Collectors.toList());
+                return new InMemoryDataset(result, newStructure);
             }
 
             @Override
             public DataStructure getDataStructure() {
-                return new DataStructure(structure);
+                return newStructure;
             }
         };
 
@@ -58,10 +54,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 Dataset resolve = expression.resolve(context);
-                List<String> columns = resolve.getColumnNames();
-                List<List<Object>> result = resolve.getDataAsMap().stream()
+                List<List<Object>> result = resolve.getDataPoints().stream()
                         .filter(map -> (Boolean) filter.resolve(map))
-                        .map(map -> Dataset.mapToRowMajor(map, columns))
                         .collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
@@ -71,34 +65,31 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
-        var structure = expression.getDataStructure().values().stream().map(component -> {
-            return !fromTo.containsKey(component.getName()) ?
-                    component :
-                    new Dataset.Component(fromTo.get(component.getName()), component.getType(), component.getRole());
-        }).collect(Collectors.toList());
-
+        var structure = expression.getDataStructure().values().stream()
+                .map(component -> {
+                    return !fromTo.containsKey(component.getName()) ?
+                            component :
+                            new Dataset.Component(fromTo.get(component.getName()), component.getType(), component.getRole());
+                }).collect(Collectors.toList());
+        Structured.DataStructure renamedStructure = new Structured.DataStructure(structure);
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {
-                var result = expression.resolve(context).getDataAsMap().stream()
-                        .map(map -> {
-                            var newMap = new HashMap<>(map);
-                            for (String fromName : fromTo.keySet()) {
-                                newMap.remove(fromName);
-                            }
+                var result = expression.resolve(context).getDataPoints().stream()
+                        .map(dataPoint -> {
+                            var newDataPoint = new DataPoint(renamedStructure, dataPoint);
                             for (String fromName : fromTo.keySet()) {
                                 var toName = fromTo.get(fromName);
-                                newMap.put(toName, map.get(fromName));
+                                newDataPoint.set(toName, dataPoint.get(fromName));
                             }
-                            return newMap;
-                        }).map(map -> Dataset.mapToRowMajor(map, getColumnNames()))
-                        .collect(Collectors.toList());
+                            return newDataPoint;
+                        }).collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
 
             @Override
             public DataStructure getDataStructure() {
-                return new DataStructure(structure);
+                return renamedStructure;
             }
         };
     }
@@ -109,21 +100,26 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         var structure = expression.getDataStructure().values().stream()
                 .filter(component -> columnNames.contains(component.getName()))
                 .collect(Collectors.toList());
+        var newStructure = new Structured.DataStructure(structure);
 
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var columnNames = getColumnNames();
-                List<List<Object>> result = expression.resolve(context).getDataAsMap().stream()
-                        .map(data -> data.entrySet().stream().filter(entry -> columnNames.contains(entry.getKey()))
-                                .collect(HashMap<String, Object>::new, (acc, entry) -> acc.put(entry.getKey(), entry.getValue()), HashMap::putAll))
-                        .map(map -> Dataset.mapToRowMajor(map, getColumnNames())).collect(Collectors.toList());
+                List<List<Object>> result = expression.resolve(context).getDataPoints().stream()
+                        .map(data -> {
+                            var projectedDataPoint = new DataPoint(newStructure);
+                            for (String column : columnNames) {
+                                projectedDataPoint.set(column, data.get(column));
+                            }
+                            return projectedDataPoint;
+                        }).collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
 
             @Override
             public DataStructure getDataStructure() {
-                return new DataStructure(structure);
+                return newStructure;
             }
         };
     }

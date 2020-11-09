@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <code>Structured</code> is the base interface for representing structured data.
@@ -31,7 +32,6 @@ public interface Structured {
         private final String name;
         private final Class<?> type;
         private final Dataset.Role role;
-        private int index;
 
         /**
          * Constructor taking the name, type and role of the component.
@@ -50,14 +50,6 @@ public interface Structured {
             this.name = component.getName();
             this.type = component.getType();
             this.role = component.getRole();
-        }
-
-        int getIndex() {
-            return index;
-        }
-
-        void setIndex(int index) {
-            this.index = index;
         }
 
         /**
@@ -111,7 +103,7 @@ public interface Structured {
         }
     }
 
-    class DataStructure extends LinkedHashMap<String, Dataset.Component> {
+    class DataStructure extends IndexedHashMap<String, Dataset.Component> {
 
         public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles) {
             super(types.size());
@@ -120,7 +112,6 @@ public interface Structured {
             }
             for (String column : types.keySet()) {
                 Component component = new Component(column, types.get(column), roles.get(column));
-                component.setIndex(size());
                 put(column, component);
             }
         }
@@ -129,17 +120,11 @@ public interface Structured {
             super(components.size());
             for (Component component : components) {
                 var newComponent = new Component(component);
-                newComponent.setIndex(size());
-                put(newComponent.getName(), newComponent);
+                Component old = put(newComponent.getName(), newComponent);
+                if (old != null) {
+                    throw new IllegalArgumentException("duplicate column in " + components);
+                }
             }
-        }
-
-        public int indexOf(String column) {
-            return indexOf(get(column));
-        }
-
-        public int indexOf(Dataset.Component component) {
-            return component.getIndex();
         }
 
         @Override
@@ -170,24 +155,35 @@ public interface Structured {
             }
         }
 
+        public DataPoint(DataStructure dataStructure) {
+            super();
+            growSize(dataStructure.size());
+            this.dataStructure = Objects.requireNonNull(dataStructure);
+        }
+
         public DataPoint(DataStructure dataStructure, Collection<Object> collection) {
             super(dataStructure.size());
+            //growSize(dataStructure.size());
             this.dataStructure = Objects.requireNonNull(dataStructure);
             addAll(collection);
         }
 
         private void growSize(int size) {
-            while (size() < size) {
+            while (size() <= size) {
                 add(null);
             }
         }
 
-        Object get(String column) {
-            return get(dataStructure.indexOf(column));
+        public Object get(String column) {
+            return get(dataStructure.indexOfKey(column));
         }
 
-        Object set(String column, Object object) {
-            return set(dataStructure.indexOf(column), object);
+        public Object set(String column, Object object) {
+            int index = dataStructure.indexOfKey(column);
+            if (index >= size()) {
+                growSize(index);
+            }
+            return set(index, object);
         }
 
         @Override
@@ -217,6 +213,93 @@ public interface Structured {
                 hashCode = 31 * hashCode + (e == null ? 0 : e.hashCode());
             }
             return hashCode;
+        }
+    }
+
+    class DataPointMap implements Map<String, Object> {
+
+        private final DataPoint dataPoint;
+
+        public DataPointMap(DataPoint dataPoint) {
+            this.dataPoint = dataPoint;
+        }
+
+        @Override
+        public int size() {
+            return dataPoint.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return dataPoint.isEmpty();
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object get(Object key) {
+            return dataPoint.get((String) key);
+        }
+
+        @Override
+        public Object put(String key, Object value) {
+            return dataPoint.set(key, value);
+        }
+
+        @Override
+        public Object remove(Object key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void putAll(Map<? extends String, ?> m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<String> keySet() {
+            return dataPoint.dataStructure.keySet();
+        }
+
+        @Override
+        public Collection<Object> values() {
+            return dataPoint;
+        }
+
+        @Override
+        public Set<Entry<String, Object>> entrySet() {
+            return dataPoint.dataStructure.keySet().stream()
+                    .map(component -> new AbstractMap.SimpleEntry<>(
+                            component,
+                            dataPoint.get(component))
+                    )
+                    .collect(Collectors.toSet());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Map)) return false;
+            Map<?, ?> that = (Map<?, ?>) o;
+            return entrySet().equals(that.entrySet());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(entrySet());
         }
     }
 
