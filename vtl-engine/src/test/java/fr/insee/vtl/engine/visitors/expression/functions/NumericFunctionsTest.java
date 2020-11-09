@@ -1,6 +1,9 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import org.assertj.core.data.Offset;
+import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +29,8 @@ public class NumericFunctionsTest {
         ScriptContext context = engine.getContext();
         engine.eval("a := mod(5, 2);");
         assertThat(context.getAttribute("a")).isEqualTo(1D);
-//        engine.eval("b := mod(5, -2);");
-//        assertThat(context.getAttribute("b")).isEqualTo(-1D);
+        engine.eval("b := mod(5, -2);");
+        assertThat(context.getAttribute("b")).isEqualTo(-1D);
         engine.eval("c := mod(8, 1);");
         assertThat(context.getAttribute("c")).isEqualTo(0D);
         engine.eval("d := mod(9, 0);");
@@ -70,20 +73,22 @@ public class NumericFunctionsTest {
         ScriptContext context = engine.getContext();
         engine.eval("a := log(1024, 2);");
         assertThat(context.getAttribute("a")).isEqualTo(10D);
-//        assertThatThrownBy(() -> {
-//            engine.eval("b := log(1024, 1);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
-//        assertThatThrownBy(() -> {
-//            engine.eval("c := log(-2, 10);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+        engine.eval("b := log(1024, 10);");
+        assertThat(((Double) context.getAttribute("b"))).isCloseTo(3.01D, Percentage.withPercentage(0.01));
         assertThatThrownBy(() -> {
-            engine.eval("d := log(10, \"ko\");");
+            engine.eval("c := log(1024, 0);");
+        }).isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("Log base has to be greater or equal than 1");
+        assertThatThrownBy(() -> {
+            engine.eval("d := log(-2, 10);");
+        }).isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("Log operand has to be positive");
+        assertThatThrownBy(() -> {
+            engine.eval("e := log(10, \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
                 .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
         assertThatThrownBy(() -> {
-            engine.eval("e := log(\"ko\", 10);");
+            engine.eval("f := log(\"ko\", 10);");
         }).isInstanceOf(InvalidTypeException.class)
                 .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
     }

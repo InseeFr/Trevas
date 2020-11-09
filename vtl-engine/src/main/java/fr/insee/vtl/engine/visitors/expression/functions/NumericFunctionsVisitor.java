@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DoubleExpression;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -84,11 +86,10 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
         var rightExpression = assertNumber(exprVisitor.visit(right), right);
         return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            Double leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            Double rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return rightDouble.equals(0D) ? leftDouble : leftDouble % rightDouble;
+            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
+            Double rightDouble = ((Number) rightExpression.resolve(context)).doubleValue();
+            if (rightDouble.equals(0D)) return leftDouble;
+            return (leftDouble % rightDouble) * (rightDouble < 0 ? -1 : 1);
         });
     }
 
@@ -96,25 +97,22 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
         var rightExpression = assertNumber(exprVisitor.visit(right), right);
         return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            Double leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            Double rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
+            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
+            Double rightDouble = ((Number) rightExpression.resolve(context)).doubleValue();
             return Math.pow(leftDouble, rightDouble);
         });
     }
 
-    private ResolvableExpression handleLog(VtlParser.ExprContext left, VtlParser.ExprContext right) {
+    private ResolvableExpression handleLog(VtlParser.ExprContext left, VtlParser.ExprContext base) {
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var baseExpression = assertNumber(exprVisitor.visit(right), right);
+        var baseExpression = assertNumber(exprVisitor.visit(base), base);
         return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var baseValue = baseExpression.resolve(context);
-            Double leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            Double baseDouble = baseValue instanceof Long ? ((Long) baseValue).doubleValue() : (Double) baseValue;
-            //TODO:
-            // If leftDouble <= 0
-            // If baseDouble <= 1
+            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
+            Double baseDouble = ((Number) baseExpression.resolve(context)).doubleValue();
+            if (leftDouble <= 0)
+                throw new VtlRuntimeException(new InvalidArgumentException("Log operand has to be positive", left));
+            if (baseDouble < 1)
+                throw new VtlRuntimeException(new InvalidArgumentException("Log base has to be greater or equal than 1", base));
             return Math.log(leftDouble) / Math.log(baseDouble);
         });
     }
