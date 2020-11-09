@@ -172,7 +172,7 @@ public interface Structured {
         }
 
         private void growSize(int size) {
-            while (size() <= size) {
+            while (size() < size) {
                 add(null);
             }
         }
@@ -183,8 +183,8 @@ public interface Structured {
 
         public Object set(String column, Object object) {
             int index = dataStructure.indexOfKey(column);
-            if (index >= size()) {
-                growSize(index);
+            if (index > size() - 1) {
+                growSize(index + 1);
             }
             return set(index, object);
         }
