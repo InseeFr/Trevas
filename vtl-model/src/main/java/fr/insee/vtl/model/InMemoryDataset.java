@@ -45,7 +45,7 @@ public class InMemoryDataset implements Dataset {
     }
 
     public InMemoryDataset(List<List<Object>> data, DataStructure structures) {
-        this.structure = new DataStructure(structures.values());
+        this.structure = structures;
         this.data = convertList(data);
     }
 
