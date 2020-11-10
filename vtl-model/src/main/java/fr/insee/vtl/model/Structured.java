@@ -103,7 +103,7 @@ public interface Structured {
         }
     }
 
-    class DataStructure extends IndexedHashMap<String, Dataset.Component> {
+    class DataStructure extends IndexedHashMap<String, Structured.Component> {
 
         public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles) {
             super(types.size());

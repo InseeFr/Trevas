@@ -19,6 +19,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
+
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
  */
@@ -44,14 +46,10 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
-
-        // TODO: Move to TypeChecking class.
-        if (!leftExpression.getType().equals(rightExpression.getType())) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
-            );
-        }
+        ResolvableExpression rightExpression = assertTypeExpression(
+                exprVisitor.visit(ctx.right),
+                leftExpression.getType(),
+                ctx.right);
 
         // Get the type of the Token.
         // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
@@ -59,17 +57,9 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         switch (type.getType()) {
             case VtlParser.EQ:
-                return BooleanExpression.of(context -> {
-                    Object leftValue = leftExpression.resolve(context);
-                    Object rightValue = rightExpression.resolve(context);
-                    return leftValue.equals(rightValue);
-                });
+                return handleEqual(leftExpression, rightExpression);
             case VtlParser.NEQ:
-                return BooleanExpression.of(context -> {
-                    Object leftValue = leftExpression.resolve(context);
-                    Object rightValue = rightExpression.resolve(context);
-                    return !leftValue.equals(rightValue);
-                });
+                return handleNotEqual(leftExpression, rightExpression);
             case VtlParser.LT:
                 return BooleanExpression.of(context -> {
                     if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
@@ -133,6 +123,22 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
+    }
+
+    private ResolvableExpression handleEqual(ResolvableExpression left, ResolvableExpression right) {
+        return BooleanExpression.of(context -> {
+            Object leftValue = left.resolve(context);
+            Object rightValue = right.resolve(context);
+            return leftValue.equals(rightValue);
+        });
+    }
+
+    private ResolvableExpression handleNotEqual(ResolvableExpression left, ResolvableExpression right) {
+        return BooleanExpression.of(context -> {
+            Object leftValue = left.resolve(context);
+            Object rightValue = right.resolve(context);
+            return !leftValue.equals(rightValue);
+        });
     }
 
     /**

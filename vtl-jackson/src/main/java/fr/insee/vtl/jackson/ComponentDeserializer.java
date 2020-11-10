@@ -9,7 +9,7 @@ import fr.insee.vtl.model.Structured;
 import java.io.IOException;
 import java.util.Map;
 
-public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
+public class ComponentDeserializer extends StdDeserializer<Structured.Component> {
 
     private static final Map<String, Class<?>> TYPES = Map.of(
             "STRING", String.class,
@@ -23,7 +23,7 @@ public class ComponentDeserializer extends StdDeserializer<Dataset.Component> {
     }
 
     @Override
-    public Dataset.Component deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public Structured.Component deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         var node = ctxt.readTree(p);
         var name = node.get("name").asText();
         var type = node.get("type").asText();
