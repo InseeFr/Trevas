@@ -62,4 +62,8 @@ public interface ResolvableExpression extends TypedExpression {
      * @return The result of the resolution of the expression in the given context.
      */
     Object resolve(Map<String, Object> context);
+
+    default Object resolve(Structured.DataPoint context) {
+        return resolve(new Structured.DataPointMap(context));
+    }
 }

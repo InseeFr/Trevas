@@ -1,6 +1,9 @@
 package fr.insee.vtl.model;
 
 import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -8,14 +11,18 @@ import java.util.stream.Collectors;
  */
 public class InMemoryDataset implements Dataset {
 
-    private final List<List<Object>> data;
-    private final List<Component> components;
-    private final List<String> columns;
+    private final List<DataPoint> data;
+    private final DataStructure structure;
+
+    public InMemoryDataset(List<DataPoint> data, Map<String, Component> structure) {
+        this.structure = new DataStructure(structure.values());
+        this.data = data;
+    }
 
     /**
      * Constructor taking initial data and structure components types and roles.
      *
-     * @param data The initial data as a list of mappings between column names and column contents.
+     * @param data  The initial data as a list of mappings between column names and column contents.
      * @param types A mapping between the names and types of the columns as structure components.
      * @param roles A mapping between the names and roles of the columns as structure components.
      */
@@ -23,19 +30,8 @@ public class InMemoryDataset implements Dataset {
         if (!Objects.requireNonNull(types).keySet().equals(Objects.requireNonNull(roles).keySet())) {
             throw new IllegalArgumentException("types and role keys differ");
         }
-        this.columns = new ArrayList<>(types.keySet());
-        this.data = Objects.requireNonNull(data).stream().map(map -> Dataset.mapToRowMajor(map, columns))
-                .collect(Collectors.toList());
-        this.components = new ArrayList<>(data.size());
-        while (components.size() < columns.size()) {
-            components.add(null);
-        }
-        for (String column : columns) {
-            this.components.set(
-                    columns.indexOf(column),
-                    new Component(column, types.get(column), roles.get(column))
-            );
-        }
+        this.structure = new DataStructure(types, roles);
+        this.data = convert(data);
     }
 
     /**
@@ -44,29 +40,35 @@ public class InMemoryDataset implements Dataset {
      * @param data       The initial data as a list of list of objects representing data contents.
      * @param structures The list of structure components forming the structure of the dataset.
      */
-    public InMemoryDataset(List<List<Object>> data, Collection<Component> structures) {
-        this.components = new LinkedList<>(Objects.requireNonNull(structures));
-        this.columns = this.components.stream().map(Component::getName).collect(Collectors.toList());
-        this.data = Objects.requireNonNull(data);
+    public InMemoryDataset(List<List<Object>> data, List<Component> structures) {
+        this.structure = new DataStructure(structures);
+        this.data = convertList(data);
     }
 
-    /**
-     * Constructor taking structure components types and roles and creating an corresponding empty dataset.
-     *
-     * @param types A mapping between the names and types of the structure components.
-     * @param roles A mapping between the names and roles of the structure components.
-     */
-    public InMemoryDataset(Map<String, Class<?>> types, Map<String, Role> roles) {
-        this(new ArrayList<>(), types, roles);
+    public InMemoryDataset(List<List<Object>> data, DataStructure structures) {
+        this.structure = structures;
+        this.data = convertList(data);
+    }
+
+    private List<DataPoint> convert(List<Map<String, Object>> data) {
+        return Objects.requireNonNull(data).stream()
+                .map(map -> new DataPoint(this.structure, map))
+                .collect(Collectors.toList());
+    }
+
+    private List<DataPoint> convertList(List<List<Object>> data) {
+        return Objects.requireNonNull(data).stream()
+                .map(map -> new DataPoint(this.structure, map))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<List<Object>> getDataPoints() {
+    public List<DataPoint> getDataPoints() {
         return data;
     }
 
     @Override
-    public List<Component> getDataStructure() {
-        return components;
+    public DataStructure getDataStructure() {
+        return structure;
     }
 }

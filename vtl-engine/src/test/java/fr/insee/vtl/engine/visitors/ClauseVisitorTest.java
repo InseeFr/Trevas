@@ -71,6 +71,39 @@ public class ClauseVisitorTest {
     }
 
     @Test
+    public void testCalcRoleModifier() throws ScriptException {
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[calc new_age := age + 1, identifier id := name, attribute unit := \"year\"];");
+
+        Dataset ds = (Dataset) context.getAttribute("ds");
+        Dataset.Component idComponent = ds.getDataStructure().values().stream().filter(component ->
+                component.getName().equals("id")
+        ).findFirst().orElse(null);
+        Dataset.Component ageComponent = ds.getDataStructure().values().stream().filter(component ->
+                component.getName().equals("new_age")
+        ).findFirst().orElse(null);
+        Dataset.Component unitComponent = ds.getDataStructure().values().stream().filter(component ->
+                component.getName().equals("unit")
+        ).findFirst().orElse(null);
+
+        assertThat(ageComponent.getRole()).isEqualTo(Role.MEASURE);
+        assertThat(idComponent.getRole()).isEqualTo(Role.IDENTIFIER);
+        assertThat(unitComponent.getRole()).isEqualTo(Role.ATTRIBUTE);
+    }
+
+    @Test
     public void testRenameClause() throws ScriptException {
         //TODO: add test for duplicate component name after rename
 
@@ -90,7 +123,7 @@ public class ClauseVisitorTest {
         engine.eval("ds := ds1[rename age to weight, weight to age, name to pseudo];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
                 Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
                 Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
@@ -116,7 +149,7 @@ public class ClauseVisitorTest {
         engine.eval("ds := ds1[calc res := age + weight / 2];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("name", "Hadrien", "res", 15.5, "age", 10L, "weight", 11L),
                 Map.of("name", "Nico", "res", 16.0, "age", 11L, "weight", 10L),
                 Map.of("name", "Franck", "res", 16.5, "age", 12L, "weight", 9L)
@@ -142,7 +175,7 @@ public class ClauseVisitorTest {
         engine.eval("ds := ds1[keep name, age];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("name", "Hadrien", "age", 10L),
                 Map.of("name", "Nico", "age", 11L),
                 Map.of("name", "Franck", "age", 12L)
@@ -151,7 +184,7 @@ public class ClauseVisitorTest {
         engine.eval("ds := ds1[drop weight];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("name", "Hadrien", "age", 10L),
                 Map.of("name", "Nico", "age", 11L),
                 Map.of("name", "Franck", "age", 12L)

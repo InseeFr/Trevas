@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -28,6 +30,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final IfVisitor ifVisitor;
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
+    private final SetFunctionsVisitor setFunctionsVisitor;
+    private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -46,6 +50,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ifVisitor = new IfVisitor(this);
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
+        setFunctionsVisitor = new SetFunctionsVisitor(this);
+        numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -194,6 +200,16 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitComparisonFunctions(VtlParser.ComparisonFunctionsContext ctx) {
         return comparisonFunctionsVisitor.visit(ctx.comparisonOperators());
+    }
+
+    @Override
+    public ResolvableExpression visitSetFunctions(VtlParser.SetFunctionsContext ctx) {
+        return setFunctionsVisitor.visit(ctx);
+    }
+
+    @Override
+    public ResolvableExpression visitNumericFunctions(VtlParser.NumericFunctionsContext ctx) {
+        return numericFunctionsVisitor.visit(ctx.numericOperators());
     }
 
     /**

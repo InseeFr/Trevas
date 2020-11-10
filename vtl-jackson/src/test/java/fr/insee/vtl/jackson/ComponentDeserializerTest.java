@@ -2,6 +2,7 @@ package fr.insee.vtl.jackson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.Structured;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,38 +24,38 @@ public class ComponentDeserializerTest extends AbstractMapperTest {
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"IDENTIFIER\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(stringComponent);
+        assertThat(component).isEqualTo(stringComponent);
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"NUMBER\", \"role\": \"IDENTIFIER\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(doubleComponent);
+        assertThat(component).isEqualTo(doubleComponent);
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"INTEGER\", \"role\": \"IDENTIFIER\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(longComponent);
+        assertThat(component).isEqualTo(longComponent);
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"BOOLEAN\", \"role\": \"IDENTIFIER\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(booleanComponent);
+        assertThat(component).isEqualTo(booleanComponent);
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"MEASURE\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(measureComponent);
+        assertThat(component).isEqualTo(measureComponent);
 
         component = mapper.readValue("" +
                 "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"ATTRIBUTE\" }" +
-                "", Dataset.Component.class
+                "", Structured.Component.class
         );
-        assertThat(component).isEqualToComparingFieldByField(attributeComponent);
+        assertThat(component).isEqualTo(attributeComponent);
     }
 }

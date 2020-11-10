@@ -28,7 +28,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions) {
+    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, fr.insee.vtl.model.Dataset.Role> roles) {
         return null;
     }
 

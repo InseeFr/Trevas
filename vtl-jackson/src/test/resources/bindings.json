@@ -1,8 +1,6 @@
 {
   "string": "string",
   "int": 1,
-  "float": 1.2,
-  "bool": true,
   "dataset": {
     "structure": [
       {
@@ -46,5 +44,7 @@
         268.021
       ]
     ]
-  }
+  },
+  "float": 1.2,
+  "bool": true
 }

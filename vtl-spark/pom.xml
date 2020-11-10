@@ -10,17 +10,10 @@
         <version>0.1.0</version>
     </parent>
 
-    <artifactId>vtl-engine</artifactId>
-    <name>VTL Engine</name>
+    <artifactId>vtl-spark</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
     <dependencies>
-        <dependency>
-            <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-parser</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
@@ -28,34 +21,31 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.10</version>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-engine</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.12</artifactId>
+            <version>3.0.1</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.1</version>
-
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>fr.insee.vtl.spark</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
-
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-
             </plugin>
         </plugins>
     </build>

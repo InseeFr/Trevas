@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,7 +11,7 @@ public abstract class DatasetExpression implements ResolvableExpression, Structu
         return new DatasetExpression() {
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
+            public Structured.DataStructure getDataStructure() {
                 return value.getDataStructure();
             }
 

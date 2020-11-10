@@ -2,11 +2,14 @@ package fr.insee.vtl.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.databind.util.TokenBuffer;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,18 +31,49 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
     public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
         // Json is an object.
-        var token = p.currentToken();
-        if (!token.isStructStart()) {
+        if (p.currentToken() != JsonToken.START_OBJECT) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
         }
 
-        List<Dataset.Component> structure = deserializeStructure(p, ctxt);
-        List<List<Object>> dataPoints = deserializeDataPoints(p, ctxt, structure);
+        List<Dataset.Component> structure = null;
+        List<List<Object>> dataPoints = null;
+
+        while (p.nextToken() != JsonToken.END_OBJECT) {
+            if (STRUCTURE_NAMES.contains(p.currentName())) {
+                structure = deserializeStructure(p, ctxt);
+                if (dataPoints != null) {
+                    convertDataPoints(p, dataPoints, structure);
+                }
+            } else if (DATAPOINT_NAMES.contains(p.currentName())) {
+                if (structure != null) {
+                    dataPoints = deserializeDataPoints(p, ctxt, structure);
+                } else {
+                    dataPoints = deserializeUncheckedDataPoint(p, ctxt);
+                }
+            }
+        }
+
         return new InMemoryDataset(dataPoints, structure);
+
+    }
+
+    private void convertDataPoints(JsonParser p, List<List<Object>> objects, List<Structured.Component> components) throws IOException {
+        // Create a list of functions for each type. This require the structure
+        // to be before the data.
+        List<PointDeserializer> deserializers = components.stream()
+                .map(PointDeserializer::new)
+                .collect(Collectors.toList());
+
+        for (List<Object> object : objects) {
+            for (int i = 0; i < object.size(); i++) {
+                var converted = deserializers.get(i).convert(p, object.get(i));
+                object.set(i, converted);
+            }
+        }
     }
 
     private List<List<Object>> deserializeDataPoints(JsonParser p, DeserializationContext ctxt, List<Dataset.Component> components) throws IOException {
-        var fieldName = p.nextFieldName();
+        var fieldName = p.currentName();
         if (!DATAPOINT_NAMES.contains(fieldName)) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
         }
@@ -74,8 +108,20 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         return dataPoints;
     }
 
+    private List<List<Object>> deserializeUncheckedDataPoint(JsonParser p, DeserializationContext ctxt) throws IOException {
+        var fieldName = p.currentName();
+        if (!DATAPOINT_NAMES.contains(fieldName)) {
+            ctxt.handleUnexpectedToken(Dataset.class, p);
+        }
+        p.nextToken();
+
+        var listOfComponentType = ctxt.getTypeFactory().constructCollectionLikeType(List.class, List.class);
+        return ctxt.readValue(p, listOfComponentType);
+
+    }
+
     private List<Dataset.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt) throws IOException {
-        var fieldName = p.nextFieldName();
+        var fieldName = p.currentName();
         if (!STRUCTURE_NAMES.contains(fieldName)) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
         }
@@ -92,6 +138,16 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
         PointDeserializer(Dataset.Component component) {
             this.component = Objects.requireNonNull(component);
+        }
+
+        Object convert(JsonParser p, Object object) throws IOException {
+            return convert(p.getCodec(), object, component.getType());
+        }
+
+        Object convert(ObjectCodec codec, Object node, Class<?> type) throws IOException {
+            var buf = new TokenBuffer(codec, false);
+            codec.writeValue(buf, node);
+            return buf.asParser().readValueAs(type);
         }
 
         Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
