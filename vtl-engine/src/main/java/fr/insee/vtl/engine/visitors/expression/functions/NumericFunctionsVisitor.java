@@ -4,12 +4,16 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DoubleExpression;
+import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
@@ -35,10 +39,78 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
 
         switch (ctx.op.getType()) {
+            case VtlParser.CEIL:
+                // TODO: Support dataset.
+                return handleCeil(ctx.expr());
+            case VtlParser.FLOOR:
+                // TODO: Support dataset.
+                return handleFloor(ctx.expr());
+            case VtlParser.ABS:
+                // TODO: Support dataset.
+                return handleAbs(ctx.expr());
+            case VtlParser.EXP:
+                // TODO: Support dataset.
+                return handleExp(ctx.expr());
+            case VtlParser.LN:
+                // TODO: Support dataset.
+                return handleLn(ctx.expr());
+            case VtlParser.SQRT:
+                // TODO: Support dataset.
+                return handleSqrt(ctx.expr());
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
 
+    }
+
+    private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return LongExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return ((Double) (Math.ceil(exprDouble))).longValue();
+        });
+    }
+
+    private ResolvableExpression handleFloor(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return LongExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return ((Double) (Math.floor(exprDouble))).longValue();
+        });
+    }
+
+    private ResolvableExpression handleAbs(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.abs(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleExp(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.exp(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleLn(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            return Math.log(exprDouble);
+        });
+    }
+
+    private ResolvableExpression handleSqrt(VtlParser.ExprContext expr) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            if (exprDouble < 0)
+                throw new VtlRuntimeException(new InvalidArgumentException("Sqrt operand has to be 0 or positive", expr));
+            return Math.sqrt(exprDouble);
+        });
     }
 
     /**
@@ -51,10 +123,40 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
 
         switch (ctx.op.getType()) {
+            case VtlParser.ROUND:
+                // TODO: Support dataset.
+                return handleRound(ctx.expr(), ctx.optionalExpr());
+            case VtlParser.TRUNC:
+                // TODO: Support dataset.
+                return handleTrunc(ctx.expr(), ctx.optionalExpr());
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
 
+    }
+
+    private ResolvableExpression handleRound(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
+            bd = bd.setScale(decimalLong.intValue(), RoundingMode.HALF_UP);
+            return bd.doubleValue();
+        });
+    }
+
+    private ResolvableExpression handleTrunc(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
+        var expression = assertNumber(exprVisitor.visit(expr), expr);
+        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
+        return DoubleExpression.of(context -> {
+            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
+            bd = bd.setScale(decimalLong.intValue(), RoundingMode.DOWN);
+            return bd.doubleValue();
+        });
     }
 
     /**

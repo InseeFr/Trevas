@@ -45,17 +45,17 @@
 | Multiplication    | \*           | :heavy_check_mark: |
 | Division          | /            | :heavy_check_mark: |
 | Concatenation     | &#124;&#124; | :heavy_check_mark: |
-| Modulo            | mod          |        :x:         |
-| Rounding          | round        |        :x:         |
-| Truncation        | trunc        |        :x:         |
-| Ceiling           | ceil         |        :x:         |
-| Floor             | floor        |        :x:         |
-| Absolute value    | abs          |        :x:         |
-| Exponential       | exp          |        :x:         |
-| Natural logarithm | ln           |        :x:         |
-| Power             | power        |        :x:         |
-| Logarithm         | log          |        :x:         |
-| Square root       | sqrt         |        :x:         |
+| Modulo            | mod          | :heavy_check_mark: |
+| Rounding          | round        | :heavy_check_mark: |
+| Truncation        | trunc        | :heavy_check_mark: |
+| Ceiling           | ceil         | :heavy_check_mark: |
+| Floor             | floor        | :heavy_check_mark: |
+| Absolute value    | abs          | :heavy_check_mark: |
+| Exponential       | exp          | :heavy_check_mark: |
+| Natural logarithm | ln           | :heavy_check_mark: |
+| Power             | power        | :heavy_check_mark: |
+| Logarithm         | log          | :heavy_check_mark: |
+| Square root       | sqrt         | :heavy_check_mark: |
 
 #### VTL-ML - Comparison operators
 
@@ -71,7 +71,7 @@
 | Element of            | in / not_in      | :heavy_check_mark: |
 | Match characters      | match_characters | :heavy_check_mark: |
 | Is null               | isnull           | :heavy_check_mark: |
-| Exists in             | exists_in        |        :x:         |
+| Exists in             | exists_in        | :heavy_check_mark: |
 
 #### VTL-ML - Boolean operators
 
@@ -96,12 +96,12 @@
 
 #### VTL-ML - Set operators
 
-| Name                 | Symbol    | Supported |
-| -------------------- | :-------- | :-------: |
-| Union                | union     |    :x:    |
-| Intersection         | intersect |    :x:    |
-| Set difference       | setdiff   |    :x:    |
-| Symmetric difference | symdiff   |    :x:    |
+| Name                 | Symbol    |     Supported      |
+| -------------------- | :-------- | :----------------: |
+| Union                | union     | :heavy_check_mark: |
+| Intersection         | intersect |        :x:         |
+| Set difference       | setdiff   |        :x:         |
+| Symmetric difference | symdiff   |        :x:         |
 
 #### VTL-ML - Hierarchical aggregation
 
