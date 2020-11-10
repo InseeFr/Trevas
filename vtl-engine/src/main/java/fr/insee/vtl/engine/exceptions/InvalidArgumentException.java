@@ -2,9 +2,6 @@ package fr.insee.vtl.engine.exceptions;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * The <code>InvalidArgumentException</code> indicates that an argument used in an expression is invalid.
  */

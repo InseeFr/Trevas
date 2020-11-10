@@ -47,8 +47,8 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return DatasetExpression.of((Dataset) value);
         }
 
-        if (value instanceof Dataset.Component) {
-            var component = (Dataset.Component) value;
+        if (value instanceof Structured.Component) {
+            var component = (Structured.Component) value;
             return new ResolvableExpression() {
                 @Override
                 public Object resolve(Map<String, Object> context) {

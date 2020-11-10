@@ -37,7 +37,7 @@ public interface Dataset extends Structured {
     List<DataPoint> getDataPoints();
 
     default List<List<Object>> getDataAsList() {
-        return getDataPoints().stream().map(objects -> (List<Object>) new ArrayList(objects)).collect(Collectors.toList());
+        return getDataPoints().stream().map(objects -> (List<Object>) new ArrayList<>(objects)).collect(Collectors.toList());
     }
 
     /**

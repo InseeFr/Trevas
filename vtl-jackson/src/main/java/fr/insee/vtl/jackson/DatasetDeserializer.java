@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -17,6 +16,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.JsonMappingException.from;
 
 public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
@@ -35,7 +36,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
             ctxt.handleUnexpectedToken(Dataset.class, p);
         }
 
-        List<Dataset.Component> structure = null;
+        List<Structured.Component> structure = null;
         List<List<Object>> dataPoints = null;
 
         while (p.nextToken() != JsonToken.END_OBJECT) {
@@ -72,7 +73,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
         }
     }
 
-    private List<List<Object>> deserializeDataPoints(JsonParser p, DeserializationContext ctxt, List<Dataset.Component> components) throws IOException {
+    private List<List<Object>> deserializeDataPoints(JsonParser p, DeserializationContext ctxt, List<Structured.Component> components) throws IOException {
         var fieldName = p.currentName();
         if (!DATAPOINT_NAMES.contains(fieldName)) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
@@ -120,7 +121,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
     }
 
-    private List<Dataset.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt) throws IOException {
+    private List<Structured.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt) throws IOException {
         var fieldName = p.currentName();
         if (!STRUCTURE_NAMES.contains(fieldName)) {
             ctxt.handleUnexpectedToken(Dataset.class, p);
@@ -134,9 +135,9 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
     private static class PointDeserializer {
 
-        private final Dataset.Component component;
+        private final Structured.Component component;
 
-        PointDeserializer(Dataset.Component component) {
+        PointDeserializer(Structured.Component component) {
             this.component = Objects.requireNonNull(component);
         }
 
@@ -158,7 +159,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
                     return ctxt.readValue(p, component.getType());
                 }
             } catch (IOException ioe) {
-                throw MismatchedInputException.from(
+                throw from(
                         p,
                         String.format("failed to deserialize column %s", component.getName()),
                         ioe

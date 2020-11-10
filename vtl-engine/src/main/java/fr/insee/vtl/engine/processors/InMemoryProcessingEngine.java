@@ -68,14 +68,14 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         var structure = expression.getDataStructure().values().stream()
-                .map(component -> {
-                    return !fromTo.containsKey(component.getName())
-                            ? component
-                            : new Dataset.Component(
-                            fromTo.get(component.getName()),
-                            component.getType(),
-                            component.getRole());
-                }).collect(Collectors.toList());
+                .map(component ->
+                        !fromTo.containsKey(component.getName())
+                                ? component
+                                : new Dataset.Component(
+                                fromTo.get(component.getName()),
+                                component.getType(),
+                                component.getRole())
+                ).collect(Collectors.toList());
         Structured.DataStructure renamedStructure = new Structured.DataStructure(structure);
         return new DatasetExpression() {
             @Override

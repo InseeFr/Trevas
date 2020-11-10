@@ -3,13 +3,12 @@ package fr.insee.vtl.jackson;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class ComponentSerializer extends StdSerializer<Dataset.Component> {
+public class ComponentSerializer extends StdSerializer<Structured.Component> {
 
     private static final Map<Class<?>, String> TYPES = Map.of(
             String.class, "STRING",
@@ -23,7 +22,7 @@ public class ComponentSerializer extends StdSerializer<Dataset.Component> {
     }
 
     @Override
-    public void serialize(Dataset.Component value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(Structured.Component value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
         gen.writeObjectField("name", value.getName());
         gen.writeObjectField("type", TYPES.get(value.getType()));

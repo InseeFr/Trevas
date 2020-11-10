@@ -20,6 +20,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
     private final ExpressionVisitor exprVisitor;
 
+    private final String UNKNOW_OPERATOR = "unknown operator " ;
+
     /**
      * Constructor taking a scripting context.
      *
@@ -58,7 +60,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleSqrt(ctx.expr());
             default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
         }
 
     }
@@ -130,7 +132,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleTrunc(ctx.expr(), ctx.optionalExpr());
             default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
         }
 
     }
@@ -140,7 +142,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
         return DoubleExpression.of(context -> {
             Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
-            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            Long decimalLong = (Long) decimalValue.resolve(context);
             BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
             bd = bd.setScale(decimalLong.intValue(), RoundingMode.HALF_UP);
             return bd.doubleValue();
@@ -152,7 +154,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
         return DoubleExpression.of(context -> {
             Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
-            Long decimalLong = ((Long) decimalValue.resolve(context)).longValue();
+            Long decimalLong = (Long) decimalValue.resolve(context);
             BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
             bd = bd.setScale(decimalLong.intValue(), RoundingMode.DOWN);
             return bd.doubleValue();
@@ -179,7 +181,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleLog(ctx.left, ctx.right);
             default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
         }
 
     }

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkDatasetTest {
