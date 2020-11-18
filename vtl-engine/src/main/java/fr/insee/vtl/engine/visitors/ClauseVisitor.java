@@ -134,7 +134,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         // Compute the new data structure.
         Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
-        for (Dataset.Component component : datasetExpression.getDataStructure()) {
+        for (Dataset.Component component : datasetExpression.getDataStructure().values()) {
             if (groupBy.contains(component.getName())) {
                 newStructure.put(component.getName(), component);
             }
@@ -147,6 +147,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             );
         }
 
+        Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {
@@ -159,12 +160,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return new InMemoryDataset(collect.entrySet().stream().map(e -> {
                     e.getValue().putAll(e.getKey());
                     return Dataset.mapToRowMajor(e.getValue(), newStructure.keySet());
-                }).collect(Collectors.toList()), newStructure.values());
+                }).collect(Collectors.toList()), structure);
             }
 
             @Override
-            public List<Dataset.Component> getDataStructure() {
-                return new ArrayList<>(newStructure.values());
+            public DataStructure getDataStructure() {
+                return structure;
             }
         };
     }

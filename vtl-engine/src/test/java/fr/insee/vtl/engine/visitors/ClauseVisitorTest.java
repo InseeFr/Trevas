@@ -215,7 +215,7 @@ public class ClauseVisitorTest {
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age)," +
                 "avgWeight := avg(age)," +
-                "countVal := count()" +
+                "countVal := count(null)" +
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(

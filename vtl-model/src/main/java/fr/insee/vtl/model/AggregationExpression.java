@@ -51,7 +51,13 @@ public class AggregationExpression implements Collector<Map<String, Object>, Obj
     }
 
     public static AggregationExpression withExpression(ResolvableExpression expression, Collector collector, Class type) {
-        return new AggregationExpression(Collectors.mapping(expression::resolve, collector), type);
+        return new AggregationExpression(Collectors.mapping(new Function<Map<String, Object>, Object>() {
+            @Override
+            public Object apply(Map<String, Object> map) {
+                // TODO: Use datapoint instead.
+                return expression.resolve(map);
+            }
+        }, collector), type);
     }
 
     @Override
