@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -9,12 +8,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-public class AggregationExpression implements Collector<Map<String, Object>, Object, Object>, TypedExpression {
+public class AggregationExpression implements Collector<Structured.DataPoint, Object, Object>, TypedExpression {
 
-    private final Collector<Map<String, Object>, Object, Object> aggregation;
-    private final Class type;
+    private final Collector<Structured.DataPoint, ?, ? extends Object> aggregation;
+    private final Class<?> type;
 
-    public AggregationExpression(Collector<Map<String, Object>, Object, Object> aggregation, Class type) {
+    public AggregationExpression(Collector<Structured.DataPoint, ?, ? extends Object> aggregation, Class<?> type) {
         this.aggregation = aggregation;
         this.type = type;
     }
@@ -46,16 +45,16 @@ public class AggregationExpression implements Collector<Map<String, Object>, Obj
         }
     }
 
-    public static AggregationExpression withType(Collector collector, Class type) {
+    public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
         return new AggregationExpression(collector, type);
     }
 
-    public static AggregationExpression withExpression(ResolvableExpression expression, Collector collector, Class type) {
-        return new AggregationExpression(Collectors.mapping(new Function<Map<String, Object>, Object>() {
+    public static AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, ?> collector, Class<?> type) {
+        return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
             @Override
-            public Object apply(Map<String, Object> map) {
+            public Object apply(Structured.DataPoint dataPoint) {
                 // TODO: Use datapoint instead.
-                return expression.resolve(map);
+                return expression.resolve(dataPoint);
             }
         }, collector), type);
     }
@@ -67,22 +66,22 @@ public class AggregationExpression implements Collector<Map<String, Object>, Obj
 
     @Override
     public Supplier<Object> supplier() {
-        return aggregation.supplier();
+        return (Supplier<Object>) aggregation.supplier();
     }
 
     @Override
-    public BiConsumer<Object, Map<String, Object>> accumulator() {
-        return aggregation.accumulator();
+    public BiConsumer<Object, Structured.DataPoint> accumulator() {
+        return (BiConsumer<Object, Structured.DataPoint>) aggregation.accumulator();
     }
 
     @Override
     public BinaryOperator<Object> combiner() {
-        return aggregation.combiner();
+        return (BinaryOperator<Object>) aggregation.combiner();
     }
 
     @Override
     public Function<Object, Object> finisher() {
-        return aggregation.finisher();
+        return (Function<Object, Object>) aggregation.finisher();
     }
 
     @Override
