@@ -2,6 +2,7 @@ package fr.insee.vtl.spark;
 
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.model.ResolvableExpression;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -10,6 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
+import javax.script.ScriptEngine;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,5 +60,35 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = dataset.getSparkDataset().select(columnSeq);
 
         return new SparkDatasetExpression(new SparkDataset(result));
+    }
+
+    public static class Factory implements ProcessingEngineFactory {
+
+        private static final String SPARK_SESSION = "$vtl.spark.session";
+
+        @Override
+        public String getName() {
+            return "spark";
+        }
+
+        @Override
+        public ProcessingEngine getProcessingEngine(ScriptEngine engine) {
+            // Try to find the session in the script engine.
+            var session = engine.get(SPARK_SESSION);
+            if (session != null) {
+                if (session instanceof SparkSession) {
+                    return new SparkProcessingEngine((SparkSession) session);
+                } else {
+                    throw new IllegalArgumentException(SPARK_SESSION + " was not a spark session");
+                }
+            } else {
+                var activeSession = SparkSession.active();
+                if (activeSession != null) {
+                    return new SparkProcessingEngine(activeSession);
+                } else {
+                    throw new IllegalArgumentException("no active spark session");
+                }
+            }
+        }
     }
 }

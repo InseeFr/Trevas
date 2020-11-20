@@ -2,9 +2,9 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
-import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -14,7 +14,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
-    public static final String PROCESSING_ENGINE = "$vtl.trevas.processing_engine";
+    public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
 
@@ -36,22 +38,26 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
-    public List<ProcessingEngine> findProcessingEngines() {
-        ServiceLoader<ProcessingEngine> loader = ServiceLoader.load(ProcessingEngine.class);
-        return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
+    private List<String> getProcessingEngineNames() {
+        Object o = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
+                .orElse("memory");
+        if (o instanceof String) {
+            return Arrays.asList(((String) o).split(","));
+        } else {
+            throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES +
+                    " must be a comma separated list of names");
+        }
     }
 
     public ProcessingEngine getProcessingEngine() {
-        Class<ProcessingEngine> processingEngineClass = (Class<ProcessingEngine>) get(PROCESSING_ENGINE);
-        if (processingEngineClass == null) {
-            return new InMemoryProcessingEngine();
-        }
-        return ServiceLoader.load(ProcessingEngine.class)
+        List<String> names = getProcessingEngineNames();
+        List<ProcessingEngineFactory> factories = ServiceLoader.load(ProcessingEngineFactory.class)
                 .stream()
-                .filter(p -> p.type().isAssignableFrom(processingEngineClass))
-                .findFirst()
                 .map(ServiceLoader.Provider::get)
-                .orElseThrow();
+                .filter(f -> names.contains(f.getName()))
+                .collect(Collectors.toList());
+        // TODO: Handle multiple factories.
+        return factories.get(0).getProcessingEngine(this);
     }
 
     /**

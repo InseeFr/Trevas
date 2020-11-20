@@ -1,30 +1,35 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.VtlScriptEngineFactory;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkProcessingEngineTest {
 
     private SparkSession spark;
-    private VtlScriptEngine engine;
+    private ScriptEngine engine;
 
     @BeforeEach
     public void setUp() {
-        engine = new VtlScriptEngine(new VtlScriptEngineFactory());
+
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        engine = mgr.getEngineByExtension("vtl");
 
         spark = SparkSession.builder()
                 .appName("test")
@@ -32,20 +37,39 @@ public class SparkProcessingEngineTest {
                 .getOrCreate();
         SparkSession.setActiveSession(spark);
 
-        engine.put(VtlScriptEngine.PROCESSING_ENGINE, SparkProcessingEngine.class);
+        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
     }
 
     @AfterEach
-    void tearDown() {
+    public void tearDown() {
         if (spark != null)
             spark.close();
     }
 
-    @Test
-    void testServiceLoader() {
-        List<ProcessingEngine> processingEngines = engine.findProcessingEngines();
-        assertThat(processingEngines).hasSize(2);
+    public void testLoadActiveSession() {
+        SparkSession spark = SparkSession.builder()
+                .appName("test")
+                .master("local")
+                .getOrCreate();
+        SparkSession.setActiveSession(spark);
+        try {
+
+        } finally {
+            spark.close();
+        }
     }
+
+    @Test
+    public void testServiceLoader() {
+        List<String> processingEngines = ServiceLoader.load(ProcessingEngineFactory.class).stream()
+                .map(ServiceLoader.Provider::get)
+                .map(ProcessingEngineFactory::getName)
+                .collect(Collectors.toList());
+        assertThat(processingEngines).containsExactlyInAnyOrder(
+                "memory", "spark"
+        );
+    }
+
 
     @Test
     public void testProjection() throws ScriptException {

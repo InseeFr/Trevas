@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.processors;
 
 import fr.insee.vtl.model.*;
 
+import javax.script.ScriptEngine;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -127,5 +128,18 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 return newStructure;
             }
         };
+    }
+
+    public static class Factory implements ProcessingEngineFactory {
+
+        @Override
+        public String getName() {
+            return "memory";
+        }
+
+        @Override
+        public ProcessingEngine getProcessingEngine(ScriptEngine engine) {
+            return new InMemoryProcessingEngine();
+        }
     }
 }

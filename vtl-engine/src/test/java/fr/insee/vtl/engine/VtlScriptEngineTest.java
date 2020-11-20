@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,8 +43,8 @@ public class VtlScriptEngineTest {
     @Test
     public void testProcessingEngines() {
         VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
-        List<ProcessingEngine> processingEngines = vtlScriptEngine.findProcessingEngines();
-        assertThat(processingEngines).isNotEmpty();
+        ProcessingEngine processingEngines = vtlScriptEngine.getProcessingEngine();
+        assertThat(processingEngines).isNotNull();
     }
 
     @Test

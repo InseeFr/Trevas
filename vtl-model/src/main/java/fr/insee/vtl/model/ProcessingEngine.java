@@ -14,5 +14,4 @@ public interface ProcessingEngine {
 
     DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames);
 
-
 }

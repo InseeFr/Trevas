@@ -1,5 +1,7 @@
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
+import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
 
 import javax.script.ScriptEngineFactory;
 
@@ -14,9 +16,10 @@ module fr.insee.vtl.engine {
 
     requires transitive fr.insee.vtl.model;
     uses ProcessingEngine;
+    uses ProcessingEngineFactory;
 
     exports fr.insee.vtl.engine.processors;
-    provides ProcessingEngine with fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+    provides ProcessingEngineFactory with InMemoryProcessingEngine.Factory;
 
     requires org.antlr.antlr4.runtime;
     requires org.apache.commons.lang3;
