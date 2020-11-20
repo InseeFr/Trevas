@@ -190,4 +190,39 @@ public class ClauseVisitorTest {
                 Map.of("name", "Franck", "age", 12L)
         );
     }
+
+    @Test
+    public void testAggregate() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        // test := ds1[aggr sumAge := sum(age) group by country];
+        // test := ds1[aggr sumAge := sum(age group by country)];
+        // test := ds1[aggr sumAge := sum(age group by country), totalWeight := sum(weight group by country)];
+        // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
+
+        engine.eval("res := ds1[aggr " +
+                "sumAge := sum(age)," +
+                "avgWeight := avg(age)," +
+                "countVal := count(null)" +
+                " group by country];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5, "countVal", 2L),
+                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0, "countVal", 1L)
+        );
+
+
+    }
 }

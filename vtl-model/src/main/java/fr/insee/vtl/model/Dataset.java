@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,16 +18,8 @@ public interface Dataset extends Structured {
      * @param columns A <code>List</code> of column names giving the order of the column contents in the returned list.
      * @return A <code>List</code> of column contents of the input dataset ordered as specified by the input list of column names.
      */
-    static List<Object> mapToRowMajor(Map<String, Object> map, List<String> columns) {
-        List<Object> row = new ArrayList<>(columns.size());
-        while (row.size() < columns.size()) {
-            row.add(null);
-        }
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String column = entry.getKey();
-            row.set(columns.indexOf(column), map.get(column));
-        }
-        return row;
+    static List<Object> mapToRowMajor(Map<String, Object> map, Collection<String> columns) {
+        return columns.stream().map(map::get).collect(Collectors.toList());
     }
 
     /**
