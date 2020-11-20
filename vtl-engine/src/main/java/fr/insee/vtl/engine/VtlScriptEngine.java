@@ -23,22 +23,9 @@ import java.util.stream.Collectors;
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
+    public static final String PROCESSING_ENGINE = "$vtl.trevas.processing_engine";
+
     private final ScriptEngineFactory factory;
-
-    public List<ProcessingEngine> findProcessingEngines() {
-        ServiceLoader<ProcessingEngine> loader = ServiceLoader.load(ProcessingEngine.class);
-        return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
-    }
-
-    public ProcessingEngine getProcessingEngine() {
-        return processingEngine;
-    }
-
-    public void setProcessingEngine(ProcessingEngine processingEngine) {
-        this.processingEngine = processingEngine;
-    }
-
-    private ProcessingEngine processingEngine = new InMemoryProcessingEngine();
 
     /**
      * Constructor taking a script engine factory.
@@ -49,10 +36,28 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
+    public List<ProcessingEngine> findProcessingEngines() {
+        ServiceLoader<ProcessingEngine> loader = ServiceLoader.load(ProcessingEngine.class);
+        return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
+    }
+
+    public ProcessingEngine getProcessingEngine() {
+        Class<ProcessingEngine> processingEngineClass = (Class<ProcessingEngine>) get(PROCESSING_ENGINE);
+        if (processingEngineClass == null) {
+            return new InMemoryProcessingEngine();
+        }
+        return ServiceLoader.load(ProcessingEngine.class)
+                .stream()
+                .filter(p -> p.type().isAssignableFrom(processingEngineClass))
+                .findFirst()
+                .map(ServiceLoader.Provider::get)
+                .orElseThrow();
+    }
+
     /**
      * Base method for the evaluation of a script expression in a given context.
      *
-     * @param stream The script to evaluate represented as a stream of Unicode code points.
+     * @param stream  The script to evaluate represented as a stream of Unicode code points.
      * @param context The evaluation context (for example: data bindings).
      * @return The result of the evaluation of the script in the given context.
      * @throws VtlScriptException In case of error during the evaluation.
@@ -62,7 +67,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             VtlLexer lexer = new VtlLexer(stream);
             VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context, processingEngine);
+            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context, getProcessingEngine());
             Object lastValue = null;
             for (VtlParser.StatementContext stmt : parser.start().statement()) {
                 lastValue = assignmentVisitor.visit(stmt);
@@ -76,7 +81,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     /**
      * Evaluation of a script expression (represented as a string) in a given context.
      *
-     * @param script The script to evaluate represented as a string.
+     * @param script  The script to evaluate represented as a string.
      * @param context The evaluation context (for example: data bindings).
      * @return The result of the evaluation of the script in the given context.
      * @throws VtlScriptException In case of error during the evaluation.
@@ -90,7 +95,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     /**
      * Evaluation of a script expression (read in a <code>Reader</code>) in a given context.
      *
-     * @param reader The <code>Reader</code> containing the script to evaluate.
+     * @param reader  The <code>Reader</code> containing the script to evaluate.
      * @param context The evaluation context (for example: data bindings).
      * @return The result of the evaluation of the script in the given context.
      * @throws ScriptException In case of error during the evaluation.

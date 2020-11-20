@@ -30,20 +30,21 @@ public class SparkProcessingEngineTest {
                 .appName("test")
                 .master("local")
                 .getOrCreate();
+        SparkSession.setActiveSession(spark);
 
-        engine.setProcessingEngine(new SparkProcessingEngine(spark));
+        engine.put(VtlScriptEngine.PROCESSING_ENGINE, SparkProcessingEngine.class);
     }
 
     @AfterEach
     void tearDown() {
-        spark.close();
+        if (spark != null)
+            spark.close();
     }
 
     @Test
     void testServiceLoader() {
-        // TODO: Figure out why ImMemoryProcessingEngine is not found here.
         List<ProcessingEngine> processingEngines = engine.findProcessingEngines();
-        assertThat(processingEngines).isNotEmpty();
+        assertThat(processingEngines).hasSize(2);
     }
 
     @Test
