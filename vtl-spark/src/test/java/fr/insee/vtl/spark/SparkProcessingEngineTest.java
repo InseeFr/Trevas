@@ -96,6 +96,7 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
+
     void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
