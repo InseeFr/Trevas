@@ -1,5 +1,6 @@
 package fr.insee.vtl.model;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ public interface Structured {
     /**
      * The <code>Structure</code> class represent a structure component with its name, type and role.
      */
-    class Component {
+    class Component implements Serializable {
 
         private final String name;
         private final Class<?> type;

@@ -61,65 +61,78 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             case VtlParser.NEQ:
                 return handleNotEqual(leftExpression, rightExpression);
             case VtlParser.LT:
-                return BooleanExpression.of(context -> {
-                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue < rightValue;
-                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    });
+                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue < rightValue;
-                    }
+                    });
+                } else {
                     throw new VtlRuntimeException(
                             new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
-                });
+                }
             case VtlParser.MT:
-                return BooleanExpression.of(context -> {
-                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue > rightValue;
-                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    });
+
+                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue > rightValue;
-                    }
+                    });
+                } else {
                     throw new VtlRuntimeException(
                             new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
-                });
+                }
             case VtlParser.LE:
-                return BooleanExpression.of(context -> {
-                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue <= rightValue;
-                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    });
+                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue <= rightValue;
-                    }
+                    });
+                } else {
                     throw new VtlRuntimeException(
                             new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
-                });
+                }
             case VtlParser.ME:
-                return BooleanExpression.of(context -> {
-                    if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Long leftValue = (Long) leftExpression.resolve(context);
                         Long rightValue = (Long) rightExpression.resolve(context);
                         return leftValue >= rightValue;
-                    } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    });
+                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                    return BooleanExpression.of(context -> {
                         Double leftValue = (Double) leftExpression.resolve(context);
                         Double rightValue = (Double) rightExpression.resolve(context);
                         return leftValue >= rightValue;
-                    }
+                    });
+                } else {
                     throw new VtlRuntimeException(
                             new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
                     );
-                });
+                }
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }

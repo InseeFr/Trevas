@@ -7,13 +7,14 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
 /**
  * <code>VarIdVisitor</code> is the base visitor for variable identifiers.
  */
-public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
+public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implements Serializable {
 
     private final Map<String, Object> context;
 
@@ -49,15 +50,17 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (value instanceof Structured.Component) {
             var component = (Structured.Component) value;
+            String name = component.getName();
+            Class<?> type = component.getType();
             return new ResolvableExpression() {
                 @Override
                 public Object resolve(Map<String, Object> context) {
-                    return context.get(component.getName());
+                    return context.get(name);
                 }
 
                 @Override
                 public Class<?> getType() {
-                    return component.getType();
+                    return type;
                 }
             };
         }
