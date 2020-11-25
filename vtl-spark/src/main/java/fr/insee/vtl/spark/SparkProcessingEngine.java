@@ -41,7 +41,20 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
-        return null;
+        SparkDataset dataset;
+        if (expression instanceof SparkDatasetExpression) {
+            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
+        } else {
+            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
+        }
+
+        List<Column> newNames = fromTo.entrySet().stream()
+                .map(rename -> new Column(rename.getKey()).as(rename.getValue()))
+                .collect(Collectors.toList());
+
+        Dataset<Row> result = dataset.getSparkDataset().select(JavaConverters.iterableAsScalaIterable(newNames).toSeq());
+
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     @Override
