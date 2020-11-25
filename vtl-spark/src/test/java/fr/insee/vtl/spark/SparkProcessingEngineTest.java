@@ -71,6 +71,31 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
+    public void testFilterClause() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                ),
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[filter age > 10 and age < 12];");
+
+        assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
+                Map.of("name", "Nico", "age", 11L, "weight", 10L)
+        ));
+
+    }
+
+    @Test
     void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
