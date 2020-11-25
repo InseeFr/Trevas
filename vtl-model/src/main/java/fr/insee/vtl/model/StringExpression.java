@@ -1,7 +1,6 @@
 package fr.insee.vtl.model;
 
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * The <code>StringExpression</code> class is an abstract representation of a string expression.
@@ -25,7 +24,7 @@ public abstract class StringExpression implements ResolvableExpression {
         return String.class;
     }
 
-    public static StringExpression of(Function<Map<String, Object>, String> func) {
+    public static StringExpression of(VtlFunction<Map<String, Object>, String> func) {
         return new StringExpression() {
             @Override
             public String resolve(Map<String, Object> context) {

@@ -19,7 +19,7 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     /**
      * Constructor taking a scripting context.
      *
-     * @param context The scripting context for the visitor.
+     * @param expressionVisitor the parent expression visitor.
      */
     public BooleanVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);

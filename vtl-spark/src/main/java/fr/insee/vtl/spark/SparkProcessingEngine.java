@@ -36,7 +36,17 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
-        return null;
+        SparkDataset dataset;
+        if (expression instanceof SparkDatasetExpression) {
+            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
+        } else {
+            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
+        }
+
+        Dataset<Row> ds = dataset.getSparkDataset();
+        SparkFilterFunction filterFunction = new SparkFilterFunction(filter);
+        Dataset<Row> result = ds.filter(filterFunction);
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     @Override
@@ -104,4 +114,5 @@ public class SparkProcessingEngine implements ProcessingEngine {
             }
         }
     }
+
 }
