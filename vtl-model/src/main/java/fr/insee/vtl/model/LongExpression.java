@@ -7,17 +7,6 @@ import java.util.Map;
  */
 public abstract class LongExpression extends NumberExpression {
 
-    /**
-     * Returns the result of applying a function of type <code>Long</code> to a given dataset context.
-     *
-     * @param func A function applicable to a dataset context and yielding a <code>Long</code> result.
-     * @return The result of applying the given function to the dataset context.
-     */
-    @Deprecated
-    public static LongExpression withFunction(VtlFunction<Map<String, Object>, Long> func) {
-        return of(func);
-    }
-
     public static LongExpression of(Long value) {
         return new LongExpression() {
             @Override

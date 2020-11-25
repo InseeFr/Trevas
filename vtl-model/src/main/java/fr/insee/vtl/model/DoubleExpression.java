@@ -7,11 +7,6 @@ import java.util.Map;
  */
 public abstract class DoubleExpression extends NumberExpression {
 
-    @Deprecated
-    public static DoubleExpression withFunction(VtlFunction<Map<String, Object>, Double> func) {
-        return of(func);
-    }
-
     /**
      * Returns the result of applying a function of type <code>Double</code> to a given dataset context.
      *
