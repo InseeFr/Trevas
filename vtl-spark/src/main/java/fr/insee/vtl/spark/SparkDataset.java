@@ -31,12 +31,13 @@ public class SparkDataset implements Dataset {
 
     public SparkDataset(Dataset vtlDataset, SparkSession spark) {
 
+        // TODO: Handle nullable with component
         List<StructField> schema = new ArrayList<>();
         for (Component component : vtlDataset.getDataStructure().values()) {
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
-                    false
+                    true
             ));
         }
 
