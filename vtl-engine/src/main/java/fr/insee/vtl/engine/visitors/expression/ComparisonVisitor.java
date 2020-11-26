@@ -224,16 +224,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 .map(expression -> expression.resolve(Map.of()))
                 .collect(Collectors.toList());
 
-        return new ListExpression() {
-            @Override
-            public List<?> resolve(Map<String, Object> context) {
-                return values;
-            }
-
-            @Override
-            public Class<?> containedType() {
-                return type;
-            }
-        };
+        return ListExpression.withContainedType(values, type);
     }
 }
