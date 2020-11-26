@@ -4,18 +4,24 @@ import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.model.ResolvableExpression;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 
 public class SparkProcessingEngine implements ProcessingEngine {
 
@@ -31,7 +37,54 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, fr.insee.vtl.model.Dataset.Role> roles) {
-        return null;
+        SparkDataset dataset;
+        if (expression instanceof SparkDatasetExpression) {
+            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
+        } else {
+            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
+        }
+        Dataset<Row> ds = dataset.getSparkDataset();
+
+        // Compute the new schema.
+        // TODO: Use conversion from DataStructure.
+        StructType oldSchema = ds.schema();
+        List<String> oldNames = Arrays.asList(oldSchema.fieldNames());
+        List<String> newNames = new ArrayList<>(oldNames);
+        for (String exprName : expressions.keySet()) {
+            if (!newNames.contains(exprName)) {
+                newNames.add(exprName);
+            }
+        }
+
+        List<StructField> newFields = new ArrayList<>();
+        for (String newName : newNames) {
+            if (oldNames.contains(newName) && !expressions.containsKey(newName)) {
+                newFields.add(oldSchema.apply(newName));
+            } else {
+                newFields.add(DataTypes.createStructField(
+                        newName,
+                        fromVtlType(expressions.get(newName).getType()),
+                        false
+                ));
+            }
+        }
+        StructType newSchema = DataTypes.createStructType(newFields);
+
+        Dataset<Row> result = ds.map((MapFunction<Row, Row>) row -> {
+            SparkRowMap context = new SparkRowMap(row);
+            Object[] objects = new Object[newSchema.size()];
+            for (String name : newSchema.fieldNames()) {
+                int index = newSchema.fieldIndex(name);
+                if (expressions.containsKey(name)) {
+                    objects[index] = expressions.get(name).resolve(context);
+                } else {
+                    objects[index] = row.get(index);
+                }
+            }
+            return new GenericRowWithSchema(objects, newSchema);
+        }, RowEncoder.apply(newSchema));
+
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     @Override

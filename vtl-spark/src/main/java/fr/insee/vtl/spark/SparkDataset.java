@@ -65,7 +65,7 @@ public class SparkDataset implements Dataset {
         }
     }
 
-    private DataType fromVtlType(Class<?> type) {
+    public static DataType fromVtlType(Class<?> type) {
         if (String.class.equals(type)) {
             return StringType;
         } else if (Long.class.equals(type)) {
