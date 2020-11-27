@@ -57,6 +57,29 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
     }
 
     /**
+     * Returns a <code>ResolvableExpression</code> with a given type and value.
+     *
+     * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
+     * @param value  The expression value.
+     * @return An instance of <code>ResolvableExpression</code> with the given type and value.
+     */
+    static ResolvableExpression ofType(Class<Object> clazz, Object value) {
+        return new ResolvableExpression() {
+
+            @Override
+            public Object resolve(Map<String, Object> context) {
+                return value;
+            }
+
+            @Override
+            public Class getType() {
+                return clazz;
+            }
+
+        };
+    }
+
+    /**
      * Resolves the expression in a given context.
      *
      * @param context The context for the resolution.

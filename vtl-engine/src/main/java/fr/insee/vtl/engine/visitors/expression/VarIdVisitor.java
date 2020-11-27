@@ -51,18 +51,8 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         if (value instanceof Structured.Component) {
             var component = (Structured.Component) value;
             String name = component.getName();
-            Class<?> type = component.getType();
-            return new ResolvableExpression() {
-                @Override
-                public Object resolve(Map<String, Object> context) {
-                    return context.get(name);
-                }
-
-                @Override
-                public Class<?> getType() {
-                    return type;
-                }
-            };
+            Class type = component.getType();
+            return ResolvableExpression.withType(type, c -> c.get(name));
         }
 
         if (value instanceof Integer || value instanceof Long) {
@@ -82,18 +72,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         }
 
         if (value == null) {
-            // TODO: Should probably be a static value.
-            return new ResolvableExpression() {
-                @Override
-                public Object resolve(Map<String, Object> context) {
-                    return null;
-                }
-
-                @Override
-                public Class<?> getType() {
-                    return Object.class;
-                }
-            };
+            return ResolvableExpression.ofType(Object.class, null);
         }
 
         throw new VtlRuntimeException(new UnsupportedTypeException(ctx, value.getClass()));
