@@ -21,8 +21,11 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor expressionVisitor;
 
-    public SetFunctionsVisitor(ExpressionVisitor expressionVisitor) {
+    private final ProcessingEngine processingEngine;
+
+    public SetFunctionsVisitor(ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
+        this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
     @Override
@@ -53,23 +56,6 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         }
 
-        return new DatasetExpression() {
-            @Override
-            public Dataset resolve(Map<String, Object> context) {
-                Stream<DataPoint> stream = Stream.empty();
-                for (DatasetExpression datasetExpression : datasets) {
-                    var dataset = datasetExpression.resolve(context);
-                    stream = Stream.concat(stream, dataset.getDataPoints().stream());
-                }
-                List<DataPoint> data = stream.distinct().collect(Collectors.toList());
-                return new InMemoryDataset(data, getDataStructure());
-            }
-
-            @Override
-            public DataStructure getDataStructure() {
-                return (datasets.get(0)).getDataStructure();
-            }
-        };
-
+        return processingEngine.executeUnion(datasets);
     }
 }

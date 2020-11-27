@@ -14,4 +14,6 @@ public interface ProcessingEngine {
 
     DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames);
 
+    DatasetExpression executeUnion(List<DatasetExpression> datasets);
+
 }
