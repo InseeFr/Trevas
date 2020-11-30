@@ -1,10 +1,12 @@
 package fr.insee.vtl.engine.processors;
 
+import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
 
 import javax.script.ScriptEngine;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -148,6 +150,38 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             @Override
             public DataStructure getDataStructure() {
                 return (datasets.get(0)).getDataStructure();
+            }
+        };
+    }
+
+    @Override
+    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+                                         Map<String, AggregationExpression> collectorMap,
+                                         Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+
+                List<DataPoint> data = expression.resolve(Map.of()).getDataPoints();
+                MapCollector collector = new MapCollector(structure, collectorMap);
+                List<DataPoint> collect = data.stream()
+                        .collect(Collectors.groupingBy(keyExtractor, collector))
+                        .entrySet().stream()
+                        .map(e -> {
+                            DataPoint dataPoint = e.getValue();
+                            Map<String, Object> identifiers = e.getKey();
+                            for (Map.Entry<String, Object> identifierElement : identifiers.entrySet()) {
+                                dataPoint.set(identifierElement.getKey(), identifierElement.getValue());
+                            }
+                            return dataPoint;
+                        }).collect(Collectors.toList());
+
+                return new InMemoryDataset(collect, structure);
+            }
+
+            @Override
+            public DataStructure getDataStructure() {
+                return structure;
             }
         };
     }

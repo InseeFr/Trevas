@@ -2,18 +2,13 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
-import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
@@ -149,32 +144,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
 
         Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
-        return new DatasetExpression() {
-            @Override
-            public Dataset resolve(Map<String, Object> context) {
 
-                List<DataPoint> data = datasetExpression.resolve(Map.of()).getDataPoints();
-                MapCollector collector = new MapCollector(structure, collectorMap);
-                List<DataPoint> collect = data.stream()
-                        .collect(Collectors.groupingBy(keyExtractor, collector))
-                        .entrySet().stream()
-                        .map(e -> {
-                            DataPoint dataPoint = e.getValue();
-                            Map<String, Object> identifiers = e.getKey();
-                            for (Map.Entry<String, Object> identifierElement : identifiers.entrySet()) {
-                                dataPoint.set(identifierElement.getKey(), identifierElement.getValue());
-                            }
-                            return dataPoint;
-                        }).collect(Collectors.toList());
-
-                return new InMemoryDataset(collect, structure);
-            }
-
-            @Override
-            public DataStructure getDataStructure() {
-                return structure;
-            }
-        };
+        return processingEngine.executeAggr(datasetExpression, structure, collectorMap, keyExtractor);
     }
 
 }
