@@ -30,8 +30,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final IfVisitor ifVisitor;
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
-    private final SetFunctionsVisitor setFunctionsVisitor;
     private final NumericFunctionsVisitor numericFunctionsVisitor;
+    private final SetFunctionsVisitor setFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -50,8 +50,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ifVisitor = new IfVisitor(this);
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
-        setFunctionsVisitor = new SetFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
+        setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -202,9 +202,16 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return comparisonFunctionsVisitor.visit(ctx.comparisonOperators());
     }
 
+    /**
+     * Visits set function expressions.
+     *
+     * @param ctx The scripting context for the function expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the function expression.
+     * @see SetFunctionsVisitor
+     */
     @Override
     public ResolvableExpression visitSetFunctions(VtlParser.SetFunctionsContext ctx) {
-        return setFunctionsVisitor.visit(ctx);
+        return setFunctionsVisitor.visit(ctx.setOperators());
     }
 
     @Override

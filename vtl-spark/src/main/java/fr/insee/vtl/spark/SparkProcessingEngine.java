@@ -168,4 +168,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         }
     }
 
+    @Override
+    public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+        return null;
+    }
 }

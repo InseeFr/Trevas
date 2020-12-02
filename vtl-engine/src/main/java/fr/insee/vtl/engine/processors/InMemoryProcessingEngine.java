@@ -6,6 +6,7 @@ import javax.script.ScriptEngine;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InMemoryProcessingEngine implements ProcessingEngine {
 
@@ -126,6 +127,27 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             @Override
             public DataStructure getDataStructure() {
                 return newStructure;
+            }
+        };
+    }
+
+    @Override
+    public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+                Stream<DataPoint> stream = Stream.empty();
+                for (DatasetExpression datasetExpression : datasets) {
+                    var dataset = datasetExpression.resolve(context);
+                    stream = Stream.concat(stream, dataset.getDataPoints().stream());
+                }
+                List<DataPoint> data = stream.distinct().collect(Collectors.toList());
+                return new InMemoryDataset(data, getDataStructure());
+            }
+
+            @Override
+            public DataStructure getDataStructure() {
+                return (datasets.get(0)).getDataStructure();
             }
         };
     }
