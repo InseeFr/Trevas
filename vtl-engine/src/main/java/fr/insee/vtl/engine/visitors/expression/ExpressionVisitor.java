@@ -31,6 +31,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
     private final NumericFunctionsVisitor numericFunctionsVisitor;
+    private final SetFunctionsVisitor setFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -50,6 +51,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
+        setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -209,8 +211,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitSetFunctions(VtlParser.SetFunctionsContext ctx) {
-        SetFunctionsVisitor setFunctionVisitor = new SetFunctionsVisitor(this, processingEngine);
-        return setFunctionVisitor.visit(ctx.setOperators());
+        return setFunctionsVisitor.visit(ctx.setOperators());
     }
 
     @Override
