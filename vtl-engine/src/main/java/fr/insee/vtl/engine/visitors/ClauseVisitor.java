@@ -8,11 +8,7 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
@@ -148,108 +144,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
 
         Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
-        return new DatasetExpression() {
-            @Override
-            public Dataset resolve(Map<String, Object> context) {
 
-                List<DataPoint> data = datasetExpression.resolve(Map.of()).getDataPoints();
-                MapCollector collector = new MapCollector(structure, collectorMap);
-                List<DataPoint> collect = data.stream()
-                        .collect(Collectors.groupingBy(keyExtractor, collector))
-                        .entrySet().stream()
-                        .map(e -> {
-                            DataPoint dataPoint = e.getValue();
-                            Map<String, Object> identifiers = e.getKey();
-                            for (Map.Entry<String, Object> identifierElement : identifiers.entrySet()) {
-                                dataPoint.set(identifierElement.getKey(), identifierElement.getValue());
-                            }
-                            return dataPoint;
-                        }).collect(Collectors.toList());
-
-                return new InMemoryDataset(collect, structure);
-            }
-
-            @Override
-            public DataStructure getDataStructure() {
-                return structure;
-            }
-        };
+        return processingEngine.executeAggr(datasetExpression, structure, collectorMap, keyExtractor);
     }
 
-    /**
-     * Collector that uses a map of collectors.
-     */
-    static class MapCollector implements Collector<Structured.DataPoint, Structured.DataPoint, Structured.DataPoint> {
-
-        private final Structured.DataStructure structure;
-        private final Map<String, Supplier<Object>> supplierMap = new HashMap<>();
-        private final Map<String, BiConsumer<Object, Structured.DataPoint>> accumulatorMap = new HashMap<>();
-        private final Map<String, BinaryOperator<Object>> combinerMap = new HashMap<>();
-        private final Map<String, Function<Object, Object>> finisherMap = new HashMap<>();
-
-        public MapCollector(Structured.DataStructure structure, Map<String, ? extends Collector<Structured.DataPoint, Object, Object>> collectorMap) {
-            this.structure = Objects.requireNonNull(structure);
-            if (!structure.keySet().containsAll(collectorMap.keySet())) {
-                throw new IllegalArgumentException("inconsistent collector map");
-            }
-            for (Map.Entry<String, ? extends Collector<Structured.DataPoint, Object, Object>> entry : collectorMap.entrySet()) {
-                supplierMap.put(entry.getKey(), entry.getValue().supplier());
-                accumulatorMap.put(entry.getKey(), entry.getValue().accumulator());
-                combinerMap.put(entry.getKey(), entry.getValue().combiner());
-                finisherMap.put(entry.getKey(), entry.getValue().finisher());
-            }
-        }
-
-        @Override
-        public Supplier<Structured.DataPoint> supplier() {
-            return () -> {
-                Structured.DataPoint dataPoint = new Structured.DataPoint(structure);
-                for (Map.Entry<String, Supplier<Object>> entry : supplierMap.entrySet()) {
-                    String column = entry.getKey();
-                    dataPoint.set(column, entry.getValue().get());
-                }
-                return dataPoint;
-            };
-        }
-
-        @Override
-        public BiConsumer<Structured.DataPoint, Structured.DataPoint> accumulator() {
-            return (map, context) -> {
-                for (Map.Entry<String, BiConsumer<Object, Structured.DataPoint>> entry : accumulatorMap.entrySet()) {
-                    String column = entry.getKey();
-                    Object accumulatorValue = map.get(column);
-                    entry.getValue().accept(accumulatorValue, context);
-                }
-            };
-        }
-
-        @Override
-        public BinaryOperator<Structured.DataPoint> combiner() {
-            return (map, map2) -> {
-                for (Map.Entry<String, BinaryOperator<Object>> entry : combinerMap.entrySet()) {
-                    String column = entry.getKey();
-                    Object newValue = entry.getValue().apply(map.get(column), map2.get(column));
-                    map.set(column, newValue);
-                }
-                return map;
-            };
-        }
-
-        @Override
-        public Function<Structured.DataPoint, Structured.DataPoint> finisher() {
-            return map -> {
-                for (Map.Entry<String, Function<Object, Object>> entry : finisherMap.entrySet()) {
-                    String column = entry.getKey();
-                    map.set(column, entry.getValue().apply(map.get(column)));
-                }
-                return map;
-            };
-        }
-
-        @Override
-        public Set<Characteristics> characteristics() {
-            // TODO: Think about this.
-            return Set.of(Characteristics.UNORDERED);
-        }
-    }
 }

@@ -1,9 +1,6 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -19,6 +16,7 @@ import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
@@ -170,6 +168,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+        return null;
+    }
+
+    @Override
+    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+                                         Map<String, AggregationExpression> collectorMap,
+                                         Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
         return null;
     }
 }
