@@ -5,7 +5,9 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.TypedExpression;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * <code>TypeChecking</code> class contains useful methods for checking the type of VTL expressions.
@@ -41,6 +43,21 @@ public class TypeChecking {
      */
     public static boolean isType(TypedExpression expression, Class<?> type) {
         return type.isAssignableFrom(expression.getType());
+    }
+
+    /**
+     * Checks if expressions have the same type (or null).
+     *
+     * @param objects    Objects to check.
+     * @param type       The type to check against.
+     * @return A boolean which is <code>true</code> if the expression can be interpreted as a type, <code>false</code> otherwise.
+     */
+    public static boolean hasSameTypeOrNull(Object... objects) {
+        return Stream.of(objects)
+                .filter(Objects::nonNull)
+                .map(Object::getClass)
+                .distinct()
+                .count() == 1;
     }
 
     /**
@@ -126,5 +143,9 @@ public class TypeChecking {
      */
     public static boolean isDataset(TypedExpression expression) {
         return false;
+    }
+
+    public static boolean hasNullArgs(Object... objects) {
+        return Stream.of(objects).anyMatch(Objects::isNull);
     }
 }
