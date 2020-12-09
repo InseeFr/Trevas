@@ -2,10 +2,13 @@ package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * <code>TypeChecking</code> class contains useful methods for checking the type of VTL expressions.
@@ -19,6 +22,8 @@ public class TypeChecking {
     /**
      * Assert that an expression is of the given type.
      *
+     * If expression type is Object (null type), the returned expression will be of expected type.
+     *
      * @param expression the expression to check.
      * @param type       the type to check against.
      * @param tree       the tree of the expression.
@@ -26,6 +31,9 @@ public class TypeChecking {
      * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause.
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
+        if (Object.class.equals(expression.getType())) {
+            return (T) ResolvableExpression.withType(type, ctx -> null);
+        }
         if (!isType(expression, type)) {
             throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
         }
@@ -41,6 +49,20 @@ public class TypeChecking {
      */
     public static boolean isType(TypedExpression expression, Class<?> type) {
         return type.isAssignableFrom(expression.getType());
+    }
+
+    /**
+     * Checks if expressions have the same type (or null type, Object for now).
+     *
+     * @param  expressions    Objects to check.
+     * @return A boolean which is <code>true</code> if the expression can be interpreted as a type, <code>false</code> otherwise.
+     */
+    public static boolean hasSameTypeOrNull(ResolvableExpression... expressions) {
+        return Stream.of(expressions)
+                .map(ResolvableExpression::getType)
+                .filter(clazz -> !Object.class.equals(clazz))
+                .distinct()
+                .count() <= 1;
     }
 
     /**
@@ -126,5 +148,9 @@ public class TypeChecking {
      */
     public static boolean isDataset(TypedExpression expression) {
         return false;
+    }
+
+    public static boolean hasNullArgs(Object... objects) {
+        return Stream.of(objects).anyMatch(Objects::isNull);
     }
 }

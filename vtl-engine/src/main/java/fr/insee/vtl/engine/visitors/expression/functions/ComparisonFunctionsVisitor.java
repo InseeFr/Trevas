@@ -14,6 +14,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
+
 /**
  * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving comparison functions.
  */
@@ -43,24 +45,29 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         ResolvableExpression fromExpression = exprVisitor.visit(ctx.from_);
         ResolvableExpression toExpression = exprVisitor.visit(ctx.to_);
 
-        if (operandExpression.getType() != fromExpression.getType() &&
-                operandExpression.getType() != toExpression.getType())
+        if (!hasSameTypeOrNull(operandExpression, fromExpression, toExpression))
             throw new VtlRuntimeException(new ConflictingTypesException(
                             List.of(operandExpression.getType(), fromExpression.getType(), toExpression.getType()),
                             ctx
                     ));
         // TODO: handle other types (dates?)
-        if (TypeChecking.isLong(operandExpression))
+
+        var typedOperandExpression =
+                TypeChecking.assertTypeExpression(operandExpression, fromExpression.getType(), ctx.op);
+
+        if (TypeChecking.isLong(typedOperandExpression))
             return ResolvableExpression.withType(Boolean.class, context -> {
-                Long operandValue = (Long) operandExpression.resolve(context);
+                Long operandValue = (Long) typedOperandExpression.resolve(context);
                 Long fromValue = (Long) fromExpression.resolve(context);
                 Long toValue = (Long) toExpression.resolve(context);
+                if(TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
                 return operandValue >= fromValue && operandValue <= toValue;
             });
         return ResolvableExpression.withType(Boolean.class, context -> {
-            Double operandValue = (Double) operandExpression.resolve(context);
+            Double operandValue = (Double) typedOperandExpression.resolve(context);
             Double fromValue = (Double) fromExpression.resolve(context);
             Double toValue = (Double) toExpression.resolve(context);
+            if(TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
             return operandValue >= fromValue && operandValue <= toValue;
         });
     }
