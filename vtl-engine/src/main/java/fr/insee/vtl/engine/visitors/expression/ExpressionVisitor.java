@@ -1,10 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.*;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -32,6 +29,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
     private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final SetFunctionsVisitor setFunctionsVisitor;
+    private final JoinFunctionsVisitor joinFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -52,6 +50,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
+        joinFunctionsVisitor = new JoinFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -212,6 +211,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitSetFunctions(VtlParser.SetFunctionsContext ctx) {
         return setFunctionsVisitor.visit(ctx.setOperators());
+    }
+
+    @Override
+    public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
+        return joinFunctionsVisitor.visitJoinFunctions(ctx);
     }
 
     @Override
