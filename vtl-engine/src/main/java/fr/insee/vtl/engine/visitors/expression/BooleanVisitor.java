@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -23,6 +24,10 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     public BooleanVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+    }
+
+    private static boolean nullFalse(Boolean b) {
+        return b != null ? b : false;
     }
 
     /**
@@ -49,9 +54,22 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         var leftExpression = assertBoolean(exprVisitor.visit(left), left);
         var rightExpression = assertBoolean(exprVisitor.visit(right), right);
         return BooleanExpression.of(context -> {
+
             var leftValue = (Boolean) leftExpression.resolve(context);
+            if (leftValue != null && !leftValue) {
+                return false;
+            }
+
             var rightValue = (Boolean) rightExpression.resolve(context);
-            return leftValue && rightValue;
+            if (rightValue != null && !rightValue) {
+                return false;
+            }
+
+            if (TypeChecking.hasNullArgs(leftValue, rightValue)) {
+                return null;
+            } else {
+                return true;
+            }
         });
     }
 
@@ -60,8 +78,17 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         var rightExpression = assertBoolean(exprVisitor.visit(right), right);
         return BooleanExpression.of(context -> {
             var leftValue = (Boolean) leftExpression.resolve(context);
+            if (leftValue != null && leftValue) {
+                return true;
+            }
             var rightValue = (Boolean) rightExpression.resolve(context);
-            return leftValue || rightValue;
+            if (rightValue != null && rightValue) {
+                return true;
+            }
+            if (TypeChecking.hasNullArgs(rightValue, leftValue)) {
+                return null;
+            }
+            return false;
         });
     }
 
@@ -70,8 +97,14 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         var rightExpression = assertBoolean(exprVisitor.visit(right), right);
         return BooleanExpression.of(context -> {
             var leftValue = (Boolean) leftExpression.resolve(context);
+            if (leftValue == null) {
+                return null;
+            }
             var rightValue = (Boolean) rightExpression.resolve(context);
-            return leftValue ^ rightValue;
+            if (rightValue == null) {
+                return null;
+            }
+            return nullFalse(leftValue) ^ nullFalse(rightValue);
         });
     }
 }

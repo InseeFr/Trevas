@@ -8,6 +8,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,14 +26,13 @@ public class BooleanExprTest {
     @Test
     public void testBooleans() throws ScriptException {
         ScriptContext context = engine.getContext();
-        List<Boolean> a = List.of(false, false, true, true);
-        List<Boolean> b = List.of(false, true, false, true);
+        List<Boolean> a = Arrays.asList(  false, false, false, true,  true,  true, null,  null, null);
+        List<Boolean> b = Arrays.asList(  false, true,  null,  false, true,  null, false, true, null);
+        List<Boolean> and = Arrays.asList(false, false, false, false, true,  null, false, null, null);
+        List<Boolean> or = Arrays.asList( false, true,  null,  true,  true,  true, null,  true, null);
+        List<Boolean> xor = Arrays.asList(false, true,  null,  true,  false, null, null,  null, null);
 
-        List<Boolean> and = List.of(false, false, false, true);
-        List<Boolean> or = List.of(false, true, true, true);
-        List<Boolean> xor = List.of(false, true, true, false);
-
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < a.size(); i++) {
             context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);
             context.setAttribute("b", b.get(i), ScriptContext.ENGINE_SCOPE);
 
@@ -41,9 +41,17 @@ public class BooleanExprTest {
                     "orRes := a or b;" +
                     "xorRes := a xor b;"
             );
-            assertThat(context.getAttribute("andRes")).isEqualTo(and.get(i));
-            assertThat(context.getAttribute("orRes")).isEqualTo(or.get(i));
-            assertThat(context.getAttribute("xorRes")).isEqualTo(xor.get(i));
+            assertThat(context.getAttribute("andRes"))
+                    .as("%s && %s -> %s", a.get(i), b.get(i), and.get(i))
+                    .isEqualTo(and.get(i));
+
+            assertThat(context.getAttribute("orRes"))
+                    .as("%s || %s -> %s", a.get(i), b.get(i), or.get(i))
+                    .isEqualTo(or.get(i));
+
+            assertThat(context.getAttribute("xorRes"))
+                    .as("%s ^ %s -> %s", a.get(i), b.get(i), xor.get(i))
+                    .isEqualTo(xor.get(i));
         }
     }
 
