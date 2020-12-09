@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -21,6 +22,8 @@ public class TypeChecking {
     /**
      * Assert that an expression is of the given type.
      *
+     * If expression type is Object (null type), the returned expression will be of expected type.
+     *
      * @param expression the expression to check.
      * @param type       the type to check against.
      * @param tree       the tree of the expression.
@@ -28,6 +31,9 @@ public class TypeChecking {
      * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause.
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
+        if (Object.class.equals(expression.getType())) {
+            return (T) ResolvableExpression.withType(type, ctx -> null);
+        }
         if (!isType(expression, type)) {
             throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
         }
@@ -46,18 +52,17 @@ public class TypeChecking {
     }
 
     /**
-     * Checks if expressions have the same type (or null).
+     * Checks if expressions have the same type (or null type, Object for now).
      *
-     * @param objects    Objects to check.
-     * @param type       The type to check against.
+     * @param  expressions    Objects to check.
      * @return A boolean which is <code>true</code> if the expression can be interpreted as a type, <code>false</code> otherwise.
      */
-    public static boolean hasSameTypeOrNull(Object... objects) {
-        return Stream.of(objects)
-                .filter(Objects::nonNull)
-                .map(Object::getClass)
+    public static boolean hasSameTypeOrNull(ResolvableExpression... expressions) {
+        return Stream.of(expressions)
+                .map(ResolvableExpression::getType)
+                .filter(clazz -> !Object.class.equals(clazz))
                 .distinct()
-                .count() == 1;
+                .count() <= 1;
     }
 
     /**
