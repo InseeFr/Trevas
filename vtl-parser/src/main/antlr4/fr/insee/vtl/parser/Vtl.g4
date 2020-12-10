@@ -1,3 +1,7 @@
+// VTL 2.0 06/2020 SDMX
+// Remove component duplication
+// Add distance operators (levenshtein)
+
 grammar Vtl;
 import VtlTokens;
 
@@ -74,6 +78,7 @@ functions:
     | conditionalOperators              # conditionalFunctions
     | aggrOperatorsGrouping             # aggregateFunctions
     | anFunction                        # analyticFunctions
+    | distanceOperators                 # distanceFunctions
 ;
 
 
@@ -314,6 +319,10 @@ aggrOperatorsGrouping:
 //    | op=RANK LPAREN  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause) RPAREN RPAREN                                                                           # rankAnComponent
 //    | op=RATIO_TO_REPORT LPAREN exprComponent OVER  LPAREN (partition=partitionByClause) RPAREN RPAREN                                                                          # ratioToReportAnComponent
 //;
+
+distanceOperators:
+    LEVENSHTEIN LPAREN left=expr COMMA right=expr RPAREN    # levenshteinAtom
+;
 /*---------------------------------------------------END FUNCTIONS-------------------------------------------------*/
 
 /*-------------------------------------------------CLAUSE EXPRESSION------------------------------------------------*/

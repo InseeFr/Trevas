@@ -1,10 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.*;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -32,6 +29,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
     private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final SetFunctionsVisitor setFunctionsVisitor;
+    private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -52,6 +50,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
+        distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -217,6 +216,18 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitNumericFunctions(VtlParser.NumericFunctionsContext ctx) {
         return numericFunctionsVisitor.visit(ctx.numericOperators());
+    }
+
+    /**
+     * Visits expressions involving distance functions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the distance function.
+     * @see DistanceFunctionsVisitor
+     */
+    @Override
+    public ResolvableExpression visitDistanceFunctions(VtlParser.DistanceFunctionsContext ctx) {
+        return distanceFunctionsVisitor.visit(ctx.distanceOperators());
     }
 
     /**

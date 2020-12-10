@@ -109,6 +109,7 @@ lexer grammar VtlTokens;
   HIERARCHY         : 'hierarchy';
   OPTIONAL			: '_';
   INVALID			: 'invalid';
+  LEVENSHTEIN       : 'levenshtein';
 
   VALUE_DOMAIN			          : 'valuedomain';
   VARIABLE				            : 'variable';
