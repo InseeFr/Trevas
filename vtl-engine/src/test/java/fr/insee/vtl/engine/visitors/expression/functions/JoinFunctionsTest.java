@@ -26,6 +26,32 @@ public class JoinFunctionsTest {
     }
 
     @Test
+    public void testDuplicateNameNotSupportedYet() {
+        InMemoryDataset dataset1 = new InMemoryDataset(
+                List.of(),
+                List.of(
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+        InMemoryDataset dataset2 = new InMemoryDataset(
+                List.of(),
+                List.of(
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        engine.getContext().setAttribute("ds1", dataset1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
+        assertThatThrownBy(() -> engine.eval("result := left_join(ds1 as dsOne, ds2);"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("duplicate");
+    }
+
+    @Test
     public void testJoinWithAlias() throws ScriptException {
 
         InMemoryDataset dataset1 = new InMemoryDataset(
@@ -69,12 +95,6 @@ public class JoinFunctionsTest {
                 Arrays.asList("c", 5L, 6L, 14L, 15L),
                 Arrays.asList("d", 7L, 8L, null, null)
         );
-    }
-
-    @Test
-    public void testLeftJoin() {
-        assertThatThrownBy(() -> engine.eval("result := left_join(a, b, c);"))
-                .hasMessage("TODO: left_join");
     }
 
     @Test
