@@ -121,21 +121,31 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 var rightPoints = right.resolve(context).getDataPoints();
                 List<DataPoint> result = new ArrayList<>();
                 for (DataPoint leftPoint : leftPoints) {
+                    List<DataPoint> matches = new ArrayList<>();
+                    for (DataPoint rightPoint : rightPoints) {
+                        // Check equality
+                        if (predicate.compare(leftPoint, rightPoint) == 0) {
+                            matches.add(rightPoint);
+                        }
+                    }
+
                     // Create merge datapoint.
                     var mergedPoint = new DataPoint(structure);
                     for (String leftColumn : left.getDataStructure().keySet()) {
                         mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
                     }
 
-                    for (DataPoint rightPoint : rightPoints) {
-                        // Check equality
-                        if (predicate.compare(leftPoint, rightPoint) == 0) {
+                    if (matches.isEmpty()) {
+                        result.add(mergedPoint);
+                    } else {
+                        for (DataPoint match : matches) {
+                            var matchPoint = new DataPoint(structure, mergedPoint);
                             for (String rightColumn : right.getDataStructure().keySet()) {
-                                mergedPoint.set(rightColumn, rightPoint.get(rightColumn));
+                                matchPoint.set(rightColumn, match.get(rightColumn));
                             }
+                            result.add(matchPoint);
                         }
                     }
-                    result.add(mergedPoint);
                 }
                 return new InMemoryDataset(result, structure);
             }
