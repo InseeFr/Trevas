@@ -50,7 +50,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
-        joinFunctionsVisitor = new JoinFunctionsVisitor(this);
+        joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 

@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -95,6 +97,69 @@ public class SparkProcessingEngineTest {
                 Map.of("name", "Franck", "age", 24L, "weight", 9L, "wisdom", 10.5D)
         ));
 
+    }
+
+    @Test
+    public void testJoinWithAlias() throws ScriptException {
+
+        InMemoryDataset dataset1 = new InMemoryDataset(
+                List.of(
+                        List.of("a", 1L, 2L),
+                        List.of("b", 3L, 4L),
+                        List.of("c", 5L, 6L),
+                        List.of("d", 7L, 8L)
+                ),
+                List.of(
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+        InMemoryDataset dataset2 = new InMemoryDataset(
+                List.of(
+                        List.of(9L, "a", 10L),
+                        List.of(11L, "b", 12L),
+                        List.of(12L, "c", 13L),
+                        List.of(14L, "c", 15L)
+                ),
+                List.of(
+                        new Structured.Component("age2", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("weight2", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        InMemoryDataset dataset3 = new InMemoryDataset(
+                List.of(
+                        List.of(16L, "a", 17L),
+                        List.of(18L, "b", 19L),
+                        List.of(20L, "c", 21L),
+                        List.of(22L, "c", 23L)
+                ),
+                List.of(
+                        new Structured.Component("age3", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("weight3", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        ScriptContext context = engine.getContext();
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", dataset2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", dataset3);
+
+        engine.eval("result := left_join(ds1 as dsOne, ds2, ds3);");
+
+        var result = (Dataset) context.getAttribute("result");
+        assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("a", 1L, 2L, 9L, 10L, 16L, 17L),
+                Arrays.asList("b", 3L, 4L, 11L, 12L, 18L, 19L),
+                Arrays.asList("c", 5L, 6L, 12L, 13L, 20L, 21L),
+                Arrays.asList("c", 5L, 6L, 12L, 13L, 22L, 23L),
+                Arrays.asList("c", 5L, 6L, 14L, 15L, 20L, 21L),
+                Arrays.asList("c", 5L, 6L, 14L, 15L, 22L, 23L),
+                Arrays.asList("d", 7L, 8L, null, null, null, null)
+        );
     }
 
     @Test

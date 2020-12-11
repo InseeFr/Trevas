@@ -11,7 +11,6 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
@@ -19,7 +18,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
+import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 public class SparkProcessingEngine implements ProcessingEngine {
 
@@ -33,14 +34,17 @@ public class SparkProcessingEngine implements ProcessingEngine {
         this.spark = SparkSession.active();
     }
 
+    private SparkDataset asSparkDataset(DatasetExpression expression) {
+        if (expression instanceof SparkDatasetExpression) {
+            return ((SparkDatasetExpression) expression).resolve(Map.of());
+        } else {
+            return new SparkDataset(expression.resolve(Map.of()), spark);
+        }
+    }
+
     @Override
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, fr.insee.vtl.model.Dataset.Role> roles) {
-        SparkDataset dataset;
-        if (expression instanceof SparkDatasetExpression) {
-            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
-        } else {
-            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
-        }
+        SparkDataset dataset = asSparkDataset(expression);
         Dataset<Row> ds = dataset.getSparkDataset();
 
         // Compute the new schema.
@@ -87,12 +91,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
-        SparkDataset dataset;
-        if (expression instanceof SparkDatasetExpression) {
-            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
-        } else {
-            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
-        }
+        SparkDataset dataset = asSparkDataset(expression);
 
         Dataset<Row> ds = dataset.getSparkDataset();
         SparkFilterFunction filterFunction = new SparkFilterFunction(filter);
@@ -102,18 +101,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
-        SparkDataset dataset;
-        if (expression instanceof SparkDatasetExpression) {
-            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
-        } else {
-            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
-        }
+        SparkDataset dataset = asSparkDataset(expression);
 
         List<Column> newNames = fromTo.entrySet().stream()
                 .map(rename -> new Column(rename.getKey()).as(rename.getValue()))
                 .collect(Collectors.toList());
 
-        Dataset<Row> result = dataset.getSparkDataset().select(JavaConverters.iterableAsScalaIterable(newNames).toSeq());
+        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(newNames).toSeq());
 
         return new SparkDatasetExpression(new SparkDataset(result));
     }
@@ -121,17 +115,54 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
         SparkDataset dataset;
-        if (expression instanceof SparkDatasetExpression) {
-            dataset = ((SparkDatasetExpression) expression).resolve(Map.of());
-        } else {
-            dataset = new SparkDataset(expression.resolve(Map.of()), spark);
-        }
+        dataset = asSparkDataset(expression);
 
         List<Column> columns = columnNames.stream().map(Column::new).collect(Collectors.toList());
-        Seq<Column> columnSeq = JavaConverters.iterableAsScalaIterable(columns).toSeq();
+        Seq<Column> columnSeq = iterableAsScalaIterable(columns).toSeq();
 
         // Project in spark.
         Dataset<Row> result = dataset.getSparkDataset().select(columnSeq);
+
+        return new SparkDatasetExpression(new SparkDataset(result));
+    }
+
+    @Override
+    public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+        return null;
+    }
+
+    @Override
+    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+                                         Map<String, AggregationExpression> collectorMap,
+                                         Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
+        return null;
+    }
+
+    @Override
+    public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
+        // Convert to spark dataset.
+        List<Dataset<Row>> sparkDatasets = new ArrayList<>();
+        for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {
+            var sparkDataset = asSparkDataset(dataset.getValue())
+                    .getSparkDataset()
+                    .as(dataset.getKey());
+            sparkDatasets.add(sparkDataset);
+        }
+
+        var identifiers = components.stream()
+                .filter(component -> IDENTIFIER.equals(component.getRole()))
+                .map(Structured.Component::getName)
+                .collect(Collectors.toList());
+
+        var iterator = sparkDatasets.iterator();
+        var result = iterator.next();
+        while (iterator.hasNext()) {
+            result = result.join(
+                    iterator.next(),
+                    iterableAsScalaIterable(identifiers).toSeq(),
+                    "left"
+            );
+        }
 
         return new SparkDatasetExpression(new SparkDataset(result));
     }
@@ -164,17 +195,5 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 }
             }
         }
-    }
-
-    @Override
-    public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-        return null;
-    }
-
-    @Override
-    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
-                                         Map<String, AggregationExpression> collectorMap,
-                                         Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
-        return null;
     }
 }
