@@ -23,6 +23,7 @@ module fr.insee.vtl.engine {
 
     requires org.antlr.antlr4.runtime;
     requires org.apache.commons.lang3;
+    requires org.apache.commons.text;
 
     provides ScriptEngineFactory with VtlScriptEngineFactory;
 

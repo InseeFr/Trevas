@@ -30,6 +30,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final SetFunctionsVisitor setFunctionsVisitor;
     private final JoinFunctionsVisitor joinFunctionsVisitor;
+    private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
@@ -51,6 +52,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
+        distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -221,6 +223,18 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitNumericFunctions(VtlParser.NumericFunctionsContext ctx) {
         return numericFunctionsVisitor.visit(ctx.numericOperators());
+    }
+
+    /**
+     * Visits expressions involving distance functions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the distance function.
+     * @see DistanceFunctionsVisitor
+     */
+    @Override
+    public ResolvableExpression visitDistanceFunctions(VtlParser.DistanceFunctionsContext ctx) {
+        return distanceFunctionsVisitor.visit(ctx.distanceOperators());
     }
 
     /**
