@@ -35,23 +35,27 @@ public class SparkDataset implements Dataset {
     }
 
     public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
+        List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
+                RowFactory.create(points.toArray(new Object[]{}))
+        ).collect(Collectors.toList());
 
         // TODO: Handle nullable with component
+        StructType schema = toSparkSchema(vtlDataset.getDataStructure());
+
+        this.sparkDataset = spark.createDataFrame(rows, schema);
+        this.roles = Objects.requireNonNull(roles);
+    }
+
+    public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
-        for (Component component : vtlDataset.getDataStructure().values()) {
+        for (Component component : structure.values()) {
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
                     true
             ));
         }
-
-        List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
-                RowFactory.create(points.toArray(new Object[]{}))
-        ).collect(Collectors.toList());
-
-        this.sparkDataset = spark.createDataFrame(rows, DataTypes.createStructType(schema));
-        this.roles = Objects.requireNonNull(roles);
+        return DataTypes.createStructType(schema);
     }
 
     public static Class<?> toVtlType(DataType dataType) {
