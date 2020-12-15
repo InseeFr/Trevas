@@ -34,7 +34,7 @@ public class SparkDataset implements Dataset {
         this.sparkDataset = sparkDataset;
     }
 
-    public SparkDataset(Dataset vtlDataset, SparkSession spark) {
+    public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
 
         // TODO: Handle nullable with component
         List<StructField> schema = new ArrayList<>();
@@ -50,7 +50,8 @@ public class SparkDataset implements Dataset {
                 RowFactory.create(points.toArray(new Object[]{}))
         ).collect(Collectors.toList());
 
-        sparkDataset = spark.createDataFrame(rows, DataTypes.createStructType(schema));
+        this.sparkDataset = spark.createDataFrame(rows, DataTypes.createStructType(schema));
+        this.roles = Objects.requireNonNull(roles);
     }
 
     public static Class<?> toVtlType(DataType dataType) {

@@ -44,7 +44,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 ));
     }
 
-    private static Map<String, Role> getRoleMap(SparkDataset dataset) {
+    private static Map<String, Role> getRoleMap(fr.insee.vtl.model.Dataset dataset) {
         return getRoleMap(dataset.getDataStructure().values());
     }
 
@@ -52,7 +52,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         if (expression instanceof SparkDatasetExpression) {
             return ((SparkDatasetExpression) expression).resolve(Map.of());
         } else {
-            return new SparkDataset(expression.resolve(Map.of()), spark);
+            var dataset = expression.resolve(Map.of());
+            return new SparkDataset(dataset, getRoleMap(dataset), spark);
         }
     }
 
@@ -100,7 +101,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
             return new GenericRowWithSchema(objects, newSchema);
         }, RowEncoder.apply(newSchema));
 
-        return new SparkDatasetExpression(new SparkDataset(result));
+        // Create the new role map.
+        var roleMap = getRoleMap(dataset);
+        roleMap.putAll(roles);
+
+        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
     }
 
     @Override
@@ -123,7 +128,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(newNames).toSeq());
 
-        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
+        var roleMap = getRoleMap(dataset);
+        for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
+            var role = roleMap.remove(fromToEntry.getKey());
+            roleMap.put(fromToEntry.getValue(), role);
+        }
+
+        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
     }
 
     @Override
