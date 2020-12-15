@@ -53,6 +53,18 @@ public interface Structured {
             this.role = component.getRole();
         }
 
+        public boolean isIdentifier() {
+            return Dataset.Role.IDENTIFIER.equals(this.role);
+        }
+
+        public boolean isMeasure() {
+            return Dataset.Role.MEASURE.equals(this.role);
+        }
+
+        public boolean isAttribute() {
+            return Dataset.Role.ATTRIBUTE.equals(this.role);
+        }
+
         /**
          * Returns the name of the component.
          *
