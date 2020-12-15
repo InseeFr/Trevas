@@ -11,8 +11,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConverters;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.types.DataTypes.*;
@@ -24,6 +23,12 @@ public class SparkDataset implements Dataset {
 
     private final org.apache.spark.sql.Dataset<Row> sparkDataset;
     private DataStructure dataStructure = null;
+    private Collection<String> identifiers = Collections.emptyList();
+
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Collection<String> identifiers) {
+        this.sparkDataset = Objects.requireNonNull(sparkDataset);
+        this.identifiers = Objects.requireNonNull(identifiers);
+    }
 
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
         this.sparkDataset = sparkDataset;
@@ -98,7 +103,11 @@ public class SparkDataset implements Dataset {
             StructType schema = sparkDataset.schema();
             List<Component> components = new ArrayList<>();
             for (StructField field : JavaConverters.asJavaCollection(schema)) {
-                components.add(new Component(field.name(), toVtlType(field.dataType()), Role.MEASURE));
+                components.add(new Component(
+                        field.name(),
+                        toVtlType(field.dataType()),
+                        identifiers.contains(field.name()) ? Role.IDENTIFIER : Role.MEASURE
+                ));
             }
             dataStructure = new DataStructure(components);
         }
