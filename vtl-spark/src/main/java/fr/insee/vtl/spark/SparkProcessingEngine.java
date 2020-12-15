@@ -122,11 +122,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         SparkDataset dataset = asSparkDataset(expression);
 
-        List<Column> newNames = fromTo.entrySet().stream()
-                .map(rename -> new Column(rename.getKey()).as(rename.getValue()))
-                .collect(Collectors.toList());
+        List<Column> columns = new ArrayList<>();
+        for (String name : dataset.getColumnNames()) {
+            var column = new Column(name);
+            if (fromTo.containsKey(name)) {
+                column = column.as(fromTo.get(name));
+            }
+            columns.add(column);
+        }
 
-        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(newNames).toSeq());
+        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(columns).toSeq());
 
         var roleMap = getRoleMap(dataset);
         for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
