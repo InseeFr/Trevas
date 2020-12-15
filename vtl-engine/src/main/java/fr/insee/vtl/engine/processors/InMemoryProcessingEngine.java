@@ -4,8 +4,7 @@ import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
 
 import javax.script.ScriptEngine;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -177,6 +176,85 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                         }).collect(Collectors.toList());
 
                 return new InMemoryDataset(collect, structure);
+            }
+
+            @Override
+            public DataStructure getDataStructure() {
+                return structure;
+            }
+        };
+    }
+
+    @Override
+    public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
+        var iterator = datasets.values().iterator();
+        var leftMost = iterator.next();
+        while (iterator.hasNext()) {
+            leftMost = handleLeftJoin(components, leftMost, iterator.next());
+        }
+        return leftMost;
+    }
+
+    private DatasetExpression handleLeftJoin(List<Structured.Component> identifiers, DatasetExpression left, DatasetExpression right) {
+        // Create common structure
+        List<Structured.Component> components = new ArrayList<>(identifiers);
+        for (Structured.Component component : left.getDataStructure().values()) {
+            if (!identifiers.contains(component)) {
+                components.add(component);
+            }
+        }
+        for (Structured.Component component : right.getDataStructure().values()) {
+            if (!identifiers.contains(component)) {
+                components.add(component);
+            }
+        }
+
+        var structure = new Structured.DataStructure(components);
+
+        // Predicate for the join. Could be using the
+        Comparator<Structured.DataPoint> predicate = (dl, dr) -> {
+            for (Structured.Component identifier : identifiers) {
+                if (!Objects.equals(dl.get(identifier.getName()), dr.get(identifier.getName()))) {
+                    return -1;
+                }
+            }
+            return 0;
+        };
+
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+                var leftPoints = left.resolve(context).getDataPoints();
+                var rightPoints = right.resolve(context).getDataPoints();
+                List<DataPoint> result = new ArrayList<>();
+                for (DataPoint leftPoint : leftPoints) {
+                    List<DataPoint> matches = new ArrayList<>();
+                    for (DataPoint rightPoint : rightPoints) {
+                        // Check equality
+                        if (predicate.compare(leftPoint, rightPoint) == 0) {
+                            matches.add(rightPoint);
+                        }
+                    }
+
+                    // Create merge datapoint.
+                    var mergedPoint = new DataPoint(structure);
+                    for (String leftColumn : left.getDataStructure().keySet()) {
+                        mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
+                    }
+
+                    if (matches.isEmpty()) {
+                        result.add(mergedPoint);
+                    } else {
+                        for (DataPoint match : matches) {
+                            var matchPoint = new DataPoint(structure, mergedPoint);
+                            for (String rightColumn : right.getDataStructure().keySet()) {
+                                matchPoint.set(rightColumn, match.get(rightColumn));
+                            }
+                            result.add(matchPoint);
+                        }
+                    }
+                }
+                return new InMemoryDataset(result, structure);
             }
 
             @Override

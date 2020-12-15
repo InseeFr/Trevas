@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static fr.insee.vtl.model.Structured.*;
+
 public interface ProcessingEngine {
 
     DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
@@ -17,8 +19,10 @@ public interface ProcessingEngine {
 
     DatasetExpression executeUnion(List<DatasetExpression> datasets);
 
-    DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+    DatasetExpression executeAggr(DatasetExpression expression, DataStructure structure,
                                   Map<String, AggregationExpression> collectorMap,
-                                  Function<Structured.DataPoint, Map<String, Object>> keyExtractor);
+                                  Function<DataPoint, Map<String, Object>> keyExtractor);
+
+    DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
 }
