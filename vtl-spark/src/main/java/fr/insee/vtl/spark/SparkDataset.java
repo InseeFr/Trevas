@@ -23,11 +23,11 @@ public class SparkDataset implements Dataset {
 
     private final org.apache.spark.sql.Dataset<Row> sparkDataset;
     private DataStructure dataStructure = null;
-    private Collection<String> identifiers = Collections.emptyList();
+    private Map<String, Role> roles = Collections.emptyMap();
 
-    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Collection<String> identifiers) {
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
         this.sparkDataset = Objects.requireNonNull(sparkDataset);
-        this.identifiers = Objects.requireNonNull(identifiers);
+        this.roles = Objects.requireNonNull(roles);
     }
 
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
@@ -106,7 +106,7 @@ public class SparkDataset implements Dataset {
                 components.add(new Component(
                         field.name(),
                         toVtlType(field.dataType()),
-                        identifiers.contains(field.name()) ? Role.IDENTIFIER : Role.MEASURE
+                        roles.getOrDefault(field.name(), Role.MEASURE)
                 ));
             }
             dataStructure = new DataStructure(components);
