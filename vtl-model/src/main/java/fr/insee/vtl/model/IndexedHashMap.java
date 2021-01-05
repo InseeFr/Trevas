@@ -42,7 +42,7 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
 
     @Override
     public boolean containsValue(Object value) {
-        return containsValue(value);
+        return delegate.containsValue(value);
     }
 
     @Override

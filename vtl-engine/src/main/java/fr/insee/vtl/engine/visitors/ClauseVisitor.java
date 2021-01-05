@@ -53,7 +53,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var roles = new LinkedHashMap<String, Dataset.Role>();
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
             var columnName = calcCtx.componentID().getText();
-            var columnRole = calcCtx.componentRole() == null ? Dataset.Role.MEASURE
+            var columnRole = calcCtx.componentRole() == null
+                    ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
             ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
             expressions.put(columnName, calc);

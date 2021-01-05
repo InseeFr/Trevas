@@ -11,8 +11,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConverters;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.types.DataTypes.*;
@@ -24,28 +23,39 @@ public class SparkDataset implements Dataset {
 
     private final org.apache.spark.sql.Dataset<Row> sparkDataset;
     private DataStructure dataStructure = null;
+    private Map<String, Role> roles = Collections.emptyMap();
+
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
+        this.sparkDataset = Objects.requireNonNull(sparkDataset);
+        this.roles = Objects.requireNonNull(roles);
+    }
 
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
         this.sparkDataset = sparkDataset;
     }
 
-    public SparkDataset(Dataset vtlDataset, SparkSession spark) {
+    public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
+        List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
+                RowFactory.create(points.toArray(new Object[]{}))
+        ).collect(Collectors.toList());
 
         // TODO: Handle nullable with component
+        StructType schema = toSparkSchema(vtlDataset.getDataStructure());
+
+        this.sparkDataset = spark.createDataFrame(rows, schema);
+        this.roles = Objects.requireNonNull(roles);
+    }
+
+    public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
-        for (Component component : vtlDataset.getDataStructure().values()) {
+        for (Component component : structure.values()) {
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
                     true
             ));
         }
-
-        List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
-                RowFactory.create(points.toArray(new Object[]{}))
-        ).collect(Collectors.toList());
-
-        sparkDataset = spark.createDataFrame(rows, DataTypes.createStructType(schema));
+        return DataTypes.createStructType(schema);
     }
 
     public static Class<?> toVtlType(DataType dataType) {
@@ -98,7 +108,11 @@ public class SparkDataset implements Dataset {
             StructType schema = sparkDataset.schema();
             List<Component> components = new ArrayList<>();
             for (StructField field : JavaConverters.asJavaCollection(schema)) {
-                components.add(new Component(field.name(), toVtlType(field.dataType()), Role.MEASURE));
+                components.add(new Component(
+                        field.name(),
+                        toVtlType(field.dataType()),
+                        roles.getOrDefault(field.name(), Role.MEASURE)
+                ));
             }
             dataStructure = new DataStructure(components);
         }

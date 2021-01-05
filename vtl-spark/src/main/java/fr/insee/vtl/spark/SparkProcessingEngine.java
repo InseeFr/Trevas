@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.model.Dataset.Component;
+import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
@@ -34,16 +36,29 @@ public class SparkProcessingEngine implements ProcessingEngine {
         this.spark = SparkSession.active();
     }
 
+    private static Map<String, Role> getRoleMap(Collection<Component> components) {
+        return components.stream()
+                .collect(Collectors.toMap(
+                        Component::getName,
+                        Component::getRole
+                ));
+    }
+
+    private static Map<String, Role> getRoleMap(fr.insee.vtl.model.Dataset dataset) {
+        return getRoleMap(dataset.getDataStructure().values());
+    }
+
     private SparkDataset asSparkDataset(DatasetExpression expression) {
         if (expression instanceof SparkDatasetExpression) {
             return ((SparkDatasetExpression) expression).resolve(Map.of());
         } else {
-            return new SparkDataset(expression.resolve(Map.of()), spark);
+            var dataset = expression.resolve(Map.of());
+            return new SparkDataset(dataset, getRoleMap(dataset), spark);
         }
     }
 
     @Override
-    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, fr.insee.vtl.model.Dataset.Role> roles) {
+    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, Role> roles) {
         SparkDataset dataset = asSparkDataset(expression);
         Dataset<Row> ds = dataset.getSparkDataset();
 
@@ -86,7 +101,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
             return new GenericRowWithSchema(objects, newSchema);
         }, RowEncoder.apply(newSchema));
 
-        return new SparkDatasetExpression(new SparkDataset(result));
+        // Create the new role map.
+        var roleMap = getRoleMap(dataset);
+        roleMap.putAll(roles);
+
+        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
     }
 
     @Override
@@ -96,26 +115,36 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> ds = dataset.getSparkDataset();
         SparkFilterFunction filterFunction = new SparkFilterFunction(filter);
         Dataset<Row> result = ds.filter(filterFunction);
-        return new SparkDatasetExpression(new SparkDataset(result));
+        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
     }
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         SparkDataset dataset = asSparkDataset(expression);
 
-        List<Column> newNames = fromTo.entrySet().stream()
-                .map(rename -> new Column(rename.getKey()).as(rename.getValue()))
-                .collect(Collectors.toList());
+        List<Column> columns = new ArrayList<>();
+        for (String name : dataset.getColumnNames()) {
+            var column = new Column(name);
+            if (fromTo.containsKey(name)) {
+                column = column.as(fromTo.get(name));
+            }
+            columns.add(column);
+        }
 
-        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(newNames).toSeq());
+        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(columns).toSeq());
 
-        return new SparkDatasetExpression(new SparkDataset(result));
+        var roleMap = getRoleMap(dataset);
+        for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
+            var role = roleMap.remove(fromToEntry.getKey());
+            roleMap.put(fromToEntry.getValue(), role);
+        }
+
+        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
     }
 
     @Override
     public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
-        SparkDataset dataset;
-        dataset = asSparkDataset(expression);
+        SparkDataset dataset = asSparkDataset(expression);
 
         List<Column> columns = columnNames.stream().map(Column::new).collect(Collectors.toList());
         Seq<Column> columnSeq = iterableAsScalaIterable(columns).toSeq();
@@ -123,19 +152,19 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // Project in spark.
         Dataset<Row> result = dataset.getSparkDataset().select(columnSeq);
 
-        return new SparkDatasetExpression(new SparkDataset(result));
+        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
     }
 
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-        return null;
+        throw new UnsupportedOperationException("TODO");
     }
 
     @Override
     public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
                                          Map<String, AggregationExpression> collectorMap,
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
-        return null;
+        throw new UnsupportedOperationException("TODO");
     }
 
     @Override
@@ -164,7 +193,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             );
         }
 
-        return new SparkDatasetExpression(new SparkDataset(result));
+        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(components)));
     }
 
     public static class Factory implements ProcessingEngineFactory {
