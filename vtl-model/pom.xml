@@ -12,6 +12,7 @@
 
     <artifactId>vtl-model</artifactId>
     <name>VTL Model</name>
+	<description>Model describing VTL expressions and bindings</description>
     <version>0.1.0-SNAPSHOT</version>
 
 </project>

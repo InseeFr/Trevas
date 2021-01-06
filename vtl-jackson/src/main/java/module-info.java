@@ -1,5 +1,5 @@
 /**
- * This module expose a Jackson Module for VTL model.
+ * This module exposes a Jackson module for the VTL model.
  */
 
 module fr.insee.vtl.jackson {
