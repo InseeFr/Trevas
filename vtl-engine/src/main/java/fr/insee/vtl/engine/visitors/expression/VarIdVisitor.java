@@ -75,7 +75,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
             return ResolvableExpression.ofType(Object.class, null);
         }
 
-        throw new VtlRuntimeException(new UnsupportedTypeException(ctx, value.getClass()));
+        throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), ctx));
 
     }
 }
