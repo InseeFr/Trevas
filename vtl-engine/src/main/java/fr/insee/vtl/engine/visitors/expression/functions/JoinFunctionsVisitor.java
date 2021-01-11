@@ -3,9 +3,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.RuleContext;
@@ -97,6 +95,44 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         return datasets;
     }
 
+    /**
+     * Rename all the components to avoid duplicates.
+     */
+    private Map<String, DatasetExpression> renameDuplicates(List<Component> identifiers,
+                                                                      Map<String, DatasetExpression> datasets) {
+        Set<String> identifierNames = identifiers.stream().map(Component::getName).collect(Collectors.toSet());
+        Set<String> duplicates = new HashSet<>();
+        Set<String> uniques = new HashSet<>();
+        for (DatasetExpression dataset : datasets.values()) {
+            for (String name : dataset.getColumnNames()) {
+                // Ignore identifiers.
+                if (identifierNames.contains(name)) {
+                    continue;
+                }
+                // Compute duplicates.
+                if(!uniques.add(name)) {
+                    duplicates.add(name);
+                }
+            }
+        }
+
+        // Use duplicates to rename columns
+        Map<String, DatasetExpression> result = new LinkedHashMap<>();
+        for (Map.Entry<String, DatasetExpression> entry : datasets.entrySet()) {
+            var name = entry.getKey();
+            var dataset = entry.getValue();
+            Map<String, String> fromTo = new HashMap<>();
+            for (String columnName : dataset.getColumnNames()) {
+                if (duplicates.contains(columnName)) {
+                    fromTo.put(columnName, name + "#" + columnName);
+                }
+            }
+            result.put(name, processingEngine.executeRename(dataset, fromTo));
+        }
+
+        return result;
+    }
+
     private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
         var joinClauseContext = ctx.joinClause();
         var datasets = normalizeDatasets(joinClauseContext);
@@ -125,7 +161,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
             commonIdentifiers.removeIf(component -> !usingNames.contains(component.getName()));
         }
 
-        return processingEngine.executeLeftJoin(datasets, commonIdentifiers);
+        return processingEngine.executeLeftJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
     }
 
     private DatasetExpression crossJoin(VtlParser.JoinExprContext ctx) {

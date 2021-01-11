@@ -131,13 +131,18 @@ public interface Structured {
 
         public DataStructure(Collection<Component> components) {
             super(components.size());
+            Set<Component> duplicates = new HashSet<>();
             for (Component component : components) {
                 var newComponent = new Component(component);
                 Component old = put(newComponent.getName(), newComponent);
                 if (old != null) {
-                    throw new IllegalArgumentException("duplicate column in " + components);
+                    duplicates.add(old);
                 }
             }
+            if (!duplicates.isEmpty()) {
+                throw new IllegalArgumentException("duplicate column " + duplicates);
+            }
+
         }
 
         public DataStructure(DataStructure dataStructure) {
