@@ -211,7 +211,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
         var structure = new Structured.DataStructure(components);
 
-        // Predicate for the join. Could be using the
+        // Predicate for the join.
         Comparator<Structured.DataPoint> predicate = (dl, dr) -> {
             for (Structured.Component identifier : identifiers) {
                 if (!Objects.equals(dl.get(identifier.getName()), dr.get(identifier.getName()))) {
