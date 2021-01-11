@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 public class ConflictingTypesException extends VtlScriptException {
 
     /**
-     * Constructor taking the parsing context and the conflicting types.
+     * Constructor taking the conflicting types and the parsing context.
      *
-     * @param tree The parsing context where the exception is thrown.
      * @param types The conflicting types.
+     * @param tree The parsing context where the exception is thrown.
      */
     public ConflictingTypesException(Collection<Class<?>> types, ParseTree tree) {
         super(String.format("conflicting types: %s", types.stream().map(Class::getSimpleName)
