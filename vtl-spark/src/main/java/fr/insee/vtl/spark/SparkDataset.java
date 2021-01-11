@@ -46,6 +46,11 @@ public class SparkDataset implements Dataset {
         this.roles = Objects.requireNonNull(roles);
     }
 
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure dataStructure) {
+        this.sparkDataset = Objects.requireNonNull(sparkDataset);
+        this.dataStructure = Objects.requireNonNull(dataStructure);
+    }
+
     public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
