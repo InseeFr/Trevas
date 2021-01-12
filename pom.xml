@@ -17,6 +17,10 @@
     <name>Trevas</name>
     <description>Transformation engine and validator for statistics.</description>
     <url>https://inseefr.github.io/Trevas</url>
+    <organization>
+        <name>Insee</name>
+        <url>http://insee.fr</url>
+    </organization>
 
     <licenses>
         <license>
