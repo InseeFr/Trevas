@@ -12,6 +12,7 @@
 
     <artifactId>vtl-engine</artifactId>
     <name>VTL Engine</name>
+	<description>VTL engine framework for Trevas</description>
     <version>0.1.0-SNAPSHOT</version>
 
     <dependencies>
