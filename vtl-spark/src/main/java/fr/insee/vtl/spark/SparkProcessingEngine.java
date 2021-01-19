@@ -50,9 +50,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     private SparkDataset asSparkDataset(DatasetExpression expression) {
         if (expression instanceof SparkDatasetExpression) {
-            return ((SparkDatasetExpression) expression).resolve(Map.of());
+            return ((SparkDatasetExpression) expression).resolve(Collections.emptyMap());
         } else {
-            var dataset = expression.resolve(Map.of());
+            fr.insee.vtl.model.Dataset dataset = expression.resolve(Collections.emptyMap());
             return new SparkDataset(dataset, getRoleMap(dataset), spark);
         }
     }
@@ -102,7 +102,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         }, RowEncoder.apply(newSchema));
 
         // Create the new role map.
-        var roleMap = getRoleMap(dataset);
+        Map<String, Role> roleMap = getRoleMap(dataset);
         roleMap.putAll(roles);
 
         return new SparkDatasetExpression(new SparkDataset(result, roleMap));
@@ -124,7 +124,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         List<Column> columns = new ArrayList<>();
         for (String name : dataset.getColumnNames()) {
-            var column = new Column(name);
+            Column column = new Column(name);
             if (fromTo.containsKey(name)) {
                 column = column.as(fromTo.get(name));
             }
@@ -133,9 +133,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(columns).toSeq());
 
-        var roleMap = getRoleMap(dataset);
+        Map<String, Role> roleMap = getRoleMap(dataset);
         for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
-            var role = roleMap.remove(fromToEntry.getKey());
+            Role role = roleMap.remove(fromToEntry.getKey());
             roleMap.put(fromToEntry.getValue(), role);
         }
 
@@ -172,19 +172,19 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // Convert to spark dataset.
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {
-            var sparkDataset = asSparkDataset(dataset.getValue())
+            Dataset<Row> sparkDataset = asSparkDataset(dataset.getValue())
                     .getSparkDataset()
                     .as(dataset.getKey());
             sparkDatasets.add(sparkDataset);
         }
 
-        var identifiers = components.stream()
+        List<String> identifiers = components.stream()
                 .filter(component -> IDENTIFIER.equals(component.getRole()))
                 .map(Structured.Component::getName)
                 .collect(Collectors.toList());
 
-        var iterator = sparkDatasets.iterator();
-        var result = iterator.next();
+        Iterator<Dataset<Row>> iterator = sparkDatasets.iterator();
+        Dataset<Row> result = iterator.next();
         while (iterator.hasNext()) {
             result = result.join(
                     iterator.next(),
@@ -208,7 +208,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         @Override
         public ProcessingEngine getProcessingEngine(ScriptEngine engine) {
             // Try to find the session in the script engine.
-            var session = engine.get(SPARK_SESSION);
+            Object session = engine.get(SPARK_SESSION);
             if (session != null) {
                 if (session instanceof SparkSession) {
                     return new SparkProcessingEngine((SparkSession) session);
@@ -216,7 +216,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     throw new IllegalArgumentException(SPARK_SESSION + " was not a spark session");
                 }
             } else {
-                var activeSession = SparkSession.active();
+                SparkSession activeSession = SparkSession.active();
                 if (activeSession != null) {
                     return new SparkProcessingEngine(activeSession);
                 } else {
