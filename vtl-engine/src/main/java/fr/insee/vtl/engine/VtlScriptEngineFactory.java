@@ -3,6 +3,7 @@ package fr.insee.vtl.engine;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <code>VtlScriptEngineFactory</code> is used to instantiate VTL script engines and hold their basic description.
@@ -86,7 +87,8 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public Object getParameter(String key) {
-        throw new UnsupportedOperationException();
+        Objects.requireNonNull(key);
+        return null;
     }
 
     /**
