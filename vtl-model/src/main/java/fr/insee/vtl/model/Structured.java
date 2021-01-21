@@ -133,8 +133,8 @@ public interface Structured {
             super(components.size());
             Set<Component> duplicates = new HashSet<>();
             for (Component component : components) {
-                Component newComponent = new Component(component);
-                Component old = put(newComponent.getName(), newComponent);
+                var newComponent = new Component(component);
+                var old = put(newComponent.getName(), newComponent);
                 if (old != null) {
                     duplicates.add(old);
                 }

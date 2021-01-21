@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,7 @@ import java.util.Map;
 public abstract class ListExpression implements ResolvableExpression, TypedContainerExpression {
 
     public static <T> ListExpression withContainedType(Collection<Object> elements, Class<T> containedType) {
-        List<Object> list = new ArrayList<>(elements);
+        List<Object> list = List.copyOf(elements);
         return new ListExpression() {
             @Override
             public List<?> resolve(Map<String, Object> context) {
