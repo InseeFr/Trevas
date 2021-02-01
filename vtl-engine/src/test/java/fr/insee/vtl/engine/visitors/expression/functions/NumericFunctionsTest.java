@@ -24,6 +24,51 @@ public class NumericFunctionsTest {
     }
 
     @Test
+    public void testNull() throws  ScriptException {
+        // Ceil
+        engine.eval("a := ceil(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Floor
+        engine.eval("a := floor(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Abs
+        engine.eval("a := abs(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Exp
+        engine.eval("a := exp(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Ln
+        engine.eval("a := ln(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Round
+        engine.eval("a := round(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := round(10.55, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Trunc
+        engine.eval("a := trunc(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Sqrt
+        engine.eval("a := sqrt(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Mod
+        engine.eval("a := mod(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := mod(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        // Power
+        engine.eval("a := power(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := power(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        // Log
+        engine.eval("a := log(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := log(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    }
+
+    @Test
     public void testCeil() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := ceil(3.14159);");
