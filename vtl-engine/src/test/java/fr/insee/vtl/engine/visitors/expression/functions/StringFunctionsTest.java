@@ -32,12 +32,6 @@ public class StringFunctionsTest {
         // Rtrim
         engine.eval("a := rtrim(null);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        // Ltrim
-        engine.eval("a := ceil(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        // Rtrim
-        engine.eval("a := ceil(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Upper
         engine.eval("a := upper(null);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();

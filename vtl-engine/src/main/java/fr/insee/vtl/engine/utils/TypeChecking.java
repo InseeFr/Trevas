@@ -76,12 +76,7 @@ public class TypeChecking {
     }
 
     public static <T extends TypedExpression> T assertNumber(T expression, ParseTree tree) {
-        if (!isType(expression, Number.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(Set.of(Long.class, Double.class), expression.getType(), tree)
-            );
-        }
-        return expression;
+        return assertTypeExpression(expression, Number.class, tree);
     }
 
     /**

@@ -38,9 +38,6 @@ public class DistanceFunctionsTest {
         engine.eval("b := levenshtein(\"test\", \"tes\");");
         assertThat(context.getAttribute("b")).isEqualTo(1L);
 
-        engine.eval("c := levenshtein(null, \"tes\");");
-        assertThat(context.getAttribute("c")).isNull();
-
         assertThatThrownBy(() -> {
             engine.eval("z := levenshtein(1, \"test\");");
         }).isInstanceOf(InvalidTypeException.class)

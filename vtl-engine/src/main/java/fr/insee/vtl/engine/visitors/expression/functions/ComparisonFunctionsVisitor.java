@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -14,6 +13,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
 
 /**
@@ -47,9 +47,9 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         if (!hasSameTypeOrNull(operandExpression, fromExpression, toExpression))
             throw new VtlRuntimeException(new ConflictingTypesException(
-                            List.of(operandExpression.getType(), fromExpression.getType(), toExpression.getType()),
-                            ctx
-                    ));
+                    List.of(operandExpression.getType(), fromExpression.getType(), toExpression.getType()),
+                    ctx
+            ));
         // TODO: handle other types (dates?)
 
         var typedOperandExpression =
@@ -60,14 +60,14 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 Long operandValue = (Long) typedOperandExpression.resolve(context);
                 Long fromValue = (Long) fromExpression.resolve(context);
                 Long toValue = (Long) toExpression.resolve(context);
-                if(TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
+                if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
                 return operandValue >= fromValue && operandValue <= toValue;
             });
         return ResolvableExpression.withType(Boolean.class, context -> {
             Double operandValue = (Double) typedOperandExpression.resolve(context);
             Double fromValue = (Double) fromExpression.resolve(context);
             Double toValue = (Double) toExpression.resolve(context);
-            if(TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
+            if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
             return operandValue >= fromValue && operandValue <= toValue;
         });
     }
@@ -80,23 +80,13 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
      */
     @Override
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
-        ResolvableExpression operandExpression = exprVisitor.visit(ctx.op);
-        ResolvableExpression patternExpression = exprVisitor.visit(ctx.pattern);
-
-        if (!operandExpression.getType().equals(String.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(String.class, operandExpression.getType(), ctx.op)
-            );
-        }
-        if (!patternExpression.getType().equals(String.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(String.class, patternExpression.getType(), ctx.pattern)
-            );
-        }
+        ResolvableExpression operandExpression = assertString(exprVisitor.visit(ctx.op), ctx.op);
+        ResolvableExpression patternExpression = assertString(exprVisitor.visit(ctx.pattern), ctx.pattern);
 
         return ResolvableExpression.withType(Boolean.class, context -> {
             String operandValue = (String) operandExpression.resolve(context);
             String patternValue = (String) patternExpression.resolve(context);
+            if (TypeChecking.hasNullArgs(operandValue, patternValue)) return null;
             Pattern pattern = Pattern.compile(patternValue);
             Matcher matcher = pattern.matcher(operandValue);
             return matcher.matches();
@@ -116,5 +106,5 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 operandExpression.resolve(context) == null
         );
     }
-    
+
 }
