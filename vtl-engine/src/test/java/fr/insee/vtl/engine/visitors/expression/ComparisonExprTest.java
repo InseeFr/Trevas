@@ -9,6 +9,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,6 +21,31 @@ public class ComparisonExprTest {
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    public void testNull() throws  ScriptException {
+
+        ScriptContext context = engine.getContext();
+
+        List<String> operators = List.of("=", "<>", "<", ">", "<=", ">=");
+        List<String> values = List.of(
+                "\"string\"", "1.1", "1", "true", "null"
+        );
+
+        for (String operator : operators) {
+            // Left is null
+            for (String value : values) {
+                engine.eval("bool := null " + operator + " " + value + " ;");
+                assertThat((Boolean) context.getAttribute("bool")).isNull();
+            }
+
+            // Right is null
+            for (String value : values) {
+                engine.eval("bool := " + value + " " + operator + ";");
+                assertThat((Boolean) context.getAttribute("bool")).isNull();
+            }
+        }
     }
 
     @Test
