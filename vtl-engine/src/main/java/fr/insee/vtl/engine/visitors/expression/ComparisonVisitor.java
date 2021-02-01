@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
+import static fr.insee.vtl.engine.utils.TypeChecking.*;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
@@ -37,6 +37,31 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    private static <T extends Comparable<T>>  boolean equal(T left, T right) {
+        return left.compareTo(right) == 0;
+    }
+
+    private static <T extends Comparable<T>>  boolean notEqual(T left, T right) {
+        return !equal(left, right);
+    }
+
+    private static <T extends Comparable<T>>  boolean lessThan(T left, T right) {
+        return left.compareTo(right) < 0;
+    }
+
+    private static <T extends Comparable<T>>  boolean greaterThan(T left, T right) {
+        return left.compareTo(right) > 0;
+    }
+
+    private static <T extends Comparable<T>>  boolean lessThanOrEqual(T left, T right) {
+        return !greaterThan(left, right);
+    }
+
+    private static <T extends Comparable<T>>  boolean greaterThanOrEqual(T left, T right) {
+        return !lessThan(left, right);
+    }
+
+
     /**
      * Visits expressions with comparisons.
      *
@@ -46,113 +71,60 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-        ResolvableExpression rightExpression = assertTypeExpression(
-                exprVisitor.visit(ctx.right),
-                leftExpression.getType(),
-                ctx.right);
+        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
 
         // Get the type of the Token.
         // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
-        switch (type.getType()) {
-            case VtlParser.EQ:
-                return handleEqual(leftExpression, rightExpression);
-            case VtlParser.NEQ:
-                return handleNotEqual(leftExpression, rightExpression);
-            case VtlParser.LT:
-                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
-                    return BooleanExpression.of(context -> {
-                        Long leftValue = (Long) leftExpression.resolve(context);
-                        Long rightValue = (Long) rightExpression.resolve(context);
-                        return leftValue < rightValue;
-                    });
-                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
-                    return BooleanExpression.of(context -> {
-                        Double leftValue = (Double) leftExpression.resolve(context);
-                        Double rightValue = (Double) rightExpression.resolve(context);
-                        return leftValue < rightValue;
-                    });
-                } else {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
-                    );
-                }
-            case VtlParser.MT:
-                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
-                    return BooleanExpression.of(context -> {
-                        Long leftValue = (Long) leftExpression.resolve(context);
-                        Long rightValue = (Long) rightExpression.resolve(context);
-                        return leftValue > rightValue;
-                    });
+        // Special case with nulls.
+        if (leftExpression.getType().equals(Object.class) || rightExpression.getType().equals(Object.class)) {
+            return BooleanExpression.of((Boolean) null);
+        }
 
-                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+        assertTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
+
+        // As long as both types return Comparable<TYPE>.
+        if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
+            switch (type.getType()) {
+                case VtlParser.EQ:
                     return BooleanExpression.of(context -> {
-                        Double leftValue = (Double) leftExpression.resolve(context);
-                        Double rightValue = (Double) rightExpression.resolve(context);
-                        return leftValue > rightValue;
+                        return equal((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
                     });
-                } else {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
-                    );
-                }
-            case VtlParser.LE:
-                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                case VtlParser.NEQ:
                     return BooleanExpression.of(context -> {
-                        Long leftValue = (Long) leftExpression.resolve(context);
-                        Long rightValue = (Long) rightExpression.resolve(context);
-                        return leftValue <= rightValue;
+                        return notEqual((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
                     });
-                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                case VtlParser.LT:
                     return BooleanExpression.of(context -> {
-                        Double leftValue = (Double) leftExpression.resolve(context);
-                        Double rightValue = (Double) rightExpression.resolve(context);
-                        return leftValue <= rightValue;
+                        return lessThan((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
                     });
-                } else {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
-                    );
-                }
-            case VtlParser.ME:
-                if (TypeChecking.isLong(leftExpression) && TypeChecking.isLong(rightExpression)) {
+                case VtlParser.MT:
                     return BooleanExpression.of(context -> {
-                        Long leftValue = (Long) leftExpression.resolve(context);
-                        Long rightValue = (Long) rightExpression.resolve(context);
-                        return leftValue >= rightValue;
+                        return greaterThan((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
                     });
-                } else if (TypeChecking.isDouble(leftExpression) && TypeChecking.isDouble(rightExpression)) {
+                case VtlParser.LE:
                     return BooleanExpression.of(context -> {
-                        Double leftValue = (Double) leftExpression.resolve(context);
-                        Double rightValue = (Double) rightExpression.resolve(context);
-                        return leftValue >= rightValue;
+                        return lessThanOrEqual((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
                     });
-                } else {
-                    throw new VtlRuntimeException(
-                            new InvalidTypeException(leftExpression.getType(), rightExpression.getType(), ctx.right)
-                    );
-                }
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+                case VtlParser.ME:
+                    return BooleanExpression.of(context -> {
+                        return greaterThanOrEqual((Comparable) leftExpression.resolve(context),
+                                (Comparable) rightExpression.resolve(context));
+                    });
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
+        } else {
+            throw new Error("type " + leftExpression.getType() + " must implement Comparable");
         }
     }
 
-    private ResolvableExpression handleEqual(ResolvableExpression left, ResolvableExpression right) {
-        return BooleanExpression.of(context -> {
-            Object leftValue = left.resolve(context);
-            Object rightValue = right.resolve(context);
-            return leftValue.equals(rightValue);
-        });
-    }
-
-    private ResolvableExpression handleNotEqual(ResolvableExpression left, ResolvableExpression right) {
-        return BooleanExpression.of(context -> {
-            Object leftValue = left.resolve(context);
-            Object rightValue = right.resolve(context);
-            return !leftValue.equals(rightValue);
-        });
-    }
 
     /**
      * Visits 'element of' ('In' or 'Not in') expressions.

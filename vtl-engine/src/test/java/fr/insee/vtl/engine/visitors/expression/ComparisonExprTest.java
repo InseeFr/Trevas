@@ -30,7 +30,7 @@ public class ComparisonExprTest {
 
         List<String> operators = List.of("=", "<>", "<", ">", "<=", ">=");
         List<String> values = List.of(
-                "\"string\"", "1.1", "1", "true", "null"
+                "\"string\"", "1.1", "1", "null"
         );
 
         for (String operator : operators) {
@@ -42,7 +42,7 @@ public class ComparisonExprTest {
 
             // Right is null
             for (String value : values) {
-                engine.eval("bool := " + value + " " + operator + ";");
+                engine.eval("bool := " + value + " " + operator + " null;");
                 assertThat((Boolean) context.getAttribute("bool")).isNull();
             }
         }
