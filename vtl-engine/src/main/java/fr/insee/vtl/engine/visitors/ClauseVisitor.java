@@ -30,7 +30,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     private static String getName(VtlParser.ComponentIDContext context) {
         // TODO: Should be an expression so we can handle membership better and use the exceptions
         //  for undefined var etc.
-        return context.getText();
+        String text = context.getText();
+        if (text.startsWith("'") && text.endsWith("'")) {
+            text = text.substring(1, text.length() - 1);
+        }
+        return text;
     }
 
     @Override
@@ -52,7 +56,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var expressions = new LinkedHashMap<String, ResolvableExpression>();
         var roles = new LinkedHashMap<String, Dataset.Role>();
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
-            var columnName = calcCtx.componentID().getText();
+            var columnName = getName(calcCtx.componentID());
             var columnRole = calcCtx.componentRole() == null
                     ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());

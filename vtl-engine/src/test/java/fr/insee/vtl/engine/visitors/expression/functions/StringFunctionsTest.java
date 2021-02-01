@@ -47,15 +47,6 @@ public class StringFunctionsTest {
         assertThat(context.getAttribute("s1")).isEqualTo("bcde");
         engine.eval("s1 := substr(\"abcde\",1,3);");
         assertThat(context.getAttribute("s1")).isEqualTo("bc");
-
-        assertThatThrownBy(() -> {
-            engine.eval("se1 := substr(\"abc\",1,2,3);");
-        }).isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("too many args (3) for: substr(\"abc\",1,2,3)");
-        assertThatThrownBy(() -> {
-            engine.eval("se2 := substr(\"abc\",1,2,3,4,5,6);");
-        }).isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("too many args (6) for: substr(\"abc\",1,2,3,4,5,6)");
     }
 
     @Test

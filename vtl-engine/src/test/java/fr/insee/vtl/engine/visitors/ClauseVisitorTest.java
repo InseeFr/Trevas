@@ -85,7 +85,7 @@ public class ClauseVisitorTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc new_age := age + 1, identifier id := name, attribute unit := \"year\"];");
+        engine.eval("ds := ds1[calc new_age := age + 1, identifier id := name, attribute 'unit' := \"year\"];");
 
         Dataset ds = (Dataset) context.getAttribute("ds");
         Dataset.Component idComponent = ds.getDataStructure().values().stream().filter(component ->

@@ -2,22 +2,18 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.*;
 
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,11 +67,46 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private Object evalStream(CodePointCharStream stream, ScriptContext context) throws VtlScriptException {
         try {
             VtlLexer lexer = new VtlLexer(stream);
+
+            Deque<VtlScriptException> errors = new ArrayDeque<>();
+            BaseErrorListener baseErrorListener = new BaseErrorListener() {
+                @Override
+                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int startLine, int startColumn, String msg, RecognitionException e) {
+                    if (e != null && e.getCtx() != null) {
+                        errors.add(new VtlScriptException(msg, e.getCtx()));
+                    } else {
+                        if (offendingSymbol instanceof Token) {
+                            errors.add(new VtlSyntaxException(msg, (Token) offendingSymbol));
+                        } else {
+                            throw new Error("offendingSymbol was not a Token");
+                        }
+                    }
+                }
+
+            };
+
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(baseErrorListener);
+
             VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
+            parser.removeErrorListeners();
+            parser.addErrorListener(baseErrorListener);
+
+            // Note that we need to call this method to trigger the
+            // error listener.
+            var start = parser.start();
+
+            if (!errors.isEmpty()) {
+                var first = errors.removeFirst();
+                for (VtlScriptException suppressed : errors) {
+                    first.addSuppressed(suppressed);
+                }
+                throw first;
+            }
 
             AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context, getProcessingEngine());
             Object lastValue = null;
-            for (VtlParser.StatementContext stmt : parser.start().statement()) {
+            for (VtlParser.StatementContext stmt : start.statement()) {
                 lastValue = assignmentVisitor.visit(stmt);
             }
             return lastValue;

@@ -17,7 +17,7 @@ public class VtlScriptException extends ScriptException {
     /**
      * Constructor taking the exception message and the parsing context.
      *
-     * @param msg The message for the exception.
+     * @param msg  The message for the exception.
      * @param tree The parsing context where the exception is thrown.
      */
     public VtlScriptException(String msg, ParseTree tree) {
@@ -29,7 +29,7 @@ public class VtlScriptException extends ScriptException {
      * Constructor taking the mother exception and the parsing context.
      *
      * @param mother The mother exception.
-     * @param tree The parsing context where the exception is thrown.
+     * @param tree   The parsing context where the exception is thrown.
      */
     public VtlScriptException(Exception mother, ParseTree tree) {
         super(mother);
@@ -83,19 +83,26 @@ public class VtlScriptException extends ScriptException {
         private final Integer endColumn;
 
 
-        private Position(Token from, Token to) {
+        public Position(Token from, Token to) {
             this.startLine = from.getLine() - 1;
             this.endLine = to.getLine() - 1;
             this.startColumn = from.getCharPositionInLine();
             this.endColumn = to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1);
         }
 
-        private Position(Token token) {
+        public Position(Token token) {
             this.startLine = token.getLine() - 1;
             this.endLine = token.getLine() - 1;
             this.startColumn = token.getCharPositionInLine();
             this.endColumn = token.getCharPositionInLine() + (token.getStopIndex() - token.getStartIndex() + 1);
         }
+
+//        public Position(Integer startLine, Integer endLine, Integer startColumn, Integer endColumn) {
+//            this.startLine = startLine - 1;
+//            this.endLine = endLine - 1;
+//            this.startColumn = startColumn;
+//            this.endColumn = startLine + ( - token.getStartIndex() + 1);
+//        }
 
         /**
          * Returns the number of the line where the <code>Position</code> starts.
