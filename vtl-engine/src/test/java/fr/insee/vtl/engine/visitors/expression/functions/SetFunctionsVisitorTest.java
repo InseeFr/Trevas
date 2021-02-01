@@ -61,7 +61,7 @@ public class SetFunctionsVisitorTest {
                 .hasMessageContaining("ds3 is incompatible");
     }
 
--    @Test
+    @Test
     public void testUnionSimple() throws ScriptException {
 
         InMemoryDataset dataset = new InMemoryDataset(
