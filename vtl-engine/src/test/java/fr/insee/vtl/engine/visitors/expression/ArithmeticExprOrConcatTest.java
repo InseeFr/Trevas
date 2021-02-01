@@ -24,12 +24,20 @@ public class ArithmeticExprOrConcatTest {
     @Test
     public void testNull() throws  ScriptException {
         ScriptContext context = engine.getContext();
-
+        // Plus
+        engine.eval("res := 1 + null;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        engine.eval("res := null + 1;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        // Minus
+        engine.eval("res := 1 - null;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        engine.eval("res := null - 1;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        // Concat
         engine.eval("res := \"\" || null;");
         assertThat((Boolean) context.getAttribute("res")).isNull();
         engine.eval("res := null || \"\";");
-        assertThat((Boolean) context.getAttribute("res")).isNull();
-        engine.eval("res := null || null;");
         assertThat((Boolean) context.getAttribute("res")).isNull();
     }
 
