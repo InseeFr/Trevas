@@ -22,7 +22,7 @@ public class IfExprTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
         engine.eval("a := if null then \"true\" else \"false\";");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         engine.eval("b := if true then null else \"false\";");
