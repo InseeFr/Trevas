@@ -6,8 +6,11 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -31,7 +34,7 @@ public class TypeChecking {
      * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause.
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
-        if (Object.class.equals(expression.getType())) {
+        if (isNull(expression)) {
             return (T) ResolvableExpression.withType(type, ctx -> null);
         }
         if (!isType(expression, type)) {
@@ -65,6 +68,10 @@ public class TypeChecking {
                 .count() <= 1;
     }
 
+    public static boolean isNull(TypedExpression expression) {
+        return Object.class.equals(expression.getType());
+    }
+
     /**
      * Checks if an expression can be interpreted as a number.
      *
@@ -76,12 +83,7 @@ public class TypeChecking {
     }
 
     public static <T extends TypedExpression> T assertNumber(T expression, ParseTree tree) {
-        if (!isType(expression, Number.class)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(Set.of(Long.class, Double.class), expression.getType(), tree)
-            );
-        }
-        return expression;
+        return assertTypeExpression(expression, Number.class, tree);
     }
 
     /**

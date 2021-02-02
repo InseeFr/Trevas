@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.DoubleExpression;
 import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -54,12 +55,14 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
             return LongExpression.of(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
                 Long rightValue = (Long) rightExpression.resolve(context);
+                if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
                 return leftValue + rightValue;
             });
         }
         return DoubleExpression.of(context -> {
             var leftValue = leftExpression.resolve(context);
             var rightValue = rightExpression.resolve(context);
+            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
             var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
             var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
             return leftDouble + rightDouble;
@@ -73,12 +76,14 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
             return LongExpression.of(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
                 Long rightValue = (Long) rightExpression.resolve(context);
+                if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
                 return leftValue - rightValue;
             });
         }
         return DoubleExpression.of(context -> {
             var leftValue = leftExpression.resolve(context);
             var rightValue = rightExpression.resolve(context);
+            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
             var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
             var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
             return leftDouble - rightDouble;
@@ -91,6 +96,7 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         return StringExpression.of(context -> {
             String leftValue = (String) leftExpression.resolve(context);
             String rightValue = (String) rightExpression.resolve(context);
+            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
             return leftValue.concat(rightValue);
         });
     }

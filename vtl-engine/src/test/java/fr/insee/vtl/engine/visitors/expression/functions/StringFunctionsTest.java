@@ -22,6 +22,53 @@ public class StringFunctionsTest {
     }
 
     @Test
+    public void testNull() throws  ScriptException {
+        // Trim
+        engine.eval("a := trim(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Ltrim
+        engine.eval("a := ltrim(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Rtrim
+        engine.eval("a := rtrim(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Upper
+        engine.eval("a := upper(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Lower
+        engine.eval("a := lower(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Length
+        engine.eval("a := length(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Substr
+        engine.eval("a := substr(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := substr(\"ok\", null, 2);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        engine.eval("c := substr(\"ok\", 1, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        // Replace
+        engine.eval("a := replace(null, \"ooo\", \"ttt\");");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := replace(\"ok\", null, \"ttt\");");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        engine.eval("c := replace(\"ok\", \"ooo\", null);");
+        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        engine.eval("d := replace(\"ok\", \"ooo\", null);");
+        assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
+        // Instr
+        engine.eval("a := instr(null, \"ooo\", 1, 2);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := instr(\"ok\", null, 1, 2);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        engine.eval("c := instr(\"ok\", \"ooo\", null, 2);");
+        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        engine.eval("d := instr(\"ok\", \"ooo\", 1, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
+    }
+
+    @Test
     public void testUnaryStringFunction() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("trimValue := trim(\"  abc  \");");
@@ -47,15 +94,6 @@ public class StringFunctionsTest {
         assertThat(context.getAttribute("s1")).isEqualTo("bcde");
         engine.eval("s1 := substr(\"abcde\",1,3);");
         assertThat(context.getAttribute("s1")).isEqualTo("bc");
-
-        assertThatThrownBy(() -> {
-            engine.eval("se1 := substr(\"abc\",1,2,3);");
-        }).isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("too many args (3) for: substr(\"abc\",1,2,3)");
-        assertThatThrownBy(() -> {
-            engine.eval("se2 := substr(\"abc\",1,2,3,4,5,6);");
-        }).isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("too many args (6) for: substr(\"abc\",1,2,3,4,5,6)");
     }
 
     @Test

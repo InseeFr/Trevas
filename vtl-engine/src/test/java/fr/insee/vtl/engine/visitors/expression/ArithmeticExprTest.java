@@ -9,6 +9,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,6 +21,31 @@ public class ArithmeticExprTest {
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    public void testNull() throws  ScriptException {
+
+        ScriptContext context = engine.getContext();
+
+        List<String> operators = List.of("+", "-", "/", "*");
+        List<String> values = List.of(
+                "1.1", "1", "null"
+        );
+
+        for (String operator : operators) {
+            // Left is null
+            for (String value : values) {
+                engine.eval("res := null " + operator + " " + value + " ;");
+                assertThat((Boolean) context.getAttribute("res")).isNull();
+            }
+
+            // Right is null
+            for (String value : values) {
+                engine.eval("res := " + value + " " + operator + " null ;");
+                assertThat((Boolean) context.getAttribute("res")).isNull();
+            }
+        }
     }
 
     @Test
@@ -82,10 +109,10 @@ public class ArithmeticExprTest {
         assertThatThrownBy(() -> {
             engine.eval("plus := + \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("minus := - \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 }

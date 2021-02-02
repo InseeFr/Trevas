@@ -68,7 +68,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return LongExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             return ((Double) (Math.ceil(exprDouble))).longValue();
         });
     }
@@ -76,7 +78,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleFloor(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return LongExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             return ((Double) (Math.floor(exprDouble))).longValue();
         });
     }
@@ -84,7 +88,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleAbs(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             return Math.abs(exprDouble);
         });
     }
@@ -92,7 +98,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleExp(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             return Math.exp(exprDouble);
         });
     }
@@ -100,7 +108,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleLn(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             return Math.log(exprDouble);
         });
     }
@@ -108,7 +118,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     private ResolvableExpression handleSqrt(VtlParser.ExprContext expr) {
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             if (exprDouble < 0)
                 throw new VtlRuntimeException(new InvalidArgumentException("Sqrt operand has to be 0 or positive", expr));
             return Math.sqrt(exprDouble);
@@ -141,8 +153,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             Long decimalLong = (Long) decimalValue.resolve(context);
+            if (decimalLong == null) return null;
             BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
             bd = bd.setScale(decimalLong.intValue(), RoundingMode.HALF_UP);
             return bd.doubleValue();
@@ -153,8 +168,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var expression = assertNumber(exprVisitor.visit(expr), expr);
         var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
         return DoubleExpression.of(context -> {
-            Double exprDouble = ((Number) expression.resolve(context)).doubleValue();
+            Number exprNumber = (Number) expression.resolve(context);
+            if (exprNumber == null) return null;
+            Double exprDouble = exprNumber.doubleValue();
             Long decimalLong = (Long) decimalValue.resolve(context);
+            if (decimalLong == null) return null;
             BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
             bd = bd.setScale(decimalLong.intValue(), RoundingMode.DOWN);
             return bd.doubleValue();
@@ -190,8 +208,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
         var rightExpression = assertNumber(exprVisitor.visit(right), right);
         return DoubleExpression.of(context -> {
-            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
-            Double rightDouble = ((Number) rightExpression.resolve(context)).doubleValue();
+            Number leftNumber = (Number) leftExpression.resolve(context);
+            Number rightNumber = (Number) rightExpression.resolve(context);
+            if (leftNumber == null || rightNumber == null) return null;
+            Double leftDouble = leftNumber.doubleValue();
+            Double rightDouble = rightNumber.doubleValue();
             if (rightDouble.equals(0D)) return leftDouble;
             return (leftDouble % rightDouble) * (rightDouble < 0 ? -1 : 1);
         });
@@ -201,8 +222,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
         var rightExpression = assertNumber(exprVisitor.visit(right), right);
         return DoubleExpression.of(context -> {
-            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
-            Double rightDouble = ((Number) rightExpression.resolve(context)).doubleValue();
+            Number leftNumber = (Number) leftExpression.resolve(context);
+            Number rightNumber = (Number) rightExpression.resolve(context);
+            if (leftNumber == null || rightNumber == null) return null;
+            Double leftDouble = leftNumber.doubleValue();
+            Double rightDouble = rightNumber.doubleValue();
             return Math.pow(leftDouble, rightDouble);
         });
     }
@@ -211,8 +235,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         var leftExpression = assertNumber(exprVisitor.visit(left), left);
         var baseExpression = assertNumber(exprVisitor.visit(base), base);
         return DoubleExpression.of(context -> {
-            Double leftDouble = ((Number) leftExpression.resolve(context)).doubleValue();
-            Double baseDouble = ((Number) baseExpression.resolve(context)).doubleValue();
+            Number leftNumber = (Number) leftExpression.resolve(context);
+            Number baseNumber = (Number) baseExpression.resolve(context);
+            if (leftNumber == null || baseNumber == null) return null;
+            Double leftDouble = leftNumber.doubleValue();
+            Double baseDouble = baseNumber.doubleValue();
             if (leftDouble <= 0)
                 throw new VtlRuntimeException(new InvalidArgumentException("Log operand has to be positive", left));
             if (baseDouble < 1)

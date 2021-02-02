@@ -24,6 +24,51 @@ public class NumericFunctionsTest {
     }
 
     @Test
+    public void testNull() throws  ScriptException {
+        // Ceil
+        engine.eval("a := ceil(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Floor
+        engine.eval("a := floor(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Abs
+        engine.eval("a := abs(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Exp
+        engine.eval("a := exp(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Ln
+        engine.eval("a := ln(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Round
+        engine.eval("a := round(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := round(10.55, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Trunc
+        engine.eval("a := trunc(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Sqrt
+        engine.eval("a := sqrt(null);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        // Mod
+        engine.eval("a := mod(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := mod(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        // Power
+        engine.eval("a := power(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := power(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        // Log
+        engine.eval("a := log(null, 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := log(10, null);");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    }
+
+    @Test
     public void testCeil() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := ceil(3.14159);");
@@ -37,7 +82,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -54,7 +99,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -67,7 +112,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -84,7 +129,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -101,7 +146,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := ln(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -120,7 +165,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("f := round(\"ko\", 2);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("f := round(2.22222, 2.3);");
         }).isInstanceOf(InvalidTypeException.class)
@@ -143,7 +188,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("f := trunc(\"ko\", 2);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("f := trunc(2.22222, 2.3);");
         }).isInstanceOf(InvalidTypeException.class)
@@ -164,7 +209,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := sqrt(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -181,11 +226,11 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := mod(10, \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("f := mod(\"ko\", 10);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -204,11 +249,11 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("f := power(10, \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("e := power(\"ko\", 10);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test
@@ -229,10 +274,10 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := log(10, \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
         assertThatThrownBy(() -> {
             engine.eval("f := log(\"ko\", 10);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Double or Long");
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 }

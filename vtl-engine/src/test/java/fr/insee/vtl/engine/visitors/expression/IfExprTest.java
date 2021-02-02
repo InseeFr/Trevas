@@ -22,6 +22,16 @@ public class IfExprTest {
     }
 
     @Test
+    public void testNull() throws ScriptException {
+        engine.eval("a := if null then \"true\" else \"false\";");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := if true then null else \"false\";");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        engine.eval("c := if false then \"true\" else null;");
+        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+    }
+
+    @Test
     public void testIfExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("s := if true then \"true\" else \"false\";");

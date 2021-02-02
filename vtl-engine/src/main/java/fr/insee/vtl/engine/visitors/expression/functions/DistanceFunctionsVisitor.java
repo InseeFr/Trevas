@@ -44,7 +44,7 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
         return ResolvableExpression.withType(Long.class, context -> {
             String leftValue = (String) leftExpression.resolve(context);
             String rightValue = (String) rightExpression.resolve(context);
-            if(TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
+            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
             return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(leftValue, rightValue));
         });
     }

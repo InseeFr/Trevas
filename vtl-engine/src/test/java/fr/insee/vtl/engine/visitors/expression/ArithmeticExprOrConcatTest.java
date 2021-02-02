@@ -8,6 +8,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ArithmeticExprOrConcatTest {
@@ -17,6 +19,26 @@ public class ArithmeticExprOrConcatTest {
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    public void testNull() throws  ScriptException {
+        ScriptContext context = engine.getContext();
+        // Plus
+        engine.eval("res := 1 + null;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        engine.eval("res := null + 1;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        // Minus
+        engine.eval("res := 1 - null;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        engine.eval("res := null - 1;");
+        assertThat((Long) context.getAttribute("res")).isNull();
+        // Concat
+        engine.eval("res := \"\" || null;");
+        assertThat((Boolean) context.getAttribute("res")).isNull();
+        engine.eval("res := null || \"\";");
+        assertThat((Boolean) context.getAttribute("res")).isNull();
     }
 
     @Test
