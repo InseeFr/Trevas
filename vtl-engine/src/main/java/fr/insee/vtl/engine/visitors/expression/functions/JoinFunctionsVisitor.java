@@ -173,7 +173,34 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression innerJoin(VtlParser.JoinExprContext ctx) {
-        throw new UnsupportedOperationException("TODO: inner_join");
+        var joinClauseContext = ctx.joinClause();
+        var datasets = normalizeDatasets(joinClauseContext);
+
+        // Left join require that all the datasets have the same identifiers.
+        var commonIdentifiers = checkSameIdentifiers(datasets.values())
+                .orElseThrow(() -> new VtlRuntimeException(
+                        new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
+                ));
+
+        // Remove the identifiers
+        if (joinClauseContext.USING() != null) {
+            var identifierNames = commonIdentifiers.stream()
+                    .map(Component::getName)
+                    .collect(Collectors.toList());
+            var usingNames = new ArrayList<String>();
+            for (VtlParser.ComponentIDContext usingContext : joinClauseContext.componentID()) {
+                var name = usingContext.getText();
+                if (!identifierNames.contains(name)) {
+                    throw new VtlRuntimeException(
+                            new InvalidArgumentException("not in the set of common identifiers", usingContext)
+                    );
+                }
+                usingNames.add(name);
+            }
+            commonIdentifiers.removeIf(component -> !usingNames.contains(component.getName()));
+        }
+
+        return processingEngine.executeInnerJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
     }
 
 
