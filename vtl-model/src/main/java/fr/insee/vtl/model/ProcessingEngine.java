@@ -24,6 +24,8 @@ public interface ProcessingEngine {
 
     /**
      * Execute a filter transformations on the dataset expression.
+     * <p>
+     * TODO: Use {@link BooleanExpression}
      *
      * @param expression the dataset to apply the filter transformations on
      * @param filter     a filter expression
