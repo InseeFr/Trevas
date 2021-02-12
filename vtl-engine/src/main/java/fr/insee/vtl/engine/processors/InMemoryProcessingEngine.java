@@ -197,6 +197,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return leftMost;
     }
 
+    @Override
+    public DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
+        var iterator = datasets.values().iterator();
+        var leftMost = iterator.next();
+        while (iterator.hasNext()) {
+            leftMost = handleInnerJoin(components, leftMost, iterator.next());
+        }
+        return leftMost;
+    }
+
     /**
      * Return a structure with the common identifiers only once.
      */

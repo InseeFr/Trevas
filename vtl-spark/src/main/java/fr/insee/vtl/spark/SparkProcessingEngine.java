@@ -168,8 +168,22 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
+    public DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
+        List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
+        List<String> identifiers = identifierNames(components);
+        var innerJoin = executeJoin(sparkDatasets, identifiers, "inner");
+        return new SparkDatasetExpression(new SparkDataset(innerJoin, getRoleMap(components)));
+    }
+
+    @Override
     public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
-        // Convert to spark dataset.
+        List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
+        List<String> identifiers = identifierNames(components);
+        var innerJoin = executeJoin(sparkDatasets, identifiers, "left");
+        return new SparkDatasetExpression(new SparkDataset(innerJoin, getRoleMap(components)));
+    }
+
+    private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {
             var sparkDataset = asSparkDataset(dataset.getValue())
@@ -177,23 +191,27 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     .as(dataset.getKey());
             sparkDatasets.add(sparkDataset);
         }
+        return sparkDatasets;
+    }
 
-        var identifiers = components.stream()
+    private static List<String> identifierNames(List<Component> components) {
+        return components.stream()
                 .filter(component -> IDENTIFIER.equals(component.getRole()))
-                .map(Structured.Component::getName)
+                .map(Component::getName)
                 .collect(Collectors.toList());
+    }
 
+    public Dataset<Row> executeJoin(List<Dataset<Row>> sparkDatasets, List<String> identifiers, String type) {
         var iterator = sparkDatasets.iterator();
         var result = iterator.next();
         while (iterator.hasNext()) {
             result = result.join(
                     iterator.next(),
                     iterableAsScalaIterable(identifiers).toSeq(),
-                    "left"
+                    type
             );
         }
-
-        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(components)));
+        return result;
     }
 
     public static class Factory implements ProcessingEngineFactory {

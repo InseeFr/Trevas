@@ -25,4 +25,7 @@ public interface ProcessingEngine {
 
     DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
+
+
 }
