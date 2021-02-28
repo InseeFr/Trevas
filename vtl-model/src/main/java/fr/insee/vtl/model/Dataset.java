@@ -1,26 +1,19 @@
 package fr.insee.vtl.model;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * <code>Dataset</code> is the base interface for structured datasets conforming to the VTL data model.
+ * Structured dataset
+ *
+ * <code>Dataset</code> is the base interface for structured datasets
+ * conforming to the VTL data model.
+ * <p>
+ * The dataset has a {@link DataStructure} and contains a list of {@link DataPoint}s
  */
 public interface Dataset extends Structured {
-
-    /**
-     * Converts a dataset represented as a list of column values to a row-major order dataset in a specified column order.
-     *
-     * @param map     The input dataset represented as a <code>Map</code> of column names to column contents (<code>Object</code> instances).
-     * @param columns A <code>List</code> of column names giving the order of the column contents in the returned list.
-     * @return A <code>List</code> of column contents of the input dataset ordered as specified by the input list of column names.
-     */
-    static List<Object> mapToRowMajor(Map<String, Object> map, Collection<String> columns) {
-        return columns.stream().map(map::get).collect(Collectors.toList());
-    }
 
     /**
      * Returns the data contained in the dataset as a list of list of objects.
@@ -34,16 +27,18 @@ public interface Dataset extends Structured {
     }
 
     /**
-     * Returns the data contained in the dataset as a list of mappings between column names and column contents.
-     *
-     * @return The data contained in the dataset as a list of mappings between column names and column contents.
+     * Returns the data contained in the dataset as a list of maps.
+     * <p>
+     * The returned {@link Map}s are views backed by the {@link DataPointMap} class and do not
+     * trigger data copy. Some methods of the Map interface are unsupported.
      */
     default List<Map<String, Object>> getDataAsMap() {
         return getDataPoints().stream().map(DataPointMap::new).collect(Collectors.toList());
     }
 
     /**
-     * The <code>Role</code> <code>Enumeration</code> lists the roles of a component in a dataset structure.
+     * The <code>Role</code> <code>Enumeration</code> lists the roles of a component
+     * in a dataset structure.
      */
     enum Role {
         /**

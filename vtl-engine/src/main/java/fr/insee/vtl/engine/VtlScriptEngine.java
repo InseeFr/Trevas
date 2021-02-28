@@ -17,7 +17,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * <code>VtlScriptEngine</code> provides base methods for the VTL script engine.
+ * The {@link ScriptEngine} implementation for VTL.
+ * <p>
+ * To get an instance of the engine use the {@link ScriptEngineManager}:
+ * <pre><code>
+ * ScriptEngineManager manager = new ScriptEngineManager();
+ * ScriptEngine engine = manager.getEngineByName("vtl");
+ * </code></pre>
+ * <p>
+ * VTL expression can be evaluated using the methods
+ * {@link #eval(Reader)}, {@link #eval(Reader, ScriptContext)},
+ * {@link #eval(String)} and {@link #eval(String, ScriptContext)}
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
@@ -41,7 +51,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return Arrays.asList(((String) o).split(","));
         } else {
             throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES +
-                    " must be a comma separated list of names");
+                                               " must be a comma separated list of names");
         }
     }
 

@@ -37,9 +37,9 @@ public interface Structured {
         /**
          * Constructor taking the name, type and role of the component.
          *
-         * @param name A string giving the name of the structure component to create.
-         * @param type A <code>Class</code> giving the type of the structure component to create.
-         * @param role A <code>Role</code> giving the role of the structure component to create.
+         * @param name A string giving the name of the structure component to create
+         * @param type A <code>Class</code> giving the type of the structure component to create
+         * @param role A <code>Role</code> giving the role of the structure component to create
          */
         public Component(String name, Class<?> type, Dataset.Role role) {
             this.name = Objects.requireNonNull(name);
@@ -77,7 +77,7 @@ public interface Structured {
         /**
          * Returns the type of the component.
          *
-         * @return The type of the component as an instance of <code>Class</code>.
+         * @return The type of the component as an instance of <code>Class</code>
          */
         public Class<?> getType() {
             return type;
@@ -86,7 +86,7 @@ public interface Structured {
         /**
          * Returns the role of component.
          *
-         * @return The role of the component as a value of the <code>Role</code> enumeration.
+         * @return The role of the component as a value of the <code>Role</code> enumeration
          */
         public Dataset.Role getRole() {
             return role;
@@ -98,8 +98,8 @@ public interface Structured {
             if (o == null || getClass() != o.getClass()) return false;
             Component component = (Component) o;
             return name.equals(component.name) &&
-                    type.equals(component.type) &&
-                    role == component.role;
+                   type.equals(component.type) &&
+                   role == component.role;
         }
 
         @Override
@@ -110,14 +110,27 @@ public interface Structured {
         @Override
         public String toString() {
             return "Component{" + name +
-                    ", type=" + type +
-                    ", role=" + role +
-                    '}';
+                   ", type=" + type +
+                   ", role=" + role +
+                   '}';
         }
     }
 
+    /**
+     * The <code>DataStructure</code> represents the structure of a Dataset.
+     * <p>
+     * A DataStructure helps with the indexing of a {@link DataPoint}. It keeps
+     * the position of each component.
+     */
     class DataStructure extends IndexedHashMap<String, Structured.Component> {
 
+        /**
+         * Creates a DataStructure with type and role maps.
+         *
+         * @param types The types of each component, by name
+         * @param roles The roles of each component, by name
+         * @throws IllegalArgumentException if the key set of types and roles are not equal.
+         */
         public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles) {
             super(types.size());
             if (!types.keySet().equals(roles.keySet())) {
@@ -129,6 +142,12 @@ public interface Structured {
             }
         }
 
+        /**
+         * Creates a DataStructure with a collection of components.
+         *
+         * @param components A collection of components
+         * @throws IllegalArgumentException in case of duplicate column names
+         */
         public DataStructure(Collection<Component> components) {
             super(components.size());
             Set<Component> duplicates = new HashSet<>();
@@ -145,6 +164,8 @@ public interface Structured {
 
         }
 
+        // TODO: Remove. We can sympy use a Map<String, Component> of the
+        //        constructor with Collection<Component>
         public DataStructure(DataStructure dataStructure) {
             super(dataStructure);
         }
@@ -164,10 +185,28 @@ public interface Structured {
         }
     }
 
+    /**
+     * A structured row of a {@link Dataset}.
+     * <p>
+     * A point is composed of a structure and a list of values. Values
+     * can be accessed by position or by name.
+     * <p>
+     * Two <code>DataPoint</code> instances are considered equal if all of their
+     * identifier values are equal.
+     */
     class DataPoint extends ArrayList<Object> {
 
         private final DataStructure dataStructure;
 
+        /**
+         * Create a new instance with the given {@link DataStructure} and a map of values.
+         * <p>
+         * Note that only the values associated with the columns of the data structure will
+         * be used.
+         *
+         * @param dataStructure the data structure
+         * @param map           the map of values
+         */
         public DataPoint(DataStructure dataStructure, Map<String, Object> map) {
             super();
             growSize(dataStructure.size());
@@ -177,12 +216,26 @@ public interface Structured {
             }
         }
 
+        /**
+         * Create an empty <code>DataPoint</code> with the given data structure
+         *
+         * @param dataStructure the data structure
+         */
         public DataPoint(DataStructure dataStructure) {
             super();
             growSize(dataStructure.size());
             this.dataStructure = Objects.requireNonNull(dataStructure);
         }
 
+        /**
+         * Create a new instance with the given {@link DataStructure} and a collection of values.
+         * <p>
+         * Note that only the values within the size of the data structure will be used, from
+         * 0 to dataStructure.size() - 1.
+         *
+         * @param dataStructure the data structure
+         * @param collection    the collection of values
+         */
         public DataPoint(DataStructure dataStructure, Collection<Object> collection) {
             super(dataStructure.size());
             this.dataStructure = Objects.requireNonNull(dataStructure);
@@ -195,10 +248,25 @@ public interface Structured {
             }
         }
 
+        /**
+         * Get the value by name.
+         *
+         * @param column the name of the column
+         * @return the value associated with the column
+         * @throws IndexOutOfBoundsException if the name is not in the {@link DataStructure}.
+         */
         public Object get(String column) {
             return get(dataStructure.indexOfKey(column));
         }
 
+        /**
+         * Set the value by name.
+         *
+         * @param column the name of the column
+         * @param object the name of the column
+         * @return the element previously at the specified position
+         * @throws IndexOutOfBoundsException if the name is not in the {@link DataStructure}.
+         */
         public Object set(String column, Object object) {
             int index = dataStructure.indexOfKey(column);
             if (index > size() - 1) {
@@ -237,10 +305,20 @@ public interface Structured {
         }
     }
 
+    /**
+     * A {@link Map} <strong>view</strong> of a {@link DataPoint}.
+     * <p>
+     * The methods remove, putAll and clear are not supported.
+     */
     class DataPointMap implements Map<String, Object> {
 
         private final DataPoint dataPoint;
 
+        /**
+         * Create a new <code>DataPointMap</code>.
+         *
+         * @param dataPoint the data point.
+         */
         public DataPointMap(DataPoint dataPoint) {
             this.dataPoint = dataPoint;
         }
@@ -257,12 +335,12 @@ public interface Structured {
 
         @Override
         public boolean containsKey(Object key) {
-            throw new UnsupportedOperationException();
+            return dataPoint.dataStructure.containsKey(key);
         }
 
         @Override
         public boolean containsValue(Object value) {
-            throw new UnsupportedOperationException();
+            return dataPoint.contains(value);
         }
 
         @Override
@@ -275,16 +353,31 @@ public interface Structured {
             return dataPoint.set(key, value);
         }
 
+        /**
+         * Unsupported operation.
+         *
+         * @throws UnsupportedOperationException
+         */
         @Override
         public Object remove(Object key) {
             throw new UnsupportedOperationException();
         }
 
+        /**
+         * Unsupported operation.
+         *
+         * @throws UnsupportedOperationException
+         */
         @Override
         public void putAll(Map<? extends String, ?> m) {
             throw new UnsupportedOperationException();
         }
 
+        /**
+         * Unsupported operation.
+         *
+         * @throws UnsupportedOperationException
+         */
         @Override
         public void clear() {
             throw new UnsupportedOperationException();

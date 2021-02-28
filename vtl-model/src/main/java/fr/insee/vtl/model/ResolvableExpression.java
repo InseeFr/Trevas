@@ -60,7 +60,7 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
      * Returns a <code>ResolvableExpression</code> with a given type and value.
      *
      * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
-     * @param value  The expression value.
+     * @param value The expression value.
      * @return An instance of <code>ResolvableExpression</code> with the given type and value.
      */
     static ResolvableExpression ofType(Class<Object> clazz, Object value) {
@@ -87,6 +87,12 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
      */
     Object resolve(Map<String, Object> context);
 
+    /**
+     * Resolves the expression for a given datapoint.
+     *
+     * @param context the data point to resolve the expression against
+     * @return the result of the resolution of the expression
+     */
     default Object resolve(Structured.DataPoint context) {
         return resolve(new Structured.DataPointMap(context));
     }
