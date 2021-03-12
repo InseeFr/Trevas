@@ -79,5 +79,7 @@ public interface ProcessingEngine {
 
     DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
+
 
 }

@@ -157,9 +157,49 @@ public class JoinFunctionsTest {
     }
 
     @Test
-    public void testCrossJoin() {
-        assertThatThrownBy(() -> engine.eval("result := cross_join(a, b, c);"))
-                .hasMessage("TODO: cross_join");
+    public void testCrossJoin() throws ScriptException {
+
+        InMemoryDataset ds3 = new InMemoryDataset(
+                List.of(
+                        List.of("a", 1L, 1L),
+                        List.of("a", 2L, 2L),
+                        List.of("a", 3L, 3L),
+                        List.of("b", 1L, 3L),
+                        List.of("b", 2L, 4L)
+                ),
+                List.of(
+                        new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                        new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
+                )
+        );
+
+        InMemoryDataset ds4 = new InMemoryDataset(
+                List.of(
+                        List.of("a", 1L, 7L),
+                        List.of("a", 2L, 8L)
+                ),
+                List.of(
+                        new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                        new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("m2", Long.class, Role.MEASURE)
+                )
+        );
+
+        engine.getContext().setAttribute("ds3", ds3, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds4", ds4, ScriptContext.ENGINE_SCOPE);
+        engine.eval("result := cross_join(ds3, ds4);");
+
+        var result = (Dataset) engine.getContext().getAttribute("result");
+        assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
+                "ds3#id1", "ds3#id2", "m1", "ds4#id1", "ds4#id2", "m2"
+        );
+        /*assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("a", 1L, 1L, 7L),
+                Arrays.asList("a", 2L, 2L, 8L),
+                Arrays.asList("b", 1L, 3L, 9L),
+                Arrays.asList("b", 2L, 4L, 10L)
+        );*/
     }
 
     @Test

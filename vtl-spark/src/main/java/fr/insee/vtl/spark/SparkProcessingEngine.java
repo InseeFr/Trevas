@@ -183,6 +183,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(innerJoin, getRoleMap(components)));
     }
 
+    @Override
+    public DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+        List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
+        var crossJoin = executeJoin(sparkDatasets, List.of(), "cross");
+        return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
+    }
+
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {
@@ -205,7 +212,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         var iterator = sparkDatasets.iterator();
         var result = iterator.next();
         while (iterator.hasNext()) {
-            result = result.join(
+            if (type.equals("cross")) result = result.crossJoin(iterator.next());
+            else result = result.join(
                     iterator.next(),
                     iterableAsScalaIterable(identifiers).toSeq(),
                     type

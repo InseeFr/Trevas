@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.model.Dataset.Component;
@@ -58,9 +59,9 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         throw new UnsupportedOperationException("unknown join type");
     }
 
-    private LinkedHashMap<String, DatasetExpression> normalizeDatasets(VtlParser.JoinClauseContext joinClauseContext) {
+    private LinkedHashMap<String, DatasetExpression> normalizeDatasets(List<VtlParser.JoinClauseItemContext> joinClauseItems) {
         LinkedHashMap<String, DatasetExpression> datasets = new LinkedHashMap<>();
-        for (VtlParser.JoinClauseItemContext joinClauseItem : joinClauseContext.joinClauseItem()) {
+        for (VtlParser.JoinClauseItemContext joinClauseItem : joinClauseItems) {
 
             // Expression here is not so nice if alias is optional.. We force var id.
             var datasetExpressionContext = joinClauseItem.expr();
@@ -118,7 +119,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
         var joinClauseContext = ctx.joinClause();
-        var datasets = normalizeDatasets(joinClauseContext);
+        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
         // Left join require that all the datasets have the same identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
@@ -148,7 +149,17 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression crossJoin(VtlParser.JoinExprContext ctx) {
-        throw new UnsupportedOperationException("TODO: cross_join");
+        var joinClauseContext = ctx.joinClauseWithoutUsing();
+        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+
+        Map<String, DatasetExpression> renamedDatasets = renameDuplicates(List.of(), datasets);
+
+        List<Component> identifiers = renamedDatasets.values().stream()
+                .flatMap(dsExpr -> dsExpr.getDataStructure().values().stream())
+                .filter(c -> c.isIdentifier())
+                .collect(Collectors.toList());
+
+        return processingEngine.executeCrossJoin(renamedDatasets, identifiers);
     }
 
     private DatasetExpression fullJoin(VtlParser.JoinExprContext ctx) {
@@ -157,7 +168,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private DatasetExpression innerJoin(VtlParser.JoinExprContext ctx) {
         var joinClauseContext = ctx.joinClause();
-        var datasets = normalizeDatasets(joinClauseContext);
+        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
         // Left join require that all the datasets have the same identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())

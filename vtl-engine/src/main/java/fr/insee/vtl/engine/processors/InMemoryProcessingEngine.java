@@ -207,6 +207,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return leftMost;
     }
 
+    @Override
+    public DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+        var iterator = datasets.values().iterator();
+        var leftMost = iterator.next();
+        while (iterator.hasNext()) {
+            leftMost = handleCrossJoin(identifiers, leftMost, iterator.next());
+        }
+        return leftMost;
+    }
+
     /**
      * Return a structure with the common identifiers only once.
      */
@@ -326,6 +336,54 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
         };
     }
+
+    private DatasetExpression handleCrossJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
+        var structure = createCommonStructure(identifiers, left, right);
+        var predicate = createPredicate(identifiers);
+
+        return new DatasetExpression() {
+            @Override
+            public Dataset resolve(Map<String, Object> context) {
+                var leftPoints = left.resolve(context).getDataPoints();
+                var rightPoints = right.resolve(context).getDataPoints();
+                List<DataPoint> result = new ArrayList<>();
+                for (DataPoint leftPoint : leftPoints) {
+                    List<DataPoint> matches = new ArrayList<>();
+                    for (DataPoint rightPoint : rightPoints) {
+                        // Check equality
+                        if (predicate.compare(leftPoint, rightPoint) == 0) {
+                            matches.add(rightPoint);
+                        }
+                    }
+
+                    // Create merge datapoint.
+                    var mergedPoint = new DataPoint(structure);
+                    for (String leftColumn : left.getDataStructure().keySet()) {
+                        mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
+                    }
+
+                    if (matches.isEmpty()) {
+                        result.add(mergedPoint);
+                    } else {
+                        for (DataPoint match : matches) {
+                            var matchPoint = new DataPoint(structure, mergedPoint);
+                            for (String rightColumn : right.getDataStructure().keySet()) {
+                                matchPoint.set(rightColumn, match.get(rightColumn));
+                            }
+                            result.add(matchPoint);
+                        }
+                    }
+                }
+                return new InMemoryDataset(result, structure);
+            }
+
+            @Override
+            public DataStructure getDataStructure() {
+                return structure;
+            }
+        };
+    }
+
 
     public static class Factory implements ProcessingEngineFactory {
 
