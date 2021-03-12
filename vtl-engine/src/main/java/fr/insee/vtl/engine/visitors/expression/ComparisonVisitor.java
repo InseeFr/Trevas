@@ -89,6 +89,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             switch (type.getType()) {
                 case VtlParser.EQ:
                     return BooleanExpression.of(context -> {
+                        // TODO: factorize null handling in equal function
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;

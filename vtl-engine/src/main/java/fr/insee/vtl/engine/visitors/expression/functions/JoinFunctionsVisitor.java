@@ -25,28 +25,11 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
-    private static List<Component> findCommonIdentifiers(Collection<DatasetExpression> datasetExpressions) {
-        Set<Component> intersection = new LinkedHashSet<>();
-        for (DatasetExpression datasetExpression : datasetExpressions) {
-            var structure = datasetExpression.getDataStructure();
-            if (intersection.isEmpty()) {
-                for (Component component : structure.values()) {
-                    if (Role.IDENTIFIER.equals(component.getRole())) {
-                        intersection.add(component);
-                    }
-                }
-            } else {
-                intersection.retainAll(structure.values());
-            }
-        }
-        return new ArrayList<>(intersection);
-    }
-
     private static Optional<List<Component>> checkSameIdentifiers(Collection<DatasetExpression> datasetExpressions) {
-        Set<Set<Component>> identifiers = new HashSet<>();
+        Set<Set<Component>> identifiers = new LinkedHashSet<>();
         for (DatasetExpression datasetExpression : datasetExpressions) {
             var structure = datasetExpression.getDataStructure();
-            var ids = new HashSet<Component>();
+            var ids = new LinkedHashSet<Component>();
             for (Component component : structure.values()) {
                 if (component.getRole().equals(Role.IDENTIFIER)) {
                     ids.add(component);
@@ -101,8 +84,8 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     private Map<String, DatasetExpression> renameDuplicates(List<Component> identifiers,
                                                                       Map<String, DatasetExpression> datasets) {
         Set<String> identifierNames = identifiers.stream().map(Component::getName).collect(Collectors.toSet());
-        Set<String> duplicates = new HashSet<>();
-        Set<String> uniques = new HashSet<>();
+        Set<String> duplicates = new LinkedHashSet<>();
+        Set<String> uniques = new LinkedHashSet<>();
         for (DatasetExpression dataset : datasets.values()) {
             for (String name : dataset.getColumnNames()) {
                 // Ignore identifiers.
@@ -121,7 +104,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         for (Map.Entry<String, DatasetExpression> entry : datasets.entrySet()) {
             var name = entry.getKey();
             var dataset = entry.getValue();
-            Map<String, String> fromTo = new HashMap<>();
+            Map<String, String> fromTo = new LinkedHashMap<>();
             for (String columnName : dataset.getColumnNames()) {
                 if (duplicates.contains(columnName)) {
                     fromTo.put(columnName, name + "#" + columnName);
