@@ -191,15 +191,21 @@ public class JoinFunctionsTest {
         engine.eval("result := cross_join(ds3, ds4);");
 
         var result = (Dataset) engine.getContext().getAttribute("result");
-        assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
-                "ds3#id1", "ds3#id2", "m1", "ds4#id1", "ds4#id2", "m2"
+        assertThat(result.getColumnNames()).containsExactly(
+                "ds3#id1", "ds3#id2", "ds4#id1", "ds4#id2", "m1", "m2"
         );
-        /*assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("a", 1L, 1L, 7L),
-                Arrays.asList("a", 2L, 2L, 8L),
-                Arrays.asList("b", 1L, 3L, 9L),
-                Arrays.asList("b", 2L, 4L, 10L)
-        );*/
+        assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("a", 1L, "a", 1L, 1L, 7L),
+                Arrays.asList("a", 1L, "a", 2L, 1L, 8L),
+                Arrays.asList("a", 2L, "a", 1L, 2L, 7L),
+                Arrays.asList("a", 2L, "a", 2L, 2L, 8L),
+                Arrays.asList("a", 3L, "a", 1L, 3L, 7L),
+                Arrays.asList("a", 3L, "a", 2L, 3L, 8L),
+                Arrays.asList("b", 1L, "a", 1L, 3L, 7L),
+                Arrays.asList("b", 1L, "a", 2L, 3L, 8L),
+                Arrays.asList("b", 2L, "a", 1L, 4L, 7L),
+                Arrays.asList("b", 2L, "a", 2L, 4L, 8L)
+        );
     }
 
     @Test

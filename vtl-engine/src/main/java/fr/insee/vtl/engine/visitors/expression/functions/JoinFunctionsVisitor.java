@@ -3,14 +3,15 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.model.Dataset.Component;
@@ -83,7 +84,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
      * Rename all the components to avoid duplicates.
      */
     private Map<String, DatasetExpression> renameDuplicates(List<Component> identifiers,
-                                                                      Map<String, DatasetExpression> datasets) {
+                                                            Map<String, DatasetExpression> datasets) {
         Set<String> identifierNames = identifiers.stream().map(Component::getName).collect(Collectors.toSet());
         Set<String> duplicates = new LinkedHashSet<>();
         Set<String> uniques = new LinkedHashSet<>();
@@ -94,7 +95,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                     continue;
                 }
                 // Compute duplicates.
-                if(!uniques.add(name)) {
+                if (!uniques.add(name)) {
                     duplicates.add(name);
                 }
             }
