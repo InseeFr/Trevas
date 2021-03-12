@@ -16,7 +16,6 @@ import java.util.Map;
 
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JoinFunctionsTest {
 
@@ -157,6 +156,63 @@ public class JoinFunctionsTest {
     }
 
     @Test
+    public void testFullJoin() throws ScriptException {
+        ScriptContext context = engine.getContext();
+
+        var ds1 = new InMemoryDataset(
+                List.of(
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("b", 1L),
+                Arrays.asList("c", 2L),
+                Arrays.asList("d", 3L)
+        );
+
+        var ds2 = new InMemoryDataset(
+                List.of(
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("a", 4L),
+                Arrays.asList("b", 5L),
+                Arrays.asList("c", 6L)
+        );
+
+        var ds3 = new InMemoryDataset(
+                List.of(
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("a", 7L),
+                Arrays.asList("d", 8L)
+        );
+
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", ds2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", ds3);
+
+        engine.eval("result := full_join(ds1 as dsOne, ds2, ds3);");
+
+        var result = (Dataset) context.getAttribute("result");
+
+        assertThat(result.getDataStructure().values()).containsExactly(
+                new Structured.Component("id", String.class, Role.IDENTIFIER),
+                new Structured.Component("dsOne#m1", Long.class, Role.MEASURE),
+                new Structured.Component("ds2#m1", Long.class, Role.MEASURE),
+                new Structured.Component("ds3#m1", Long.class, Role.MEASURE)
+        );
+
+        assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("d", 3L, null, 8L),
+                Arrays.asList("c", 2L, 6L, null),
+                Arrays.asList("b", 1L, 5L, null),
+                Arrays.asList("a", null, 4L, 7L)
+        );
+
+    }
+
+    @Test
     public void testCrossJoin() throws ScriptException {
 
         InMemoryDataset ds3 = new InMemoryDataset(
@@ -206,11 +262,5 @@ public class JoinFunctionsTest {
                 Arrays.asList("b", 2L, "a", 1L, 4L, 7L),
                 Arrays.asList("b", 2L, "a", 2L, 4L, 8L)
         );
-    }
-
-    @Test
-    public void testFullJoin() {
-        assertThatThrownBy(() -> engine.eval("result := full_join(a, b, c);"))
-                .hasMessage("TODO: full_join");
     }
 }

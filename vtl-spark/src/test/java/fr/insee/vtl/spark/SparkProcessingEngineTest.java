@@ -211,7 +211,7 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
-    void testFullJoin() throws ScriptException {
+    public void testFullJoin() throws ScriptException {
         ScriptContext context = engine.getContext();
 
         var ds1 = new InMemoryDataset(

@@ -301,7 +301,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     private DatasetExpression handleFullJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-        throw new UnsupportedOperationException("TODO");
+        // Naive implementation, left and right union.
+        // TODO: Implement a faster algorithm.
+        return executeUnion(List.of(
+                handleLeftJoin(identifiers, left, right),
+                handleLeftJoin(identifiers, right, left)
+        ));
     }
 
     private DatasetExpression handleLeftJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
