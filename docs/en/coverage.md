@@ -18,9 +18,9 @@
 
 #### VTL-ML - Join operators
 
-| Name | Symbol                                       | InMemory | Spark |
-| ---- | :------------------------------------------- | :------: | :---: |
-| Join | inner_join, left_join, full_join, cross_join |   :x:    |  :x:  |
+| Name | Symbol                                       |      InMemory      |       Spark        |
+| ---- | :------------------------------------------- | :----------------: | :----------------: |
+| Join | inner_join, left_join, full_join, cross_join | :heavy_check_mark: | :heavy_check_mark: |
 
 #### VTL-ML - String operators
 
