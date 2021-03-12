@@ -77,4 +77,11 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
+
+    DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
+
+    DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
+
+
 }

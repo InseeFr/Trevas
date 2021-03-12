@@ -34,6 +34,16 @@ public class InMemoryDataset implements Dataset {
     }
 
     /**
+     * Constructor taking initial data and structure components types and roles.
+     *
+     * @param dataPoints The initial data as a list of list of objects representing data contents.
+     * @param structure  The list of structure components forming the structure of the dataset.
+     */
+    public InMemoryDataset(List<Component> structure, List<Object>... dataPoints) {
+        this(List.of(dataPoints), structure);
+    }
+
+    /**
      * Constructor taking initial data and a list of structure components.
      *
      * @param data       The initial data as a list of list of objects representing data contents.
