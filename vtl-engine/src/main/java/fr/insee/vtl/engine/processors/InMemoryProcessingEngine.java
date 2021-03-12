@@ -217,6 +217,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return leftMost;
     }
 
+    @Override
+    public DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+        var iterator = datasets.values().iterator();
+        var leftMost = iterator.next();
+        while (iterator.hasNext()) {
+            leftMost = handleFullJoin(identifiers, leftMost, iterator.next());
+        }
+        return leftMost;
+    }
+
     /**
      * Return a structure with the common identifiers only once.
      */
@@ -288,6 +298,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 return structure;
             }
         };
+    }
+
+    private DatasetExpression handleFullJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
+        throw new UnsupportedOperationException("TODO");
     }
 
     private DatasetExpression handleLeftJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {

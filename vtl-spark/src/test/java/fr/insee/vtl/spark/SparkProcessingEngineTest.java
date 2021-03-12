@@ -211,6 +211,63 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
+    void testFullJoin() throws ScriptException {
+        ScriptContext context = engine.getContext();
+
+        var ds1 = new InMemoryDataset(
+                List.of(
+                        new Component("id", String.class, Role.IDENTIFIER),
+                        new Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("b", 1L),
+                Arrays.asList("c", 2L),
+                Arrays.asList("d", 3L)
+        );
+
+        var ds2 = new InMemoryDataset(
+                List.of(
+                        new Component("id", String.class, Role.IDENTIFIER),
+                        new Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("a", 4L),
+                Arrays.asList("b", 5L),
+                Arrays.asList("c", 6L)
+        );
+
+        var ds3 = new InMemoryDataset(
+                List.of(
+                        new Component("id", String.class, Role.IDENTIFIER),
+                        new Component("m1", Long.class, Role.MEASURE)
+                ),
+                Arrays.asList("a", 7L),
+                Arrays.asList("d", 8L)
+        );
+
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", ds2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", ds3);
+
+        engine.eval("result := full_join(ds1 as dsOne, ds2, ds3);");
+
+        var result = (Dataset) context.getAttribute("result");
+
+        assertThat(result.getDataStructure().values()).containsExactly(
+                new Component("id", String.class, Role.IDENTIFIER),
+                new Component("dsOne#m1", Long.class, Role.MEASURE),
+                new Component("ds2#m1", Long.class, Role.MEASURE),
+                new Component("ds3#m1", Long.class, Role.MEASURE)
+        );
+
+        assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("d", 3L, null, 8L),
+                Arrays.asList("c", 2L, 6L, null),
+                Arrays.asList("b", 1L, 5L, null),
+                Arrays.asList("a", null, 4L, 7L)
+        );
+
+    }
+
+    @Test
     public void testCrossJoin() throws ScriptException {
         ScriptContext context = engine.getContext();
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);

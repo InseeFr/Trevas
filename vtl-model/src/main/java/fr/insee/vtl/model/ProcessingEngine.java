@@ -81,5 +81,7 @@ public interface ProcessingEngine {
 
     DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
 
+    DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
+
 
 }

@@ -190,6 +190,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
     }
 
+    @Override
+    public DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+        List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
+        List<String> identifierNames = identifierNames(identifiers);
+        var crossJoin = executeJoin(sparkDatasets, identifierNames, "outer");
+        return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
+    }
+
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {

@@ -122,13 +122,13 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         var joinClauseContext = ctx.joinClause();
         var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
-        // Left join require that all the datasets have the same identifiers.
+        // Left join require that all the datasets have one or more common identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
                         new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
                 ));
 
-        // Remove the identifiers
+        // Remove the identifiers that are not part of the "using" list
         if (joinClauseContext.USING() != null) {
             var identifierNames = commonIdentifiers.stream()
                     .map(Component::getName)
@@ -164,7 +164,16 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression fullJoin(VtlParser.JoinExprContext ctx) {
-        throw new UnsupportedOperationException("TODO: full_join");
+        var joinClauseContext = ctx.joinClauseWithoutUsing();
+        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+
+        // Full join require that all the datasets have one or more common identifiers.
+        var commonIdentifiers = checkSameIdentifiers(datasets.values())
+                .orElseThrow(() -> new VtlRuntimeException(
+                        new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
+                ));
+
+        return processingEngine.executeFullJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
     }
 
     private DatasetExpression innerJoin(VtlParser.JoinExprContext ctx) {
