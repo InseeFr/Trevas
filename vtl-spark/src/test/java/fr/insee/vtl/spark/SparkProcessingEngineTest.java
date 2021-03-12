@@ -156,6 +156,8 @@ public class SparkProcessingEngineTest {
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", dataset2);
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", dataset3);
 
+        // Left join
+
         engine.eval("result := left_join(ds1 as dsOne, ds2, ds3);");
 
         var result = (Dataset) context.getAttribute("result");
@@ -170,6 +172,30 @@ public class SparkProcessingEngineTest {
         );
 
         assertThat(result.getDataStructure()).containsValues(
+                new Component("name", String.class, Role.IDENTIFIER),
+                new Component("age", Long.class, Role.MEASURE),
+                new Component("weight", Long.class, Role.MEASURE),
+                new Component("age2", Long.class, Role.MEASURE),
+                new Component("weight2", Long.class, Role.MEASURE),
+                new Component("age3", Long.class, Role.MEASURE),
+                new Component("weight3", Long.class, Role.MEASURE)
+        );
+
+        // Inner join
+
+        engine.eval("result := inner_join(ds1 as dsOne, ds2, ds3);");
+
+        var resultInner = (Dataset) context.getAttribute("result");
+        assertThat(resultInner.getDataAsList()).containsExactlyInAnyOrder(
+                Arrays.asList("a", 1L, 2L, 9L, 10L, 16L, 17L),
+                Arrays.asList("b", 3L, 4L, 11L, 12L, 18L, 19L),
+                Arrays.asList("c", 5L, 6L, 12L, 13L, 20L, 21L),
+                Arrays.asList("c", 5L, 6L, 12L, 13L, 22L, 23L),
+                Arrays.asList("c", 5L, 6L, 14L, 15L, 20L, 21L),
+                Arrays.asList("c", 5L, 6L, 14L, 15L, 22L, 23L)
+        );
+
+        assertThat(resultInner.getDataStructure()).containsValues(
                 new Component("name", String.class, Role.IDENTIFIER),
                 new Component("age", Long.class, Role.MEASURE),
                 new Component("weight", Long.class, Role.MEASURE),
