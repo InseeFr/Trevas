@@ -81,7 +81,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 newFields.add(DataTypes.createStructField(
                         newName,
                         fromVtlType(expressions.get(newName).getType()),
-                        false
+                        true
                 ));
             }
         }

@@ -14,6 +14,8 @@ public class SparkFilterFunction implements FilterFunction<Row> {
 
     @Override
     public boolean call(Row row) {
-        return (boolean) expression.resolve(new SparkRowMap(row));
+        var res = expression.resolve(new SparkRowMap(row));
+        if (res == null) return false;
+        return (boolean) res;
     }
 }
