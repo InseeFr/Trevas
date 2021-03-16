@@ -19,4 +19,4 @@ jobs:
         with:
           java-version: 11.0.4
       - name: Test & package with Maven
-        run: mvn clean verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas
+        run: mvn clean verify sonar:sonar -Dsonar.organization=inseefr -Dsonar.projectKey=InseeFr_Trevas
