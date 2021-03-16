@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -28,14 +30,16 @@ public class ClauseVisitorTest {
     @Test
     public void testFilterClause() throws ScriptException {
 
-        InMemoryDataset dataset = new InMemoryDataset(
+        var dataset = new InMemoryDataset(
                 List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                        new Structured.Component("name", String.class, Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Role.MEASURE),
+                        new Structured.Component("weight", Long.class, Role.MEASURE)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Arrays.asList("Toto", null, 100L),
+                Arrays.asList("Hadrien", 10L, 11L),
+                Arrays.asList("Nico", 11L, 10L),
+                Arrays.asList("Franck", 12L, 9L)
         );
 
         ScriptContext context = engine.getContext();
@@ -48,6 +52,13 @@ public class ClauseVisitorTest {
                 Map.of("name", "Nico", "age", 11L, "weight", 10L)
         ));
 
+        engine.eval("ds := ds1[filter age > 10 or age < 12];");
+
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+        ));
     }
 
     @Test

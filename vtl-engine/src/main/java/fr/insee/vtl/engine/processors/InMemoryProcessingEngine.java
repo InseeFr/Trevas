@@ -62,7 +62,11 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             public Dataset resolve(Map<String, Object> context) {
                 Dataset resolve = expression.resolve(context);
                 List<List<Object>> result = resolve.getDataPoints().stream()
-                        .filter(map -> (Boolean) filter.resolve(map))
+                        .filter(map -> {
+                            var res = filter.resolve(map);
+                            if (res == null) return false;
+                            return (boolean) res;
+                        })
                         .collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }

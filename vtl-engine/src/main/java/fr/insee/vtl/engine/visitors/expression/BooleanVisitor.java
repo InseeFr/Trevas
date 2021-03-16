@@ -56,20 +56,14 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return BooleanExpression.of(context -> {
 
             var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue != null && !leftValue) {
-                return false;
-            }
+            if (leftValue == null) return null;
+            if (!leftValue) return false;
 
             var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue != null && !rightValue) {
-                return false;
-            }
+            if (rightValue == null) return null;
+            if (!rightValue) return false;
 
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) {
-                return null;
-            } else {
-                return true;
-            }
+            return true;
         });
     }
 
