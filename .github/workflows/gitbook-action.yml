@@ -1,0 +1,15 @@
+name: Trevas docs publication
+on:
+  push:
+    branches:
+      - master # trigger branch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Gitbook Action
+        uses: ZanderZhao/gitbook-action@master
+        with:
+          source_dir: docs
+          token: ${{ secrets.GITHUB_TOKEN }}
