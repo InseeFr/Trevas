@@ -92,6 +92,8 @@
                     <!-- Suppress UnresolvedMavenProperty. -->
                     <argLine>@{surefireArgLine}</argLine>
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <forkedProcessExitTimeoutInSeconds>180</forkedProcessExitTimeoutInSeconds>
+                    <forkCount>1</forkCount>
                 </configuration>
             </plugin>
             <plugin>
