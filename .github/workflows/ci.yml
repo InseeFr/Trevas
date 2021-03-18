@@ -19,9 +19,9 @@ jobs:
         with:
           java-version: 11.0.4
       - name: Test & package with Maven
-        run: mvn package
+        run: mvn clean package
       - name: Analyze with SonarCloud
-        run: ./mvnw -B verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas -Dsonar.organization=inseefr -Dsonar.host.url=https://sonarcloud.io
+        run: mvn verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas -Dsonar.organization=inseefr -Dsonar.host.url=https://sonarcloud.io
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
