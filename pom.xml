@@ -90,7 +90,7 @@
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <!-- Suppress UnresolvedMavenProperty. -->
-                    <argLine>${surefireArgLine}</argLine>
+                    <argLine>@{surefireArgLine}</argLine>
                     <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>
