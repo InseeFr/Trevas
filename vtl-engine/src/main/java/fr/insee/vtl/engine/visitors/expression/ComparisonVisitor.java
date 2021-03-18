@@ -37,28 +37,28 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
-    private static <T extends Comparable<T>> boolean equal(T left, T right) {
+    private static <T extends Comparable<T>> boolean isEqual(T left, T right) {
         return left.compareTo(right) == 0;
     }
 
-    private static <T extends Comparable<T>> boolean notEqual(T left, T right) {
-        return !equal(left, right);
+    private static <T extends Comparable<T>> boolean isNotEqual(T left, T right) {
+        return !isEqual(left, right);
     }
 
-    private static <T extends Comparable<T>> boolean lessThan(T left, T right) {
+    private static <T extends Comparable<T>> boolean isLessThan(T left, T right) {
         return left.compareTo(right) < 0;
     }
 
-    private static <T extends Comparable<T>> boolean greaterThan(T left, T right) {
+    private static <T extends Comparable<T>> boolean isGreaterThan(T left, T right) {
         return left.compareTo(right) > 0;
     }
 
-    private static <T extends Comparable<T>> boolean lessThanOrEqual(T left, T right) {
-        return !greaterThan(left, right);
+    private static <T extends Comparable<T>> boolean isLessThanOrEqual(T left, T right) {
+        return !isGreaterThan(left, right);
     }
 
-    private static <T extends Comparable<T>> boolean greaterThanOrEqual(T left, T right) {
-        return !lessThan(left, right);
+    private static <T extends Comparable<T>> boolean isGreaterThanOrEqual(T left, T right) {
+        return !isLessThan(left, right);
     }
 
 
@@ -93,42 +93,42 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return equal(leftValue, rightValue);
+                        return isEqual(leftValue, rightValue);
                     });
                 case VtlParser.NEQ:
                     return BooleanExpression.of(context -> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return notEqual(leftValue, rightValue);
+                        return isNotEqual(leftValue, rightValue);
                     });
                 case VtlParser.LT:
                     return BooleanExpression.of(context -> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return lessThan(leftValue, rightValue);
+                        return isLessThan(leftValue, rightValue);
                     });
                 case VtlParser.MT:
                     return BooleanExpression.of(context -> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return greaterThan(leftValue, rightValue);
+                        return isGreaterThan(leftValue, rightValue);
                     });
                 case VtlParser.LE:
                     return BooleanExpression.of(context -> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return lessThanOrEqual(leftValue, rightValue);
+                        return isLessThanOrEqual(leftValue, rightValue);
                     });
                 case VtlParser.ME:
                     return BooleanExpression.of(context -> {
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
-                        return greaterThanOrEqual(leftValue, rightValue);
+                        return isGreaterThanOrEqual(leftValue, rightValue);
                     });
                 default:
                     throw new UnsupportedOperationException("unknown operator " + ctx);
