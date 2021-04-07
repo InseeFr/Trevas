@@ -208,6 +208,9 @@
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
+                                <configuration>
+									<keyname>6CA98FFB</keyname>
+                                </configuration>
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
