@@ -15,12 +15,12 @@ Les datasets `SparkDataset` permettent de représenter les tables statistiques d
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-engine</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-spark</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 <!-- Only for Kubernetes case -->
 <dependency>
