@@ -2,7 +2,7 @@
 
 Transformation engine and validator for statistics.
 
-![Build Status](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml/badge.svg)
+[![Build Status](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=alert_status)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=coverage)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -13,11 +13,10 @@ For actual execution, VTL expressions need to be translated to the target runtim
 
 Trevas provides an abstract definition of a Java VTL engine, as well as two concrete implementations:
 
-  * an in-memory engine for relatively small data, for example at design time when developing and testing VTL expressions on data samples
-  * an [Apache Spark](https://spark.apache.org/) engine for Big Data production environments
+- an in-memory engine for relatively small data, for example at design time when developing and testing VTL expressions on data samples
+- an [Apache Spark](https://spark.apache.org/) engine for Big Data production environments
 
 Other implementations can be easily developed for different contexts.
-
 
 ## Documentation
 
