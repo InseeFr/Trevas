@@ -5,6 +5,7 @@ Transformation engine and validator for statistics.
 [![Build Status](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=alert_status)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=coverage)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Trevas is a Java engine for the Validation and Transformation Language (VTL), an [SDMX standard](https://sdmx.org/?page_id=5096) that allows the formal definition of algorithms to validate statistical data and calculate derived data. VTL is user oriented and provides a technology-neutral and standard view of statistical processes at the business level. Trevas supports the latest VTL version (v2.0, July 2020).
