@@ -7,12 +7,12 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>vtl-model</artifactId>
     <name>VTL Model</name>
 	<description>Model describing VTL expressions and bindings</description>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
 
 </project>
