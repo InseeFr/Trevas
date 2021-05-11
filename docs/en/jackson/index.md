@@ -1,6 +1,6 @@
 # VTL Jackson
 
-## Dépendances
+## Dependencies
 
 ```xml=
 <dependency>
@@ -15,15 +15,15 @@
 </dependency>
 ```
 
-## Objets supportés
+## Supported objects
 
 - Dataset
 - Component
 - Bindings
 
-## Json / Dataset
+## JSON dataset
 
-La représentation JSON d'un `Dataset` est définie ainsi :
+The JSON representation of a `Dataset` is defined as:
 
 ```json
 {
@@ -41,9 +41,9 @@ La représentation JSON d'un `Dataset` est définie ainsi :
 }
 ```
 
-## Déclaration du module
+## Declaration of a module
 
-Le module peut être déclaré globalement à l'échelle du projet client :
+A module can be globally declared for the client project:
 
 ```java=
 public ObjectMapper objectMapper() {
@@ -52,9 +52,9 @@ public ObjectMapper objectMapper() {
 }
 ```
 
-## Exemple
+## Example
 
-### Désérialisation
+### Deserialization
 
 ```java=
 ObjectMapper objectMapper = new ObjectMapper();

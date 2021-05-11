@@ -20,7 +20,7 @@ ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 
 ## Variable entrantes
 
-Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clé / valeur au sein d'un objet `Bindings`.
+Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clés / valeurs au sein d'un objet `Bindings`.
 
 ```java=
 Bindings bindings = new SimpleBindings(Map.of("a", 1));
@@ -42,7 +42,7 @@ try {
 
 ## Récupération des résultats
 
-L'ensemble des variables, entrantes ou créées sont accessibles via le context du moteur :
+Toutes les variables entrantes ou créées sont accessibles via le contexte du moteur :
 
 ```java=
 Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);

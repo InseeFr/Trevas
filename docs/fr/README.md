@@ -6,4 +6,4 @@
 
 Trevas expose notamment un moteur d'exécution java 11.
 
-Le moteur répond à la norme JSR 223, définissant l'utilisation de scripts en Java.
+Le moteur répond à la norme [JSR 223](https://jcp.org/en/jsr/detail?id=223) qui spécifie l'utilisation de scripts en Java.

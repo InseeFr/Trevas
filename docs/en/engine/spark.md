@@ -1,15 +1,15 @@
 # Dataset - Spark
 
-Les datasets `SparkDataset` permettent de représenter les tables statistiques dans une application Java, délégant les calculs à un cluster Spark.
+The `SparkDataset` represent statistical cubes in Java, and delegate computations to a Spark cluster.
 
-## Utilisation
+## Usage
 
-- ajouter les dépendances Trevas / Spark requises
-- instancier une session Spark
-- instancier un moteur d'éxecution Trevas / Spark
-- créer des sources de données Spark et les introduire dans le moteur Trevas sous forme de `SparkDataset`
+- add required Trevas / Spark dependencies
+- instanciate a Spark session
+- instanciate a Trevas / Spark engine
+- create the Spark data sources and feed them to the Trevas engine as `SparkDataset` instances
 
-## Dépendances
+## Dependencies
 
 ```xml=
 <dependency>
@@ -30,7 +30,7 @@ Les datasets `SparkDataset` permettent de représenter les tables statistiques d
 </dependency>
 ```
 
-## Session Spark
+## Spark session
 
 ### Local
 
@@ -44,39 +44,39 @@ SparkSession spark = sparkBuilder.getOrCreate();
 
 ### Standalone
 
-#### Installer un cluster Spark standalone
+#### Install a standalone Spark cluster
 
-Le cluster Spark peut être installé dans n'importe quel environnement.
+The Spark cluster can be installed in any environment.
 
-Par exemple, pour en installer un dans un cluster Kubernetes via Helm :
+For example, installing a Spark cluster in a Kubernetes cluster via Helm is done with:
 
 ```bash
 helm install my-spark bitnami/spark --set image.repository=inseefrlab/spark --set image.tag=latest
 ```
 
-#### Instancier la session Spark
+#### Instanciate the Spark session
 
 ```java=
 SparkSession.Builder sparkBuilder = SparkSession.builder()
         .appName("vtl-lab")
-        // my-spark est le nom donné précédemment à votre cluster
+        // my-spark is the name previously given to the cluster
         .master("spark://my-spark-master-svc:7077");
 
-// Activer l'allocation dynamique d'exécuteur (optionnel)
+// Activate dynamic allocation of executors (optional)
 sparkBuilder.config("spark.dynamicAllocation.enabled", true);
 sparkBuilder.config("spark.dynamicAllocation.shuffleTracking.enabled", true);
-// Nombre d'exécuteurs minimum
+// Minimum number of executors
 sparkBuilder.config("spark.dynamicAllocation.minExecutors", 10);
 
-// Connexion à un datalake HDFS de type s3
+// Connection to a S3 HDFS datalake
 sparkBuilder.config("spark.hadoop.fs.s3a.access.key", sparkProperties.getAccessKey());
 sparkBuilder.config("spark.hadoop.fs.s3a.secret.key", sparkProperties.getSecretKey());
 sparkBuilder.config("spark.hadoop.fs.s3a.connection.ssl.enabled", sparkProperties.getSslEnabled());
 sparkBuilder.config("spark.hadoop.fs.s3a.session.token", sparkProperties.getSessionToken());
 sparkBuilder.config("spark.hadoop.fs.s3a.endpoint", sparkProperties.getSessionEndpoint());
 
-// Transférer les dépendances Trevas aux exécuteurs Spark
-// Voir https://stackoverflow.com/questions/28079307
+// Transfer Spark dependencies to the Spark executors
+// See https://stackoverflow.com/questions/28079307
 sparkBuilder.config("spark.jars", String.join(",",
         "/vtl-spark.jar",
         "/vtl-model.jar",
@@ -90,15 +90,15 @@ SparkSession spark = sparkBuilder.getOrCreate();
 
 ### Kubernetes
 
-Plutôt que de se connecter à une instance Spark préalablement installée (mode standalone), Kubernetes permet d'orchestrer l'exécution d'un job Spark au sein du cluster.
+Instead of connecting to a previously installed Spark instance (standalone mode), Kubernetes allows the orchestration of the execution of a Spark job in the cluster.
 
 ### Service account
 
-Afin que l'application cliente, requêtant le cluster Kubernetes pour lancer un job Spark, puisse obtenir les droits pour déployer les services nécessaires au lancement du job, un service account doit être configuré :
+A service account must be configured to allow the client application that queries the Kubernetes cluster to obtain the rights required to launch the job:
 
 - `serviceaccount.yml`
 
-Déclarer le service account associé à un namespace Kubernetes :
+Declare the service account associated to a Kubernetes cluster:
 
 ```yml
 apiVersion: v1
@@ -110,7 +110,7 @@ metadata:
 
 - `role.yml`
 
-Déclarer les rôles associés à un namespace Kubernetes :
+Declare the roles associated to a Kubernetes namespace:
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -137,7 +137,7 @@ rules:
 
 - `role-bindings.yml`
 
-Associer le service account et le rôle dans le namespace Kubernetes :
+Associate the service account and the role in the Kubernetes namespace:
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -156,7 +156,7 @@ roleRef:
 
 - `deployment.yml`
 
-Définir le service account à utiliser dans l'application Java cliente :
+Define the service account to use in the client Java application:
 
 ```yml
 [...]
@@ -167,37 +167,37 @@ spec:
 [...]
 ```
 
-#### Configuration de la session Spark Kubernetes
+#### Configuration of the Spark Kubernetes session
 
 ```java=
 SparkSession.Builder sparkBuilder = SparkSession.builder()
                 .appName("my-app")
                 .master("k8s://https://kubernetes.default.svc.cluster.local:443");
 
-// Image docker déployée pour le driver et les exécuteurs
+// Docker image deployed for the driver and the executors
 sparkBuilder.config("spark.kubernetes.container.image.pullPolicy", sparkProperties.getKubernetesContainerImagePullPolicy());
 sparkBuilder.config("spark.kubernetes.container.image", sparkProperties.getKubernetesContainerImage());
 
-// Configuration de l'instance Spark à déployer dans le cluster Kubernetes
+// Configuration of the Spark instance to deploy in the Kubernetes cluster
 sparkBuilder.config("spark.kubernetes.namespace", sparkProperties.getKubernetesNamespace());
 sparkBuilder.config("spark.kubernetes.executor.request.cores", sparkProperties.getKubernetesExecutorRequestCores());
 sparkBuilder.config("spark.kubernetes.driver.pod.name", sparkProperties.getKubernetesDriverPodName());
 
-// Activer l'allocation dynamique d'exécuteur (optionnel)
+// Activate the dynamic allocation of executors (optional)
 sparkBuilder.config("spark.dynamicAllocation.enabled", true);
 sparkBuilder.config("spark.dynamicAllocation.shuffleTracking.enabled", true);
-// Nombre d'exécuteurs minimum
+// Minimum number of executors
 sparkBuilder.config("spark.dynamicAllocation.minExecutors", 10);
 
-// Connexion à un datalake HDFS de type s3
+// Connection to a type 3 HDFS datalake
 sparkBuilder.config("spark.hadoop.fs.s3a.access.key", sparkProperties.getAccessKey());
 sparkBuilder.config("spark.hadoop.fs.s3a.secret.key", sparkProperties.getSecretKey());
 sparkBuilder.config("spark.hadoop.fs.s3a.connection.ssl.enabled", sparkProperties.getSslEnabled());
 sparkBuilder.config("spark.hadoop.fs.s3a.session.token", sparkProperties.getSessionToken());
 sparkBuilder.config("spark.hadoop.fs.s3a.endpoint", sparkProperties.getSessionEndpoint());
 
-// Transférer les dépendances Trevas aux exécuteurs Spark
-// Voir https://stackoverflow.com/questions/28079307
+// Transfer the Trevas dependencies to the Spark executors
+// See https://stackoverflow.com/questions/28079307
 sparkBuilder.config("spark.jars", String.join(",",
         "/vtl-spark.jar",
         "/vtl-model.jar",
@@ -209,11 +209,11 @@ sparkBuilder.config("spark.jars", String.join(",",
 SparkSession spark = sparkBuilder.getOrCreate();
 ```
 
-## Moteur d'exécution Trevas / Spark
+## Trevas / Spark execution engine
 
-Par défaut, un engine Trevas résoud les traitements `InMemory`.
+By defaults, a Trevas engine resolves treatments `InMemory`.
 
-Afin d'activer la résolution via Spark, deux propriétés sont à valoriser :
+In order to activate the resolution via Spark, two properties must be valued:
 
 ```java=
 ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -225,11 +225,11 @@ engine.put("$vtl.spark.session", spark);
 
 ## SparkDataset
 
-Afin d'instancier un `SparkDataset` Trevas, une source de données Spark et un fichier JSON décrivant la structure des données sont requis.
+In order to instanciate a Trevas `SparkDataset`, a Spark data source and a JSON file describing the data structure are required.
 
-### Source de données Spark
+### Spark data source
 
-L'API Spark permet de créer des `Dataset` depuis plusieurs formats : Parquet, Avro, JSON, CSV, JDBC...
+The Spark API allows the creation of `Dataset` instances from various formats : Parquet, Avro, JSON, CSV, JDBC...
 
 #### Parquet
 
@@ -237,7 +237,7 @@ L'API Spark permet de créer des `Dataset` depuis plusieurs formats : Parquet, A
 Dataset<Row> dataset = spark.read().parquet("path/to/parquet/folder");
 ```
 
-### Structure des données
+### Data structure
 
 #### Format
 
@@ -249,7 +249,7 @@ Dataset<Row> dataset = spark.read().parquet("path/to/parquet/folder");
 ]
 ```
 
-#### Sérialisation
+#### Serialization
 
 ```java=
 List<Structured.Component> components =
@@ -260,7 +260,7 @@ objectMapper.readValue(Paths.get("path/to/structure.json")
 Structured.DataStructure structure = new Structured.DataStructure(components);
 ```
 
-### Instanciation du `SparkDataset`
+### `SparkDataset` instanciation
 
 ```java=
 SparkDataset dataset = new SparkDataset(dataset, structure);

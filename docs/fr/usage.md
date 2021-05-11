@@ -1,8 +1,8 @@
 # Usage
 
-## Importing into a Maven project
+## Import dans un projet Maven
 
-The Trevas engine has to be added to your project via the `pom.xml`:
+Il faut importer le moteur Trevas dans votre projet via le `pom.xml` :
 
 ```xml
 <dependency>
@@ -12,22 +12,22 @@ The Trevas engine has to be added to your project via the `pom.xml`:
 </dependency>
 ```
 
-## Engine usage
+## Utilisation du moteur
 
-To instantiate the VTL 2.0 engine, we simply have to create a `ScriptEngine`:
+Pour instancier le moteur VTL 2.0, il suffit de créer un `ScriptEngine`:
 
 ```java
 ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 ```
 
-If we want to add input bindings, we can do it as follows:
+Il est possible d'ajouter des 'bindings' comme suit:
 
 ```java
 ScriptContext context = engine.getContext();
 context.setBindings(jsonBindings, ScriptContext.ENGINE_SCOPE);
 ```
 
-To execute the script and get results, just do:
+Pour exécuter le script et récupérer les résultats:
 
 ```java
 try {
@@ -39,7 +39,7 @@ try {
 }
 ```
 
-Where `processErrors` can be for instance:
+Où `processErrors` peut être, par exemple:
 
 ```java
 private <T> T processErrors(Throwable ex, ServerRequest request, ServerResponse response) {
@@ -60,11 +60,11 @@ private <T> T processErrors(Throwable ex, ServerRequest request, ServerResponse 
 }
 ```
 
-## Dataset serialization
+## Sérialisation des jeux de données
 
-Instead of dealing yourself with `Dataset` objects defined in the Trevas Model module, a dedicated module based on Jackson is available in Trevas.
+Au lieu de gérer vous-mêmes les instances de la classe `Dataset` définie dans Trevas, vous pouvez utiliser un module existant basé sur Jackson.
 
-### Dependencies
+### Dépendances
 
 ```xml
 <dependency>
@@ -80,22 +80,22 @@ Instead of dealing yourself with `Dataset` objects defined in the Trevas Model m
 </dependency>
 ```
 
-### Initialization of Jackson Mapper
+### Initialisation du Jackson Mapper
 
-Thanks to the module, it's possible to register once the Trevas Jackson module in your application:
+Grâce à ce module, il est possible d'enregistrer une fois seulement le module Jackson dans votre application:
 
 ```java
 ObjectMapper mapper = new ObjectMapper();
 mapper.registerModule(new TrevasModule());
 ```
 
-Providing it to your webserver, `Dataset`, `Component` and `Bindings` will be serialized/deserialized automatically.
+En le fournissant à votre serveur web, `Dataset`, `Component` et `Bindings` seront sérialisés et désérialisés automatiquement.
 
-### Bindings JSON model
+### Modèle JSON pour les bindings
 
-The JSON bindings cover scalars and datasets.
+Les bindings JSON couvrent les scalaires et les jeux de données.
 
-To include a `Dataset`, you have to respect the following model:
+Pour inclure un `Dataset`, il est nécessaire de respecter le modèle suivant :
 
 ```json
 {
@@ -111,6 +111,6 @@ To include a `Dataset`, you have to respect the following model:
 }
 ```
 
-The value of `type` has to be one of: `STRING`, `INTEGER`, `NUMBER`, `BOOLEAN`.
+La valeur de `type` doit être parmi : `STRING`, `INTEGER`, `NUMBER`, `BOOLEAN`.
 
-The value of `role` has to to be one of: `IDENTIFIER`, `MEASURE`, `ATTRIBUTE`.
+La valeur de `role` doit être parmi : `IDENTIFIER`, `MEASURE`, `ATTRIBUTE`.
