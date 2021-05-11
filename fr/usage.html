@@ -1,10 +1,10 @@
 
 <!DOCTYPE HTML>
-<html lang="en" >
+<html lang="fr" >
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Usage · Java VTL 2.1</title>
+        <title>Utilisation · Java VTL 2.1</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -83,7 +83,7 @@
         
             
 <div id="book-search-input" role="search">
-    <input type="text" placeholder="Type to search" />
+    <input type="text" placeholder="Tapez pour rechercher" />
 </div>
 
             
@@ -99,7 +99,7 @@
 
     
         
-        <li class="header">Developer guide</li>
+        <li class="header">Guide du développeur</li>
         
         
     
@@ -121,7 +121,7 @@
                 <a href="getting-started.html">
             
                     
-                    Getting started
+                    Démarrage
             
                 </a>
             
@@ -192,7 +192,7 @@
                 <a href="usage.html">
             
                     
-                    Usage
+                    Utilisation
             
                 </a>
             
@@ -203,7 +203,7 @@
 
     
         
-        <li class="header">User guide</li>
+        <li class="header">Guide utilisateur</li>
         
         
     
@@ -212,7 +212,7 @@
                 <a href="coverage.html">
             
                     
-                    Functional coverage of the VTL 2.0 Engine
+                    Couverture fonctionnelle du moteur d'exécution VTL 2.0
             
                 </a>
             
@@ -227,7 +227,7 @@
 
     <li>
         <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
-            Published with GitBook
+            Publié avec GitBook
         </a>
     </li>
 </ul>
@@ -250,7 +250,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Usage</a>
+        <a href="." >Utilisation</a>
     </h1>
 </div>
 
@@ -266,23 +266,23 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="usage">Usage</h1>
-<h2 id="importing-into-a-maven-project">Importing into a Maven project</h2>
-<p>The Trevas engine has to be added to your project via the <code>pom.xml</code>:</p>
+<h2 id="import-dans-un-projet-maven">Import dans un projet Maven</h2>
+<p>Il faut importer le moteur Trevas dans votre projet via le <code>pom.xml</code> :</p>
 <pre class="language-"><code class="lang-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>fr.insee.trevas<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>vtl-engine<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>x.y.z<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
 </code></pre>
-<h2 id="engine-usage">Engine usage</h2>
-<p>To instantiate the VTL 2.0 engine, we simply have to create a <code>ScriptEngine</code>:</p>
+<h2 id="utilisation-du-moteur">Utilisation du moteur</h2>
+<p>Pour instancier le moteur VTL 2.0, il suffit de cr&#xE9;er un <code>ScriptEngine</code>:</p>
 <pre class="language-"><code class="lang-java"><span class="token class-name">ScriptEngine</span> engine <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ScriptEngineManager</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getEngineByName</span><span class="token punctuation">(</span><span class="token string">&quot;vtl&quot;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
-<p>If we want to add input bindings, we can do it as follows:</p>
+<p>Il est possible d&apos;ajouter des &apos;bindings&apos; comme suit:</p>
 <pre class="language-"><code class="lang-java"><span class="token class-name">ScriptContext</span> context <span class="token operator">=</span> engine<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 context<span class="token punctuation">.</span><span class="token function">setBindings</span><span class="token punctuation">(</span>jsonBindings<span class="token punctuation">,</span> <span class="token class-name">ScriptContext</span><span class="token punctuation">.</span>ENGINE_SCOPE<span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
-<p>To execute the script and get results, just do:</p>
+<p>Pour ex&#xE9;cuter le script et r&#xE9;cup&#xE9;rer les r&#xE9;sultats:</p>
 <pre class="language-"><code class="lang-java"><span class="token keyword">try</span> <span class="token punctuation">{</span>
     engine<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>script<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token class-name">Bindings</span> outputBindings <span class="token operator">=</span> context<span class="token punctuation">.</span><span class="token function">getBindings</span><span class="token punctuation">(</span><span class="token class-name">ScriptContext</span><span class="token punctuation">.</span>ENGINE_SCOPE<span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -291,7 +291,7 @@ context<span class="token punctuation">.</span><span class="token function">setB
     <span class="token function">processErrors</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> request<span class="token punctuation">,</span> response<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<p>Where <code>processErrors</code> can be for instance:</p>
+<p>O&#xF9; <code>processErrors</code> peut &#xEA;tre, par exemple:</p>
 <pre class="language-"><code class="lang-java"><span class="token keyword">private</span> <span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">T</span><span class="token punctuation">&gt;</span></span> <span class="token class-name">T</span> <span class="token function">processErrors</span><span class="token punctuation">(</span><span class="token class-name">Throwable</span> ex<span class="token punctuation">,</span> <span class="token class-name">ServerRequest</span> request<span class="token punctuation">,</span> <span class="token class-name">ServerResponse</span> response<span class="token punctuation">)</span> <span class="token punctuation">{</span>
     LOGGER<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token class-name">Level</span><span class="token punctuation">.</span>FINE<span class="token punctuation">,</span> <span class="token string">&quot;Error&quot;</span><span class="token punctuation">,</span> ex<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword">if</span> <span class="token punctuation">(</span>ex <span class="token keyword">instanceof</span> <span class="token class-name">VtlScriptException</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -309,9 +309,9 @@ context<span class="token punctuation">.</span><span class="token function">setB
     <span class="token keyword">return</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="dataset-serialization">Dataset serialization</h2>
-<p>Instead of dealing yourself with <code>Dataset</code> objects defined in the Trevas Model module, a dedicated module based on Jackson is available in Trevas.</p>
-<h3 id="dependencies">Dependencies</h3>
+<h2 id="s&#xE9;rialisation-des-jeux-de-donn&#xE9;es">S&#xE9;rialisation des jeux de donn&#xE9;es</h2>
+<p>Au lieu de g&#xE9;rer vous-m&#xEA;mes les instances de la classe <code>Dataset</code> d&#xE9;finie dans Trevas, vous pouvez utiliser un module existant bas&#xE9; sur Jackson.</p>
+<h3 id="d&#xE9;pendances">D&#xE9;pendances</h3>
 <pre class="language-"><code class="lang-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>fr.insee.trevas<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>vtl-jackson<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
@@ -324,15 +324,15 @@ context<span class="token punctuation">.</span><span class="token function">setB
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>2.11.2<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
 </code></pre>
-<h3 id="initialization-of-jackson-mapper">Initialization of Jackson Mapper</h3>
-<p>Thanks to the module, it&apos;s possible to register once the Trevas Jackson module in your application:</p>
+<h3 id="initialisation-du-jackson-mapper">Initialisation du Jackson Mapper</h3>
+<p>Gr&#xE2;ce &#xE0; ce module, il est possible d&apos;enregistrer une fois seulement le module Jackson dans votre application:</p>
 <pre class="language-"><code class="lang-java"><span class="token class-name">ObjectMapper</span> mapper <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ObjectMapper</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 mapper<span class="token punctuation">.</span><span class="token function">registerModule</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">TrevasModule</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
-<p>Providing it to your webserver, <code>Dataset</code>, <code>Component</code> and <code>Bindings</code> will be serialized/deserialized automatically.</p>
-<h3 id="bindings-json-model">Bindings JSON model</h3>
-<p>The JSON bindings cover scalars and datasets.</p>
-<p>To include a <code>Dataset</code>, you have to respect the following model:</p>
+<p>En le fournissant &#xE0; votre serveur web, <code>Dataset</code>, <code>Component</code> et <code>Bindings</code> seront s&#xE9;rialis&#xE9;s et d&#xE9;s&#xE9;rialis&#xE9;s automatiquement.</p>
+<h3 id="mod&#xE8;le-json-pour-les-bindings">Mod&#xE8;le JSON pour les bindings</h3>
+<p>Les bindings JSON couvrent les scalaires et les jeux de donn&#xE9;es.</p>
+<p>Pour inclure un <code>Dataset</code>, il est n&#xE9;cessaire de respecter le mod&#xE8;le suivant :</p>
 <pre class="language-"><code class="lang-json"><span class="token punctuation">{</span>
     <span class="token property">&quot;dataStructure&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
         <span class="token punctuation">{</span><span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;my_name&quot;</span><span class="token punctuation">,</span> <span class="token property">&quot;type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;STRING&quot;</span><span class="token punctuation">,</span> <span class="token property">&quot;role&quot;</span><span class="token operator">:</span> <span class="token string">&quot;IDENTIFIER&quot;</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
@@ -345,8 +345,8 @@ mapper<span class="token punctuation">.</span><span class="token function">regis
     <span class="token punctuation">]</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<p>The value of <code>type</code> has to be one of: <code>STRING</code>, <code>INTEGER</code>, <code>NUMBER</code>, <code>BOOLEAN</code>.</p>
-<p>The value of <code>role</code> has to to be one of: <code>IDENTIFIER</code>, <code>MEASURE</code>, <code>ATTRIBUTE</code>.</p>
+<p>La valeur de <code>type</code> doit &#xEA;tre parmi : <code>STRING</code>, <code>INTEGER</code>, <code>NUMBER</code>, <code>BOOLEAN</code>.</p>
+<p>La valeur de <code>role</code> doit &#xEA;tre parmi : <code>IDENTIFIER</code>, <code>MEASURE</code>, <code>ATTRIBUTE</code>.</p>
 
                                 
                                 </section>
@@ -379,7 +379,7 @@ mapper<span class="token punctuation">.</span><span class="token function">regis
                 </a>
                 
                 
-                <a href="coverage.html" class="navigation navigation-next " aria-label="Next page: Functional coverage of the VTL 2.0 Engine">
+                <a href="coverage.html" class="navigation navigation-next " aria-label="Next page: Couverture fonctionnelle du moteur d'exécution VTL 2.0">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -390,7 +390,7 @@ mapper<span class="token punctuation">.</span><span class="token function">regis
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Usage","level":"1.5","depth":1,"next":{"title":"Functional coverage of the VTL 2.0 Engine","level":"2.1","depth":1,"path":"coverage.md","ref":"coverage.md","articles":[]},"previous":{"title":"Jackson","level":"1.4","depth":1,"path":"jackson/index.md","ref":"jackson/index.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"en","gitbook":"*"},"file":{"path":"usage.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":".","book":{"language":"en"}});
+            gitbook.page.hasChanged({"page":{"title":"Utilisation","level":"1.5","depth":1,"next":{"title":"Couverture fonctionnelle du moteur d'exécution VTL 2.0","level":"2.1","depth":1,"path":"coverage.md","ref":"coverage.md","articles":[]},"previous":{"title":"Jackson","level":"1.4","depth":1,"path":"jackson/index.md","ref":"jackson/index.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"usage.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":".","book":{"language":"fr"}});
         });
     </script>
 </div>

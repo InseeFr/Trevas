@@ -1,10 +1,10 @@
 
 <!DOCTYPE HTML>
-<html lang="fr" >
+<html lang="en" >
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>InMemory · Java VTL 2.1</title>
+        <title>Engine · Java VTL 2.1</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -69,10 +69,10 @@
     <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="spark.html" />
+    <link rel="next" href="in-memory.html" />
     
     
-    <link rel="prev" href="./" />
+    <link rel="prev" href="../getting-started.html" />
     
 
     </head>
@@ -83,7 +83,7 @@
         
             
 <div id="book-search-input" role="search">
-    <input type="text" placeholder="Tapez pour rechercher" />
+    <input type="text" placeholder="Type to search" />
 </div>
 
             
@@ -99,7 +99,7 @@
 
     
         
-        <li class="header">Guide du développeur</li>
+        <li class="header">Developer guide</li>
         
         
     
@@ -121,7 +121,7 @@
                 <a href="../getting-started.html">
             
                     
-                    Démarrage
+                    Getting started
             
                 </a>
             
@@ -129,7 +129,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="./">
+        <li class="chapter active" data-level="1.3" data-path="./">
             
                 <a href="./">
             
@@ -143,7 +143,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter active" data-level="1.3.1" data-path="in-memory.html">
+        <li class="chapter " data-level="1.3.1" data-path="in-memory.html">
             
                 <a href="in-memory.html">
             
@@ -192,7 +192,7 @@
                 <a href="../usage.html">
             
                     
-                    Utilisation
+                    Usage
             
                 </a>
             
@@ -203,7 +203,7 @@
 
     
         
-        <li class="header">Guide utilisateur</li>
+        <li class="header">User guide</li>
         
         
     
@@ -212,7 +212,7 @@
                 <a href="../coverage.html">
             
                     
-                    Couverture fonctionnelle du moteur d'exécution VTL 2.0
+                    Functional coverage of the VTL 2.0 Engine
             
                 </a>
             
@@ -227,7 +227,7 @@
 
     <li>
         <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
-            Publié avec GitBook
+            Published with GitBook
         </a>
     </li>
 </ul>
@@ -250,7 +250,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >InMemory</a>
+        <a href=".." >Engine</a>
     </h1>
 </div>
 
@@ -265,40 +265,50 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="dataset---inmemory">Dataset - InMemory</h1>
-<p>Les datasets <code>InMemoryDataset</code> permettent de repr&#xE9;senter les tables statistiques dans une application Java.</p>
-<h2 id="exemple">Exemple</h2>
+                                <h1 id="vtl-engine">VTL Engine</h1>
+<h2 id="dependency">Dependency</h2>
+<pre class="language-"><code class="lang-xml="><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>fr.insee.trevas<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>vtl-engine<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>0.1.0<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
+</code></pre>
+<h2 id="instanciation-of-the-execution-engine">Instanciation of the execution engine</h2>
+<p>The execution engine conforms to the <a href="https://docs.oracle.com/javase/10/scripting/java-scripting-api.htm#JSJSG109" target="_blank"><code>Script Engine</code></a> specification, and can thus be instanciated with the following instuction:</p>
 <pre class="language-"><code class="lang-java=">ScriptEngine engine = new ScriptEngineManager().getEngineByName(&quot;vtl&quot;);
-
-Bindings bindings = new SimpleBindings();
-
-// Par d&#xE9;faut, si le r&#xF4;le d&apos;une variable n&apos;est pas d&#xE9;fini, le r&#xF4;le `MEASURE` lui sera affect&#xE9;.
-InMemoryDataset dataset = new InMemoryDataset(
-                List.of(
-                        Map.of(&quot;var1&quot;, &quot;x&quot;, &quot;var2&quot;, &quot;y&quot;, &quot;var3&quot;, 5),
-                        Map.of(&quot;var1&quot;, &quot;xx&quot;, &quot;var2&quot;, &quot;yy&quot;, &quot;var3&quot;, 10)
-                ),
-                Map.of(&quot;var1&quot;, String.class, &quot;var2&quot;, String.class, &quot;var3&quot;, Long.class),
-                Map.of()
-);
-
-bindings.put(&quot;dataset&quot;, dataset);
-
+</code></pre>
+<h2 id="input-variables">Input variables</h2>
+<p>Input variables can be declared to the engine by passing them in key/value form in a <code>Bindings</code> object.</p>
+<pre class="language-"><code class="lang-java=">Bindings bindings = new SimpleBindings(Map.of(&quot;a&quot;, 1));
 ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-
-String script = &quot;res := dataset[filter var3 &gt; 6];&quot;;
-
+</code></pre>
+<h2 id="script-execution">Script execution</h2>
+<pre class="language-"><code class="lang-java=">// The &apos;a&apos; will be looked up in the engine bindings
+String script = &quot;res := a + 1;&quot;;
 try {
     engine.eval(script);
 } catch (ScriptException e) {
     e.printStackTrace();
 }
-
-Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
-
-InMemoryDataset res = (InMemoryDataset) outputBindings.get(&quot;res&quot;);
 </code></pre>
+<h2 id="retrieving-the-results">Retrieving the results</h2>
+<p>All the input and output variables are accessible via the engine context:</p>
+<pre class="language-"><code class="lang-java=">Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
+</code></pre>
+<p>It is then possible to access a particular variable:</p>
+<pre class="language-"><code class="lang-java=">outputBindings.get(&quot;res&quot;);
+</code></pre>
+<h2 id="dataset">Dataset</h2>
+<p>The data sets are represented as instances of <code>Dataset</code>.</p>
+<p>These <code>Dataset</code> are composed of a <code>dataStructure</code> and a <code>dataPoints</code> members.</p>
+<p>The <code>dataStructure</code> are composed of <code>Component</code> members, each having a <code>name</code>, a <code>role</code> and a <code>type</code>.</p>
+<p>The values in the <code>dataPoints</code> of components that have a <code>IDENTIFIER</code> role must be unique.</p>
+<p>Two subclasses of <code>Dataset</code> are exposed:</p>
+<ul>
+<li><code>InMemoryDataset</code>: allows the creation of a <code>Dataset</code> within the JVM (<a href="in-memory.html">see details</a>)</li>
+<li><code>SparkDataset</code>: allows the creation of a <code>Dataset</code> to be transferred to Spark (<a href="spark.html">see details</a>)</li>
+</ul>
 
                                 
                                 </section>
@@ -326,12 +336,12 @@ InMemoryDataset res = (InMemoryDataset) outputBindings.get(&quot;res&quot;);
 
             
                 
-                <a href="./" class="navigation navigation-prev " aria-label="Previous page: Engine">
+                <a href="../getting-started.html" class="navigation navigation-prev " aria-label="Previous page: Getting started">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
                 
-                <a href="spark.html" class="navigation navigation-next " aria-label="Next page: Spark">
+                <a href="in-memory.html" class="navigation navigation-next " aria-label="Next page: InMemory">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -342,7 +352,7 @@ InMemoryDataset res = (InMemoryDataset) outputBindings.get(&quot;res&quot;);
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"InMemory","level":"1.3.1","depth":2,"next":{"title":"Spark","level":"1.3.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]},"previous":{"title":"Engine","level":"1.3","depth":1,"path":"engine/index.md","ref":"engine/index.md","articles":[{"title":"InMemory","level":"1.3.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},{"title":"Spark","level":"1.3.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"engine/in-memory.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":"..","book":{"language":"fr"}});
+            gitbook.page.hasChanged({"page":{"title":"Engine","level":"1.3","depth":1,"next":{"title":"InMemory","level":"1.3.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},"previous":{"title":"Getting started","level":"1.2","depth":1,"path":"getting-started.md","ref":"getting-started.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"en","gitbook":"*"},"file":{"path":"engine/index.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":"..","book":{"language":"en"}});
         });
     </script>
 </div>

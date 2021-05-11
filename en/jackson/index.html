@@ -1,6 +1,6 @@
 
 <!DOCTYPE HTML>
-<html lang="fr" >
+<html lang="en" >
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
@@ -83,7 +83,7 @@
         
             
 <div id="book-search-input" role="search">
-    <input type="text" placeholder="Tapez pour rechercher" />
+    <input type="text" placeholder="Type to search" />
 </div>
 
             
@@ -99,7 +99,7 @@
 
     
         
-        <li class="header">Guide du développeur</li>
+        <li class="header">Developer guide</li>
         
         
     
@@ -121,7 +121,7 @@
                 <a href="../getting-started.html">
             
                     
-                    Démarrage
+                    Getting started
             
                 </a>
             
@@ -192,7 +192,7 @@
                 <a href="../usage.html">
             
                     
-                    Utilisation
+                    Usage
             
                 </a>
             
@@ -203,7 +203,7 @@
 
     
         
-        <li class="header">Guide utilisateur</li>
+        <li class="header">User guide</li>
         
         
     
@@ -212,7 +212,7 @@
                 <a href="../coverage.html">
             
                     
-                    Couverture fonctionnelle du moteur d'exécution VTL 2.0
+                    Functional coverage of the VTL 2.0 Engine
             
                 </a>
             
@@ -227,7 +227,7 @@
 
     <li>
         <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
-            Publié avec GitBook
+            Published with GitBook
         </a>
     </li>
 </ul>
@@ -266,7 +266,7 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="vtl-jackson">VTL Jackson</h1>
-<h2 id="d&#xE9;pendances">D&#xE9;pendances</h2>
+<h2 id="dependencies">Dependencies</h2>
 <pre class="language-"><code class="lang-xml="><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>fr.insee.trevas<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>vtl-jackson<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
@@ -278,14 +278,14 @@
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>2.12.1<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
 </code></pre>
-<h2 id="objets-support&#xE9;s">Objets support&#xE9;s</h2>
+<h2 id="supported-objects">Supported objects</h2>
 <ul>
 <li>Dataset</li>
 <li>Component</li>
 <li>Bindings</li>
 </ul>
-<h2 id="json--dataset">Json / Dataset</h2>
-<p>La repr&#xE9;sentation JSON d&apos;un <code>Dataset</code> est d&#xE9;finie ainsi :</p>
+<h2 id="json-dataset">JSON dataset</h2>
+<p>The JSON representation of a <code>Dataset</code> is defined as:</p>
 <pre class="language-"><code class="lang-json"><span class="token punctuation">{</span>
   <span class="token property">&quot;dataStructure&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
     <span class="token punctuation">{</span> <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;id&quot;</span><span class="token punctuation">,</span> <span class="token property">&quot;type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;STRING&quot;</span><span class="token punctuation">,</span> <span class="token property">&quot;role&quot;</span><span class="token operator">:</span> <span class="token string">&quot;IDENTIFIER&quot;</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
@@ -300,15 +300,15 @@
   <span class="token punctuation">]</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="d&#xE9;claration-du-module">D&#xE9;claration du module</h2>
-<p>Le module peut &#xEA;tre d&#xE9;clar&#xE9; globalement &#xE0; l&apos;&#xE9;chelle du projet client :</p>
+<h2 id="declaration-of-a-module">Declaration of a module</h2>
+<p>A module can be globally declared for the client project:</p>
 <pre class="language-"><code class="lang-java=">public ObjectMapper objectMapper() {
     return new ObjectMapper()
             .registerModule(new TrevasModule());
 }
 </code></pre>
-<h2 id="exemple">Exemple</h2>
-<h3 id="d&#xE9;s&#xE9;rialisation">D&#xE9;s&#xE9;rialisation</h3>
+<h2 id="example">Example</h2>
+<h3 id="deserialization">Deserialization</h3>
 <pre class="language-"><code class="lang-java=">ObjectMapper objectMapper = new ObjectMapper();
 objectMapper.readValue(json, Dataset.class);
 </code></pre>
@@ -344,7 +344,7 @@ objectMapper.readValue(json, Dataset.class);
                 </a>
                 
                 
-                <a href="../usage.html" class="navigation navigation-next " aria-label="Next page: Utilisation">
+                <a href="../usage.html" class="navigation navigation-next " aria-label="Next page: Usage">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -355,7 +355,7 @@ objectMapper.readValue(json, Dataset.class);
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Jackson","level":"1.4","depth":1,"next":{"title":"Utilisation","level":"1.5","depth":1,"path":"usage.md","ref":"usage.md","articles":[]},"previous":{"title":"Spark","level":"1.3.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"jackson/index.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":"..","book":{"language":"fr"}});
+            gitbook.page.hasChanged({"page":{"title":"Jackson","level":"1.4","depth":1,"next":{"title":"Usage","level":"1.5","depth":1,"path":"usage.md","ref":"usage.md","articles":[]},"previous":{"title":"Spark","level":"1.3.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"en","gitbook":"*"},"file":{"path":"jackson/index.md","mtime":"2021-05-11T20:58:40.714Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-05-11T20:59:36.438Z"},"basePath":"..","book":{"language":"en"}});
         });
     </script>
 </div>
