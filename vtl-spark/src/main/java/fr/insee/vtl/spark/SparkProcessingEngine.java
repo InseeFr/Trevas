@@ -53,7 +53,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
             return ((SparkDatasetExpression) expression).resolve(Map.of());
         } else {
             var dataset = expression.resolve(Map.of());
-            return new SparkDataset(dataset, getRoleMap(dataset), spark);
+            if (dataset instanceof SparkDataset) {
+                return (SparkDataset) dataset;
+            } else {
+                return new SparkDataset(dataset, getRoleMap(dataset), spark);
+            }
         }
     }
 
