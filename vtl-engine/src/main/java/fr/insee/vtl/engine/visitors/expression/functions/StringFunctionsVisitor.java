@@ -1,7 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.LongExpression;
@@ -14,8 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 
 /**
  * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving string functions.
@@ -132,10 +130,11 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             //  to do some research.
             throw new UnsupportedOperationException("too many args (" + args + ") for: " + ctx.getText());
         }
+        // TODO: grammar issue: endParameter should be named lengthParameter
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
         var startExpression = ctx.startParameter == null ? LongExpression.of(0L)
                 : assertLong(exprVisitor.visit(ctx.startParameter), ctx.startParameter);
-        var endExpression = ctx.endParameter == null ? null
+        var lengthExpression = ctx.endParameter == null ? null
                 : assertLong(exprVisitor.visit(ctx.endParameter), ctx.endParameter);
 
         return ResolvableExpression.withType(String.class, context -> {
@@ -143,10 +142,14 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             if (value == null) return null;
             Long startValue = (Long) startExpression.resolve(context);
             if (startValue == null) return null;
-            if (endExpression == null) return value.substring(startValue.intValue());
-            Long endValue = (Long) endExpression.resolve(context);
-            if (endValue == null) return null;
-            return value.substring(startValue.intValue(), endValue.intValue());
+            if (startValue > value.length()) return "";
+            var start = startValue.equals(0L) ? 0 : startValue.intValue()  - 1;
+            if (lengthExpression == null) return value.substring(start);
+            Long lengthValue = (Long) lengthExpression.resolve(context);
+            if (lengthValue == null) return null;
+            var end = start + lengthValue.intValue();
+            if (end > value.length()) return value.substring(start);;
+            return value.substring(start, end);
         });
     }
 

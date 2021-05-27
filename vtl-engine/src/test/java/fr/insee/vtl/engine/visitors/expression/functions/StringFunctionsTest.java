@@ -88,12 +88,16 @@ public class StringFunctionsTest {
     @Test
     public void testSubstrAtom() throws ScriptException {
         ScriptContext context = engine.getContext();
-        engine.eval("s1 := substr(\"abcde\");");
-        assertThat(context.getAttribute("s1")).isEqualTo("abcde");
-        engine.eval("s1 := substr(\"abcde\",1);");
-        assertThat(context.getAttribute("s1")).isEqualTo("bcde");
-        engine.eval("s1 := substr(\"abcde\",1,3);");
-        assertThat(context.getAttribute("s1")).isEqualTo("bc");
+        engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\");");
+        assertThat(context.getAttribute("s1")).isEqualTo("abcdefghijklmnopqrstuvwxyz");
+        engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 2);");
+        assertThat(context.getAttribute("s1")).isEqualTo("bcdefghijklmnopqrstuvwxyz");
+        engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 5, 10);");
+        assertThat(context.getAttribute("s1")).isEqualTo("efghijklmn");
+        engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 25, 10);");
+        assertThat(context.getAttribute("s1")).isEqualTo("yz");
+        engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 30, 10);");
+        assertThat(context.getAttribute("s1")).isEqualTo("");
     }
 
     @Test
