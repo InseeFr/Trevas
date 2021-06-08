@@ -40,7 +40,7 @@ public class VtlScriptException extends ScriptException {
      * Returns the position in a VTL expression corresponding to a parsing context.
      *
      * @param tree The parsing context whose corresponding position is looked up.
-     * @return The position in the VTL expression, as an <code>Position</code> instance.
+     * @return The position in the VTL expression, as a <code>Position</code> instance.
      */
     public static Position positionOf(ParseTree tree) {
         if (tree instanceof ParserRuleContext) {
@@ -64,9 +64,9 @@ public class VtlScriptException extends ScriptException {
     }
 
     /**
-     * Returns the position in a VTL expressions that caused the exception.
+     * Returns the position in a VTL expression that caused the exception.
      *
-     * @return The position in the VTL expression, as an <code>Position</code> instance.
+     * @return The position in the VTL expression, as a <code>Position</code> instance.
      */
     public Position getPosition() {
         return positionOf(getTree());
@@ -82,7 +82,12 @@ public class VtlScriptException extends ScriptException {
         private final Integer startColumn;
         private final Integer endColumn;
 
-
+        /**
+         * Constructor taking the tokens that start and end the faulty expression.
+         *
+         * @param from The token that begins the faulty expression.
+         * @param to The token that ends the faulty expression.
+         */
         public Position(Token from, Token to) {
             this.startLine = from.getLine() - 1;
             this.endLine = to.getLine() - 1;
@@ -90,19 +95,17 @@ public class VtlScriptException extends ScriptException {
             this.endColumn = to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1);
         }
 
+        /**
+         * Constructor taking a single token that corresponds to the faulty expression.
+         *
+         * @param token The token that corresponds to the faulty expression.
+         */
         public Position(Token token) {
             this.startLine = token.getLine() - 1;
             this.endLine = token.getLine() - 1;
             this.startColumn = token.getCharPositionInLine();
             this.endColumn = token.getCharPositionInLine() + (token.getStopIndex() - token.getStartIndex() + 1);
         }
-
-//        public Position(Integer startLine, Integer endLine, Integer startColumn, Integer endColumn) {
-//            this.startLine = startLine - 1;
-//            this.endLine = endLine - 1;
-//            this.startColumn = startColumn;
-//            this.endColumn = startLine + ( - token.getStartIndex() + 1);
-//        }
 
         /**
          * Returns the number of the line where the <code>Position</code> starts.
