@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * ScriptEngine engine = manager.getEngineByName("vtl");
  * </code></pre>
  * <p>
- * VTL expression can be evaluated using the methods
+ * VTL expressions can be evaluated using the methods:
  * {@link #eval(Reader)}, {@link #eval(Reader, ScriptContext)},
  * {@link #eval(String)} and {@link #eval(String, ScriptContext)}
  */
@@ -44,6 +44,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
+    /**
+     * Returns the list of names of the engine as a list of strings.
+     *
+     * @return The names of the engine as a list of strings.
+     */
     private List<String> getProcessingEngineNames() {
         Object o = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
@@ -55,6 +60,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         }
     }
 
+    /**
+     * Returns an instance of the processing engine for the script engine.
+     *
+     * @return an instance of the processing engine for the script engine.
+     */
     public ProcessingEngine getProcessingEngine() {
         List<String> names = getProcessingEngineNames();
         List<ProcessingEngineFactory> factories = ServiceLoader.load(ProcessingEngineFactory.class)
