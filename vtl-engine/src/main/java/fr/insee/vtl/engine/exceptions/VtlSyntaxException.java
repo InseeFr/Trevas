@@ -9,13 +9,19 @@ public class VtlSyntaxException extends VtlScriptException {
 
     private final Position position;
 
+    /**
+     * Constructor taking the error message and the faulty token.
+     *
+     * @param msg The error message for the exception.
+     * @param token The faulty token.
+     */
     public VtlSyntaxException(String msg, Token token) {
         super(msg, null);
         position = new Position(token);
     }
 
     /**
-     * Returns the position in a VTL expressions that caused the exception.
+     * Returns the position in a VTL expression that caused the exception.
      *
      * @return The position in the VTL expression, as an <code>Position</code> instance.
      */
@@ -23,6 +29,5 @@ public class VtlSyntaxException extends VtlScriptException {
     public Position getPosition() {
         return position;
     }
-
 
 }

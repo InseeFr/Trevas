@@ -11,6 +11,9 @@ import java.util.stream.Stream;
 
 import static fr.insee.vtl.model.Structured.*;
 
+/**
+ * The <code>InMemoryProcessingEngine</code> class is an implementation of a VTL engine that performs all operations in memory.
+ */
 public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
@@ -46,7 +49,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 return newStructure;
             }
         };
-
     }
 
     @Override
@@ -70,7 +72,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                         .collect(Collectors.toList());
                 return new InMemoryDataset(result, getDataStructure());
             }
-
         };
     }
 
@@ -232,7 +233,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     /**
-     * Return a structure with the common identifiers only once.
+     * Returns a structure with the common identifiers only once.
      */
     private DataStructure createCommonStructure(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
         List<Component> components = new ArrayList<>(identifiers);
@@ -249,6 +250,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return new DataStructure(components);
     }
 
+    // TODO JavaDoc for the private methods below
     private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
         return (dl, dr) -> {
             for (Component identifier : identifiers) {
@@ -391,6 +393,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         };
     }
 
+    /**
+     * The <code>Factory</code> class is an implementation of a VTL engine factory that returns in-memory engines.
+     */
     public static class Factory implements ProcessingEngineFactory {
 
         @Override
