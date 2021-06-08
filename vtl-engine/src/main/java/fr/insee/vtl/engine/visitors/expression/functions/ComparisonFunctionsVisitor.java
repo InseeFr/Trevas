@@ -32,7 +32,6 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
-
     /**
      * Visits a 'between' expression with scalar operand and delimiters.
      *
@@ -106,5 +105,4 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 operandExpression.resolve(context) == null
         );
     }
-
 }

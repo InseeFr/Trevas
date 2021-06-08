@@ -148,7 +148,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             Long lengthValue = (Long) lengthExpression.resolve(context);
             if (lengthValue == null) return null;
             var end = start + lengthValue.intValue();
-            if (end > value.length()) return value.substring(start);;
+            if (end > value.length()) return value.substring(start);
             return value.substring(start, end);
         });
     }
@@ -190,17 +190,16 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         var start = ctx.startParameter == null ? LongExpression.of(0L)
                 : assertLong(exprVisitor.visit(ctx.startParameter), ctx.startParameter);
 
-        var occurence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
+        var occurrence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
                 : assertLong(exprVisitor.visit(ctx.occurrenceParameter), ctx.occurrenceParameter);
 
         return ResolvableExpression.withType(Long.class, context -> {
             String value = (String) expression.resolve(context);
             String patternValue = (String) pattern.resolve(context);
             Long startValue = (Long) start.resolve(context);
-            Long occurenceValue = (Long) occurence.resolve(context);
-            if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurenceValue)) return null;
-            return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurenceValue.intValue()) + 1L;
+            Long occurrenceValue = (Long) occurrence.resolve(context);
+            if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
+            return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
         });
     }
-
 }

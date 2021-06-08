@@ -16,16 +16,19 @@ import java.util.Objects;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
+/**
+ * <code>NumericFunctionsVisitor</code> is the visitor for expressions involving numeric functions.
+ */
 public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
-    private final String UNKNOW_OPERATOR = "unknown operator " ;
+    private final String UNKNOWN_OPERATOR = "unknown operator " ;
 
     /**
      * Constructor taking a scripting context.
      *
-     * @param context The expression visitor.
+     * @param expressionVisitor The expression visitor.
      */
     public NumericFunctionsVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
@@ -35,7 +38,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      * Visits a 'unaryNumeric' expression.
      *
      * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a double).
+     * @return A <code>ResolvableExpression</code> resolving to a double.
      */
     @Override
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
@@ -60,9 +63,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleSqrt(ctx.expr());
             default:
-                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
-
     }
 
     private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
@@ -144,9 +146,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleTrunc(ctx.expr(), ctx.optionalExpr());
             default:
-                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
-
     }
 
     private ResolvableExpression handleRound(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
@@ -183,7 +184,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      * Visits a 'binaryNumeric' expression.
      *
      * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a double).
+     * @return A <code>ResolvableExpression</code> resolving to a double.
      */
     @Override
     public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
@@ -199,9 +200,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // TODO: Support dataset.
                 return handleLog(ctx.left, ctx.right);
             default:
-                throw new UnsupportedOperationException(UNKNOW_OPERATOR + ctx);
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
-
     }
 
     private ResolvableExpression handleModulo(VtlParser.ExprContext left, VtlParser.ExprContext right) {
@@ -247,5 +247,4 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return Math.log(leftDouble) / Math.log(baseDouble);
         });
     }
-
 }

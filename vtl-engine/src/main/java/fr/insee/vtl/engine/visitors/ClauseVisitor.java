@@ -11,6 +11,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * <code>ClauseVisitor</code> is the visitor for VTL clause expressions (component filter, aggr, drop, etc.).
+ */
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final DatasetExpression datasetExpression;
@@ -18,6 +21,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final ProcessingEngine processingEngine;
 
+    /**
+     * Constructor taking a dataset expression and a processing engine.
+     *
+     * @param datasetExpression The dataset expression containing the clause expression.
+     * @param processingEngine The processing engine for dataset expressions.
+     */
     public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.

@@ -17,11 +17,20 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 
+/**
+ * <code>JoinFunctionsVisitor</code> is the visitor for expressions involving join functions (left, inner, full, etc.).
+ */
 public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final ExpressionVisitor expressionVisitor;
     private final ProcessingEngine processingEngine;
 
+    /**
+     * Constructor taking an expression visitor and a processing engine.
+     *
+     * @param expressionVisitor A visitor for the expression corresponding to the join function.
+     * @param processingEngine The processing engine.
+     */
     public JoinFunctionsVisitor(ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
         this.processingEngine = Objects.requireNonNull(processingEngine);
@@ -206,6 +215,4 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         return processingEngine.executeInnerJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
     }
-
-
 }

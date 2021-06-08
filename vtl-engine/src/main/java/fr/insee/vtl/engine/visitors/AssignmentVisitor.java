@@ -10,11 +10,20 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import java.util.Objects;
 
+/**
+ * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
+ */
 public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     private final ScriptContext context;
     private final ExpressionVisitor expressionVisitor;
 
+    /**
+     * Constructor taking a scripting context and a processing engine.
+     *
+     * @param context The scripting context.
+     * @param processingEngine The processing engine.
+     */
     public AssignmentVisitor(ScriptContext context, ProcessingEngine processingEngine) {
         this.context = Objects.requireNonNull(context);
         expressionVisitor = new ExpressionVisitor(
