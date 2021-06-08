@@ -20,9 +20,9 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The scripting context for the visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public ArithmeticVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
@@ -47,7 +47,6 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
-
     }
 
     private ResolvableExpression handleMultiplication(VtlParser.ExprContext left, VtlParser.ExprContext right) {

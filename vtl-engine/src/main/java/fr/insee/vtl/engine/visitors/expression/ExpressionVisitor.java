@@ -34,9 +34,10 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ProcessingEngine processingEngine;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking a scripting context and a processing engine.
      *
-     * @param context The map
+     * @param context The map representing the context.
+     * @param processingEngine The processing engine.
      */
     public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
         Objects.requireNonNull(context);
@@ -57,7 +58,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     /**
-     * Visits constants expressions.
+     * Visits constant expressions.
      *
      * @param ctx The scripting context for the expression.
      * @return A <code>ResolvableExpression</code> resolving to the constant value with the expected type.

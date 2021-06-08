@@ -20,9 +20,9 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor The expression visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public IfVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
