@@ -7,11 +7,26 @@ import fr.insee.vtl.model.Dataset;
 
 import java.io.IOException;
 
+/**
+ * <code>DatasetSerializer</code> is a JSON serializer specialized for datasets.
+ */
 public class DatasetSerializer extends StdSerializer<Dataset> {
+
+    /**
+     * Base constructor.
+     */
     protected DatasetSerializer() {
         super(Dataset.class);
     }
 
+    /**
+     * Serializes a <code>Dataset</code> object in JSON.
+     *
+     * @param value The dataset component to serialize.
+     * @param gen The base JSON generator.
+     * @param provider The serialization provider.
+     * @throws IOException In case of problem while creating the JSON dataset.
+     */
     @Override
     public void serialize(Dataset value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();

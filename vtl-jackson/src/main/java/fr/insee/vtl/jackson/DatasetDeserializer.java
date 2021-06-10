@@ -19,15 +19,29 @@ import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.databind.JsonMappingException.from;
 
+/**
+ * <code>DatasetDeserializer</code> is a JSON deserializer specialized for datasets.
+ */
 public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
     private static final Set<String> STRUCTURE_NAMES = Set.of("structure", "dataStructure");
     private static final Set<String> DATAPOINT_NAMES = Set.of("data", "dataPoints");
 
+    /**
+     * Base constructor.
+     */
     protected DatasetDeserializer() {
         super(Dataset.class);
     }
 
+    /**
+     * Deserializes a JSON dataset into a <code>Dataset</code> object.
+     *
+     * @param p The base JSON parser.
+     * @param ctxt A deserialization context.
+     * @return The deserialized dataset.
+     * @throws IOException In case of problem while processing the JSON dataset.
+     */
     @Override
     public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 

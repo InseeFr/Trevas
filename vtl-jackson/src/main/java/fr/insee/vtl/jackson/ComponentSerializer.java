@@ -8,6 +8,9 @@ import fr.insee.vtl.model.Structured;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * <code>ComponentSerializer</code> is a JSON serializer specialized for dataset components.
+ */
 public class ComponentSerializer extends StdSerializer<Structured.Component> {
 
     private static final Map<Class<?>, String> TYPES = Map.of(
@@ -17,10 +20,21 @@ public class ComponentSerializer extends StdSerializer<Structured.Component> {
             Boolean.class, "BOOLEAN"
     );
 
+    /**
+     * Base constructor.
+     */
     protected ComponentSerializer() {
         super(Structured.Component.class);
     }
 
+    /**
+     * Serializes a <code>Structured.Component</code> object in JSON.
+     *
+     * @param value The dataset component to serialize.
+     * @param gen The base JSON generator.
+     * @param provider The serialization provider.
+     * @throws IOException In case of problem while creating the JSON component.
+     */
     @Override
     public void serialize(Structured.Component value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
