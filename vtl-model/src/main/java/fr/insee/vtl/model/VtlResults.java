@@ -1,5 +1,6 @@
 package fr.insee.vtl.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +15,9 @@ public class VtlResults {
      */
     Map<String, Dataset> getInputs() {
 
-        return null;
+        Map<String, Dataset> inputs = new HashMap<>();
+
+        return inputs;
     }
 
     /**
@@ -24,7 +27,9 @@ public class VtlResults {
      */
     Map<String, Dataset> getOutputs() {
 
-        return null;
+        Map<String, Dataset> outputs = new HashMap<>();
+
+        return outputs;
     }
 
     /**
