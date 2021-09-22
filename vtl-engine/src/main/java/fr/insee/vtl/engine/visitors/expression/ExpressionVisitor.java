@@ -30,6 +30,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final SetFunctionsVisitor setFunctionsVisitor;
     private final JoinFunctionsVisitor joinFunctionsVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
@@ -53,6 +54,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
+        genericFunctionsVisitor = new GenericFunctionsVisitor(this);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
@@ -219,6 +221,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
         return joinFunctionsVisitor.visitJoinFunctions(ctx);
+    }
+
+    @Override
+    public ResolvableExpression visitGenericFunctions(VtlParser.GenericFunctionsContext ctx) {
+        return genericFunctionsVisitor.visitGenericFunctions(ctx);
     }
 
     @Override

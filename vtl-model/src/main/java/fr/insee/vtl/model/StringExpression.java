@@ -11,7 +11,7 @@ public abstract class StringExpression implements ResolvableExpression {
         return new StringExpression() {
             @Override
             public String resolve(Map<String, Object> context) {
-                return value.toString();
+                return value == null ? null : value.toString();
             }
         };
     }
