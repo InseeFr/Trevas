@@ -77,8 +77,9 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
             var datasetExpressionContext = joinClauseItem.expr();
             if (!(datasetExpressionContext instanceof VtlParser.VarIdExprContext)) {
                 throw new VtlRuntimeException(
-                        new InvalidArgumentException("use a variable", datasetExpressionContext));
+                        new InvalidArgumentException("cannot use expression in join clause", datasetExpressionContext));
             }
+
             var alias = Optional.<RuleContext>ofNullable(joinClauseItem.alias())
                     .orElse(datasetExpressionContext).getText();
             var datasetExpression = (DatasetExpression) assertTypeExpression(
