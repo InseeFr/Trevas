@@ -61,7 +61,7 @@ public class JoinFunctionsTest {
     }
 
     @Test
-    void testJoinWithExpressionFails() {
+    public void testJoinWithExpressionFails() {
         engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
         engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
