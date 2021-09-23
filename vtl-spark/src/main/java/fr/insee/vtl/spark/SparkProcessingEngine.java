@@ -98,12 +98,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
         roleMap.putAll(roles);
 
         try {
-            // Try as expression first.
+            // Try with expressions first.
             var expressionsList = expressionStrings.entrySet().stream().map(expressionEntry -> String.format(
                     "%s as %s", expressionEntry.getValue(), expressionEntry.getKey()
             )).collect(Collectors.toList());
             Dataset<Row> result = ds.selectExpr(Stream.concat(
-                    // Get the back the old columns.
+                    // Get back the old columns.
                     newNames.stream().filter(name -> !expressionStrings.containsKey(name)),
                     expressionsList.stream()
             ).toArray(String[]::new));
