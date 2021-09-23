@@ -40,7 +40,7 @@ public abstract class BooleanExpression implements ResolvableExpression {
      * @param outputClass The type to cast expression.
      * @return The casted <code>ResolvableExpression</code>.
      */
-    public static ResolvableExpression castTo(ResolvableExpression expr, Class outputClass) {
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
                 Boolean exprValue = (Boolean) expr.resolve(context);

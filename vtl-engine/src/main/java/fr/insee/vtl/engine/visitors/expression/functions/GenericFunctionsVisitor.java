@@ -42,7 +42,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             case VtlParser.BOOLEAN:
                 return Boolean.class;
             default:
-                throw new UnsupportedOperationException("Basic scalar type " + basicScalarText + " unsupported");
+                throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
         }
     }
 
@@ -59,20 +59,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         Integer basicScalarType = symbol.getType();
         String basicScalarText = symbol.getText();
 
-        // Special case with nulls.
-        if (expression.getType().equals(Object.class)) {
-            if (basicScalarType.equals(VtlParser.INTEGER))
-                return LongExpression.of((Long) null);
-            if (basicScalarType.equals(VtlParser.NUMBER))
-                return DoubleExpression.of((Double) null);
-            if (basicScalarType.equals(VtlParser.STRING))
-                return StringExpression.of((String) null);
-            if (basicScalarType.equals(VtlParser.BOOLEAN))
-                return BooleanExpression.of((Boolean) null);
-            throw new UnsupportedOperationException("Cast second argument has to be a basic scalar type but is: " + basicScalarText);
-        }
-
         Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
+
+        if(Object.class.equals(expression.getType()))
+            return ResolvableExpression.ofType(outputClass, null);
 
         if (String.class.equals(expression.getType())) {
             return StringExpression.castTo(expression, outputClass);

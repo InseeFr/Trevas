@@ -46,7 +46,7 @@ public abstract class DoubleExpression extends NumberExpression {
      * @param outputClass The type to cast expression.
      * @return The casted <code>ResolvableExpression</code>.
      */
-    public static ResolvableExpression castTo(ResolvableExpression expr, Class outputClass) {
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
                 Double exprValue = (Double) expr.resolve(context);
@@ -58,7 +58,7 @@ public abstract class DoubleExpression extends NumberExpression {
                 Double exprValue = (Double) expr.resolve(context);
                 if (exprValue == null) return null;
                 if (exprValue % 1 != 0)
-                    throw new RuntimeException(exprValue.toString() + " can not be casted into integer");
+                    throw new UnsupportedOperationException(exprValue.toString() + " can not be casted into integer");
                 return exprValue.longValue();
             });
         if (outputClass.equals(Double.class))
@@ -71,7 +71,7 @@ public abstract class DoubleExpression extends NumberExpression {
             return BooleanExpression.of(context -> {
                 Double exprValue = (Double) expr.resolve(context);
                 if (exprValue == null) return null;
-                return exprValue.equals(0D) ? false : true;
+                return !exprValue.equals(0D);
             });
         throw new ClassCastException("Cast Long to " + outputClass + " is not supported");
     }
