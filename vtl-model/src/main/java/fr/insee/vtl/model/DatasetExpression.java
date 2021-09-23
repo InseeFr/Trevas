@@ -7,6 +7,12 @@ import java.util.Map;
  */
 public abstract class DatasetExpression implements ResolvableExpression, Structured {
 
+    /**
+     * Returns a dataset expression based on a given dataset.
+     *
+     * @param value The dataset on which the expression should be based.
+     * @return The dataset expression.
+     */
     public static DatasetExpression of(Dataset value) {
         return new DatasetExpression() {
 
