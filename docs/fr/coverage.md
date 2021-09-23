@@ -6,15 +6,16 @@
 
 #### VTL-ML - General purpose operators
 
-| Name                              | Symbol |     Supported      |
-| --------------------------------- | :----- | :----------------: |
-| Parentheses                       | ( )    | :heavy_check_mark: |
-| Persistent assignment             | <-     |        :x:         |
-| Temporary assignment              | :=     | :heavy_check_mark: |
-| Membership                        | #      |        :x:         |
-| User-defined operator call        |        |        :x:         |
-| Evaluation of an external routine | eval   |        :x:         |
-| Type conversion                   | cast   |        :x:         |
+| Name                                               | Symbol |     Supported      |
+| -------------------------------------------------- | :----- | :----------------: |
+| Parentheses                                        | ( )    | :heavy_check_mark: |
+| Persistent assignment                              | <-     |        :x:         |
+| Temporary assignment                               | :=     | :heavy_check_mark: |
+| Membership                                         | #      |        :x:         |
+| User-defined operator call                         |        |        :x:         |
+| Evaluation of an external routine                  | eval   |        :x:         |
+| Type conversion (string, integer, double, boolean) | cast   | :heavy_check_mark: |
+| Type conversion (others)                           | cast   |        :x:         |
 
 #### VTL-ML - Join operators
 
