@@ -22,6 +22,12 @@ public abstract class DoubleExpression extends NumberExpression {
         };
     }
 
+    /**
+     * Returns a double expression evaluating to a given value in any context.
+     *
+     * @param value The double value to which the expression should evaluate.
+     * @return The double expression.
+     */
     public static DoubleExpression of(Double value) {
         return new DoubleExpression() {
             @Override
