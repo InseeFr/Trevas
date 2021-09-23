@@ -17,6 +17,7 @@ import javax.script.ScriptEngine;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
@@ -62,7 +63,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions, Map<String, Role> roles) {
+    public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
+                                         Map<String, Role> roles, Map<String, String> expressionStrings) {
         SparkDataset dataset = asSparkDataset(expression);
         Dataset<Row> ds = dataset.getSparkDataset();
 
@@ -91,35 +93,52 @@ public class SparkProcessingEngine implements ProcessingEngine {
         }
         StructType newSchema = DataTypes.createStructType(newFields);
 
-        Dataset<Row> result = ds.map((MapFunction<Row, Row>) row -> {
-            SparkRowMap context = new SparkRowMap(row);
-            Object[] objects = new Object[newSchema.size()];
-            for (String name : newSchema.fieldNames()) {
-                int index = newSchema.fieldIndex(name);
-                if (expressions.containsKey(name)) {
-                    objects[index] = expressions.get(name).resolve(context);
-                } else {
-                    objects[index] = row.get(index);
-                }
-            }
-            return new GenericRowWithSchema(objects, newSchema);
-        }, RowEncoder.apply(newSchema));
-
         // Create the new role map.
         var roleMap = getRoleMap(dataset);
         roleMap.putAll(roles);
 
-        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+        try {
+            // Try as expression first.
+            var expressionsList = expressionStrings.entrySet().stream().map(expressionEntry -> String.format(
+                    "%s as %s", expressionEntry.getValue(), expressionEntry.getKey()
+            )).collect(Collectors.toList());
+            Dataset<Row> result = ds.selectExpr(Stream.concat(
+                    // Get the back the old columns.
+                    newNames.stream().filter(name -> !expressionStrings.containsKey(name)),
+                    expressionsList.stream()
+            ).toArray(String[]::new));
+            return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+        } catch (Exception e) {
+            Dataset<Row> result = ds.map((MapFunction<Row, Row>) row -> {
+                SparkRowMap context = new SparkRowMap(row);
+                Object[] objects = new Object[newSchema.size()];
+                for (String name : newSchema.fieldNames()) {
+                    int index = newSchema.fieldIndex(name);
+                    if (expressions.containsKey(name)) {
+                        objects[index] = expressions.get(name).resolve(context);
+                    } else {
+                        objects[index] = row.get(index);
+                    }
+                }
+                return new GenericRowWithSchema(objects, newSchema);
+            }, RowEncoder.apply(newSchema));
+            return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+        }
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
         SparkDataset dataset = asSparkDataset(expression);
 
         Dataset<Row> ds = dataset.getSparkDataset();
-        SparkFilterFunction filterFunction = new SparkFilterFunction(filter);
-        Dataset<Row> result = ds.filter(filterFunction);
-        return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
+        try {
+            Dataset<Row> result = ds.filter(filterText);
+            return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
+        } catch (Exception e) {
+            SparkFilterFunction filterFunction = new SparkFilterFunction(filter);
+            Dataset<Row> result = ds.filter(filterFunction);
+            return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
+        }
     }
 
     @Override

@@ -6,6 +6,8 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 import java.util.*;
 import java.util.function.Function;
@@ -63,6 +65,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
         var expressions = new LinkedHashMap<String, ResolvableExpression>();
+        var expressionStrings = new LinkedHashMap<String, String>();
         var roles = new LinkedHashMap<String, Dataset.Role>();
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
             var columnName = getName(calcCtx.componentID());
@@ -71,16 +74,25 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
             ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
             expressions.put(columnName, calc);
+            expressionStrings.put(columnName, getSource(calcCtx.expr()));
             roles.put(columnName, columnRole);
         }
 
-        return processingEngine.executeCalc(datasetExpression, expressions, roles);
+        return processingEngine.executeCalc(datasetExpression, expressions, roles, expressionStrings);
+    }
+
+    static String getSource(ParserRuleContext ctx) {
+        var stream = ctx.getStart().getInputStream();
+        return stream.getText(new Interval(
+                ctx.getStart().getStartIndex(),
+                ctx.getStop().getStopIndex()
+        ));
     }
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
         ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
-        return processingEngine.executeFilter(datasetExpression, filter);
+        return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
     @Override
