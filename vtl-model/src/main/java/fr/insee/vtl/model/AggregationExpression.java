@@ -8,20 +8,40 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+/**
+ * The <code>AggregationExpression</code> class is an abstract representation of an aggregation expression.
+ */
 public class AggregationExpression implements Collector<Structured.DataPoint, Object, Object>, TypedExpression {
 
     private final Collector<Structured.DataPoint, ?, ? extends Object> aggregation;
     private final Class<?> type;
 
+    /**
+     * Constructor taking a collector of data points and an intended type for the aggregation results.
+     *
+     * @param aggregation Collector of data points.
+     * @param type Expected type for aggregation results.
+     */
     public AggregationExpression(Collector<Structured.DataPoint, ?, ? extends Object> aggregation, Class<?> type) {
         this.aggregation = aggregation;
         this.type = type;
     }
 
+    /**
+     * Returns an aggregation expression that counts data points and returns a long integer.
+     *
+     * @return The counting expression.
+     */
     public static AggregationExpression count() {
         return withType(Collectors.counting(), Long.class);
     }
 
+    /**
+     * Returns an aggregation expression that averages an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The averaging expression.
+     */
     public static AggregationExpression avg(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.averagingLong(value -> (Long) value), Double.class);
@@ -33,7 +53,12 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         }
     }
 
-
+    /**
+     * Returns an aggregation expression that sums an expression on data points and returns a long integer or double number.
+     *
+     * @param expression The expression on data points.
+     * @return The summing expression.
+     */
     public static AggregationExpression sum(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.summingLong(value -> (Long) value), Long.class);
@@ -45,10 +70,26 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         }
     }
 
+    /**
+     * Returns an aggregation expression based on a data point collector and an expected type.
+     *
+     * @param collector The data point collector.
+     * @param type The expected type of the aggregation expression results.
+     * @return The aggregation expression.
+     */
     public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
         return new AggregationExpression(collector, type);
     }
 
+    /**
+     * Returns an aggregation expression based on an input expression, a data point collector and an expected type.
+     * The input expression is applied to each data point before it is accepted by the data point collector.
+     *
+     * @param expression The input resolvable expression.
+     * @param collector The data point collector.
+     * @param type The expected type of the aggregation expression results.
+     * @return The resolvable expression.
+     */
     public static AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, ?> collector, Class<?> type) {
         return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
             @Override
