@@ -73,6 +73,6 @@ public abstract class DoubleExpression extends NumberExpression {
                 if (exprValue == null) return null;
                 return !exprValue.equals(0D);
             });
-        throw new ClassCastException("Cast Long to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast Double to " + outputClass + " is not supported");
     }
 }

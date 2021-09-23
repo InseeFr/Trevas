@@ -61,9 +61,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
         Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
 
-        if(Object.class.equals(expression.getType()))
+        if (Object.class.equals(expression.getType())) {
             return ResolvableExpression.ofType(outputClass, null);
-
+        }
         if (String.class.equals(expression.getType())) {
             return StringExpression.castTo(expression, outputClass);
         }
@@ -76,6 +76,6 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         if (Double.class.equals(expression.getType())) {
             return DoubleExpression.castTo(expression, outputClass);
         }
-        throw new UnsupportedOperationException("unknown operator with type: " + expression.getClass());
+        throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }
 }
