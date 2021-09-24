@@ -218,11 +218,25 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return setFunctionsVisitor.visit(ctx.setOperators());
     }
 
+    /**
+     * Visits join function expressions.
+     *
+     * @param ctx The scripting context for the function expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the function expression.
+     * @see JoinFunctionsVisitor
+     */
     @Override
     public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
         return joinFunctionsVisitor.visitJoinFunctions(ctx);
     }
 
+    /**
+     * Visits numeric function expressions.
+     *
+     * @param ctx The scripting context for the function expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the function expression.
+     * @see NumericFunctionsVisitor
+     */
     @Override
     public ResolvableExpression visitGenericFunctions(VtlParser.GenericFunctionsContext ctx) {
         return genericFunctionsVisitor.visitGenericFunctions(ctx);

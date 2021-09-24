@@ -3,23 +3,36 @@ package fr.insee.vtl.model;
 import java.util.*;
 
 /**
- * Delegated LinkedHashMap that has indexOf methods.
+ * The <code>DoubleExpression</code> class is a delegated LinkedHashMap that has indexOf methods.
  */
 public class IndexedHashMap<K, V> implements Map<K, V> {
 
     private final Map<K, Integer> indices;
     private final Map<K, V> delegate;
 
+    /**
+     * Anonymous constructor.
+     */
     public IndexedHashMap() {
         this.indices = new HashMap<>();
         this.delegate = new HashMap<>();
     }
 
+    /**
+     * Constructor specifying an initial capacity for the map.
+     *
+     * @param initialCapacity The initial capacity to use.
+     */
     public IndexedHashMap(int initialCapacity) {
         this.indices = new HashMap<>(initialCapacity);
         this.delegate = new LinkedHashMap<>(initialCapacity);
     }
 
+    /**
+     * Constructor taking an existing map.
+     *
+     * @param map The existing map.
+     */
     public IndexedHashMap(IndexedHashMap<K, V> map) {
         this.indices = new HashMap<>(map.indices);
         this.delegate = new LinkedHashMap<>(map.delegate);
@@ -50,10 +63,21 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
         return delegate.get(key);
     }
 
+    /**
+     * Returns the index of a given key in the map, or -1 if the key is not present.
+     *
+     * @param key The key to look for.
+     * @return The index of the key in the map, or -1 if the key is not present.
+     */
     public int indexOfKey(K key) {
         return indices.getOrDefault(key, -1);
     }
 
+    /**
+     * The index of the first occurrence of a given value in the map, or -1 if the value is not present.
+     * @param value The value to look for.
+     * @return The index of the first occurrence of the value in the map, or -1 if the value is not present.
+     */
     public int indexOfValue(V value) {
         if (value == null) {
             for (Entry<K, V> e : entrySet()) {
