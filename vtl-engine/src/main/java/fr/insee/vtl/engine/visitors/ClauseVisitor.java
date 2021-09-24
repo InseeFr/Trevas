@@ -28,7 +28,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
      * Constructor taking a dataset expression and a processing engine.
      *
      * @param datasetExpression The dataset expression containing the clause expression.
-     * @param processingEngine The processing engine for dataset expressions.
+     * @param processingEngine  The processing engine for dataset expressions.
      */
     public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
@@ -150,19 +150,19 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             } else if (groupFunctionCtx.COUNT() != null) {
                 collectorMap.put(name, AggregationExpression.count());
             } else if (groupFunctionCtx.MAX() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.max(expression));
             } else if (groupFunctionCtx.MIN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.min(expression));
             } else if (groupFunctionCtx.MEDIAN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.median(expression));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevPop(expression));
             } else if (groupFunctionCtx.STDDEV_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevSamp(expression));
             } else if (groupFunctionCtx.VAR_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varPop(expression));
             } else if (groupFunctionCtx.VAR_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varSamp(expression));
             } else {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             }

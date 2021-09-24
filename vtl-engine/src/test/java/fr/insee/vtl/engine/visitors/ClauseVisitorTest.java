@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -218,11 +219,11 @@ public class ClauseVisitorTest {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
-                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10L),
-                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9L)
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
-                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
                 Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
@@ -235,16 +236,76 @@ public class ClauseVisitorTest {
         // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
-                    "sumAge := sum(age)," +
-                    "avgWeight := avg(age)," +
-                    "countVal := count(null)" +
-                    " group by country];");
+                "sumAge := sum(age)," +
+                "avgWeight := avg(age)," +
+                "countVal := count(null)," +
+                "maxAge := max(age)," +
+                "maxWeight := max(weight)," +
+                "minAge := min(age)," +
+                "minWeight := min(weight)," +
+                "medianAge := median(age)," +
+                "medianWeight := median(weight)" +
+                " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5, "countVal", 2L),
-                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0, "countVal", 1L)
+                Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5,
+                        "countVal", 2L, "maxAge", 12L, "maxWeight", 10D,
+                        "minAge", 11L, "minWeight", 9D, "medianAge", 11.5D,
+                        "medianWeight", 9.5D),
+                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0,
+                        "countVal", 1L, "maxAge", 10L, "maxWeight", 11D,
+                        "minAge", 10L, "minWeight", 11D, "medianAge", 10D,
+                        "medianWeight", 11D)
         );
 
+        InMemoryDataset dataset2 = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
+                        Map.of("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
+                        Map.of("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
+                ),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("res := ds2[aggr " +
+                "stddev_popAge := stddev_pop(age), " +
+                "stddev_popWeight := stddev_pop(weight), " +
+                "stddev_sampAge := stddev_samp(age), " +
+                "stddev_sampWeight := stddev_samp(weight), " +
+                "var_popAge := var_pop(age), " +
+                "var_popWeight := var_pop(weight), " +
+                "var_sampAge := var_samp(age), " +
+                "var_sampWeight := var_samp(weight)" +
+                " group by country];");
+
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        var fr = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0);
+
+        assertThat((Double) fr.get("stddev_popAge")).isCloseTo(1.118, Percentage.withPercentage(2));
+        assertThat((Double) fr.get("stddev_popWeight")).isCloseTo(3.640, Percentage.withPercentage(2));
+        assertThat((Double) fr.get("stddev_sampAge")).isCloseTo(1.290, Percentage.withPercentage(2));
+        assertThat((Double) fr.get("stddev_sampWeight")).isCloseTo(4.2, Percentage.withPercentage(2));
+        assertThat((Double) fr.get("var_popAge")).isEqualTo(1.25);
+        assertThat((Double) fr.get("var_popWeight")).isEqualTo(13.25);
+        assertThat((Double) fr.get("var_sampAge")).isCloseTo(1.666, Percentage.withPercentage(2));
+        assertThat((Double) fr.get("var_sampWeight")).isCloseTo(17.666, Percentage.withPercentage(2));
+
+        var no = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(1);
+
+        assertThat((Double) no.get("stddev_popAge")).isEqualTo(0.0);
+        assertThat((Double) no.get("stddev_popWeight")).isEqualTo(0.0);
+        assertThat((Double) no.get("stddev_sampAge")).isEqualTo(0.0);
+        assertThat((Double) no.get("stddev_sampWeight")).isEqualTo(0.0);
+        assertThat((Double) no.get("var_popAge")).isEqualTo(0.0);
+        assertThat((Double) no.get("var_popWeight")).isEqualTo(0.0);
+        assertThat((Double) no.get("var_sampAge")).isEqualTo(0.0);
+        assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
 
     }
 }

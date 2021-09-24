@@ -1,6 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -20,7 +20,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * Constructor taking a collector of data points and an intended type for the aggregation results.
      *
      * @param aggregation Collector of data points.
-     * @param type Expected type for aggregation results.
+     * @param type        Expected type for aggregation results.
      */
     public AggregationExpression(Collector<Structured.DataPoint, ?, ? extends Object> aggregation, Class<?> type) {
         this.aggregation = aggregation;
@@ -71,10 +71,139 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
     }
 
     /**
+     * Returns an aggregation expression that give median of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The median expression.
+     */
+    public static AggregationExpression median(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, medianCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, medianCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give max of an expression on data points and returns a long integer or double number.
+     *
+     * @param expression The expression on data points.
+     * @return The max expression.
+     */
+    public static AggregationExpression max(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            Collector<Long, ?, Optional<Long>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
+            Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Long.class);
+        } else if (Double.class.equals(expression.getType())) {
+            Collector<Double, ?, Optional<Double>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
+            Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Double.class);
+        } else {
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give min of an expression on data points and returns a long integer or double number.
+     *
+     * @param expression The expression on data points.
+     * @return The min expression.
+     */
+    public static AggregationExpression min(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            Collector<Long, ?, Optional<Long>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
+            Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Long.class);
+        } else if (Double.class.equals(expression.getType())) {
+            Collector<Double, ?, Optional<Double>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
+            Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Double.class);
+        } else {
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give population standard deviation of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The population standard deviation expression.
+     */
+    public static AggregationExpression stdDevPop(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevPopCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevPopCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give sample standard deviation of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The sample standard deviation expression.
+     */
+    public static AggregationExpression stdDevSamp(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevSampCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevSampCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give population variance of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The population variance expression.
+     */
+    public static AggregationExpression varPop(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, varPopCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, varPopCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give sample variance of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The sample variance expression.
+     */
+    public static AggregationExpression varSamp(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, varSampCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, varSampCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
      * Returns an aggregation expression based on a data point collector and an expected type.
      *
      * @param collector The data point collector.
-     * @param type The expected type of the aggregation expression results.
+     * @param type      The expected type of the aggregation expression results.
      * @return The aggregation expression.
      */
     public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
@@ -86,17 +215,197 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * The input expression is applied to each data point before it is accepted by the data point collector.
      *
      * @param expression The input resolvable expression.
-     * @param collector The data point collector.
-     * @param type The expected type of the aggregation expression results.
+     * @param collector  The data point collector.
+     * @param type       The expected type of the aggregation expression results.
      * @return The resolvable expression.
      */
-    public static AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, ?> collector, Class<?> type) {
+    public static <T> AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
         return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
             @Override
             public Object apply(Structured.DataPoint dataPoint) {
                 return expression.resolve(dataPoint);
             }
         }, collector), type);
+    }
+
+    private static Collector<Long, List<Long>, Double> medianCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> medianCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> stdDevPopCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getDeviationLongFn(true)
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> stdDevPopCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getDeviationDoubleFn(true)
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> stdDevSampCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getDeviationLongFn(false)
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> stdDevSampCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getDeviationDoubleFn(false)
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> varPopCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getVarLongFn(true)
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> varPopCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getVarDoubleFn(true)
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> varSampCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getVarLongFn(false)
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> varSampCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                getVarDoubleFn(false)
+        );
+    }
+
+    private static Function<List<Long>, Double> getDeviationLongFn(Boolean usePopulation) {
+        return longs -> {
+            if (longs.contains(null)) return null;
+            if (longs.size() <= 1) return 0D;
+            Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
+            return Math.sqrt(
+                    longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
+                            / (longs.size() - (usePopulation ? 0D : 1D))
+            );
+        };
+    }
+
+    private static Function<List<Double>, Double> getDeviationDoubleFn(Boolean usePopulation) {
+        return doubles -> {
+            if (doubles.contains(null)) return null;
+            if (doubles.size() <= 1) return 0D;
+            Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
+            return Math.sqrt(
+                    doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
+                            / (doubles.size() - (usePopulation ? 0D : 1D))
+            );
+        };
+    }
+
+    private static Function<List<Long>, Double> getVarLongFn(Boolean usePopulation) {
+        return longs -> {
+            if (longs.contains(null)) return null;
+            if (longs.size() <= 1) return 0D;
+            Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
+            return longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
+                    / (longs.size() - (usePopulation ? 0D : 1D));
+        };
+    }
+
+    private static Function<List<Double>, Double> getVarDoubleFn(Boolean usePopulation) {
+        return doubles -> {
+            if (doubles.contains(null)) return null;
+            if (doubles.size() <= 1) return 0D;
+            Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
+            return doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
+                    / (doubles.size() - (usePopulation ? 0D : 1D));
+        };
     }
 
     @Override
@@ -128,4 +437,5 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
     public Set<Characteristics> characteristics() {
         return aggregation.characteristics();
     }
+
 }
