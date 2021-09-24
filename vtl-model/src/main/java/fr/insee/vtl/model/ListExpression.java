@@ -9,6 +9,13 @@ import java.util.Map;
  */
 public abstract class ListExpression implements ResolvableExpression, TypedContainerExpression {
 
+    /**
+     * Constructor taking a collection of elements and a type for these elements.
+     *
+     * @param elements The collection of elements to include in the list expression.
+     * @param containedType The type for the list elements.
+     * @return A new list expression resolving to a list with the elements and type provided.
+     */
     public static <T> ListExpression withContainedType(Collection<Object> elements, Class<T> containedType) {
         List<Object> list = List.copyOf(elements);
         return new ListExpression() {
@@ -28,7 +35,6 @@ public abstract class ListExpression implements ResolvableExpression, TypedConta
     public Class<?> getType() {
         return List.class;
     }
-
 
     @Override
     public abstract List<?> resolve(Map<String, Object> context);

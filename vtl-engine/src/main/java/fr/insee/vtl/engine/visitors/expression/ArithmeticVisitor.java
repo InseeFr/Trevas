@@ -17,6 +17,14 @@ import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
  */
 public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    // TODO: Support dataset as argument of unary numeric.
+    //          ceil_ds := ceil(ds) -> ds[calc m1 := ceil(m1), m2 := ...]
+    //          ceil_ds := ceil(ds#measure)
+    //       Evaluate when we have a proper function abstraction:
+    //          var function = findFunction(name);
+    //          function.run(ctx.expr());
+    //
+
     private final ExpressionVisitor exprVisitor;
 
     /**
@@ -39,10 +47,8 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         switch (ctx.op.getType()) {
             case VtlParser.MUL:
-                // TODO: Support dataset.
                 return handleMultiplication(ctx.left, ctx.right);
             case VtlParser.DIV:
-                // TODO: Support dataset.
                 return handleDivision(ctx.left, ctx.right);
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);

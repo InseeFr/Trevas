@@ -47,20 +47,40 @@ public interface Structured {
             this.role = Objects.requireNonNull(role);
         }
 
+        /**
+         * Constructor taking an existing component.
+         *
+         * @param component The component to copy.
+         */
         public Component(Component component) {
             this.name = component.getName();
             this.type = component.getType();
             this.role = component.getRole();
         }
 
+        /**
+         * Tests if a component is an identifier.
+         *
+         * @return <code>true</code> if the component is an identifier, <code>false</code>.
+         */
         public boolean isIdentifier() {
             return Dataset.Role.IDENTIFIER.equals(this.role);
         }
 
+        /**
+         * Tests if a component is a measure.
+         *
+         * @return <code>true</code> if the component is a measure, <code>false</code>.
+         */
         public boolean isMeasure() {
             return Dataset.Role.MEASURE.equals(this.role);
         }
 
+        /**
+         * Tests if a component is an attribute.
+         *
+         * @return <code>true</code> if the component is an attribute, <code>false</code>.
+         */
         public boolean isAttribute() {
             return Dataset.Role.ATTRIBUTE.equals(this.role);
         }
@@ -164,7 +184,7 @@ public interface Structured {
 
         }
 
-        // TODO: Remove. We can sympy use a Map<String, Component> of the
+        // TODO: Remove. We can simply use a Map<String, Component> of the
         //        constructor with Collection<Component>
         public DataStructure(DataStructure dataStructure) {
             super(dataStructure);

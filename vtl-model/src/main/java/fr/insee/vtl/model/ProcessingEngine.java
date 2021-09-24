@@ -77,11 +77,31 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    /**
+     * Execute a inner join transformations on the dataset expressions.
+     *
+     * @param datasets   a map of aliased datasets
+     * @param components the components to join on
+     * @return the result of the left join transformation
+     */
     DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    /**
+     * Execute a cross join transformations on the dataset expressions.
+     *
+     * @param datasets   a map of aliased datasets
+     * @param components the components to join on
+     * @return the result of the left join transformation
+     */
     DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
 
+    /**
+     * Execute a full join transformations on the dataset expressions.
+     *
+     * @param datasets   a map of aliased datasets
+     * @param components the components to join on
+     * @return the result of the left join transformation
+     */
     DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
-
 
 }

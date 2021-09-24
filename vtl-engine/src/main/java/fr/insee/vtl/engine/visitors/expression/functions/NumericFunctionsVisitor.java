@@ -21,9 +21,17 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
  */
 public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    // TODO: Support dataset as argument of unary numeric.
+    //          ceil_ds := ceil(ds) -> ds[calc m1 := ceil(m1), m2 := ...]
+    //          ceil_ds := ceil(ds#measure)
+    //       Evaluate when we have a proper function abstraction:
+    //          var function = findFunction(name);
+    //          function.run(ctx.expr());
+    //
+
     private final ExpressionVisitor exprVisitor;
 
-    private final String UNKNOWN_OPERATOR = "unknown operator " ;
+    private final String UNKNOWN_OPERATOR = "unknown operator ";
 
     /**
      * Constructor taking a scripting context.
@@ -35,32 +43,26 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
 
     /**
-     * Visits a 'unaryNumeric' expression.
+     * Visits a 'unaryNumeric' expressi
+     * on.
      *
      * @param ctx The scripting context for the expression.
      * @return A <code>ResolvableExpression</code> resolving to a double.
      */
     @Override
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
-
         switch (ctx.op.getType()) {
             case VtlParser.CEIL:
-                // TODO: Support dataset.
                 return handleCeil(ctx.expr());
             case VtlParser.FLOOR:
-                // TODO: Support dataset.
                 return handleFloor(ctx.expr());
             case VtlParser.ABS:
-                // TODO: Support dataset.
                 return handleAbs(ctx.expr());
             case VtlParser.EXP:
-                // TODO: Support dataset.
                 return handleExp(ctx.expr());
             case VtlParser.LN:
-                // TODO: Support dataset.
                 return handleLn(ctx.expr());
             case VtlParser.SQRT:
-                // TODO: Support dataset.
                 return handleSqrt(ctx.expr());
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
@@ -140,10 +142,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
         switch (ctx.op.getType()) {
             case VtlParser.ROUND:
-                // TODO: Support dataset.
                 return handleRound(ctx.expr(), ctx.optionalExpr());
             case VtlParser.TRUNC:
-                // TODO: Support dataset.
                 return handleTrunc(ctx.expr(), ctx.optionalExpr());
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
@@ -191,13 +191,10 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
         switch (ctx.op.getType()) {
             case VtlParser.MOD:
-                // TODO: Support dataset.
                 return handleModulo(ctx.left, ctx.right);
             case VtlParser.POWER:
-                // TODO: Support dataset.
                 return handlePower(ctx.left, ctx.right);
             case VtlParser.LOG:
-                // TODO: Support dataset.
                 return handleLog(ctx.left, ctx.right);
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
