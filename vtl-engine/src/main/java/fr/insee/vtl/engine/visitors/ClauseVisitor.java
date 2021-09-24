@@ -156,13 +156,13 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             } else if (groupFunctionCtx.MEDIAN() != null) {
                 collectorMap.put(name, AggregationExpression.median(expression));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevPop(expression));
             } else if (groupFunctionCtx.STDDEV_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevSamp(expression));
             } else if (groupFunctionCtx.VAR_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varPop(expression));
             } else if (groupFunctionCtx.VAR_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varSamp(expression));
             } else {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             }

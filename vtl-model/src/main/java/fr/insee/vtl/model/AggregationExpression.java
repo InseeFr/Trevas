@@ -132,6 +132,74 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
     }
 
     /**
+     * Returns an aggregation expression that give population standard deviation of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The population standard deviation expression.
+     */
+    public static AggregationExpression stdDevPop(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevPopCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevPopCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give sample standard deviation of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The sample standard deviation expression.
+     */
+    public static AggregationExpression stdDevSamp(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevSampCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevSampCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give population variance of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The population variance expression.
+     */
+    public static AggregationExpression varPop(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, varPopCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, varPopCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give sample variance of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The sample variance expression.
+     */
+    public static AggregationExpression varSamp(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, varSampCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, varSampCollectorDouble()), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
      * Returns an aggregation expression based on a data point collector and an expected type.
      *
      * @param collector The data point collector.
@@ -199,6 +267,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     return longs;
                 },
                 longs -> {
+                    if (longs.contains(null)) return null;
                     Collections.sort(longs);
                     if (longs.size() % 2 == 0) {
                         return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
@@ -218,6 +287,167 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     return longs;
                 },
                 longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> stdDevPopCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> stdDevPopCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> stdDevSampCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> stdDevSampCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> varPopCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> varPopCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Long, List<Long>, Double> varSampCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> varSampCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    if (longs.contains(null)) return null;
                     Collections.sort(longs);
                     if (longs.size() % 2 == 0) {
                         return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
