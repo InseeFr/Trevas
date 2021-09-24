@@ -28,7 +28,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
      * Constructor taking a dataset expression and a processing engine.
      *
      * @param datasetExpression The dataset expression containing the clause expression.
-     * @param processingEngine The processing engine for dataset expressions.
+     * @param processingEngine  The processing engine for dataset expressions.
      */
     public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
@@ -154,7 +154,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             } else if (groupFunctionCtx.MIN() != null) {
                 collectorMap.put(name, AggregationExpression.min(expression));
             } else if (groupFunctionCtx.MEDIAN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.median(expression));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             } else if (groupFunctionCtx.STDDEV_SAMP() != null) {

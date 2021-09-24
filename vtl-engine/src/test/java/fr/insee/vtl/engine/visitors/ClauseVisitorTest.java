@@ -235,10 +235,10 @@ public class ClauseVisitorTest {
         // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
-                    "sumAge := sum(age)," +
-                    "avgWeight := avg(age)," +
-                    "countVal := count(null)" +
-                    " group by country];");
+                "sumAge := sum(age)," +
+                "avgWeight := avg(age)," +
+                "countVal := count(null)" +
+                " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5, "countVal", 2L),
@@ -257,12 +257,14 @@ public class ClauseVisitorTest {
 
         engine.eval("res := ds1[aggr " +
                 "minAge := min(age)," +
-                "minWeight := min(weight)" +
+                "minWeight := min(weight)," +
+                "medianAge := median(age), " +
+                "medianWeight := median(weight) " +
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("country", "france", "minAge", 11L, "minWeight", 9D),
-                Map.of("country", "norway", "minAge", 10L, "minWeight", 11D)
+                Map.of("country", "france", "minAge", 11L, "minWeight", 9D, "medianAge", 11.5D, "medianWeight", 9.5D),
+                Map.of("country", "norway", "minAge", 10L, "minWeight", 11D, "medianAge", 10D, "medianWeight", 11D)
         );
     }
 }

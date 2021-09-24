@@ -1,8 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -66,6 +64,23 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
             return withExpression(expression, Collectors.summingLong(value -> (Long) value), Long.class);
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.summingDouble(value -> (Double) value), Double.class);
+        } else {
+            // TODO: Support more types or throw a proper error.
+            throw new Error();
+        }
+    }
+
+    /**
+     * Returns an aggregation expression that give median of an expression on data points and returns a double number.
+     *
+     * @param expression The expression on data points.
+     * @return The median expression.
+     */
+    public static AggregationExpression median(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Long) v, medianCollectorLong()), Double.class);
+        } else if (Double.class.equals(expression.getType())) {
+            return withExpression(expression, Collectors.mapping(v -> (Double) v, medianCollectorDouble()), Double.class);
         } else {
             // TODO: Support more types or throw a proper error.
             throw new Error();
@@ -174,4 +189,43 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
     public Set<Characteristics> characteristics() {
         return aggregation.characteristics();
     }
+
+    private static Collector<Long, List<Long>, Double> medianCollectorLong() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return (double) longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
+    private static Collector<Double, List<Double>, Double> medianCollectorDouble() {
+        return Collector.of(
+                ArrayList::new,
+                List::add,
+                (longs, longs2) -> {
+                    longs.addAll(longs2);
+                    return longs;
+                },
+                longs -> {
+                    Collections.sort(longs);
+                    if (longs.size() % 2 == 0) {
+                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
+                    } else {
+                        return longs.get(longs.size() / 2);
+                    }
+                }
+        );
+    }
+
 }
