@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
+    /**
+     * Script engine property giving the (comma-separated) list of engine names.
+     */
     public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
@@ -168,7 +171,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     /**
-     * Returns an new instance of script context bindings.
+     * Returns a new instance of script context bindings.
      *
      * @return A new instance of bindings (<code>SimpleBindings</code> object).
      */
