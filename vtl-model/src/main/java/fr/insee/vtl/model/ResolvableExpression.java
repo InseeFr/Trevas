@@ -63,7 +63,7 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
      * @param value The expression value.
      * @return An instance of <code>ResolvableExpression</code> with the given type and value.
      */
-    static ResolvableExpression ofType(Class<Object> clazz, Object value) {
+    static ResolvableExpression ofType(Class<?> clazz, Object value) {
         return new ResolvableExpression() {
 
             @Override

@@ -11,7 +11,7 @@ public abstract class StringExpression implements ResolvableExpression {
         return new StringExpression() {
             @Override
             public String resolve(Map<String, Object> context) {
-                return value.toString();
+                return value == null ? null : value.toString();
             }
         };
     }
@@ -31,6 +31,41 @@ public abstract class StringExpression implements ResolvableExpression {
                 return func.apply(context);
             }
         };
+    }
+
+    /**
+     * Returns the result of the cast operator on an expression
+     *
+     * @param expr        A <code>ResolvableExpression</code> to cast.
+     * @param outputClass The type to cast expression.
+     * @return The casted <code>ResolvableExpression</code>.
+     */
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
+        if (outputClass.equals(String.class))
+            return StringExpression.of(context -> {
+                String exprValue = (String) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue;
+            });
+        if (outputClass.equals(Long.class))
+            return LongExpression.of(context -> {
+                String exprValue = (String) expr.resolve(context);
+                if (exprValue == null) return null;
+                return Long.valueOf(exprValue);
+            });
+        if (outputClass.equals(Double.class))
+            return DoubleExpression.of(context -> {
+                String exprValue = (String) expr.resolve(context);
+                if (exprValue == null) return null;
+                return Double.valueOf(exprValue);
+            });
+        if (outputClass.equals(Boolean.class))
+            return BooleanExpression.of(context -> {
+                String exprValue = (String) expr.resolve(context);
+                if (exprValue == null) return null;
+                return Boolean.valueOf(exprValue);
+            });
+        throw new ClassCastException("Cast String to " + outputClass + " is not supported");
     }
 
 }
