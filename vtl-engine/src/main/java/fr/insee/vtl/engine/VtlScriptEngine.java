@@ -13,8 +13,10 @@ import org.antlr.v4.runtime.*;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Optional;
+import java.util.ServiceLoader;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -45,18 +47,17 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     /**
-     * Returns the list of names of the engine as a list of strings.
+     * Returns the name of the engine to use.
      *
-     * @return The names of the engine as a list of strings.
+     * @return The names of the engine to use.
      */
-    private List<String> getProcessingEngineNames() {
-        Object o = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
+    private String getProcessingEngineName() {
+        Object engineName = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
-        if (o instanceof String) {
-            return Arrays.asList(((String) o).split(","));
+        if (engineName instanceof String) {
+            return (String) engineName;
         } else {
-            throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES +
-                                               " must be a comma separated list of names");
+            throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES + " must be a string");
         }
     }
 
@@ -66,14 +67,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
      * @return an instance of the processing engine for the script engine.
      */
     public ProcessingEngine getProcessingEngine() {
-        List<String> names = getProcessingEngineNames();
-        List<ProcessingEngineFactory> factories = ServiceLoader.load(ProcessingEngineFactory.class)
+        String name = getProcessingEngineName();
+        Optional<ProcessingEngineFactory> factory = ServiceLoader.load(ProcessingEngineFactory.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .filter(f -> names.contains(f.getName()))
-                .collect(Collectors.toList());
-        // TODO: Handle multiple factories.
-        return factories.get(0).getProcessingEngine(this);
+                .filter(f -> f.getName().equals(name))
+                .findFirst();
+        return factory.orElseThrow().getProcessingEngine(this);
     }
 
     /**

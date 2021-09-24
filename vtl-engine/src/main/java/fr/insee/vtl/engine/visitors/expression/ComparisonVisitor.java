@@ -73,7 +73,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
 
         // Get the type of the Token.
-        // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         // Special case with nulls.
@@ -88,7 +87,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             switch (type.getType()) {
                 case VtlParser.EQ:
                     return BooleanExpression.of(context -> {
-                        // TODO: factorize null handling in equal function
+                        // TODO: factorize null handling in equal functions
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
