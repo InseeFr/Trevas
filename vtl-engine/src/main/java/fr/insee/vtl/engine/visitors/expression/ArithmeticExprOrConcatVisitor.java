@@ -20,9 +20,9 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The scripting context for the visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public ArithmeticExprOrConcatVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);

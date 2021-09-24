@@ -11,9 +11,9 @@ import java.util.Objects;
 public class VtlScriptEngineFactory implements ScriptEngineFactory {
 
     /**
-     * Returns the full  name of the VTL script engine.
+     * Returns the full name of the VTL script engine.
      *
-     * @return The full  name of the VTL script engine.
+     * @return The full name of the VTL script engine.
      */
     @Override
     public String getEngineName() {
@@ -27,7 +27,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public String getEngineVersion() {
-        return "0.1.0";
+        return "0.1.3";
     }
 
     /**
@@ -73,11 +73,11 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
     /**
      * Returns the version of the scripting language supported by the engine.
      *
-     * @return The version of the scripting language supported by the engine ("2.1").
+     * @return The version of the scripting language supported by the engine ("2.0").
      */
     @Override
     public String getLanguageVersion() {
-        return "2.1";
+        return "2.0";
     }
 
     /**

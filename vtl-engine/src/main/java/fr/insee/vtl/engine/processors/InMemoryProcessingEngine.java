@@ -18,7 +18,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
-                                         Map<String, Dataset.Role> roles) {
+                                         Map<String, Dataset.Role> roles, Map<String, String> expressionStrings) {
 
         // Copy the structure and mutate based on the expressions.
         var newStructure = new DataStructure(expression.getDataStructure());
@@ -52,7 +52,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
         return new DatasetExpression() {
 
             @Override
@@ -250,7 +250,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return new DataStructure(components);
     }
 
-    // TODO JavaDoc for the private methods below
+    /**
+     * Create a datapoint comparator that operates on the given identifiers only.
+     */
     private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
         return (dl, dr) -> {
             for (Component identifier : identifiers) {
@@ -307,8 +309,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     private DatasetExpression handleFullJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-        // Naive implementation, left and right union.
-        // TODO: Implement a faster algorithm.
+        // Naive implementation, left and right union. Could be optimized.
         return executeUnion(List.of(
                 handleLeftJoin(identifiers, left, right),
                 handleLeftJoin(identifiers, right, left)

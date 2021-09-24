@@ -6,15 +6,16 @@
 
 #### VTL-ML - General purpose operators
 
-| Name                              | Symbol |     Supported      |
-| --------------------------------- | :----- | :----------------: |
-| Parentheses                       | ( )    | :heavy_check_mark: |
-| Persistent assignment             | <-     |        :x:         |
-| Temporary assignment              | :=     | :heavy_check_mark: |
-| Membership                        | #      |        :x:         |
-| User-defined operator call        |        |        :x:         |
-| Evaluation of an external routine | eval   |        :x:         |
-| Type conversion                   | cast   |        :x:         |
+| Name                                               | Symbol |     Supported      |
+| -------------------------------------------------- | :----- | :----------------: |
+| Parentheses                                        | ( )    | :heavy_check_mark: |
+| Persistent assignment                              | <-     |        :x:         |
+| Temporary assignment                               | :=     | :heavy_check_mark: |
+| Membership                                         | #      |        :x:         |
+| User-defined operator call                         |        |        :x:         |
+| Evaluation of an external routine                  | eval   |        :x:         |
+| Type conversion (string, integer, double, boolean) | cast   | :heavy_check_mark: |
+| Type conversion (others)                           | cast   |        :x:         |
 
 #### VTL-ML - Join operators
 
@@ -116,15 +117,15 @@
 | Aggregate invocation               |                 |        :x:         |  :x:  |
 | Analytic invocation                |                 |        :x:         |  :x:  |
 | Counting the number of data points | count           | :heavy_check_mark: |  :x:  |
-| Minimum value                      | min             |        :x:         |  :x:  |
-| Maximum value                      | max             |        :x:         |  :x:  |
-| Median value                       | median          |        :x:         |  :x:  |
+| Minimum value                      | min             | :heavy_check_mark: |  :x:  |
+| Maximum value                      | max             | :heavy_check_mark: |  :x:  |
+| Median value                       | median          | :heavy_check_mark: |  :x:  |
 | Sum                                | sum             | :heavy_check_mark: |  :x:  |
 | Average value                      | avg             | :heavy_check_mark: |  :x:  |
-| Population standard deviation      | stddev_pop      |        :x:         |  :x:  |
-| Sample standard deviation          | stddev_samp     |        :x:         |  :x:  |
-| Population variance                | var_pop         |        :x:         |  :x:  |
-| Sample variance                    | var_samp        |        :x:         |  :x:  |
+| Population standard deviation      | stddev_pop      | :heavy_check_mark: |  :x:  |
+| Sample standard deviation          | stddev_samp     | :heavy_check_mark: |  :x:  |
+| Population variance                | var_pop         | :heavy_check_mark: |  :x:  |
+| Sample variance                    | var_samp        | :heavy_check_mark: |  :x:  |
 | First value                        | first_value     |        :x:         |  :x:  |
 | Last value                         | last_value      |        :x:         |  :x:  |
 | Lag                                | lag             |        :x:         |  :x:  |

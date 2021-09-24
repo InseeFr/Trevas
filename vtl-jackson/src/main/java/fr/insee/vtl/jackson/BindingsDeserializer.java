@@ -10,12 +10,26 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 import java.io.IOException;
 
+/**
+ * <code>BindingsDeserializer</code> is a JSON deserializer specialized for data bindings.
+ */
 public class BindingsDeserializer extends StdDeserializer<Bindings> {
 
+    /**
+     * Base constructor.
+     */
     protected BindingsDeserializer() {
         super(Bindings.class);
     }
 
+    /**
+     * Deserializes JSON data bindings into a <code>Bindings</code> object.
+     *
+     * @param p The base JSON parser.
+     * @param ctxt A deserialization context.
+     * @return The deserialized data bindings.
+     * @throws IOException In case of problem while processing the JSON bindings.
+     */
     @Override
     public Bindings deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 

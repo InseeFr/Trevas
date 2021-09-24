@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.LongExpression;
@@ -26,9 +28,9 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The scripting context for the visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public StringFunctionsVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
@@ -124,11 +126,10 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         if (ctx.children.size() > 8) {
+            // Compute the amount of parameters (excluding the tokens etc.)
             String args = String.valueOf((ctx.children.size() - 4) / 2);
-            // TODO: Define subclass of VtlScriptException. Ideally there should be not distinction between a core
-            //  function and a dynamically defined function. This could be a subclass of InvalidType. Anyways need
-            //  to do some research.
-            throw new UnsupportedOperationException("too many args (" + args + ") for: " + ctx.getText());
+            throw new VtlRuntimeException(new InvalidArgumentException(
+                    "too many args (" + args + ")", ctx));
         }
         // TODO: grammar issue: endParameter should be named lengthParameter
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
@@ -148,7 +149,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             Long lengthValue = (Long) lengthExpression.resolve(context);
             if (lengthValue == null) return null;
             var end = start + lengthValue.intValue();
-            if (end > value.length()) return value.substring(start);;
+            if (end > value.length()) return value.substring(start);
             return value.substring(start, end);
         });
     }
@@ -190,17 +191,16 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         var start = ctx.startParameter == null ? LongExpression.of(0L)
                 : assertLong(exprVisitor.visit(ctx.startParameter), ctx.startParameter);
 
-        var occurence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
+        var occurrence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
                 : assertLong(exprVisitor.visit(ctx.occurrenceParameter), ctx.occurrenceParameter);
 
         return ResolvableExpression.withType(Long.class, context -> {
             String value = (String) expression.resolve(context);
             String patternValue = (String) pattern.resolve(context);
             Long startValue = (Long) start.resolve(context);
-            Long occurenceValue = (Long) occurence.resolve(context);
-            if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurenceValue)) return null;
-            return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurenceValue.intValue()) + 1L;
+            Long occurrenceValue = (Long) occurrence.resolve(context);
+            if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
+            return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
         });
     }
-
 }

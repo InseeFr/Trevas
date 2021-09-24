@@ -29,7 +29,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
      * @param expressionVisitor the parent expression visitor.
      */
@@ -61,7 +61,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return !isLessThan(left, right);
     }
 
-
     /**
      * Visits expressions with comparisons.
      *
@@ -74,7 +73,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
 
         // Get the type of the Token.
-        // TODO(hadrien): Reported to ANTLR: https://github.com/antlr/antlr4/issues/2862
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         // Special case with nulls.
@@ -89,7 +87,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             switch (type.getType()) {
                 case VtlParser.EQ:
                     return BooleanExpression.of(context -> {
-                        // TODO: factorize null handling in equal function
+                        // TODO: factorize null handling in equal functions
                         Comparable leftValue = (Comparable) leftExpression.resolve(context);
                         Comparable rightValue = (Comparable) rightExpression.resolve(context);
                         if (hasNullArgs(leftValue, rightValue)) return null;
@@ -138,7 +136,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
-
     /**
      * Visits 'element of' ('In' or 'Not in') expressions.
      *
@@ -172,7 +169,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             default:
                 throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
         }
-
     }
 
     /**

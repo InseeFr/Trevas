@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 /**
- * Collector that uses a map of collectors.
+ * The <code>MapCollector</code> class represents a collector operating on columns of a dataset.
  */
 public class MapCollector implements Collector<Structured.DataPoint, Structured.DataPoint, Structured.DataPoint> {
 
@@ -23,6 +23,12 @@ public class MapCollector implements Collector<Structured.DataPoint, Structured.
     private final Map<String, BinaryOperator<Object>> combinerMap = new HashMap<>();
     private final Map<String, Function<Object, Object>> finisherMap = new HashMap<>();
 
+    /**
+     * Constructor taking a dataset structure and a map between component names and associated collectors.
+     *
+     * @param structure The dataset structure on which to operate.
+     * @param collectorMap A map between column names and collectors.
+     */
     public MapCollector(Structured.DataStructure structure, Map<String, ? extends Collector<Structured.DataPoint, Object, Object>> collectorMap) {
         this.structure = Objects.requireNonNull(structure);
         if (!structure.keySet().containsAll(collectorMap.keySet())) {
@@ -84,7 +90,6 @@ public class MapCollector implements Collector<Structured.DataPoint, Structured.
 
     @Override
     public Set<Characteristics> characteristics() {
-        // TODO: Think about this.
         return Set.of(Characteristics.UNORDERED);
     }
 }

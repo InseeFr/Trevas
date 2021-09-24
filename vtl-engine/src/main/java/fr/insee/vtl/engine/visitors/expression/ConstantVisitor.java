@@ -10,7 +10,7 @@ import fr.insee.vtl.parser.VtlParser;
 public class ConstantVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     /**
-     * Visits constants expressions.
+     * Visits constant expressions.
      *
      * @param ctx The scripting context for the expression.
      * @return A <code>ResolvableExpression</code> resolving to the constant value with the expected type.

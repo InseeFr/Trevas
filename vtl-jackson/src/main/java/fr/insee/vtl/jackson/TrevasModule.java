@@ -6,8 +6,14 @@ import fr.insee.vtl.model.Structured;
 
 import javax.script.Bindings;
 
+/**
+ * <code>TrevasModule</code> is a Jackson module that allows the registration of Trevas serializers and deserializers.
+ */
 public class TrevasModule extends SimpleModule {
 
+    /**
+     * Base constructor: registers Trevas serializers and deserializers.
+     */
     public TrevasModule() {
         addDeserializer(Bindings.class, new BindingsDeserializer());
         addDeserializer(Dataset.class, new DatasetDeserializer());

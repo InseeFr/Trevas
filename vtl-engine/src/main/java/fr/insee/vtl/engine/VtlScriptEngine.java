@@ -13,8 +13,10 @@ import org.antlr.v4.runtime.*;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Optional;
+import java.util.ServiceLoader;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -25,12 +27,15 @@ import java.util.stream.Collectors;
  * ScriptEngine engine = manager.getEngineByName("vtl");
  * </code></pre>
  * <p>
- * VTL expression can be evaluated using the methods
+ * VTL expressions can be evaluated using the methods:
  * {@link #eval(Reader)}, {@link #eval(Reader, ScriptContext)},
  * {@link #eval(String)} and {@link #eval(String, ScriptContext)}
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
+    /**
+     * Script engine property giving the (comma-separated) list of engine names.
+     */
     public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
@@ -44,26 +49,34 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
-    private List<String> getProcessingEngineNames() {
-        Object o = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
+    /**
+     * Returns the name of the engine to use.
+     *
+     * @return The names of the engine to use.
+     */
+    private String getProcessingEngineName() {
+        Object engineName = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
-        if (o instanceof String) {
-            return Arrays.asList(((String) o).split(","));
+        if (engineName instanceof String) {
+            return (String) engineName;
         } else {
-            throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES +
-                                               " must be a comma separated list of names");
+            throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES + " must be a string");
         }
     }
 
+    /**
+     * Returns an instance of the processing engine for the script engine.
+     *
+     * @return an instance of the processing engine for the script engine.
+     */
     public ProcessingEngine getProcessingEngine() {
-        List<String> names = getProcessingEngineNames();
-        List<ProcessingEngineFactory> factories = ServiceLoader.load(ProcessingEngineFactory.class)
+        String name = getProcessingEngineName();
+        Optional<ProcessingEngineFactory> factory = ServiceLoader.load(ProcessingEngineFactory.class)
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .filter(f -> names.contains(f.getName()))
-                .collect(Collectors.toList());
-        // TODO: Handle multiple factories.
-        return factories.get(0).getProcessingEngine(this);
+                .filter(f -> f.getName().equals(name))
+                .findFirst();
+        return factory.orElseThrow().getProcessingEngine(this);
     }
 
     /**
@@ -158,7 +171,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     /**
-     * Returns an new instance of script context bindings.
+     * Returns a new instance of script context bindings.
      *
      * @return A new instance of bindings (<code>SimpleBindings</code> object).
      */

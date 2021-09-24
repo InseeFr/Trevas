@@ -31,10 +31,10 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
     }
 
     /**
-     * Visits a 'levenshtein' expression with two strings parameters.
+     * Visits a 'Levenshtein distance' expression with two strings parameters.
      *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a long (<code>10</code> representing Levenshtein distance between two string params).
+     * @param ctx The scripting context for the expression (left and right expressions should be the string parameters).
+     * @return A <code>ResolvableExpression</code> resolving to a long integer representing the Levenshtein distance between the parameters.
      */
     @Override
     public ResolvableExpression visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {

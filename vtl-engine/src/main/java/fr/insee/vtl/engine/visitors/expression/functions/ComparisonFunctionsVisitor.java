@@ -24,14 +24,13 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The expression visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public ComparisonFunctionsVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
-
 
     /**
      * Visits a 'between' expression with scalar operand and delimiters.
@@ -106,5 +105,4 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 operandExpression.resolve(context) == null
         );
     }
-
 }

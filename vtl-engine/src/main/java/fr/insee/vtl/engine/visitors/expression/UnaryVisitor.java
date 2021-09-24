@@ -18,9 +18,9 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The expression visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public UnaryVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);

@@ -14,8 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JoinFunctionsTest {
 
@@ -58,6 +60,24 @@ public class JoinFunctionsTest {
         engine = new ScriptEngineManager().getEngineByName("vtl");
     }
 
+    @Test
+    public void testJoinWithExpressionFails() {
+        engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
+
+        assertThatThrownBy(() -> engine.eval("result := left_join(ds1[filter true], ds2[filter true]);"))
+                .is(atPosition(0, 20, 36))
+                .hasMessage("cannot use expression in join clause");
+        assertThatThrownBy(() -> engine.eval("result := inner_join(ds1, ds2[filter true]);"))
+                .is(atPosition(0, 26, 42))
+                .hasMessage("cannot use expression in join clause");
+        assertThatThrownBy(() -> engine.eval("result := cross_join(ds1[filter true], ds2);"))
+                .is(atPosition(0, 21, 37))
+                .hasMessage("cannot use expression in join clause");
+        assertThatThrownBy(() -> engine.eval("result := full_join(ds1[filter true], ds2[filter true]);"))
+                .is(atPosition(0, 20, 36))
+                .hasMessage("cannot use expression in join clause");
+    }
 
     @Test
     public void testLeftJoinWithUsing() throws ScriptException {

@@ -1,16 +1,22 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * <code>ClauseVisitor</code> is the visitor for VTL clause expressions (component filter, aggr, drop, etc.).
+ */
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final DatasetExpression datasetExpression;
@@ -18,6 +24,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final ProcessingEngine processingEngine;
 
+    /**
+     * Constructor taking a dataset expression and a processing engine.
+     *
+     * @param datasetExpression The dataset expression containing the clause expression.
+     * @param processingEngine  The processing engine for dataset expressions.
+     */
     public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
@@ -28,8 +40,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private static String getName(VtlParser.ComponentIDContext context) {
-        // TODO: Should be an expression so we can handle membership better and use the exceptions
-        //  for undefined var etc.
+        // TODO: Should be an expression so we can handle membership better
+        //  and use the exceptions for undefined var etc.
+        //        res := ds1[calc test := m1 * ds1#m2 + m3]
+        //        res := ds1#m1 -> dataset with only m1.
+        //        res := ceil(ds1#m1)
+        //        res := ceil(ds1)
         String text = context.getText();
         if (text.startsWith("'") && text.endsWith("'")) {
             text = text.substring(1, text.length() - 1);
@@ -54,6 +70,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
         var expressions = new LinkedHashMap<String, ResolvableExpression>();
+        var expressionStrings = new LinkedHashMap<String, String>();
         var roles = new LinkedHashMap<String, Dataset.Role>();
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
             var columnName = getName(calcCtx.componentID());
@@ -62,23 +79,40 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
             ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
             expressions.put(columnName, calc);
+            expressionStrings.put(columnName, getSource(calcCtx.expr()));
             roles.put(columnName, columnRole);
         }
 
-        return processingEngine.executeCalc(datasetExpression, expressions, roles);
+        return processingEngine.executeCalc(datasetExpression, expressions, roles, expressionStrings);
+    }
+
+    static String getSource(ParserRuleContext ctx) {
+        var stream = ctx.getStart().getInputStream();
+        return stream.getText(new Interval(
+                ctx.getStart().getStartIndex(),
+                ctx.getStop().getStopIndex()
+        ));
     }
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
         ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
-        return processingEngine.executeFilter(datasetExpression, filter);
+        return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
     @Override
     public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
         Map<String, String> fromTo = new LinkedHashMap<>();
+        Set<String> renamed = new HashSet<>();
         for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-            fromTo.put(getName(renameCtx.fromName), getName(renameCtx.toName));
+            var toNameString = getName(renameCtx.toName);
+            var fromNameString = getName(renameCtx.fromName);
+            if (!renamed.add(toNameString)) {
+                throw new VtlRuntimeException(new InvalidArgumentException(
+                        String.format("duplicate column: %s", toNameString), renameCtx
+                ));
+            }
+            fromTo.put(fromNameString, toNameString);
         }
         return processingEngine.executeRename(datasetExpression, fromTo);
     }
@@ -95,7 +129,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
 
         // Create a keyExtractor with the columns we group by.
-        // TODO: Extract.
+        // TODO: Refactor to its own class. Possibly using the Datapoint/DatapointMap as
+        //  return types to improve performance.
         Set<String> finalGroupBy = groupBy;
         Function<Structured.DataPoint, Map<String, Object>> keyExtractor = dataPoint -> {
             return new Structured.DataPointMap(dataPoint).entrySet().stream().filter(entry -> finalGroupBy.contains(entry.getKey()))
@@ -115,19 +150,19 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             } else if (groupFunctionCtx.COUNT() != null) {
                 collectorMap.put(name, AggregationExpression.count());
             } else if (groupFunctionCtx.MAX() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.max(expression));
             } else if (groupFunctionCtx.MIN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.min(expression));
             } else if (groupFunctionCtx.MEDIAN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.median(expression));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevPop(expression));
             } else if (groupFunctionCtx.STDDEV_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.stdDevSamp(expression));
             } else if (groupFunctionCtx.VAR_POP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varPop(expression));
             } else if (groupFunctionCtx.VAR_SAMP() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.varSamp(expression));
             } else {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             }

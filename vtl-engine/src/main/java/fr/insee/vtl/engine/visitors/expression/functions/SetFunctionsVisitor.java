@@ -1,7 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -15,12 +15,20 @@ import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
+/**
+ * <code>SetFunctionsVisitor</code> is the visitor for expressions involving set functions (i.e. union).
+ */
 public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor expressionVisitor;
 
     private final ProcessingEngine processingEngine;
 
+    /**
+     * Constructor taking an expression visitor and a processing engine.
+     * @param expressionVisitor A visitor for the expression corresponding to the set function.
+     * @param processingEngine The processing engine.
+     */
     public SetFunctionsVisitor(ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
         this.processingEngine = Objects.requireNonNull(processingEngine);
@@ -40,8 +48,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
             if (structure == null) {
                 structure = rest.getDataStructure();
             } else if (!structure.equals(rest.getDataStructure())) {
-                // TODO: Create exception
-                throw new VtlRuntimeException(new VtlScriptException(
+                throw new VtlRuntimeException(new InvalidArgumentException(
                         String.format(
                                 "dataset structure of %s is incompatible with %s",
                                 expr.getText(),

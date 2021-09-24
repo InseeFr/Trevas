@@ -30,13 +30,15 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final NumericFunctionsVisitor numericFunctionsVisitor;
     private final SetFunctionsVisitor setFunctionsVisitor;
     private final JoinFunctionsVisitor joinFunctionsVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking a scripting context and a processing engine.
      *
-     * @param context The map
+     * @param context The map representing the context.
+     * @param processingEngine The processing engine.
      */
     public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
         Objects.requireNonNull(context);
@@ -52,12 +54,13 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
+        genericFunctionsVisitor = new GenericFunctionsVisitor(this);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
     /**
-     * Visits constants expressions.
+     * Visits constant expressions.
      *
      * @param ctx The scripting context for the expression.
      * @return A <code>ResolvableExpression</code> resolving to the constant value with the expected type.
@@ -215,9 +218,28 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return setFunctionsVisitor.visit(ctx.setOperators());
     }
 
+    /**
+     * Visits join function expressions.
+     *
+     * @param ctx The scripting context for the function expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the function expression.
+     * @see JoinFunctionsVisitor
+     */
     @Override
     public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
         return joinFunctionsVisitor.visitJoinFunctions(ctx);
+    }
+
+    /**
+     * Visits numeric function expressions.
+     *
+     * @param ctx The scripting context for the function expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the function expression.
+     * @see NumericFunctionsVisitor
+     */
+    @Override
+    public ResolvableExpression visitGenericFunctions(VtlParser.GenericFunctionsContext ctx) {
+        return genericFunctionsVisitor.visitGenericFunctions(ctx);
     }
 
     @Override
