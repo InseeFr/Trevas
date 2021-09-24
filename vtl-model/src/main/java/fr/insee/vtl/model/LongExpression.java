@@ -38,4 +38,39 @@ public abstract class LongExpression extends NumberExpression {
             }
         };
     }
+
+    /**
+     * Returns the result of the cast operator on an expression
+     *
+     * @param expr        A <code>ResolvableExpression</code> to cast.
+     * @param outputClass The type to cast expression.
+     * @return The casted <code>ResolvableExpression</code>.
+     */
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
+        if (outputClass.equals(String.class))
+            return StringExpression.of(context -> {
+                Long exprValue = (Long) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue.toString();
+            });
+        if (outputClass.equals(Long.class))
+            return LongExpression.of(context -> {
+                Long exprValue = (Long) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue;
+            });
+        if (outputClass.equals(Double.class))
+            return DoubleExpression.of(context -> {
+                Long exprValue = (Long) expr.resolve(context);
+                if (exprValue == null) return null;
+                return Double.valueOf(exprValue);
+            });
+        if (outputClass.equals(Boolean.class))
+            return BooleanExpression.of(context -> {
+                Long exprValue = (Long) expr.resolve(context);
+                if (exprValue == null) return null;
+                return !exprValue.equals(0L);
+            });
+        throw new ClassCastException("Cast Long to " + outputClass + " is not supported");
+    }
 }

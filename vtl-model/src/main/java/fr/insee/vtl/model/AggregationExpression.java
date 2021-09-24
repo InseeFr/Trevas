@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  */
 public class AggregationExpression implements Collector<Structured.DataPoint, Object, Object>, TypedExpression {
 
-    private final Collector<Structured.DataPoint, ?, ? extends Object> aggregation;
+    private final Collector<Structured.DataPoint, ?, ?> aggregation;
     private final Class<?> type;
 
     /**
@@ -48,7 +48,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.averagingDouble(value -> (Double) value), Double.class);
         } else {
-            // TODO
+            // TODO: Support more types or throw a proper error.
             throw new Error();
         }
     }
@@ -65,7 +65,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.summingDouble(value -> (Double) value), Double.class);
         } else {
-            // TODO
+            // TODO: Support more types or throw a proper error.
             throw new Error();
         }
     }
@@ -94,7 +94,6 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
             @Override
             public Object apply(Structured.DataPoint dataPoint) {
-                // TODO: Use datapoint instead.
                 return expression.resolve(dataPoint);
             }
         }, collector), type);

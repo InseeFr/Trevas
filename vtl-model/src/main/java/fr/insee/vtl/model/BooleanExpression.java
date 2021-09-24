@@ -44,4 +44,39 @@ public abstract class BooleanExpression implements ResolvableExpression {
             }
         };
     }
+
+    /**
+     * Returns the result of the cast operator on an expression
+     *
+     * @param expr        A <code>ResolvableExpression</code> to cast.
+     * @param outputClass The type to cast expression.
+     * @return The casted <code>ResolvableExpression</code>.
+     */
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
+        if (outputClass.equals(String.class))
+            return StringExpression.of(context -> {
+                Boolean exprValue = (Boolean) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue.toString();
+            });
+        if (outputClass.equals(Long.class))
+            return LongExpression.of(context -> {
+                Boolean exprValue = (Boolean) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue ? 1L : 0L;
+            });
+        if (outputClass.equals(Double.class))
+            return DoubleExpression.of(context -> {
+                Boolean exprValue = (Boolean) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue ? 1D : 0D;
+            });
+        if (outputClass.equals(Boolean.class))
+            return BooleanExpression.of(context -> {
+                Boolean exprValue = (Boolean) expr.resolve(context);
+                if (exprValue == null) return null;
+                return exprValue;
+            });
+        throw new ClassCastException("Cast Boolean to " + outputClass + " is not supported");
+    }
 }

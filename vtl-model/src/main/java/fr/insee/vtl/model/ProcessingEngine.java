@@ -20,7 +20,7 @@ public interface ProcessingEngine {
      * @return the result of the calc transformation
      */
     DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
-                                  Map<String, Dataset.Role> roles);
+                                  Map<String, Dataset.Role> roles, Map<String, String> expressionStrings);
 
     /**
      * Execute a filter transformations on the dataset expression.
@@ -31,7 +31,7 @@ public interface ProcessingEngine {
      * @param filter     a filter expression
      * @return the result of the filter transformation
      */
-    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter);
+    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterString);
 
     /**
      * Execute a rename transformations on the dataset expression.

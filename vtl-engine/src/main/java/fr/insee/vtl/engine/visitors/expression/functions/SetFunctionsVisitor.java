@@ -1,7 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -48,8 +48,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
             if (structure == null) {
                 structure = rest.getDataStructure();
             } else if (!structure.equals(rest.getDataStructure())) {
-                // TODO: Create exception
-                throw new VtlRuntimeException(new VtlScriptException(
+                throw new VtlRuntimeException(new InvalidArgumentException(
                         String.format(
                                 "dataset structure of %s is incompatible with %s",
                                 expr.getText(),

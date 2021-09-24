@@ -90,7 +90,6 @@ public class MapCollector implements Collector<Structured.DataPoint, Structured.
 
     @Override
     public Set<Characteristics> characteristics() {
-        // TODO: Think about this.
         return Set.of(Characteristics.UNORDERED);
     }
 }
