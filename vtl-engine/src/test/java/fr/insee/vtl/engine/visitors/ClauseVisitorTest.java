@@ -218,11 +218,11 @@ public class ClauseVisitorTest {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
-                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10L),
-                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9L)
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
-                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
                 Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
@@ -245,6 +245,24 @@ public class ClauseVisitorTest {
                 Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0, "countVal", 1L)
         );
 
+        engine.eval("res := ds1[aggr " +
+                "maxAge := max(age)," +
+                "maxWeight := max(weight)" +
+                " group by country];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("country", "france", "maxAge", 12L, "maxWeight", 10D),
+                Map.of("country", "norway", "maxAge", 10L, "maxWeight", 11D)
+        );
 
+        engine.eval("res := ds1[aggr " +
+                "minAge := min(age)," +
+                "minWeight := min(weight)" +
+                " group by country];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("country", "france", "minAge", 11L, "minWeight", 9D),
+                Map.of("country", "norway", "minAge", 10L, "minWeight", 11D)
+        );
     }
 }

@@ -150,9 +150,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             } else if (groupFunctionCtx.COUNT() != null) {
                 collectorMap.put(name, AggregationExpression.count());
             } else if (groupFunctionCtx.MAX() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.max(expression));
             } else if (groupFunctionCtx.MIN() != null) {
-                throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+                collectorMap.put(name, AggregationExpression.min(expression));
             } else if (groupFunctionCtx.MEDIAN() != null) {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {

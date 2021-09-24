@@ -1,5 +1,7 @@
 package fr.insee.vtl.model;
 
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -20,7 +22,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * Constructor taking a collector of data points and an intended type for the aggregation results.
      *
      * @param aggregation Collector of data points.
-     * @param type Expected type for aggregation results.
+     * @param type        Expected type for aggregation results.
      */
     public AggregationExpression(Collector<Structured.DataPoint, ?, ? extends Object> aggregation, Class<?> type) {
         this.aggregation = aggregation;
@@ -74,9 +76,41 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * Returns an aggregation expression based on a data point collector and an expected type.
      *
      * @param collector The data point collector.
-     * @param type The expected type of the aggregation expression results.
+     * @param type      The expected type of the aggregation expression results.
      * @return The aggregation expression.
      */
+    public static AggregationExpression max(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            Collector<Long, ?, Optional<Long>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
+            Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Long.class);
+        } else if (Double.class.equals(expression.getType())) {
+            Collector<Double, ?, Optional<Double>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
+            Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Double.class);
+        } else {
+            throw new Error();
+        }
+    }
+
+    public static AggregationExpression min(ResolvableExpression expression) {
+        if (Long.class.equals(expression.getType())) {
+            Collector<Long, ?, Optional<Long>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
+            Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Long.class);
+        } else if (Double.class.equals(expression.getType())) {
+            Collector<Double, ?, Optional<Double>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+            Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
+            Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+            return withExpression(expression, res, Double.class);
+        } else {
+            throw new Error();
+        }
+    }
+
     public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
         return new AggregationExpression(collector, type);
     }
@@ -86,11 +120,11 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * The input expression is applied to each data point before it is accepted by the data point collector.
      *
      * @param expression The input resolvable expression.
-     * @param collector The data point collector.
-     * @param type The expected type of the aggregation expression results.
+     * @param collector  The data point collector.
+     * @param type       The expected type of the aggregation expression results.
      * @return The resolvable expression.
      */
-    public static AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, ?> collector, Class<?> type) {
+    public static <T> AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
         return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
             @Override
             public Object apply(Structured.DataPoint dataPoint) {
