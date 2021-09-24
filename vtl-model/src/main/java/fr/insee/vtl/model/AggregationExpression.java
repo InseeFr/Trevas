@@ -73,11 +73,10 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
     }
 
     /**
-     * Returns an aggregation expression based on a data point collector and an expected type.
+     * Returns an aggregation expression that give max of an expression on data points and returns a long integer or double number.
      *
-     * @param collector The data point collector.
-     * @param type      The expected type of the aggregation expression results.
-     * @return The aggregation expression.
+     * @param expression The expression on data points.
+     * @return The max expression.
      */
     public static AggregationExpression max(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
@@ -95,6 +94,12 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         }
     }
 
+    /**
+     * Returns an aggregation expression that give min of an expression on data points and returns a long integer or double number.
+     *
+     * @param expression The expression on data points.
+     * @return The min expression.
+     */
     public static AggregationExpression min(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
             Collector<Long, ?, Optional<Long>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
@@ -111,6 +116,13 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         }
     }
 
+    /**
+     * Returns an aggregation expression based on a data point collector and an expected type.
+     *
+     * @param collector The data point collector.
+     * @param type      The expected type of the aggregation expression results.
+     * @return The aggregation expression.
+     */
     public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
         return new AggregationExpression(collector, type);
     }
