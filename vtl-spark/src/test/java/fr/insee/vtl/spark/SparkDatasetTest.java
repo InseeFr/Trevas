@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.model.InMemoryDataset;
+import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -25,6 +26,25 @@ public class SparkDatasetTest {
                 .appName("test")
                 .master("local")
                 .getOrCreate();
+    }
+
+    @Test
+    public void testFilters() {
+        StructType schema = DataTypes.createStructType(List.of(
+                DataTypes.createStructField("string", DataTypes.StringType, false),
+                DataTypes.createStructField("integer", DataTypes.LongType, false),
+                DataTypes.createStructField("boolean", DataTypes.BooleanType, false),
+                DataTypes.createStructField("float", DataTypes.DoubleType, false)
+        ));
+
+        Dataset<Row> dataFrame = spark.createDataFrame(List.of(
+                RowFactory.create("string", 1L, true, 1.5D)
+        ), schema);
+
+        dataFrame.filter("integer > 0").collectAsList();
+        dataFrame.filter((FilterFunction<Row>) row -> false).collectAsList();
+        dataFrame.selectExpr("integer + 2 as newInteger").collectAsList();
+
     }
 
     @Test

@@ -18,7 +18,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
-                                         Map<String, Dataset.Role> roles) {
+                                         Map<String, Dataset.Role> roles, Map<String, String> expressionStrings) {
 
         // Copy the structure and mutate based on the expressions.
         var newStructure = new DataStructure(expression.getDataStructure());
@@ -52,7 +52,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter) {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
         return new DatasetExpression() {
 
             @Override
