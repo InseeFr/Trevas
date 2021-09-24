@@ -228,36 +228,6 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         }, collector), type);
     }
 
-    @Override
-    public Class<?> getType() {
-        return type;
-    }
-
-    @Override
-    public Supplier<Object> supplier() {
-        return (Supplier<Object>) aggregation.supplier();
-    }
-
-    @Override
-    public BiConsumer<Object, Structured.DataPoint> accumulator() {
-        return (BiConsumer<Object, Structured.DataPoint>) aggregation.accumulator();
-    }
-
-    @Override
-    public BinaryOperator<Object> combiner() {
-        return (BinaryOperator<Object>) aggregation.combiner();
-    }
-
-    @Override
-    public Function<Object, Object> finisher() {
-        return (Function<Object, Object>) aggregation.finisher();
-    }
-
-    @Override
-    public Set<Characteristics> characteristics() {
-        return aggregation.characteristics();
-    }
-
     private static Collector<Long, List<Long>, Double> medianCollectorLong() {
         return Collector.of(
                 ArrayList::new,
@@ -306,15 +276,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return (double) longs.get(longs.size() / 2);
-                    }
-                }
+                getDeviationLongFn(true)
         );
     }
 
@@ -326,15 +288,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return longs.get(longs.size() / 2);
-                    }
-                }
+                getDeviationDoubleFn(true)
         );
     }
 
@@ -346,15 +300,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return (double) longs.get(longs.size() / 2);
-                    }
-                }
+                getDeviationLongFn(false)
         );
     }
 
@@ -366,15 +312,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return longs.get(longs.size() / 2);
-                    }
-                }
+                getDeviationDoubleFn(false)
         );
     }
 
@@ -386,15 +324,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return (double) longs.get(longs.size() / 2);
-                    }
-                }
+                getVarLongFn(true)
         );
     }
 
@@ -406,15 +336,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return longs.get(longs.size() / 2);
-                    }
-                }
+                getVarDoubleFn(true)
         );
     }
 
@@ -426,15 +348,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (double) (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return (double) longs.get(longs.size() / 2);
-                    }
-                }
+                getVarLongFn(false)
         );
     }
 
@@ -446,16 +360,82 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
                     longs.addAll(longs2);
                     return longs;
                 },
-                longs -> {
-                    if (longs.contains(null)) return null;
-                    Collections.sort(longs);
-                    if (longs.size() % 2 == 0) {
-                        return (longs.get(longs.size() / 2 - 1) + longs.get(longs.size() / 2)) / 2;
-                    } else {
-                        return longs.get(longs.size() / 2);
-                    }
-                }
+                getVarDoubleFn(false)
         );
+    }
+
+    private static Function<List<Long>, Double> getDeviationLongFn(Boolean usePopulation) {
+        return longs -> {
+            if (longs.contains(null)) return null;
+            if (longs.size() <= 1) return 0D;
+            Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
+            return Math.sqrt(
+                    longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
+                            / (longs.size() - (usePopulation ? 0D : 1D))
+            );
+        };
+    }
+
+    private static Function<List<Double>, Double> getDeviationDoubleFn(Boolean usePopulation) {
+        return doubles -> {
+            if (doubles.contains(null)) return null;
+            if (doubles.size() <= 1) return 0D;
+            Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
+            return Math.sqrt(
+                    doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
+                            / (doubles.size() - (usePopulation ? 0D : 1D))
+            );
+        };
+    }
+
+    private static Function<List<Long>, Double> getVarLongFn(Boolean usePopulation) {
+        return longs -> {
+            if (longs.contains(null)) return null;
+            if (longs.size() <= 1) return 0D;
+            Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
+            return longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
+                    / (longs.size() - (usePopulation ? 0D : 1D));
+        };
+    }
+
+    private static Function<List<Double>, Double> getVarDoubleFn(Boolean usePopulation) {
+        return doubles -> {
+            if (doubles.contains(null)) return null;
+            if (doubles.size() <= 1) return 0D;
+            Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
+            return doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
+                    / (doubles.size() - (usePopulation ? 0D : 1D));
+        };
+    }
+
+    @Override
+    public Class<?> getType() {
+        return type;
+    }
+
+    @Override
+    public Supplier<Object> supplier() {
+        return (Supplier<Object>) aggregation.supplier();
+    }
+
+    @Override
+    public BiConsumer<Object, Structured.DataPoint> accumulator() {
+        return (BiConsumer<Object, Structured.DataPoint>) aggregation.accumulator();
+    }
+
+    @Override
+    public BinaryOperator<Object> combiner() {
+        return (BinaryOperator<Object>) aggregation.combiner();
+    }
+
+    @Override
+    public Function<Object, Object> finisher() {
+        return (Function<Object, Object>) aggregation.finisher();
+    }
+
+    @Override
+    public Set<Characteristics> characteristics() {
+        return aggregation.characteristics();
     }
 
 }
