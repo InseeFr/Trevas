@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -14,8 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ClauseVisitorTest {
 
@@ -78,7 +81,12 @@ public class ClauseVisitorTest {
 
         engine.eval("ds := ds1[rename age to wisdom][calc wisdom := wisdom * 2];");
 
-        // TODO: add assertions.
+        var ds = (Dataset) engine.getContext().getAttribute("ds");
+        assertThat(ds.getDataAsMap()).contains(
+                Map.of("name", "Hadrien", "weight", 11L, "wisdom", 20L),
+                Map.of("name", "Nico", "weight", 10L, "wisdom", 22L),
+                Map.of("name", "Franck", "weight", 9L, "wisdom", 24L)
+        );
     }
 
     @Test
@@ -116,8 +124,6 @@ public class ClauseVisitorTest {
 
     @Test
     public void testRenameClause() throws ScriptException {
-        //TODO: add test for duplicate component name after rename
-
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
                         Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
@@ -139,6 +145,11 @@ public class ClauseVisitorTest {
                 Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
                 Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
         );
+
+        assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
+                .isInstanceOf(VtlScriptException.class)
+                .hasMessage("duplicate column: age")
+                .is(atPosition(0, 47, 58));
     }
 
     @Test
@@ -224,10 +235,10 @@ public class ClauseVisitorTest {
         // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
-                "sumAge := sum(age)," +
-                "avgWeight := avg(age)," +
-                "countVal := count(null)" +
-                " group by country];");
+                    "sumAge := sum(age)," +
+                    "avgWeight := avg(age)," +
+                    "countVal := count(null)" +
+                    " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5, "countVal", 2L),

@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -39,8 +40,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private static String getName(VtlParser.ComponentIDContext context) {
-        // TODO: Should be an expression so we can handle membership better and use the exceptions
-        //  for undefined var etc.
+        // TODO: Should be an expression so we can handle membership better
+        //  and use the exceptions for undefined var etc.
+        //        res := ds1[calc test := m1 * ds1#m2 + m3]
+        //        res := ds1#m1 -> dataset with only m1.
+        //        res := ceil(ds1#m1)
+        //        res := ceil(ds1)
         String text = context.getText();
         if (text.startsWith("'") && text.endsWith("'")) {
             text = text.substring(1, text.length() - 1);
@@ -98,8 +103,16 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
         Map<String, String> fromTo = new LinkedHashMap<>();
+        Set<String> renamed = new HashSet<>();
         for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-            fromTo.put(getName(renameCtx.fromName), getName(renameCtx.toName));
+            var toNameString = getName(renameCtx.toName);
+            var fromNameString = getName(renameCtx.fromName);
+            if (!renamed.add(toNameString)) {
+                throw new VtlRuntimeException(new InvalidArgumentException(
+                        String.format("duplicate column: %s", toNameString), renameCtx
+                ));
+            }
+            fromTo.put(fromNameString, toNameString);
         }
         return processingEngine.executeRename(datasetExpression, fromTo);
     }
@@ -116,7 +129,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
 
         // Create a keyExtractor with the columns we group by.
-        // TODO: Extract.
+        // TODO: Refactor to its own class. Possibly using the Datapoint/DatapointMap as
+        //  return types to improve performance.
         Set<String> finalGroupBy = groupBy;
         Function<Structured.DataPoint, Map<String, Object>> keyExtractor = dataPoint -> {
             return new Structured.DataPointMap(dataPoint).entrySet().stream().filter(entry -> finalGroupBy.contains(entry.getKey()))
