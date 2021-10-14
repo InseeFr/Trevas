@@ -435,6 +435,26 @@ public interface Structured {
         public int hashCode() {
             return Objects.hash(entrySet());
         }
+
+        public String toString() {
+            Iterator<Entry<String, Object>> i = entrySet().iterator();
+            if (!i.hasNext())
+                return "{}";
+
+            StringBuilder sb = new StringBuilder();
+            sb.append('{');
+            for (; ; ) {
+                Entry<String, Object> e = i.next();
+                String key = e.getKey();
+                Object value = e.getValue();
+                sb.append(key);
+                sb.append('=');
+                sb.append(value == this ? "(this Map)" : value);
+                if (!i.hasNext())
+                    return sb.append('}').toString();
+                sb.append(',').append(' ');
+            }
+        }
     }
 
 }

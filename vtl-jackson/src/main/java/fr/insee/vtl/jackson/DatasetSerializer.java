@@ -31,7 +31,7 @@ public class DatasetSerializer extends StdSerializer<Dataset> {
     public void serialize(Dataset value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
         gen.writeObjectField("dataStructure", value.getDataStructure().values());
-        gen.writeObjectField("dataPoints", value.getDataPoints());
+        gen.writeObjectField("dataPoints", value.getDataAsList());
         gen.writeEndObject();
     }
 }

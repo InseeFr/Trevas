@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,14 +15,22 @@ import java.util.stream.Collectors;
 public interface Dataset extends Structured {
 
     /**
-     * Returns the data contained in the dataset as a list of list of objects.
+     * Returns the data contained in the dataset as a list of data points.
+     * <p>
+     * Note that the order of the values in the datapoint is in the context of its
+     * data structure. It is therefore recommended to access the point by column name
+     * or use the getDataAsList method if you plan on using indices.
      *
-     * @return The data contained in the dataset as a list of list of objects.
+     * @return The data contained in the dataset as a list of data points.
      */
     List<DataPoint> getDataPoints();
 
     default List<List<Object>> getDataAsList() {
-        return getDataPoints().stream().map(objects -> (List<Object>) new ArrayList<>(objects)).collect(Collectors.toList());
+        var columns = getDataStructure().keySet();
+        return getDataPoints().stream()
+                .map(dataPoint -> columns.stream()
+                        .map(dataPoint::get).collect(Collectors.toList())
+                ).collect(Collectors.toList());
     }
 
     /**
