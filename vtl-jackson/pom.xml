@@ -7,19 +7,19 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>0.1.3-SNAPSHOT</version>
+        <version>0.2.0</version>
     </parent>
 
     <artifactId>vtl-jackson</artifactId>
     <name>VTL Jackson</name>
 	<description>Jackson module for the VTL model</description>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.2.0</version>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>0.1.3-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
