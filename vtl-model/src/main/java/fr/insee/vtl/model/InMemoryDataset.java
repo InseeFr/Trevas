@@ -33,6 +33,11 @@ public class InMemoryDataset implements Dataset {
         this.data = convert(data);
     }
 
+    public InMemoryDataset(DataStructure structures, List<Object>... data) {
+        this.structure = structures;
+        this.data = convertList(List.of(data));
+    }
+
     /**
      * Constructor taking initial data and structure components types and roles.
      *
