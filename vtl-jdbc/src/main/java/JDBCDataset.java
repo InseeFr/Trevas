@@ -13,6 +13,12 @@ public class JDBCDataset implements Dataset {
     private final Supplier<ResultSet> resultSetSupplier;
     private DataStructure structure;
 
+    /**
+     * Create a new JDBC Dataset.
+     * <p>
+     * The given supplier is called to create a new result set whenever the data or the
+     * data structure is requested.
+     */
     public JDBCDataset(Supplier<ResultSet> resultSetSupplier) {
         this.resultSetSupplier = resultSetSupplier;
     }
@@ -49,7 +55,7 @@ public class JDBCDataset implements Dataset {
     }
 
     /**
-     * Comvert a resultSetMetaData to a Vtl Datastructure.
+     * Convert a resultSetMetaData to a Vtl Datastructure.
      * <p>
      * All the components are set to measures by default.
      */
@@ -79,7 +85,7 @@ public class JDBCDataset implements Dataset {
 
     private DataPoint toDataPoint(ResultSet resultSet) {
         try {
-            DataPoint point = new DataPoint(getDataStructure());
+            DataPoint point = new DataPoint(getDataStructure(resultSet));
             for (String column : structure.keySet()) {
                 if (String.class.equals(structure.get(column).getType())) {
                     point.set(column, resultSet.getString(column));
@@ -99,15 +105,19 @@ public class JDBCDataset implements Dataset {
         }
     }
 
-    @Override
-    public DataStructure getDataStructure() {
+    private DataStructure getDataStructure(ResultSet resultSet) throws SQLException {
         if (structure == null) {
-            try (var resultSet = this.resultSetSupplier.get()) {
-                structure = toDataStructure(resultSet.getMetaData());
-            } catch (SQLException se) {
-                throw new RuntimeException(se);
-            }
+            structure = toDataStructure(resultSet.getMetaData());
         }
         return structure;
+    }
+
+    @Override
+    public DataStructure getDataStructure() {
+        try (var resultSet = this.resultSetSupplier.get()) {
+            return getDataStructure(resultSet);
+        } catch (SQLException se) {
+            throw new RuntimeException(se);
+        }
     }
 }
