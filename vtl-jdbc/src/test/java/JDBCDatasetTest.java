@@ -9,6 +9,9 @@ import javax.script.ScriptException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 class JDBCDatasetTest {
@@ -18,8 +21,7 @@ class JDBCDatasetTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        //connection = DriverManager.getConnection("jdbc:sqlite::memory:?cache=shared");
-        //Connection connection = DriverManager.getConnection("jdbc:h2:mem:database1");
+        // TODO Use temp file.
         connection = DriverManager.getConnection("jdbc:h2:~/test");
         var statement = connection.createStatement();
         statement.executeUpdate("" +
@@ -34,7 +36,7 @@ class JDBCDatasetTest {
 
         statement.executeUpdate("delete from ds1");
         statement.executeUpdate("insert into ds1 values (1, 'string1', 1.2, 'true')");
-        statement.executeUpdate("insert into ds1 values (2, 'string2', 2.2, 'false')");
+        statement.executeUpdate("insert into ds1 values (2, 'string2', 5.2, 'false')");
         statement.executeUpdate("insert into ds1 values (3, 'string3', 3.2, 'true')");
         statement.executeUpdate("insert into ds1 values (4, 'string4', 4.2, 'false')");
 
@@ -57,11 +59,19 @@ class JDBCDatasetTest {
         var bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         bindings.put("ds1", jdbcDataset);
 
-        engine.eval("ds2 := ds1[calc COL4 := if COL3 then COL2 + 1.0 else COL2 - 1.0];");
+        engine.eval("ds2 := ds1[calc identifier ID := ID, COL4 := if COL3 then COL2 + 1.0 else COL2 - 1.0];");
 
         var ds2 = (Dataset) bindings.get("ds2");
-
-        System.out.println(ds2.getDataAsMap());
+        assertThat(ds2.getDataAsMap()).containsExactly(
+                Map.of("ID", 1L, "COL1", "string1", "COL2", 1.2D,
+                        "COL3", true, "COL4", 2.2D),
+                Map.of("ID", 2L, "COL1", "string2", "COL2", 5.2D,
+                        "COL3", false, "COL4", 4.2D),
+                Map.of("ID", 3L, "COL1", "string3", "COL2", 3.2D,
+                        "COL3", true, "COL4", 4.2D),
+                Map.of("ID", 4L, "COL1", "string4", "COL2", 4.2D,
+                        "COL3", false, "COL4", 3.2D)
+        );
     }
 
 }
