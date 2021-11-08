@@ -26,7 +26,7 @@ public class SparkDataset implements Dataset {
     private Map<String, Role> roles = Collections.emptyMap();
 
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
-        this.sparkDataset = Objects.requireNonNull(sparkDataset);
+        this.sparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
         this.roles = Objects.requireNonNull(roles);
     }
 
@@ -49,6 +49,24 @@ public class SparkDataset implements Dataset {
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure dataStructure) {
         this.sparkDataset = Objects.requireNonNull(sparkDataset);
         this.dataStructure = Objects.requireNonNull(dataStructure);
+    }
+
+    /**
+     * Cast integer and float types to long and double.
+     */
+    private static org.apache.spark.sql.Dataset<Row> castIfNeeded(org.apache.spark.sql.Dataset<Row> sparkDataset) {
+        var casted = sparkDataset;
+        StructType schema = sparkDataset.schema();
+        for (StructField field : JavaConverters.asJavaCollection(schema)) {
+            if (IntegerType.sameType(field.dataType())) {
+                casted = casted.withColumn(field.name(),
+                        casted.col(field.name()).cast(LongType));
+            } else if (FloatType.sameType(field.dataType())) {
+                casted = casted.withColumn(field.name(),
+                        casted.col(field.name()).cast(DoubleType));
+            }
+        }
+        return casted;
     }
 
     public static StructType toSparkSchema(DataStructure structure) {
