@@ -220,12 +220,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * @return The resolvable expression.
      */
     public static <T> AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
-        return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
-            @Override
-            public Object apply(Structured.DataPoint dataPoint) {
-                return expression.resolve(dataPoint);
-            }
-        }, collector), type);
+        return new AggregationExpression(Collectors.mapping(expression::resolve, collector), type);
     }
 
     private static Collector<Long, List<Long>, Double> medianCollectorLong() {
