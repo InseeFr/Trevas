@@ -5,9 +5,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 public class JDBCDataset implements Dataset {
@@ -17,18 +15,6 @@ public class JDBCDataset implements Dataset {
 
     public JDBCDataset(Supplier<ResultSet> resultSetSupplier) {
         this.resultSetSupplier = resultSetSupplier;
-    }
-
-    private static Map<String, Class<?>> getColumnTypes(ResultSetMetaData metaData) throws SQLException {
-        var columnCount = metaData.getColumnCount();
-        Map<String, Class<?>> columns = new LinkedHashMap<>(columnCount);
-        for (int i = 0; i < columnCount; i++) {
-            columns.put(
-                    metaData.getColumnName(i),
-                    toVtlType(metaData.getColumnType(i))
-            );
-        }
-        return columns;
     }
 
     public static Class<?> toVtlType(Integer sqlType) {
@@ -87,7 +73,6 @@ public class JDBCDataset implements Dataset {
             }
             return result;
         } catch (SQLException se) {
-            // TODO: Use vtl exception.
             throw new RuntimeException(se);
         }
     }
@@ -110,7 +95,6 @@ public class JDBCDataset implements Dataset {
             }
             return point;
         } catch (SQLException se) {
-            // TODO: Use vtl exception.
             throw new RuntimeException(se);
         }
     }
@@ -121,7 +105,6 @@ public class JDBCDataset implements Dataset {
             try (var resultSet = this.resultSetSupplier.get()) {
                 structure = toDataStructure(resultSet.getMetaData());
             } catch (SQLException se) {
-                // TODO: Use vtl exception.
                 throw new RuntimeException(se);
             }
         }
