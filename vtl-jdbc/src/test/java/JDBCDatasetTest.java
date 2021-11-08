@@ -6,6 +6,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -20,9 +22,10 @@ class JDBCDatasetTest {
     private Connection connection;
 
     @BeforeEach
-    void setUp() throws SQLException {
-        // TODO Use temp file.
-        connection = DriverManager.getConnection("jdbc:h2:~/test");
+    void setUp() throws SQLException, IOException {
+        var databaseFile = File.createTempFile("vtl-test", "h2");
+        databaseFile.deleteOnExit();
+        connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
         var statement = connection.createStatement();
         statement.executeUpdate("" +
                                 "create table if not exists ds1 (" +
