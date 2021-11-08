@@ -11,8 +11,8 @@
     </parent>
 
     <artifactId>vtl-jdbc</artifactId>
-    <name>VTL SQL</name>
-    <description>Use JDBC as a dataset source</description>
+    <name>VTL JDBC</name>
+    <description>Dataset wrapper around JDBC result set. Useful to expose SQL tables as VTL datasets</description>
     <version>0.1.3-SNAPSHOT</version>
 
     <dependencies>
