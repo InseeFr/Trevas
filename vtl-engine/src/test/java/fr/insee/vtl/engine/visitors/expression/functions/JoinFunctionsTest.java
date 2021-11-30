@@ -11,6 +11,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -169,7 +170,19 @@ public class JoinFunctionsTest {
 
         Dataset joinData = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("joinData");
 
-        assertEquals("K003", joinData.getDataPoints().get(2).get("id"));
+        // Build Map with null value
+        Map<String, Object> thirdLine = new HashMap<>() {{
+            put("id", "K003");
+            put("measure1", 3L);
+            put("measure2", 7L);
+            put("color", null);
+        }};
+
+        assertThat(joinData.getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
+                Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue"),
+                thirdLine
+        );
     }
 
     @Test
