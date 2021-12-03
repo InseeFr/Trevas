@@ -20,13 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkSQLTest {
 
-
     private SparkSession spark;
     private ScriptEngine engine;
     private File databaseFile;
 
     @BeforeEach
-    void setUp() throws SQLException, IOException {
+    public void setUp() throws SQLException, IOException {
         databaseFile = File.createTempFile("vtl-test", "h2");
         databaseFile.deleteOnExit();
         var connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
@@ -58,7 +57,7 @@ public class SparkSQLTest {
     }
 
     @Test
-    void testReadSql() throws ScriptException {
+    public void testReadSql() throws ScriptException {
 
         // See https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
         var ds1 = spark.read().format("jdbc")

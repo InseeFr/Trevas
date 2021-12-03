@@ -16,13 +16,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-class JDBCDatasetTest {
+public class JDBCDatasetTest {
 
     private ScriptEngine engine;
     private Connection connection;
 
     @BeforeEach
-    void setUp() throws SQLException, IOException {
+    public void setUp() throws SQLException, IOException {
         var databaseFile = File.createTempFile("vtl-test", "h2");
         databaseFile.deleteOnExit();
         connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
@@ -48,7 +48,7 @@ class JDBCDatasetTest {
     }
 
     @Test
-    void testReadSql() throws ScriptException, SQLException {
+    public void testReadSql() throws ScriptException, SQLException {
 
         var statement = connection.createStatement();
         var jdbcDataset = new JDBCDataset(() -> {
