@@ -89,7 +89,7 @@ public class SetFunctionsVisitorTest {
     }
 
     @Test
-    void testUnionDifferentStructure() throws ScriptException {
+    public void testUnionDifferentStructure() throws ScriptException {
         var structure = new Structured.DataStructure(Map.of("id", String.class), Map.of("id", Dataset.Role.IDENTIFIER));
         InMemoryDataset ds1 = new InMemoryDataset(structure, List.of("1"), List.of("2"), List.of("3"), List.of("4"));
         InMemoryDataset ds2 = new InMemoryDataset(structure, List.of("3"), List.of("4"), List.of("5"), List.of("6"));
