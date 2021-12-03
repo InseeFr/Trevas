@@ -12,6 +12,7 @@
         <module>vtl-engine</module>
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
+        <module>vtl-jdbc</module>
     </modules>
 
     <name>Trevas</name>
