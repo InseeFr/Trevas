@@ -1,3 +1,5 @@
+package fr.insee.vtl.jdbc;
+
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,6 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 public class JDBCDatasetTest {
 
