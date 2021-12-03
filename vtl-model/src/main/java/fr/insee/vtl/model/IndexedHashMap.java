@@ -15,7 +15,7 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
      */
     public IndexedHashMap() {
         this.indices = new HashMap<>();
-        this.delegate = new HashMap<>();
+        this.delegate = new LinkedHashMap<>();
     }
 
     /**

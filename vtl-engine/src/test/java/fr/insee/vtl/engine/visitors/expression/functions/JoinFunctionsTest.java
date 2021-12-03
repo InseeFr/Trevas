@@ -10,10 +10,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
@@ -171,7 +168,7 @@ public class JoinFunctionsTest {
         Dataset joinData = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("joinData");
 
         // Build Map with null value
-        Map<String, Object> thirdLine = new HashMap<>() {{
+        Map<String, Object> thirdLine = new LinkedHashMap<>() {{
             put("id", "K003");
             put("measure1", 3L);
             put("measure2", 7L);
