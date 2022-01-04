@@ -52,7 +52,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
+    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
         return new DatasetExpression() {
 
             @Override

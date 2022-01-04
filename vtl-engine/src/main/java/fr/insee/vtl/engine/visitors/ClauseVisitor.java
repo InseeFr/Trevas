@@ -96,7 +96,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
+        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
         return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
