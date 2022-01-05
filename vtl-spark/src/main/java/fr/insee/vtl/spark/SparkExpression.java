@@ -10,10 +10,18 @@ import scala.collection.Seq;
 
 import java.util.Objects;
 
+/**
+ * The <code>SparkExpression</code> class is a wrapper around an expression for a Spark dataset.
+ */
 public class SparkExpression extends Expression {
 
     private final ResolvableExpression expression;
 
+    /**
+     * Constructor taking a VTL expression.
+     *
+     * @param expression the VTL expression.
+     */
     public SparkExpression(ResolvableExpression expression) {
         this.expression = Objects.requireNonNull(expression);
     }

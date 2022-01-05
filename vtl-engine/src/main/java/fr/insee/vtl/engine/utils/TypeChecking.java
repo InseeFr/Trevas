@@ -192,6 +192,8 @@ public class TypeChecking {
      * @return A boolean which is <code>true</code> if the expression can be interpreted as a dataset, <code>false</code> otherwise.
      */
     public static boolean isDataset(TypedExpression expression) {
+
+        // Not used for now, so this is a placeholder
         return false;
     }
 

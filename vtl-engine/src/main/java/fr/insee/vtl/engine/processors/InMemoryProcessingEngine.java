@@ -251,7 +251,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     /**
-     * Create a datapoint comparator that operates on the given identifiers only.
+     * Creates a datapoint comparator that operates on the given identifiers only.
      */
     private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
         return (dl, dr) -> {
