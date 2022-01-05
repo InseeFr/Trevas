@@ -10,13 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * The <code>JDBCDataset</code> class is a wrapper around a SQL result set.
+ */
 public class JDBCDataset implements Dataset {
 
     private final Supplier<ResultSet> resultSetSupplier;
     private DataStructure structure;
 
     /**
-     * Create a new JDBC Dataset.
+     * Creates a new JDBC Dataset.
      * <p>
      * The given supplier is called to create a new result set whenever the data or the
      * data structure is requested.
@@ -25,6 +28,12 @@ public class JDBCDataset implements Dataset {
         this.resultSetSupplier = resultSetSupplier;
     }
 
+    /**
+     * Translates a SQL data type into a VTL data type.
+     *
+     * @param sqlType the SQL data type to translate (as an integer).
+     * @return The corresponding VTL data type as a class.
+     */
     public static Class<?> toVtlType(Integer sqlType) {
         switch (sqlType) {
             case Types.BIGINT:
@@ -52,14 +61,14 @@ public class JDBCDataset implements Dataset {
             case Types.VARCHAR:
                 return String.class;
             default:
-                throw new UnsupportedOperationException("unsuported type " + sqlType);
+                throw new UnsupportedOperationException("unsupported type " + sqlType);
         }
     }
 
     /**
-     * Convert a resultSetMetaData to a Vtl Datastructure.
+     * Converts a {@link ResultSetMetaData} to a VTL data structure.
      * <p>
-     * All the components are set to measures by default.
+     * All the components are considered measures by default.
      */
     public static DataStructure toDataStructure(ResultSetMetaData metaData) throws SQLException {
         List<Component> components = new ArrayList<>();
@@ -70,7 +79,6 @@ public class JDBCDataset implements Dataset {
         }
         return new DataStructure(components);
     }
-
 
     @Override
     public List<DataPoint> getDataPoints() {
