@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
 import static fr.insee.vtl.engine.utils.TypeChecking.*;
 
 /**
@@ -59,13 +60,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private static <T extends Comparable<T>> boolean isGreaterThanOrEqual(T left, T right) {
         return !isLessThan(left, right);
-    }
-
-    private static BigDecimal asBigDecimal(ResolvableExpression expr, Object resolved) {
-        if (resolved == null) return null;
-        if (isLong(expr)) return new BigDecimal(Double.valueOf((Long) resolved));
-        if (isDouble(expr)) return new BigDecimal((Double) resolved);
-        return null;
     }
 
 
