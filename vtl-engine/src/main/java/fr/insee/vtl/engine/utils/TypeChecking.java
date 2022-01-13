@@ -23,12 +23,12 @@ public class TypeChecking {
 
     /**
      * Asserts that an expression is of a given type.
-     *
+     * <p>
      * If the expression is null (see {@link #isNull(TypedExpression)}), the type of the returned expression will be the expected type.
      *
      * @param expression The expression to check.
-     * @param type The type to check against.
-     * @param tree The tree of the expression.
+     * @param type       The type to check against.
+     * @param tree       The tree of the expression.
      * @return The expression with the given type, even if originally null.
      * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause if the expression is not null and not of the required type.
      */
@@ -46,7 +46,7 @@ public class TypeChecking {
      * Checks if an expression can be interpreted as a type.
      *
      * @param expression The expression to check.
-     * @param type The type to check against.
+     * @param type       The type to check against.
      * @return A boolean which is <code>true</code> if the expression can be interpreted as the given type, <code>false</code> otherwise.
      */
     public static boolean isType(TypedExpression expression, Class<?> type) {
@@ -54,9 +54,44 @@ public class TypeChecking {
     }
 
     /**
+     * Asserts that an expression is of a given type, accepting double and long mix.
+     * <p>
+     * If the expression is null (see {@link #isNull(TypedExpression)}), the type of the returned expression will be the expected type.
+     *
+     * @param expression The expression to check.
+     * @param type       The type to check against.
+     * @param tree       The tree of the expression.
+     * @return The expression with the given type, even if originally null.
+     * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause if the expression is not null and not of the required type.
+     */
+    public static <T extends TypedExpression> T assertTypeExpressionAcceptDoubleLong(T expression, Class<?> type, ParseTree tree) {
+        if (isNull(expression)) {
+            return (T) ResolvableExpression.withType(type, ctx -> null);
+        }
+        if (!isTypeDoubleLong(expression, type)) {
+            throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
+        }
+        return expression;
+    }
+
+    /**
+     * Checks if an expression can be interpreted as a type, accepting double and long mix.
+     *
+     * @param expression The expression to check.
+     * @param type       The type to check against.
+     * @return A boolean which is <code>true</code> if the expression can be interpreted as the given type, <code>false</code> otherwise.
+     */
+    public static boolean isTypeDoubleLong(TypedExpression expression, Class<?> type) {
+        var expressionType = expression.getType();
+        if ((Long.class.equals(expressionType) || Double.class.equals(expressionType))
+                && Number.class.isAssignableFrom(type)) return true;
+        return type.isAssignableFrom(expressionType);
+    }
+
+    /**
      * Checks if expressions have the same type (or null type).
      *
-     * @param  expressions Resolvable expressions to check.
+     * @param expressions Resolvable expressions to check.
      * @return A boolean which is <code>true</code> if the expressions have the same type, <code>false</code> otherwise.
      */
     public static boolean hasSameTypeOrNull(ResolvableExpression... expressions) {
@@ -91,9 +126,10 @@ public class TypeChecking {
 
     /**
      * Asserts that an expression is of type <code>Number</code>, otherwise raises an exception.
+     *
      * @param expression The expression to check.
-     * @param tree The tree of the expression.
-     * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+     * @param tree       The tree of the expression.
+     * @param <T>        The class of the expression provided (extends {@link TypedExpression}).
      * @return The expression (typed as number if it evaluates to null).
      */
     public static <T extends TypedExpression> T assertNumber(T expression, ParseTree tree) {
@@ -114,8 +150,8 @@ public class TypeChecking {
      * Asserts that an expression is of type <code>Long</code>, otherwise raises an exception.
      *
      * @param expression The expression to check.
-     * @param tree The tree of the expression.
-     * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+     * @param tree       The tree of the expression.
+     * @param <T>        The class of the expression provided (extends {@link TypedExpression}).
      * @return The expression (typed as long integer if it evaluates to null).
      */
     public static <T extends TypedExpression> T assertLong(T expression, ParseTree tree) {
@@ -134,9 +170,10 @@ public class TypeChecking {
 
     /**
      * Asserts that an expression is of type <code>Double</code>, otherwise raises an exception.
+     *
      * @param expression The expression to check.
-     * @param tree The tree of the expression.
-     * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+     * @param tree       The tree of the expression.
+     * @param <T>        The class of the expression provided (extends {@link TypedExpression}).
      * @return The expression (typed as double-precision number if it evaluates to null).
      */
     public static <T extends TypedExpression> T assertDouble(T expression, ParseTree tree) {
@@ -155,9 +192,10 @@ public class TypeChecking {
 
     /**
      * Asserts that an expression is of type <code>Boolean</code>, otherwise raises an exception.
+     *
      * @param expression The expression to check.
-     * @param tree The tree of the expression.
-     * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+     * @param tree       The tree of the expression.
+     * @param <T>        The class of the expression provided (extends {@link TypedExpression}).
      * @return The expression (typed as boolean if it evaluates to null).
      */
     public static <T extends TypedExpression> T assertBoolean(T expression, ParseTree tree) {
@@ -176,9 +214,10 @@ public class TypeChecking {
 
     /**
      * Asserts that an expression is of type <code>String</code>, otherwise raises an exception.
+     *
      * @param expression The expression to check.
-     * @param tree The tree of the expression.
-     * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+     * @param tree       The tree of the expression.
+     * @param <T>        The class of the expression provided (extends {@link TypedExpression}).
      * @return The expression (typed as string if it evaluates to null).
      */
     public static <T extends TypedExpression> T assertString(T expression, ParseTree tree) {

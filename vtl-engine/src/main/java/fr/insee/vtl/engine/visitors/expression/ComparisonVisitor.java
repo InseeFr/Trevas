@@ -12,14 +12,14 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.hasNullArgs;
+import static fr.insee.vtl.engine.utils.TypeChecking.*;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
@@ -61,6 +61,14 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return !isLessThan(left, right);
     }
 
+    private static BigDecimal asBigDecimal(ResolvableExpression expr, Object resolved) {
+        if (resolved == null) return null;
+        if (isLong(expr)) return new BigDecimal(Double.valueOf((Long) resolved));
+        if (isDouble(expr)) return new BigDecimal((Double) resolved);
+        return null;
+    }
+
+
     /**
      * Visits expressions with comparisons.
      *
@@ -80,53 +88,95 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return BooleanExpression.of((Boolean) null);
         }
 
-        assertTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
+        assertTypeExpressionAcceptDoubleLong(rightExpression, leftExpression.getType(), ctx.right);
 
         // As long as both types return Comparable<TYPE>.
         if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
             switch (type.getType()) {
                 case VtlParser.EQ:
                     return BooleanExpression.of(context -> {
-                        // TODO: factorize null handling in equal functions
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isEqual(leftValue, rightValue);
+                        // TODO: factorize null and BigDecimal handling in equal functions
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isEqual(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isEqual(leftValue, rightValue);
+                        }
                     });
                 case VtlParser.NEQ:
                     return BooleanExpression.of(context -> {
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isNotEqual(leftValue, rightValue);
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isNotEqual(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isNotEqual(leftValue, rightValue);
+                        }
                     });
                 case VtlParser.LT:
                     return BooleanExpression.of(context -> {
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isLessThan(leftValue, rightValue);
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isLessThan(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isLessThan(leftValue, rightValue);
+                        }
                     });
                 case VtlParser.MT:
                     return BooleanExpression.of(context -> {
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isGreaterThan(leftValue, rightValue);
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isGreaterThan(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isGreaterThan(leftValue, rightValue);
+                        }
                     });
                 case VtlParser.LE:
                     return BooleanExpression.of(context -> {
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isLessThanOrEqual(leftValue, rightValue);
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isLessThanOrEqual(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isLessThanOrEqual(leftValue, rightValue);
+                        }
                     });
                 case VtlParser.ME:
                     return BooleanExpression.of(context -> {
-                        Comparable leftValue = (Comparable) leftExpression.resolve(context);
-                        Comparable rightValue = (Comparable) rightExpression.resolve(context);
-                        if (hasNullArgs(leftValue, rightValue)) return null;
-                        return isGreaterThanOrEqual(leftValue, rightValue);
+                        if (isNumber(leftExpression)) {
+                            BigDecimal leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
+                            BigDecimal rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isGreaterThanOrEqual(leftValue, rightValue);
+                        } else {
+                            Comparable leftValue = (Comparable) leftExpression.resolve(context);
+                            Comparable rightValue = (Comparable) rightExpression.resolve(context);
+                            if (hasNullArgs(leftValue, rightValue)) return null;
+                            return isGreaterThanOrEqual(leftValue, rightValue);
+                        }
                     });
                 default:
                     throw new UnsupportedOperationException("unknown operator " + ctx);
