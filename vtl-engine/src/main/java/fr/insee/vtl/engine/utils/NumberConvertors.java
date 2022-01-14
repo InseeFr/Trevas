@@ -15,7 +15,7 @@ public class NumberConvertors {
 
     public static BigDecimal asBigDecimal(ResolvableExpression expr, Object resolved) {
         if (resolved == null) return null;
-        if (isLong(expr)) return BigDecimal.valueOf(Double.valueOf((Long) resolved));
+        if (isLong(expr)) return BigDecimal.valueOf((Long) resolved);
         if (isDouble(expr)) return BigDecimal.valueOf((Double) resolved);
         return null;
     }
