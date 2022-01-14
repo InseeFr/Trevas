@@ -4,17 +4,19 @@ import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
-import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
+import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
+import static fr.insee.vtl.engine.utils.TypeChecking.*;
 
 /**
  * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving comparison functions.
@@ -44,30 +46,22 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         ResolvableExpression fromExpression = exprVisitor.visit(ctx.from_);
         ResolvableExpression toExpression = exprVisitor.visit(ctx.to_);
 
-        if (!hasSameTypeOrNull(operandExpression, fromExpression, toExpression))
-            throw new VtlRuntimeException(new ConflictingTypesException(
-                    List.of(operandExpression.getType(), fromExpression.getType(), toExpression.getType()),
-                    ctx
-            ));
         // TODO: handle other types (dates?)
 
-        var typedOperandExpression =
-                TypeChecking.assertTypeExpression(operandExpression, fromExpression.getType(), ctx.op);
+        // Special case with nulls.
+        if (isNull(operandExpression) || isNull(fromExpression) || isNull(toExpression)) {
+            return BooleanExpression.of((Boolean) null);
+        }
 
-        if (TypeChecking.isLong(typedOperandExpression))
-            return ResolvableExpression.withType(Boolean.class, context -> {
-                Long operandValue = (Long) typedOperandExpression.resolve(context);
-                Long fromValue = (Long) fromExpression.resolve(context);
-                Long toValue = (Long) toExpression.resolve(context);
-                if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
-                return operandValue >= fromValue && operandValue <= toValue;
-            });
+        assertNumberOrTypeExpression(operandExpression, fromExpression.getType(), ctx.op);
+        assertNumberOrTypeExpression(operandExpression, toExpression.getType(), ctx.op);
+
         return ResolvableExpression.withType(Boolean.class, context -> {
-            Double operandValue = (Double) typedOperandExpression.resolve(context);
-            Double fromValue = (Double) fromExpression.resolve(context);
-            Double toValue = (Double) toExpression.resolve(context);
+            BigDecimal operandValue = asBigDecimal(operandExpression, operandExpression.resolve(context));
+            BigDecimal fromValue = asBigDecimal(fromExpression, fromExpression.resolve(context));
+            BigDecimal toValue = asBigDecimal(toExpression, toExpression.resolve(context));
             if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
-            return operandValue >= fromValue && operandValue <= toValue;
+            return operandValue.compareTo(fromValue) >= 0 && operandValue.compareTo(toValue) <= 0;
         });
     }
 

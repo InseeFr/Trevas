@@ -45,10 +45,12 @@ public class ComparisonFunctionsTest {
         assertThat((Boolean) context.getAttribute("b")).isTrue();
         engine.eval("b := between(10, 20,100);");
         assertThat((Boolean) context.getAttribute("b")).isFalse();
+        engine.eval("b := between(10.5, 20,100);");
+        assertThat((Boolean) context.getAttribute("b")).isFalse();
         assertThatThrownBy(() -> {
             engine.eval("b := between(10.5, \"ko\", true);");
-        }).isInstanceOf(ConflictingTypesException.class)
-                .hasMessage("conflicting types: [Double, String, Boolean]");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected 10.5 to be String");
     }
 
     @Test
