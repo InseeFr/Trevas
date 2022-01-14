@@ -186,16 +186,6 @@ public class TypeChecking {
     }
 
     /**
-     * Checks if an expression can be interpreted as a dataset.
-     *
-     * @param expression The expression to check.
-     * @return A boolean which is <code>true</code> if the expression can be interpreted as a dataset, <code>false</code> otherwise.
-     */
-    public static boolean isDataset(TypedExpression expression) {
-        return false;
-    }
-
-    /**
      * Checks if a list of objects contains one or more <code>null</code> values.
      *
      * @param objects The objects to check.

@@ -1,4 +1,4 @@
 /**
- * This package contains the actual VTL engine.
+ * This package contains the in-memory VTL engine.
  */
 package fr.insee.vtl.engine;
