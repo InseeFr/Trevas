@@ -54,7 +54,7 @@ public class TypeChecking {
     }
 
     /**
-     * Asserts that an expression is of a given type, accepting double and long mix.
+     * Asserts that an expression is either long or double, or of a given type.
      * <p>
      * If the expression is null (see {@link #isNull(TypedExpression)}), the type of the returned expression will be the expected type.
      *
@@ -64,27 +64,23 @@ public class TypeChecking {
      * @return The expression with the given type, even if originally null.
      * @throws VtlRuntimeException with {@link InvalidTypeException} as a cause if the expression is not null and not of the required type.
      */
-    public static <T extends TypedExpression> T assertTypeExpressionAcceptDoubleLong(T expression, Class<?> type, ParseTree tree) {
-        if (isNull(expression)) {
-            return (T) ResolvableExpression.withType(type, ctx -> null);
-        }
-        if (!isTypeDoubleLong(expression, type)) {
+    public static <T extends TypedExpression> T assertNumberOrTypeExpression(T expression, Class<?> type, ParseTree tree) {
+        if (!isNumberOrSameType(expression, type)) {
             throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
         }
         return expression;
     }
 
     /**
-     * Checks if an expression can be interpreted as a type, accepting double and long mix.
+     * Checks if expression is either long or double, or of given type.
      *
      * @param expression The expression to check.
      * @param type       The type to check against.
      * @return A boolean which is <code>true</code> if the expression can be interpreted as the given type, <code>false</code> otherwise.
      */
-    public static boolean isTypeDoubleLong(TypedExpression expression, Class<?> type) {
+    public static boolean isNumberOrSameType(TypedExpression expression, Class<?> type) {
         var expressionType = expression.getType();
-        if ((Long.class.equals(expressionType) || Double.class.equals(expressionType))
-                && Number.class.isAssignableFrom(type)) return true;
+        if (isNumber(expression) && Number.class.isAssignableFrom(type)) return true;
         return type.isAssignableFrom(expressionType);
     }
 

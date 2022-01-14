@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -47,8 +48,13 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         // TODO: handle other types (dates?)
 
-        assertTypeExpressionAcceptDoubleLong(operandExpression, fromExpression.getType(), ctx.op);
-        assertTypeExpressionAcceptDoubleLong(operandExpression, toExpression.getType(), ctx.op);
+        // Special case with nulls.
+        if (isNull(operandExpression) || isNull(fromExpression) || isNull(toExpression)) {
+            return BooleanExpression.of((Boolean) null);
+        }
+
+        assertNumberOrTypeExpression(operandExpression, fromExpression.getType(), ctx.op);
+        assertNumberOrTypeExpression(operandExpression, toExpression.getType(), ctx.op);
 
         return ResolvableExpression.withType(Boolean.class, context -> {
             BigDecimal operandValue = asBigDecimal(operandExpression, operandExpression.resolve(context));

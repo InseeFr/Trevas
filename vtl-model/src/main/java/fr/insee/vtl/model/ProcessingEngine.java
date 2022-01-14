@@ -31,7 +31,7 @@ public interface ProcessingEngine {
      * @param filter     a filter expression
      * @return the result of the filter transformation
      */
-    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterString);
+    DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterString);
 
     /**
      * Execute a rename transformations on the dataset expression.

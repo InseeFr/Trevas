@@ -78,11 +78,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
 
         // Special case with nulls.
-        if (leftExpression.getType().equals(Object.class) || rightExpression.getType().equals(Object.class)) {
+        if (isNull(leftExpression) || isNull(rightExpression)) {
             return BooleanExpression.of((Boolean) null);
         }
 
-        assertTypeExpressionAcceptDoubleLong(rightExpression, leftExpression.getType(), ctx.right);
+        assertNumberOrTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
 
         // As long as both types return Comparable<TYPE>.
         if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
