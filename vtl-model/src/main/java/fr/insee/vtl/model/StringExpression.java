@@ -1,5 +1,8 @@
 package fr.insee.vtl.model;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -20,14 +23,6 @@ public abstract class StringExpression implements ResolvableExpression {
                 return value == null ? null : value.toString();
             }
         };
-    }
-
-    @Override
-    public abstract String resolve(Map<String, Object> context);
-
-    @Override
-    public Class<?> getType() {
-        return String.class;
     }
 
     /**
@@ -52,11 +47,10 @@ public abstract class StringExpression implements ResolvableExpression {
      * @param outputClass The type to cast expression.
      * @return The casted <code>ResolvableExpression</code>.
      */
-    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass) {
+    public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass, String mask) {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
                 String exprValue = (String) expr.resolve(context);
-                if (exprValue == null) return null;
                 return exprValue;
             });
         if (outputClass.equals(Long.class))
@@ -77,7 +71,28 @@ public abstract class StringExpression implements ResolvableExpression {
                 if (exprValue == null) return null;
                 return Boolean.valueOf(exprValue);
             });
+        if (outputClass.equals(Date.class))
+            return DateExpression.of(context -> {
+                if (mask == null) return null;
+                String exprValue = (String) expr.resolve(context);
+                if (exprValue == null) return null;
+                Date date = null;
+                try {
+                    date = new SimpleDateFormat(mask).parse(exprValue);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                return date;
+            });
         throw new ClassCastException("Cast String to " + outputClass + " is not supported");
+    }
+
+    @Override
+    public abstract String resolve(Map<String, Object> context);
+
+    @Override
+    public Class<?> getType() {
+        return String.class;
     }
 
 }

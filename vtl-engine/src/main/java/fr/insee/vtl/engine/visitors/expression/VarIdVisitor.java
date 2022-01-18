@@ -8,6 +8,7 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
@@ -69,6 +70,10 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
 
         if (value instanceof CharSequence) {
             return StringExpression.of((CharSequence) value);
+        }
+
+        if (value instanceof Date) {
+            return DateExpression.of((Date) value);
         }
 
         if (value == null) {

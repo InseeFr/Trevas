@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +7,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,6 +33,14 @@ public class GenericFunctionsTest {
         assertThat((Boolean) context.getAttribute("c")).isNull();
         engine.eval("d := cast(null, boolean);");
         assertThat((Boolean) context.getAttribute("d")).isNull();
+        engine.eval("e := cast(null, date, \"YYYY\");");
+        assertThat((Boolean) context.getAttribute("e")).isNull();
+        engine.eval("f := cast(\"2000-01-31\", date);");
+        assertThat((Boolean) context.getAttribute("f")).isNull();
+        engine.eval("g := cast(current_date(), string);");
+        assertThat((Boolean) context.getAttribute("g")).isNull();
+        engine.eval("h := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
+        assertThat((Boolean) context.getAttribute("g")).isNull();
     }
 
     @Test
@@ -48,6 +56,10 @@ public class GenericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo("ok");
         engine.eval("d := cast(\"true\", boolean);");
         assertThat(context.getAttribute("d")).isEqualTo(true);
+        engine.eval("e := cast(\"1998-12-31\", date, \"YYYY-MM-DD\");");
+        assertThat(((Date) context.getAttribute("e")).getTime()).isEqualTo(915058800000L);
+        engine.eval("e := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
+        assertThat(((Date) context.getAttribute("e")).getTime()).isEqualTo(915058800000L);
 
         // Cast Boolean to...
         engine.eval("a := cast(true, integer);");
@@ -92,6 +104,11 @@ public class GenericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(true);
         engine.eval("d := cast(0.0, boolean);");
         assertThat(context.getAttribute("d")).isEqualTo(false);
+
+        // Cast Date to...
+        engine.eval("d := cast(\"1998-31-12\", date, \"YYYY-DD-MM\");");
+        engine.eval("strDate := cast(d, string, \"YYYY/MM\");");
+        assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
 
         // Test unsupported basic scalar type
         assertThatThrownBy(() -> {
