@@ -1,8 +1,7 @@
 package fr.insee.vtl.model;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -71,18 +70,13 @@ public abstract class StringExpression implements ResolvableExpression {
                 if (exprValue == null) return null;
                 return Boolean.valueOf(exprValue);
             });
-        if (outputClass.equals(Date.class))
+        if (outputClass.equals(LocalDate.class))
             return DateExpression.of(context -> {
                 if (mask == null) return null;
                 String exprValue = (String) expr.resolve(context);
                 if (exprValue == null) return null;
-                Date date = null;
-                try {
-                    date = new SimpleDateFormat(mask).parse(exprValue);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                return date;
+                DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
+                return LocalDate.parse(exprValue, maskFormatter);
             });
         throw new ClassCastException("Cast String to " + outputClass + " is not supported");
     }

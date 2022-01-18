@@ -1,7 +1,7 @@
 package fr.insee.vtl.model;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -15,10 +15,10 @@ public abstract class DateExpression implements ResolvableExpression {
      * @param value The date value the expression should resolve to.
      * @return The resulting date expression.
      */
-    public static DateExpression of(Date value) {
+    public static DateExpression of(LocalDate value) {
         return new DateExpression() {
             @Override
-            public Date resolve(Map<String, Object> context) {
+            public LocalDate resolve(Map<String, Object> context) {
                 return value;
             }
         };
@@ -30,10 +30,10 @@ public abstract class DateExpression implements ResolvableExpression {
      * @param func The date function to apply to the context.
      * @return The resulting date expression.
      */
-    public static DateExpression of(VtlFunction<Map<String, Object>, Date> func) {
+    public static DateExpression of(VtlFunction<Map<String, Object>, LocalDate> func) {
         return new DateExpression() {
             @Override
-            public Date resolve(Map<String, Object> context) {
+            public LocalDate resolve(Map<String, Object> context) {
                 return func.apply(context);
             }
         };
@@ -50,19 +50,20 @@ public abstract class DateExpression implements ResolvableExpression {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
                 if (mask == null) return null;
-                Date exprValue = (Date) expr.resolve(context);
+                LocalDate exprValue = (LocalDate) expr.resolve(context);
                 if (exprValue == null) return null;
-                return new SimpleDateFormat(mask).format(exprValue);
+                DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
+                return maskFormatter.format(exprValue);
             });
         throw new ClassCastException("Cast Date to " + outputClass + " is not supported");
     }
 
     @Override
-    public abstract Date resolve(Map<String, Object> context);
+    public abstract LocalDate resolve(Map<String, Object> context);
 
     @Override
     public Class<?> getType() {
-        return Date.class;
+        return LocalDate.class;
     }
 
 }

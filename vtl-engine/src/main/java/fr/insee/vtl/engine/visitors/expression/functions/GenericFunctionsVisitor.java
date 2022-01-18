@@ -7,7 +7,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -43,7 +43,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             case VtlParser.BOOLEAN:
                 return Boolean.class;
             case VtlParser.DATE:
-                return Date.class;
+                return LocalDate.class;
             default:
                 throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
         }
@@ -86,7 +86,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         if (Double.class.equals(expression.getType())) {
             return DoubleExpression.castTo(expression, outputClass);
         }
-        if (Date.class.equals(expression.getType())) {
+        if (LocalDate.class.equals(expression.getType())) {
             return DateExpression.castTo(expression, outputClass, mask);
         }
         throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());

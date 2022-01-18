@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -8,11 +7,9 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
-import java.util.Date;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TimeFunctionsTest {
 
@@ -27,6 +24,6 @@ public class TimeFunctionsTest {
     public void testCurrentDateAtom() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := current_date();");
-        assertThat(((Date) context.getAttribute("a"))).isNotNull();
+        assertThat(((LocalDate) context.getAttribute("a"))).isNotNull();
     }
 }

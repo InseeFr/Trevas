@@ -7,8 +7,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,13 +34,13 @@ public class GenericFunctionsTest {
         engine.eval("d := cast(null, boolean);");
         assertThat((Boolean) context.getAttribute("d")).isNull();
         engine.eval("e := cast(null, date, \"YYYY\");");
-        assertThat((Boolean) context.getAttribute("e")).isNull();
+        assertThat((LocalDate) context.getAttribute("e")).isNull();
         engine.eval("f := cast(\"2000-01-31\", date);");
-        assertThat((Boolean) context.getAttribute("f")).isNull();
+        assertThat((LocalDate) context.getAttribute("f")).isNull();
         engine.eval("g := cast(current_date(), string);");
-        assertThat((Boolean) context.getAttribute("g")).isNull();
+        assertThat((String) context.getAttribute("g")).isNull();
         engine.eval("h := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
-        assertThat((Boolean) context.getAttribute("g")).isNull();
+        assertThat((String) context.getAttribute("g")).isNull();
     }
 
     @Test
@@ -58,9 +57,9 @@ public class GenericFunctionsTest {
         engine.eval("d := cast(\"true\", boolean);");
         assertThat(context.getAttribute("d")).isEqualTo(true);
         engine.eval("e := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
-        assertThat(((Date) context.getAttribute("e")).toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth()).isEqualTo(1);
+        assertThat(((LocalDate) context.getAttribute("e")).getDayOfMonth()).isEqualTo(1);
         engine.eval("f := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
-        assertThat(((Date) context.getAttribute("f")).toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth()).isEqualTo(31);
+        assertThat(((LocalDate) context.getAttribute("f")).getDayOfMonth()).isEqualTo(31);
 
         // Cast Boolean to...
         engine.eval("a := cast(true, integer);");

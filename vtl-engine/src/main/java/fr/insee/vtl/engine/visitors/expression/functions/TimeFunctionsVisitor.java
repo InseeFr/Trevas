@@ -5,7 +5,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -32,6 +32,6 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
-        return ResolvableExpression.withType(Date.class, context -> new Date());
+        return ResolvableExpression.withType(LocalDate.class, context -> LocalDate.now());
     }
 }
