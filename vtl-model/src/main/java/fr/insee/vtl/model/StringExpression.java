@@ -48,10 +48,7 @@ public abstract class StringExpression implements ResolvableExpression {
      */
     public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass, String mask) {
         if (outputClass.equals(String.class))
-            return StringExpression.of(context -> {
-                String exprValue = (String) expr.resolve(context);
-                return exprValue;
-            });
+            return StringExpression.of(context -> (String) expr.resolve(context));
         if (outputClass.equals(Long.class))
             return LongExpression.of(context -> {
                 String exprValue = (String) expr.resolve(context);

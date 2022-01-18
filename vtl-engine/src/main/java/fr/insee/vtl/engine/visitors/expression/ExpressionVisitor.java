@@ -38,7 +38,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     /**
      * Constructor taking a scripting context and a processing engine.
      *
-     * @param context The map representing the context.
+     * @param context          The map representing the context.
      * @param processingEngine The processing engine.
      */
     public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
@@ -57,7 +57,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         genericFunctionsVisitor = new GenericFunctionsVisitor(this);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
-        timeFunctionsVisitor = new TimeFunctionsVisitor(this);
+        timeFunctionsVisitor = new TimeFunctionsVisitor();
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
