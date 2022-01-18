@@ -7,6 +7,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.time.ZoneId;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,10 +57,10 @@ public class GenericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo("ok");
         engine.eval("d := cast(\"true\", boolean);");
         assertThat(context.getAttribute("d")).isEqualTo(true);
-        engine.eval("e := cast(\"1998-12-31\", date, \"YYYY-MM-DD\");");
-        assertThat(((Date) context.getAttribute("e")).getTime()).isEqualTo(915058800000L);
-        engine.eval("e := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
-        assertThat(((Date) context.getAttribute("e")).getTime()).isEqualTo(915058800000L);
+        engine.eval("e := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
+        assertThat(((Date) context.getAttribute("e")).toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth()).isEqualTo(1);
+        engine.eval("f := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
+        assertThat(((Date) context.getAttribute("f")).toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth()).isEqualTo(31);
 
         // Cast Boolean to...
         engine.eval("a := cast(true, integer);");
