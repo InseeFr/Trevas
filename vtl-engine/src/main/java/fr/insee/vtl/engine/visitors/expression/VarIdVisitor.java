@@ -8,7 +8,7 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
@@ -72,8 +72,8 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
             return StringExpression.of((CharSequence) value);
         }
 
-        if (value instanceof LocalDate) {
-            return DateExpression.of((LocalDate) value);
+        if (value instanceof Instant) {
+            return InstantExpression.of((Instant) value);
         }
 
         if (value == null) {

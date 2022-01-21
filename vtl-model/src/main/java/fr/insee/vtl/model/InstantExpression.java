@@ -1,13 +1,13 @@
 package fr.insee.vtl.model;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
  * The <code>StringExpression</code> class is an abstract representation of a date expression.
  */
-public abstract class DateExpression implements ResolvableExpression {
+public abstract class InstantExpression implements ResolvableExpression {
 
     /**
      * Constructs a date expression evaluating to a given date.
@@ -15,10 +15,10 @@ public abstract class DateExpression implements ResolvableExpression {
      * @param value The date value the expression should resolve to.
      * @return The resulting date expression.
      */
-    public static DateExpression of(LocalDate value) {
-        return new DateExpression() {
+    public static InstantExpression of(Instant value) {
+        return new InstantExpression() {
             @Override
-            public LocalDate resolve(Map<String, Object> context) {
+            public Instant resolve(Map<String, Object> context) {
                 return value;
             }
         };
@@ -30,10 +30,10 @@ public abstract class DateExpression implements ResolvableExpression {
      * @param func The date function to apply to the context.
      * @return The resulting date expression.
      */
-    public static DateExpression of(VtlFunction<Map<String, Object>, LocalDate> func) {
-        return new DateExpression() {
+    public static InstantExpression of(VtlFunction<Map<String, Object>, Instant> func) {
+        return new InstantExpression() {
             @Override
-            public LocalDate resolve(Map<String, Object> context) {
+            public Instant resolve(Map<String, Object> context) {
                 return func.apply(context);
             }
         };
@@ -50,7 +50,7 @@ public abstract class DateExpression implements ResolvableExpression {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
                 if (mask == null) return null;
-                LocalDate exprValue = (LocalDate) expr.resolve(context);
+                Instant exprValue = (Instant) expr.resolve(context);
                 if (exprValue == null) return null;
                 DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
                 return maskFormatter.format(exprValue);
@@ -59,11 +59,11 @@ public abstract class DateExpression implements ResolvableExpression {
     }
 
     @Override
-    public abstract LocalDate resolve(Map<String, Object> context);
+    public abstract Instant resolve(Map<String, Object> context);
 
     @Override
     public Class<?> getType() {
-        return LocalDate.class;
+        return Instant.class;
     }
 
 }
