@@ -1,7 +1,3 @@
-// VTL 2.0 06/2020 SDMX
-// Remove component duplication
-// Add distance operators (levenshtein)
-
 grammar Vtl;
 import VtlTokens;
 
@@ -280,6 +276,7 @@ aggrOperatorsGrouping:
         | STDDEV_SAMP
         | VAR_POP
         | VAR_SAMP) LPAREN expr (groupingClause havingClause?)? RPAREN  #aggrDataset
+        | COUNT LPAREN RPAREN               # countAggr
 
 ;
 
