@@ -12,14 +12,6 @@ import java.time.Instant;
 public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     /**
-     * Constructor taking a scripting context.
-     *
-     * @param context The scripting context for the visitor.
-     */
-    public TimeFunctionsVisitor() {
-    }
-
-    /**
      * Visits the current date expression.
      *
      * @param ctx The scripting context for the expression (left and right expressions should be the string parameters).

@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -53,7 +54,7 @@ public abstract class InstantExpression implements ResolvableExpression {
                 Instant exprValue = (Instant) expr.resolve(context);
                 if (exprValue == null) return null;
                 DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
-                return maskFormatter.format(exprValue);
+                return maskFormatter.format(exprValue.atOffset(ZoneOffset.UTC));
             });
         throw new ClassCastException("Cast Date to " + outputClass + " is not supported");
     }

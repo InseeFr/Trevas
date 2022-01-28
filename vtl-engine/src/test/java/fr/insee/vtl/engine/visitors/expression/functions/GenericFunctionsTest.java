@@ -7,7 +7,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,8 +48,9 @@ public class GenericFunctionsTest {
     @Test
     public void t() {
         DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDateTime parse = LocalDateTime.parse("2020-01-02", maskFormatter);
-        System.out.println(parse.toString());
+        LocalDate parse = LocalDate.parse("2020-01-02", maskFormatter);
+        System.out.println(parse.atStartOfDay());
+        System.out.println(parse);
     }
 
     @Test
@@ -65,9 +67,9 @@ public class GenericFunctionsTest {
         engine.eval("d := cast(\"true\", boolean);");
         assertThat(context.getAttribute("d")).isEqualTo(true);
         engine.eval("e := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
-        assertThat(((Instant) context.getAttribute("e")).atZone(ZoneId.systemDefault())).isEqualTo(1);
+        assertThat((Instant) context.getAttribute("e")).isEqualTo("1998-12-01T00:00:00.000Z");
         engine.eval("f := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
-        assertThat(((Instant) context.getAttribute("f")).atZone(ZoneId.systemDefault())).isEqualTo(31);
+        assertThat((Instant) context.getAttribute("f")).isEqualTo("1998-12-31T00:00:00.000Z");
 
         // Cast Boolean to...
         engine.eval("a := cast(true, integer);");
