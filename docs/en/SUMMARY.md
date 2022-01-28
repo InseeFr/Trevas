@@ -1,5 +1,9 @@
 # Table of contents
 
+## Administrator guide
+
+- [Modification of VTL grammar](grammar.md)
+
 ## Developer guide
 
 - [Getting started](getting-started.md)

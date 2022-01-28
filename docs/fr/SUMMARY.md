@@ -1,5 +1,9 @@
 # Table des matières
 
+## Guide de l'administrateur
+
+- [Modifications de la grammaire VTL](grammar.md)
+
 ## Guide du développeur
 
 - [Démarrage](getting-started.md)

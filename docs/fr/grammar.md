@@ -1,0 +1,24 @@
+# Utilisation de la grammaire VTL
+
+Trevas s'appuie sur la grammaire formelle de VTL exprimée sous forme [EBNF](https://fr.wikipedia.org/wiki/Extended_Backus-Naur_Form). La référence est l'upgrade de la version 2.0 publiée en juillet 2020 [sur le site web SDMX](https://sdmx.org/wp-content/uploads/VTL-2.0-EBNF-Grammar-2020-07.zip).
+
+La grammaire consiste en deux fichiers prêts à être traités par le générateur de parseurs [Antlr](https://www.antlr.org/) :
+
+- [VtlTokens.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/VtlTokens.g4) contient la liste des termes VTL valides.
+
+- [Vtl.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/Vtl.g4) contient les règles qui créent les expressions VTL valides.
+
+Antlr utilise ces fichiers pour produire un lexeur, qui crée une liste de symboles du vocabulaire à partir d'un flot de caractères en entrée, et un parseur, qui crée la structure grammaticale correspondant à cette liste de symboles. Antlr peut générer des parseurs utilisables dans différents langages cibles. Trevas utilise le parseur pour Java, qui est exposé dans le module [`vtl-parser`](https://github.com/InseeFr/Trevas/tree/master/vtl-parser).
+
+## Adaptations de la grammaire
+
+Afin d'améliorer les performances et les fonctionnalités, des modifications mineures ont été faites à la grammaire VTL grammar utilisée dans Trevas.
+
+### Simplification de l'arbre grammatical
+
+Comme documenté [ici](https://github.com/VTL-Community/VTL-Community/issues/5) et [ici](https://github.com/InseeFr/Trevas-JS/issues/40), les branches `expr` et `exprComp` de l'arbre grammatical sont presques identiques. Afin d'éviter d'avoir à implémenter deux fois la même logique, la branche `exprComp` a été mise en commentaires par le commit [498c1f8](https://github.com/InseeFr/Trevas/commit/498c1f8be39702fbcfc89a3144ac1842d7771d93). Il fut remarqué par la suite que cette modification invalidait à tort l'expression `COUNT()` expression, et la règle correspondante fut donc réintroduite dans la grammaire par le commit [54f86f2] (https://github.com/InseeFr/Trevas/commit/54f86f27d2e8fdd57df1439d74ed56d225064a7d).
+
+
+### Addition d'opérateurs de distance
+
+Les opérateurs de distances tels que Levenshtein ou Jaro-Winkler sont communément utilisés dans les tests sur les chaînes de caractères. Afin de les autoriser dans les expressions VTL, le commit [036dc60](https://github.com/InseeFr/Trevas/commit/036dc6055240a38c19be7afd1d3067e370353f9f) a ajouté dans la grammaire une section `distanceOperators` contenant une règle `LEVENSHTEIN`, ainsi que le symbole `LEVENSHTEIN` dans le fichier du lexeur.
