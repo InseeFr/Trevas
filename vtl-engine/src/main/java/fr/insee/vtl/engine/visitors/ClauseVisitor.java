@@ -133,8 +133,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         //  return types to improve performance.
         Set<String> finalGroupBy = groupBy;
         Function<Structured.DataPoint, Map<String, Object>> keyExtractor = dataPoint -> {
-            return new Structured.DataPointMap(dataPoint).entrySet().stream().filter(entry -> finalGroupBy.contains(entry.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            var entries = finalGroupBy.stream().map(column -> Map.entry(column, dataPoint.get(column)))
+                    .toArray(Map.Entry[]::new);
+            return Map.ofEntries(entries);
         };
 
         // Create a map of collectors.
