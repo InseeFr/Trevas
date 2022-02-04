@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Introduction · Java VTL 2.1</title>
+        <title>Modification of VTL grammar · Java VTL 2.1</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -69,8 +69,10 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="grammar.html" />
+    <link rel="next" href="getting-started.html" />
     
+    
+    <link rel="prev" href="./" />
     
 
     </head>
@@ -101,7 +103,7 @@
         
         
     
-        <li class="chapter active" data-level="1.1" data-path="./">
+        <li class="chapter " data-level="1.1" data-path="./">
             
                 <a href="./">
             
@@ -114,7 +116,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2" data-path="grammar.html">
+        <li class="chapter active" data-level="1.2" data-path="grammar.html">
             
                 <a href="grammar.html">
             
@@ -268,7 +270,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Introduction</a>
+        <a href="." >Modification of VTL grammar</a>
     </h1>
 </div>
 
@@ -283,11 +285,23 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="introduction">Introduction</h1>
-<p>Trevas enables statistical transformations and validation expressed in the <a href="https://sdmx.org/?page_id=5096" target="_blank">VTL 2.0</a> language.</p>
-<h2 id="technical-description">Technical description</h2>
-<p><a href="https://github.com/InseeFr/Trevas" target="_blank">Trevas</a> provides in particular a Java 11 engine.</p>
-<p>Engine is based on <a href="https://jcp.org/en/jsr/detail?id=223" target="_blank">JSR 223</a> which specifies the Java Scripting API.</p>
+                                <h1 id="use-of-the-vtl-grammar">Use of the VTL grammar</h1>
+<h2 id="the-vtl-grammar">The VTL grammar</h2>
+<p>Trevas relies on the formal VTL grammar specified as <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">EBNF</a>. The reference is the upgrade of version 2.0 published in July 2020 <a href="https://sdmx.org/wp-content/uploads/VTL-2.0-EBNF-Grammar-2020-07.zip" target="_blank">on the SDMX web site</a>.</p>
+<p>The grammar consists in two files ready to be processed by the <a href="https://www.antlr.org/" target="_blank">Antlr</a> parser generator:</p>
+<ul>
+<li><p><a href="https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/VtlTokens.g4" target="_blank">VtlTokens.g4</a> contains the list of valid VTL terms.</p>
+</li>
+<li><p><a href="https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/Vtl.g4" target="_blank">Vtl.g4</a> contains the rules that create valid VTL expressions.</p>
+</li>
+</ul>
+<p>Antlr uses those files to produce a lexer, which creates a list of vocabulary symbols from an input stream of characters, and a parser, which creates the grammar structure corresponding to the list of symbols. Antlr can generate parsers usable in different target languages. Trevas uses the parser for Java, which is exposed in the <a href="https://github.com/InseeFr/Trevas/tree/master/vtl-parser" target="_blank"><code>vtl-parser</code></a> module.</p>
+<h2 id="grammar-adaptations">Grammar adaptations</h2>
+<p>In order to improve performances and fonctionalities, minor modifications have been made to the VTL grammar used in Trevas.</p>
+<h3 id="simplification-of-the-grammar-tree">Simplification of the grammar tree</h3>
+<p>As documented <a href="https://github.com/VTL-Community/VTL-Community/issues/5" target="_blank">here</a> and <a href="https://github.com/InseeFr/Trevas-JS/issues/40" target="_blank">here</a>, the <code>expr</code> and <code>exprComp</code> branches in the grammar tree are almost identical. In order to avoid implementing the same logic twice, the <code>exprComp</code> branch was commented out in commit <a href="https://github.com/InseeFr/Trevas/commit/498c1f8be39702fbcfc89a3144ac1842d7771d93" target="_blank">498c1f8</a>. It was later found that this modification wrongly invalidated the <code>COUNT()</code> expression, so the corresponding rule was reintroduced in the grammar in commit [54f86f2] (<a href="https://github.com/InseeFr/Trevas/commit/54f86f27d2e8fdd57df1439d74ed56d225064a7d" target="_blank">https://github.com/InseeFr/Trevas/commit/54f86f27d2e8fdd57df1439d74ed56d225064a7d</a>).</p>
+<h3 id="addition-of-distance-operators">Addition of distance operators</h3>
+<p>Distance operators like Levenshtein or Jaro-Winkler are commonly used in tests on strings. In order to allow them in VTL expressions, commit <a href="https://github.com/InseeFr/Trevas/commit/036dc6055240a38c19be7afd1d3067e370353f9f" target="_blank">036dc60</a> added a <code>distanceOperators</code> section containing a <code>LEVENSHTEIN</code> rule in the grammar, as well as a <code>LEVENSHTEIN</code> symbol in the lexer file.</p>
 
                                 
                                 </section>
@@ -315,8 +329,12 @@
 
             
                 
+                <a href="./" class="navigation navigation-prev " aria-label="Previous page: Introduction">
+                    <i class="fa fa-angle-left"></i>
+                </a>
                 
-                <a href="grammar.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Modification of VTL grammar">
+                
+                <a href="getting-started.html" class="navigation navigation-next " aria-label="Next page: Getting started">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -327,7 +345,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"Modification of VTL grammar","level":"1.2","depth":1,"path":"grammar.md","ref":"grammar.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"en","gitbook":"*"},"file":{"path":"README.md","mtime":"2022-02-04T09:33:45.921Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-02-04T09:34:29.134Z"},"basePath":".","book":{"language":"en"}});
+            gitbook.page.hasChanged({"page":{"title":"Modification of VTL grammar","level":"1.2","depth":1,"next":{"title":"Getting started","level":"2.1","depth":1,"path":"getting-started.md","ref":"getting-started.md","articles":[]},"previous":{"title":"Introduction","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"en","gitbook":"*"},"file":{"path":"grammar.md","mtime":"2022-02-04T09:33:45.921Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-02-04T09:34:29.134Z"},"basePath":".","book":{"language":"en"}});
         });
     </script>
 </div>
