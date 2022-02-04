@@ -7,6 +7,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -41,6 +42,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 return Double.class;
             case VtlParser.BOOLEAN:
                 return Boolean.class;
+            case VtlParser.DATE:
+                return Instant.class;
             default:
                 throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
         }
@@ -55,6 +58,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     @Override
     public ResolvableExpression visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
+        TerminalNode maskNode = ctx.STRING_CONSTANT();
+        // STRING_CONSTANT().getText return null or a string wrapped by quotes
+        String mask = maskNode == null ? null :
+                maskNode.getText()
+                        .replaceAll("\"", "")
+                        .replace("YYYY", "yyyy")
+                        .replace("DD", "dd");
         Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
         Integer basicScalarType = symbol.getType();
         String basicScalarText = symbol.getText();
@@ -65,7 +75,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return ResolvableExpression.ofType(outputClass, null);
         }
         if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass);
+            return StringExpression.castTo(expression, outputClass, mask);
         }
         if (Boolean.class.equals(expression.getType())) {
             return BooleanExpression.castTo(expression, outputClass);
@@ -75,6 +85,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
         if (Double.class.equals(expression.getType())) {
             return DoubleExpression.castTo(expression, outputClass);
+        }
+        if (Instant.class.equals(expression.getType())) {
+            return InstantExpression.castTo(expression, outputClass, mask);
         }
         throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }

@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
+
 /**
  * <code>ClauseVisitor</code> is the visitor for VTL clause expressions (component filter, aggr, drop, etc.).
  */
@@ -96,7 +98,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
+        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
         return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
@@ -144,25 +146,34 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var groupFunctionCtx = (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping();
             var expression = componentExpressionVisitor.visit(groupFunctionCtx.expr());
             if (groupFunctionCtx.SUM() != null) {
-                collectorMap.put(name, AggregationExpression.sum(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.sum(numberExpression));
             } else if (groupFunctionCtx.AVG() != null) {
-                collectorMap.put(name, AggregationExpression.avg(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.avg(numberExpression));
             } else if (groupFunctionCtx.COUNT() != null) {
                 collectorMap.put(name, AggregationExpression.count());
             } else if (groupFunctionCtx.MAX() != null) {
-                collectorMap.put(name, AggregationExpression.max(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.max(numberExpression));
             } else if (groupFunctionCtx.MIN() != null) {
-                collectorMap.put(name, AggregationExpression.min(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.min(numberExpression));
             } else if (groupFunctionCtx.MEDIAN() != null) {
-                collectorMap.put(name, AggregationExpression.median(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.median(numberExpression));
             } else if (groupFunctionCtx.STDDEV_POP() != null) {
-                collectorMap.put(name, AggregationExpression.stdDevPop(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.stdDevPop(numberExpression));
             } else if (groupFunctionCtx.STDDEV_SAMP() != null) {
-                collectorMap.put(name, AggregationExpression.stdDevSamp(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.stdDevSamp(numberExpression));
             } else if (groupFunctionCtx.VAR_POP() != null) {
-                collectorMap.put(name, AggregationExpression.varPop(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.varPop(numberExpression));
             } else if (groupFunctionCtx.VAR_SAMP() != null) {
-                collectorMap.put(name, AggregationExpression.varSamp(expression));
+                var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+                collectorMap.put(name, AggregationExpression.varSamp(numberExpression));
             } else {
                 throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
             }

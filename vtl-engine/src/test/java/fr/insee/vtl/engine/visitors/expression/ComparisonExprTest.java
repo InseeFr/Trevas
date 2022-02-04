@@ -56,31 +56,43 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("bool")).isTrue();
         engine.eval("long := 6 = (3*2);");
         assertThat((Boolean) context.getAttribute("long")).isTrue();
+        engine.eval("mix := 6 = (3*2.0);");
+        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         // NEQ
         engine.eval("bool := true <> true;");
         assertThat((Boolean) context.getAttribute("bool")).isFalse();
         engine.eval("long := 6 <> (3*20);");
         assertThat((Boolean) context.getAttribute("long")).isTrue();
+        engine.eval("mix := 6 <> (3*20.0);");
+        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         // LT
         engine.eval("lt := 2 < 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
         engine.eval("lt1 := 2.1 < 1.1;");
         assertThat((Boolean) context.getAttribute("lt1")).isFalse();
+        engine.eval("mix := 6 < 6.1;");
+        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         // MT
         engine.eval("lt := 2 > 3;");
         assertThat((Boolean) context.getAttribute("lt")).isFalse();
         engine.eval("lt1 := 2.1 > 1.1;");
         assertThat((Boolean) context.getAttribute("lt1")).isTrue();
+        engine.eval("mix := 6 > 6.1;");
+        assertThat((Boolean) context.getAttribute("mix")).isFalse();
         // LE
         engine.eval("lt := 3 <= 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
         engine.eval("lt1 := 2.1 <= 1.1;");
         assertThat((Boolean) context.getAttribute("lt1")).isFalse();
+        engine.eval("mix := 6 <= 6.1;");
+        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         // MT
         engine.eval("lt := 2 >= 3;");
         assertThat((Boolean) context.getAttribute("lt")).isFalse();
         engine.eval("lt1 := 2.1 >= 1.1;");
         assertThat((Boolean) context.getAttribute("lt1")).isTrue();
+        engine.eval("mix := 6 >= 6.1;");
+        assertThat((Boolean) context.getAttribute("mix")).isFalse();
     }
 
     @Test
@@ -89,22 +101,6 @@ public class ComparisonExprTest {
             engine.eval("s := \"ok\" <> true;");
         }).isInstanceOf(InvalidTypeException.class)
                 .hasMessage("invalid type Boolean, expected true to be String");
-        assertThatThrownBy(() -> {
-            engine.eval("s := 2.1 < 3;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 3 to be Double");
-        assertThatThrownBy(() -> {
-            engine.eval("s := 2 > 3.2;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected 3.2 to be Long");
-        assertThatThrownBy(() -> {
-            engine.eval("s := 2.1 <= 3;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 3 to be Double");
-        assertThatThrownBy(() -> {
-            engine.eval("s := 2 >= 3.55;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected 3.55 to be Long");
     }
 
     @Test

@@ -10,9 +10,9 @@
         <version>0.3.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vtl-spark</artifactId>
-    <name>VTL Spark</name>
-	<description>Trevas engine for Apache Spark</description>
+    <artifactId>vtl-jdbc</artifactId>
+    <name>VTL JDBC</name>
+    <description>Dataset wrapper around JDBC result set. Useful to expose SQL tables as VTL datasets</description>
     <version>0.3.0-SNAPSHOT</version>
 
     <dependencies>
@@ -22,43 +22,21 @@
             <version>0.3.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
             <version>0.3.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>3.2.0</version>
-        </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.200</version>
+            <version>2.1.210</version>
             <scope>test</scope>
         </dependency>
 
-
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Automatic-Module-Name>fr.insee.vtl.spark</Automatic-Module-Name>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

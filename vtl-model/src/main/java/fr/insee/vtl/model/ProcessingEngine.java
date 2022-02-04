@@ -25,13 +25,12 @@ public interface ProcessingEngine {
     /**
      * Execute a filter transformations on the dataset expression.
      * <p>
-     * TODO: Use {@link BooleanExpression}
      *
      * @param expression the dataset to apply the filter transformations on
      * @param filter     a filter expression
      * @return the result of the filter transformation
      */
-    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterString);
+    DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterString);
 
     /**
      * Execute a rename transformations on the dataset expression.
@@ -90,7 +89,7 @@ public interface ProcessingEngine {
      * Execute a cross join transformations on the dataset expressions.
      *
      * @param datasets   a map of aliased datasets
-     * @param components the components to join on
+     * @param identifiers the components to join on
      * @return the result of the left join transformation
      */
     DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
@@ -99,7 +98,7 @@ public interface ProcessingEngine {
      * Execute a full join transformations on the dataset expressions.
      *
      * @param datasets   a map of aliased datasets
-     * @param components the components to join on
+     * @param identifiers the components to join on
      * @return the result of the left join transformation
      */
     DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);

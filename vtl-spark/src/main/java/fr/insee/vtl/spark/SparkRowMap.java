@@ -6,9 +6,18 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The <code>SparkRowMap</code> class represents a row in a Spark dataset as a map.
+ */
 class SparkRowMap implements Map<String, Object> {
+
     private final Row row;
 
+    /**
+     * Constructor taking a Spark {@link Row}.
+     *
+     * @param row the row of the Spark dataset.
+     */
     public SparkRowMap(Row row) {
         this.row = row;
     }
