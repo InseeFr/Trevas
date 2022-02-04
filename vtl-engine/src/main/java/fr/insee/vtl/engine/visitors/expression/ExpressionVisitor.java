@@ -32,12 +32,13 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final JoinFunctionsVisitor joinFunctionsVisitor;
     private final GenericFunctionsVisitor genericFunctionsVisitor;
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
+    private final TimeFunctionsVisitor timeFunctionsVisitor;
     private final ProcessingEngine processingEngine;
 
     /**
      * Constructor taking a scripting context and a processing engine.
      *
-     * @param context The map representing the context.
+     * @param context          The map representing the context.
      * @param processingEngine The processing engine.
      */
     public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
@@ -56,6 +57,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         genericFunctionsVisitor = new GenericFunctionsVisitor(this);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
+        timeFunctionsVisitor = new TimeFunctionsVisitor();
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -257,6 +259,18 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitDistanceFunctions(VtlParser.DistanceFunctionsContext ctx) {
         return distanceFunctionsVisitor.visit(ctx.distanceOperators());
+    }
+
+    /**
+     * Visits expressions involving time functions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the time function.
+     * @see TimeFunctionsVisitor
+     */
+    @Override
+    public ResolvableExpression visitTimeFunctions(VtlParser.TimeFunctionsContext ctx) {
+        return timeFunctionsVisitor.visit(ctx.timeOperators());
     }
 
     /**

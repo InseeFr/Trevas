@@ -13,8 +13,8 @@ module fr.insee.vtl.engine {
 
     requires transitive java.scripting;
     requires transitive fr.insee.vtl.parser;
-
     requires transitive fr.insee.vtl.model;
+
     uses ProcessingEngine;
     uses ProcessingEngineFactory;
 
@@ -22,6 +22,8 @@ module fr.insee.vtl.engine {
     provides ProcessingEngineFactory with InMemoryProcessingEngine.Factory;
 
     requires org.antlr.antlr4.runtime;
+
+    // TODO: Consider removing these.
     requires org.apache.commons.lang3;
     requires org.apache.commons.text;
 

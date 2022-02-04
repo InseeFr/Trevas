@@ -25,14 +25,25 @@ import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
+/**
+ * The <code>SparkProcessingEngine</code> class is an implementation of a VTL engine using Apache Spark.
+ */
 public class SparkProcessingEngine implements ProcessingEngine {
 
     private final SparkSession spark;
 
+    /**
+     * Constructor taking an existing Spark session.
+     *
+     * @param spark The Spark session to use for the engine.
+     */
     public SparkProcessingEngine(SparkSession spark) {
         this.spark = Objects.requireNonNull(spark);
     }
 
+    /**
+     * Constructor creating an engine with the currently active Spark session (or otherwise the default one).
+     */
     public SparkProcessingEngine() {
         this.spark = SparkSession.active();
     }
@@ -127,7 +138,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
+    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
         SparkDataset dataset = asSparkDataset(expression);
 
         Dataset<Row> ds = dataset.getSparkDataset();
@@ -239,6 +250,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Utility method used for the implementation of the different types of join operations.
+     *
+     * @param sparkDatasets a list datasets.
+     * @param identifiers the list of identifiers to join on.
+     * @param type the type of join operation.
+     * @return The dataset resulting from the join operation.
+     */
     public Dataset<Row> executeJoin(List<Dataset<Row>> sparkDatasets, List<String> identifiers, String type) {
         var iterator = sparkDatasets.iterator();
         var result = iterator.next();
@@ -253,6 +272,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return result;
     }
 
+    /**
+     * The <code>Factory</code> class is an implementation of a VTL engine factory that returns Spark engines.
+     */
     public static class Factory implements ProcessingEngineFactory {
 
         private static final String SPARK_SESSION = "$vtl.spark.session";

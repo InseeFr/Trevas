@@ -52,7 +52,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
+    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
         return new DatasetExpression() {
 
             @Override
@@ -77,6 +77,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
+        if (fromTo.isEmpty()) {
+            return expression;
+        }
         var structure = expression.getDataStructure().values().stream()
                 .map(component ->
                         !fromTo.containsKey(component.getName())
@@ -129,6 +132,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                             }
                             return projectedDataPoint;
                         }).collect(Collectors.toList());
+                // TODO: Use List<Datapoint> type for result to avoid conversion.
                 return new InMemoryDataset(result, getDataStructure());
             }
 
@@ -251,7 +255,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     /**
-     * Create a datapoint comparator that operates on the given identifiers only.
+     * Creates a datapoint comparator that operates on the given identifiers only.
      */
     private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
         return (dl, dr) -> {

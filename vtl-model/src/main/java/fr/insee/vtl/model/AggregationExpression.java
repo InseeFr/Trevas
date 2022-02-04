@@ -48,8 +48,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.averagingDouble(value -> (Double) value), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -65,8 +65,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.summingDouble(value -> (Double) value), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -82,8 +82,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.mapping(v -> (Double) v, medianCollectorDouble()), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -105,7 +105,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
             Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
             return withExpression(expression, res, Double.class);
         } else {
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -127,7 +128,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
             Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
             return withExpression(expression, res, Double.class);
         } else {
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -143,8 +145,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevPopCollectorDouble()), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -160,8 +162,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevSampCollectorDouble()), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -177,8 +179,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.mapping(v -> (Double) v, varPopCollectorDouble()), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -194,8 +196,8 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
         } else if (Double.class.equals(expression.getType())) {
             return withExpression(expression, Collectors.mapping(v -> (Double) v, varSampCollectorDouble()), Double.class);
         } else {
-            // TODO: Support more types or throw a proper error.
-            throw new Error();
+            // Type asserted in visitor.
+            throw new Error("unexpected type");
         }
     }
 
@@ -220,12 +222,7 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * @return The resolvable expression.
      */
     public static <T> AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
-        return new AggregationExpression(Collectors.mapping(new Function<Structured.DataPoint, Object>() {
-            @Override
-            public Object apply(Structured.DataPoint dataPoint) {
-                return expression.resolve(dataPoint);
-            }
-        }, collector), type);
+        return new AggregationExpression(Collectors.mapping(expression::resolve, collector), type);
     }
 
     private static Collector<Long, List<Long>, Double> medianCollectorLong() {

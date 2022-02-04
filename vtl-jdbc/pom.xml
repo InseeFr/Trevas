@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.insee.trevas</groupId>
+        <artifactId>trevas-parent</artifactId>
+        <version>0.3.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vtl-jdbc</artifactId>
+    <name>VTL JDBC</name>
+    <description>Dataset wrapper around JDBC result set. Useful to expose SQL tables as VTL datasets</description>
+    <version>0.3.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-model</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-engine</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.1.210</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+</project>
