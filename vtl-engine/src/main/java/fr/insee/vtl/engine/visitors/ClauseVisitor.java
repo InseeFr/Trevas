@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -131,13 +132,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
 
         // Create a keyExtractor with the columns we group by.
-        // TODO: Refactor to its own class. Possibly using the Datapoint/DatapointMap as
-        //  return types to improve performance.
-        Set<String> finalGroupBy = groupBy;
-        Function<Structured.DataPoint, Map<String, Object>> keyExtractor = dataPoint -> {
-            return new Structured.DataPointMap(dataPoint).entrySet().stream().filter(entry -> finalGroupBy.contains(entry.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        };
+        var keyExtractor = new KeyExtractor(groupBy);
 
         // Create a map of collectors.
         Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
