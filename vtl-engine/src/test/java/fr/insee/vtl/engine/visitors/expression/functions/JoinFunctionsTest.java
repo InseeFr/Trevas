@@ -136,7 +136,7 @@ public class JoinFunctionsTest {
         );
 
     }
-    
+
     @Test
     public void testLeftJoinMixedStructure() throws ScriptException {
 
