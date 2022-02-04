@@ -140,51 +140,6 @@ public class JoinFunctionsTest {
 
     }
     
-//    @Test
-//    public void testLeftJoinMixedStructure() throws ScriptException {
-//
-//        InMemoryDataset dataset1 = new InMemoryDataset(
-//                List.of(
-//                        Map.of("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
-//                        Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue")
-//                ),
-//                Map.of("id", String.class, "measure1", Long.class, "measure2", Long.class, "color", String.class),
-//                Map.of("id", Role.IDENTIFIER, "measure1", Role.MEASURE, "measure2", Role.MEASURE, "color", Role.MEASURE)
-//        );
-//
-//        InMemoryDataset dataset2 = new InMemoryDataset(
-//                List.of(
-//                        Map.of("id", "K001", "intermezzo", 0L, "measure2", 11L, "measure1", 19L, "stale", ""),
-//                        Map.of("id", "K003", "intermezzo", 0L, "measure2", 7L, "measure1", 3L, "stale", "")
-//                ),
-//                Map.of("id", String.class, "intermezzo", Long.class, "measure2", Long.class, "measure1", Long.class, "stale", String.class),
-//                Map.of("id", Role.IDENTIFIER, "intermezzo", Role.MEASURE, "measure2", Role.MEASURE, "measure1", Role.MEASURE, "stale", Role.MEASURE)
-//        );
-//
-//        engine.getContext().setAttribute("ds1", dataset1, ScriptContext.ENGINE_SCOPE);
-//        engine.getContext().setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
-//
-//        engine.eval("unionData := union(ds1[keep id, measure1, measure2], ds2[keep id, measure1, measure2]);");
-//        engine.eval("ds1_keep := ds1[keep id, color];");
-//        engine.eval("joinData := left_join(unionData, ds1_keep);");
-//
-//        Dataset joinData = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("joinData");
-//
-//        // Build Map with null value
-//        Map<String, Object> thirdLine = new HashMap<>() {{
-//            put("id", "K003");
-//            put("measure1", 3L);
-//            put("measure2", 7L);
-//            put("color", null);
-//        }};
-//
-//        assertThat(joinData.getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
-//                Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue"),
-//                thirdLine
-//        );
-//    }
-
     @Test
     public void testInnerJoin() throws ScriptException {
 
