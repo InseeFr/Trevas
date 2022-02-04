@@ -132,6 +132,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                             }
                             return projectedDataPoint;
                         }).collect(Collectors.toList());
+                // TODO: Use List<Datapoint> type for result to avoid conversion.
                 return new InMemoryDataset(result, getDataStructure());
             }
 
