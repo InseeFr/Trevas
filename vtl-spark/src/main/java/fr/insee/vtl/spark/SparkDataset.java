@@ -5,10 +5,7 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import scala.collection.JavaConverters;
 
 import java.util.*;
@@ -130,6 +127,8 @@ public class SparkDataset implements Dataset {
             return Double.class;
         } else if (BooleanType.sameType(dataType)) {
             return Boolean.class;
+        } else if (DecimalType.class.equals(dataType.getClass())) {
+            return Double.class;
         } else {
             throw new UnsupportedOperationException("unsupported type " + dataType);
         }
