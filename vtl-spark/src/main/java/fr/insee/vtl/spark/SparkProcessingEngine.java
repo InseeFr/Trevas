@@ -195,9 +195,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+    public DatasetExpression executeAggr(DatasetExpression dataset, Structured.DataStructure structure,
                                          Map<String, AggregationExpression> collectorMap,
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
+        return executeAggr(
+                asSparkDataset(dataset),
+                List.of("foo", "bar"),
+                Map.of("col1", "sum", "col2", "avg"),
+                Map.of("col1", "alias1", "col2", "alias2"));
+    }
+
+    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
+                                         Map<String, String> operations, Map<String, String> aliases) {
         throw new UnsupportedOperationException("TODO");
     }
 
