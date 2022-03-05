@@ -12,6 +12,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.Seq;
+import scala.collection.JavaConverters;
+import scala.collection.mutable.ListBuffer;
 
 import javax.script.ScriptEngine;
 import java.util.*;
@@ -23,6 +25,7 @@ import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
+import static org.apache.spark.sql.functions.*;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 /**
@@ -198,16 +201,89 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeAggr(DatasetExpression dataset, Structured.DataStructure structure,
                                          Map<String, AggregationExpression> collectorMap,
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
+
+        /*
+        * for the aggregation function map, we may have duplicate keys, if we use column as key.
+        * for example, column age, can have min, max, mean, etc. as function.
+        * 
+        * For the aliasCol map, it is the same thing
+        *
+        * Solution, we need to use Data Structure LinkedHashMap<String,List<String>> to store multiple actions on the
+        * same column, and preserve the order of insertion
+         */
+
+        Map<String,List<String>> operations=new LinkedHashMap<>();
+        List ageColFunctions=new ArrayList();
+        List weightFunctions=new ArrayList();
+        List nullFunctions=new ArrayList();
+        
+        operations.put("age",ageColFunctions);
+        operations.get("age").add("sum");
+        operations.get("age").add("max");
+        operations.get("age").add("min");
+        //operations.get("age").add("median");
+        operations.put("weight",weightFunctions);
+        operations.get("weight").add("max");
+        //operations.get("weight").add("median");
+        operations.put("null",nullFunctions);
+        operations.get("null").add("count");
+
+        Map<String,List<String>> aliases=new HashMap<>();
+        List ageAliasCols=new ArrayList();
+        List weightAliasCols=new ArrayList();
+        List nullAliasCols=new ArrayList();
+
+        aliases.put("age",ageAliasCols);
+        aliases.get("age").add("sumAge");
+        aliases.get("age").add("maxAge");
+        aliases.get("age").add("minAge");
+        //aliases.get("age").add("medianAge");
+        aliases.put("weight",weightAliasCols);
+        aliases.get("weight").add("maxWeight");
+        //operations.get("weight").add("medianWeight");
+        aliases.put("null",nullAliasCols);
+        aliases.get("null").add("countVal");
+
+
         return executeAggr(
                 asSparkDataset(dataset),
-                List.of("foo", "bar"),
-                Map.of("col1", "sum", "col2", "avg"),
-                Map.of("col1", "alias1", "col2", "alias2"));
+                List.of("country", "age"),
+                operations,
+                aliases);
     }
 
     public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
-                                         Map<String, String> operations, Map<String, String> aliases) {
-        throw new UnsupportedOperationException("TODO");
+                                         Map<String,List<String>> operations, Map<String,List<String>> aliases) {
+        /*
+        * - agg(java.util.Map<String,String> exprs)
+        * - agg(Column expr, scala.collection.Seq<Column> exprs)
+        * */
+        Dataset<Row> df=dataset.getSparkDataset();
+
+//        Column head = sum("age").alias("sumAge");
+//        List<Column> columns=new ArrayList<>();
+//        columns.add(avg("weight").alias("avgWeight"));
+//        columns.add(max("age").alias("maxAge"));
+//        columns.add(min("age").alias("minAge"));
+//        columns.add(count("*").alias("countVal"));
+
+        SparkAggrFuncExprBuilder builder = null;
+        try{
+            builder=new SparkAggrFuncExprBuilder(operations,aliases);
+        }
+        catch (Exception e){
+
+        }
+        List<Column> columns=builder.getTailExpressions();
+        Column head=builder.getHeadExpression();
+        Seq<Column> tails=iterableAsScalaIterable(columns).toSeq();
+        // in scala groupByColumns.head, groupByColumns.tail:_*
+        Dataset<Row> result = df.groupBy(groupByColumns.get(0))
+                .agg(head,tails);
+
+
+        result.show();
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     @Override
