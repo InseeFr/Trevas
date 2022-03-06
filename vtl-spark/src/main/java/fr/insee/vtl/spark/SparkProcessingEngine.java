@@ -12,8 +12,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.Seq;
-import scala.collection.JavaConverters;
-import scala.collection.mutable.ListBuffer;
+
 
 import javax.script.ScriptEngine;
 import java.util.*;
@@ -203,45 +202,50 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
 
         /*
-        * for the aggregation function map, we may have duplicate keys, if we use column as key.
-        * for example, column age, can have min, max, mean, etc. as function.
-        * 
-        * For the aliasCol map, it is the same thing
-        *
-        * Solution, we need to use Data Structure LinkedHashMap<String,List<String>> to store multiple actions on the
-        * same column, and preserve the order of insertion
+         * for the aggregation function map, we may have duplicate keys, if we use column as key.
+         * for example, column age, can have min, max, mean, etc. as function.
+         *
+         * For the aliasCol map, it is the same thing
+         *
+         * Solution1, we need to use Data Structure LinkedHashMap<String,List<String>> to store multiple actions on the
+         * same column, and preserve the order of insertion.
+         *
+         * Solution2, in solution one we can only guarantee the order of the same key. If user input with mix key order
+         * such as sum(age), min(weight), max(age). The column order of final result will be different. abandon the map
+         * use List<String> operations with col1:func1,
+         * List<String> aliases with col1:alias1
          */
 
-        Map<String,List<String>> operations=new LinkedHashMap<>();
-        List ageColFunctions=new ArrayList();
-        List weightFunctions=new ArrayList();
-        List nullFunctions=new ArrayList();
-        
-        operations.put("age",ageColFunctions);
+        Map<String, List<String>> operations = new LinkedHashMap<>();
+        List ageColFunctions = new ArrayList();
+        List weightFunctions = new ArrayList();
+        List nullFunctions = new ArrayList();
+
+        operations.put("age", ageColFunctions);
         operations.get("age").add("sum");
         operations.get("age").add("max");
         operations.get("age").add("min");
-        //operations.get("age").add("median");
-        operations.put("weight",weightFunctions);
+        operations.get("age").add("median");
+        operations.put("weight", weightFunctions);
         operations.get("weight").add("max");
-        //operations.get("weight").add("median");
-        operations.put("null",nullFunctions);
+        operations.get("weight").add("median");
+        operations.put("null", nullFunctions);
         operations.get("null").add("count");
 
-        Map<String,List<String>> aliases=new HashMap<>();
-        List ageAliasCols=new ArrayList();
-        List weightAliasCols=new ArrayList();
-        List nullAliasCols=new ArrayList();
+        Map<String, List<String>> aliases = new HashMap<>();
+        List ageAliasCols = new ArrayList();
+        List weightAliasCols = new ArrayList();
+        List nullAliasCols = new ArrayList();
 
-        aliases.put("age",ageAliasCols);
+        aliases.put("age", ageAliasCols);
         aliases.get("age").add("sumAge");
         aliases.get("age").add("maxAge");
         aliases.get("age").add("minAge");
-        //aliases.get("age").add("medianAge");
-        aliases.put("weight",weightAliasCols);
+        aliases.get("age").add("medianAge");
+        aliases.put("weight", weightAliasCols);
         aliases.get("weight").add("maxWeight");
-        //operations.get("weight").add("medianWeight");
-        aliases.put("null",nullAliasCols);
+        aliases.get("weight").add("medianWeight");
+        aliases.put("null", nullAliasCols);
         aliases.get("null").add("countVal");
 
 
@@ -252,35 +256,33 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 aliases);
     }
 
-    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
-                                         Map<String,List<String>> operations, Map<String,List<String>> aliases) {
+    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColNames,
+                                         Map<String, List<String>> operations, Map<String, List<String>> aliases) {
         /*
-        * - agg(java.util.Map<String,String> exprs)
-        * - agg(Column expr, scala.collection.Seq<Column> exprs)
-        * */
-        Dataset<Row> df=dataset.getSparkDataset();
-
-//        Column head = sum("age").alias("sumAge");
-//        List<Column> columns=new ArrayList<>();
-//        columns.add(avg("weight").alias("avgWeight"));
-//        columns.add(max("age").alias("maxAge"));
-//        columns.add(min("age").alias("minAge"));
-//        columns.add(count("*").alias("countVal"));
+         * - agg(java.util.Map<String,String> exprs)
+         * - agg(Column expr, scala.collection.Seq<Column> exprs)
+         * */
+        Dataset<Row> df = dataset.getSparkDataset();
 
         SparkAggrFuncExprBuilder builder = null;
-        try{
-            builder=new SparkAggrFuncExprBuilder(operations,aliases);
+        try {
+            builder = new SparkAggrFuncExprBuilder(operations, aliases);
+        } catch (Exception e) {
+            // log exception
+            // To do handle it here or propagate the exception to higher level
         }
-        catch (Exception e){
-
+        List<Column> columns = builder.getTailExpressions();
+        Column head = builder.getHeadExpression();
+        Seq<Column> tails = iterableAsScalaIterable(columns).toSeq();
+        // in scala, we can do groupBy(groupByColumns.head, groupByColumns.tail:_*), in java no way
+        // build groupByColumns
+        List<Column> groupByCols = new ArrayList<>();
+        for (String colName : groupByColNames) {
+            groupByCols.add(col(colName));
         }
-        List<Column> columns=builder.getTailExpressions();
-        Column head=builder.getHeadExpression();
-        Seq<Column> tails=iterableAsScalaIterable(columns).toSeq();
-        // in scala groupByColumns.head, groupByColumns.tail:_*
-        Dataset<Row> result = df.groupBy(groupByColumns.get(0))
-                .agg(head,tails);
-
+        Seq<Column> groupByColumns = iterableAsScalaIterable(groupByCols).toSeq();
+        Dataset<Row> result = df.groupBy(groupByColumns)
+                .agg(head, tails);
 
         result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
@@ -339,8 +341,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
      * Utility method used for the implementation of the different types of join operations.
      *
      * @param sparkDatasets a list datasets.
-     * @param identifiers the list of identifiers to join on.
-     * @param type the type of join operation.
+     * @param identifiers   the list of identifiers to join on.
+     * @param type          the type of join operation.
      * @return The dataset resulting from the join operation.
      */
     public Dataset<Row> executeJoin(List<Dataset<Row>> sparkDatasets, List<String> identifiers, String type) {
