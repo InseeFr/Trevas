@@ -11,6 +11,7 @@ public class SparkAggrFuncExprBuilder {
     private final Map<String, List<String>> aliases;
     private List<Column> tailExpressions;
     private Column headExpression;
+    private final int accuracy=1000000;
 
     public SparkAggrFuncExprBuilder(Map<String, List<String>> operations, Map<String,List<String>> aliases) throws Exception {
           this.operations=operations;
@@ -33,7 +34,6 @@ public class SparkAggrFuncExprBuilder {
         // get the head(first) expression
         if (iterator.hasNext()) {
             headKey = iterator.next();
-            System.out.println(headKey + ":" + operations.get(headKey).get(0)+":"+aliases.get(headKey).get(0));
             // get head expression
             headExpression=buildExpression(headKey,operations.get(headKey).get(0),aliases.get(headKey).get(0));
         }
@@ -43,19 +43,16 @@ public class SparkAggrFuncExprBuilder {
         while (iterator.hasNext()) {
             String key = iterator.next();
             // if the key is headKey, skip the first action
+            List<String> functions = operations.get(key);
             if (key.equals(headKey)){
-                List<String> functions = operations.get(key);
                 if (functions.size()>1){
                     for (int i=1;i<functions.size();i++){
-                        System.out.println(key + ":" + functions.get(i)+":"+aliases.get(key).get(i));
                         tailExpressions.add(buildExpression(headKey,operations.get(headKey).get(i),aliases.get(headKey).get(i)));
                     }
                 }
             }
             else {
-                List<String> functions = operations.get(key);
                 for (int i=0;i<functions.size();i++){
-                    System.out.println(key + ":" + functions.get(i)+":"+aliases.get(key).get(i));
                     tailExpressions.add(buildExpression(key,operations.get(key).get(i),aliases.get(key).get(i)));
                 }
             }
@@ -64,6 +61,7 @@ public class SparkAggrFuncExprBuilder {
     }
 
     private Column buildExpression(String colName,String action,String aliasColName) throws Exception {
+
         Column expression;
         switch (action.toLowerCase(Locale.ROOT)) {
             case "min":
@@ -80,6 +78,21 @@ public class SparkAggrFuncExprBuilder {
                 break;
             case "count":
                 expression= count("*").alias(aliasColName);
+                break;
+            case "median":
+                expression=  percentile_approx(col(colName), lit(0.5), lit(accuracy)).alias(aliasColName);
+                break;
+            case "stddev_pop":
+                expression= stddev_pop(colName).alias(aliasColName);
+                break;
+            case "stddev_samp":
+                expression= stddev_samp(colName).alias(aliasColName);
+                break;
+            case "var_pop":
+                expression= var_pop(colName).alias(aliasColName);
+                break;
+            case "var_samp":
+                expression= var_samp(colName).alias(aliasColName);
                 break;
             case "collect_list":
                 expression= collect_list(colName).alias(aliasColName);
