@@ -397,7 +397,8 @@ public class SparkProcessingEngineTest {
                 List.of(
                         Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
                         Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
-                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
+                        Map.of("name", "toto", "country", "france", "age", 13L, "weight", 11D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
                 Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
@@ -413,7 +414,7 @@ public class SparkProcessingEngineTest {
 
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age)," +
-                "avgWeight := avg(age)," +
+                "avgWeight := avg(weight)," +
                 "countVal := count(null)," +
                 "maxAge := max(age)," +
                 "maxWeight := max(weight)," +
