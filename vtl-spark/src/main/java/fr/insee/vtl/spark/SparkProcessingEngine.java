@@ -214,6 +214,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
          * such as sum(age), min(weight), max(age). The column order of final result will be different. abandon the map
          * use List<String> operations with col1:func1,
          * List<String> aliases with col1:alias1
+         *
+         * Solution3, use AbstractMap.SimpleImmutableEntry<String, String> entry= new AbstractMap.SimpleImmutableEntry<>("col1", "action1");
          */
 
         Map<String, List<String>> operations = new LinkedHashMap<>();
