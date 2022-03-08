@@ -1,25 +1,29 @@
 # Démarrage
 
-Trevas est un projet multi-modules.
+Trevas est un projet multi-modules. Les modules suivants sont définis.
 
 ## Modules
 
 ### VTL-Engine
 
-Moteur d'exécution.
+Moteur d'exécution et son implémentation Java basique.
 
 ### VTL-Model
 
-Modèle permettant de définir les objets utilisés au sein du moteur.
+Modèle définissant les objets utilisés dans le moteur.
 
 ### VTL-Parser
 
-Parser VTL auto-généré par [Antlr](https://www.antlr.org/) à partir de la [description formelle de VTL 2.0](https://github.com/InseeFr/Trevas/tree/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser).
+Parseur généré par [Antlr](https://www.antlr.org/) à partir de la [grammaire formelle de VTL 2.0](https://github.com/InseeFr/Trevas/tree/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser).
 
 ### VTL-Spark
 
-Module permettant la résolution de transformations VTL par [Spark](https://spark.apache.org/).
+Module permettant l'exécution de transformations VTL par [Spark](https://spark.apache.org/).
 
 ### VTL-Jackson
 
-Module de sérialisation / déserialisation json de Dataset.
+Module de sérialisation / désérialisation JSON de jeux de données.
+
+### VTL-JDBC
+
+Outils pour l'utilisation de sources de données SQL.

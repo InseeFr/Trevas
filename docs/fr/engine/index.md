@@ -1,18 +1,18 @@
 # VTL Engine
 
-## Dépendance
+## Dépendance Maven
 
 ```xml=
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-engine</artifactId>
-    <version>0.1.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
 ## Instanciation du moteur d'exécution
 
-Le moteur d'exécution répondant à la norme [`Script Engine`](https://docs.oracle.com/javase/10/scripting/java-scripting-api.htm#JSJSG109), il est instanciable via l'instruction suivante :
+Le moteur d'exécution répondant à la spécification [`Script Engine`](https://docs.oracle.com/javase/10/scripting/java-scripting-api.htm#JSJSG109), il est instanciable via l'instruction suivante :
 
 ```java=
 ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -20,10 +20,12 @@ ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 
 ## Variable entrantes
 
-Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clés / valeurs au sein d'un objet `Bindings`.
+Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clés / valeurs au sein d'un objet `Bindings`. Trevas fournit une implémentation simple basée sur une `Map`Java :
 
 ```java=
-Bindings bindings = new SimpleBindings(Map.of("a", 1));
+Map<String, Object> bindingsMap = new HashMap<>();
+bindingsMap.put("a", 1);
+Bindings bindings = new SimpleBindings(bindingsMap);
 ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 ```
@@ -31,7 +33,7 @@ context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 ## Exécution d'un script
 
 ```java=
-// la variable 'a' sera recherchée dans les bindings du moteur
+// La variable 'a' sera recherchée dans les bindings passés au moteur
 String script = "res := a + 1;";
 try {
     engine.eval(script);

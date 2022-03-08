@@ -1,4 +1,4 @@
-# Developers guide
+### Choose a language
 
 * [English](en/)
 * [French](fr/)
