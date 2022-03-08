@@ -215,49 +215,60 @@ public class SparkProcessingEngine implements ProcessingEngine {
          * use List<String> operations with col1:func1,
          * List<String> aliases with col1:alias1
          */
+        List<AbstractMap.SimpleImmutableEntry<String, String>> operations = new ArrayList<>();
 
-        Map<String, List<String>> operations = new LinkedHashMap<>();
-        List ageColFunctions = new ArrayList();
-        List weightFunctions = new ArrayList();
-        List nullFunctions = new ArrayList();
+        AbstractMap.SimpleImmutableEntry<String, String> entry1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sum");
+        AbstractMap.SimpleImmutableEntry<String, String> entry2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avg");
+        AbstractMap.SimpleImmutableEntry<String, String> entry3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "count");
+        AbstractMap.SimpleImmutableEntry<String, String> entry4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "max");
+        AbstractMap.SimpleImmutableEntry<String, String> entry5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "max");
+        AbstractMap.SimpleImmutableEntry<String, String> entry6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "min");
+        AbstractMap.SimpleImmutableEntry<String, String> entry7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "min");
+        AbstractMap.SimpleImmutableEntry<String, String> entry8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "median");
+        AbstractMap.SimpleImmutableEntry<String, String> entry9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "median");
+        operations.add(entry1);
+        operations.add(entry2);
+        operations.add(entry3);
+        operations.add(entry4);
+        operations.add(entry5);
+        operations.add(entry6);
+        operations.add(entry7);
+        operations.add(entry8);
+        operations.add(entry9);
 
-        operations.put("age", ageColFunctions);
-        operations.get("age").add("sum");
-        operations.get("age").add("max");
-        operations.get("age").add("min");
-        operations.get("age").add("median");
-        operations.put("weight", weightFunctions);
-        operations.get("weight").add("max");
-        operations.get("weight").add("median");
-        operations.put("null", nullFunctions);
-        operations.get("null").add("count");
+        List<AbstractMap.SimpleImmutableEntry<String, String>> aliases = new ArrayList<>();
 
-        Map<String, List<String>> aliases = new HashMap<>();
-        List ageAliasCols = new ArrayList();
-        List weightAliasCols = new ArrayList();
-        List nullAliasCols = new ArrayList();
+        AbstractMap.SimpleImmutableEntry<String, String> a1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sumAge");
+        AbstractMap.SimpleImmutableEntry<String, String> a2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avgWeight");
+        AbstractMap.SimpleImmutableEntry<String, String> a3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "countVal");
+        AbstractMap.SimpleImmutableEntry<String, String> a4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "maxAge");
+        AbstractMap.SimpleImmutableEntry<String, String> a5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "maxWeight");
+        AbstractMap.SimpleImmutableEntry<String, String> a6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "minAge");
+        AbstractMap.SimpleImmutableEntry<String, String> a7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "minWeight");
+        AbstractMap.SimpleImmutableEntry<String, String> a8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "medianAge");
+        AbstractMap.SimpleImmutableEntry<String, String> a9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "medianWeight");
 
-        aliases.put("age", ageAliasCols);
-        aliases.get("age").add("sumAge");
-        aliases.get("age").add("maxAge");
-        aliases.get("age").add("minAge");
-        aliases.get("age").add("medianAge");
-        aliases.put("weight", weightAliasCols);
-        aliases.get("weight").add("maxWeight");
-        aliases.get("weight").add("medianWeight");
-        aliases.put("null", nullAliasCols);
-        aliases.get("null").add("countVal");
+        aliases.add(a1);
+        aliases.add(a2);
+        aliases.add(a3);
+        aliases.add(a4);
+        aliases.add(a5);
+        aliases.add(a6);
+        aliases.add(a7);
+        aliases.add(a8);
+        aliases.add(a9);
 
 
         return executeAggr(
                 asSparkDataset(dataset),
-                List.of("country", "age"),
+                List.of("country"),
                 operations,
                 aliases);
     }
 
     public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColNames,
-                                         Map<String, List<String>> operations, Map<String, List<String>> aliases) {
+                                         List<AbstractMap.SimpleImmutableEntry<String, String>> operations,
+                                         List<AbstractMap.SimpleImmutableEntry<String, String>> aliases) {
         /*
          * - agg(java.util.Map<String,String> exprs)
          * - agg(Column expr, scala.collection.Seq<Column> exprs)
