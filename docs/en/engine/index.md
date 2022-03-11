@@ -30,6 +30,18 @@ ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 ```
 
+The map containing the bindings must be mutable (the script evaluation adds the output bindings to it). The following initialization would raise an exception (`UnsupportedOperationException`) during execution:
+
+```java=
+Bindings bindings = new SimpleBindings(Map.of("a", 1));
+```
+
+However, it is possible to benefit from the conciseness of `Map.of()` by writing :
+
+```java=
+Bindings bindings = new SimpleBindings(new HashMap<>(Map.of("a", 1)));
+```
+
 ## Script execution
 
 ```java=

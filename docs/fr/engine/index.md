@@ -20,7 +20,7 @@ ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 
 ## Variable entrantes
 
-Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clés / valeurs au sein d'un objet `Bindings`. Trevas fournit une implémentation simple basée sur une `Map`Java :
+Des variables peuvent être déclarées en entrée du moteur, en les affectant sous forme de clés / valeurs au sein d'un objet `Bindings`. Trevas fournit une implémentation simple basée sur une `Map` Java :
 
 ```java=
 Map<String, Object> bindingsMap = new HashMap<>();
@@ -28,6 +28,18 @@ bindingsMap.put("a", 1);
 Bindings bindings = new SimpleBindings(bindingsMap);
 ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+```
+
+La map contenant les bindings doit être mutable (l'évaluation du script y ajoute les bindings en sortie). L'initialisation suivante provoquerait une exception (`UnsupportedOperationException`) lors de l'exécution :
+
+```java=
+Bindings bindings = new SimpleBindings(Map.of("a", 1));
+```
+
+Il est toutefois possible de bénéficier de la concision de `Map.of()` en écrivant :
+
+```java=
+Bindings bindings = new SimpleBindings(new HashMap<>(Map.of("a", 1)));
 ```
 
 ## Exécution d'un script
@@ -58,13 +70,13 @@ outputBindings.get("res");
 
 ## Dataset
 
-Les tables de données sont représentées sous forme de `Dataset`.
+Les jeux de données sont représentées sous forme de `Dataset`.
 
-Les `Dataset` sont composés d'une `dataStructure` et de `dataPoints`.
+Un `Dataset` est composé d'une `dataStructure` et d'une liste de membres `dataPoint`.
 
-Les `dataStructure` sont composées de `Component`, ayant un `name`, un `role` et un `type`.
+La `dataStructure` est composée de membres `Component`, ayant chacun un `name`, un `role` et un `type`.
 
-Les valeurs des variables ayant pour rôle `IDENTIFIER` des `dataPoints` doivent être uniques.
+Les valeurs des variables des `dataPoint`s ayant pour rôle `IDENTIFIER` doivent être uniques.
 
 Deux instances de `Dataset` sont exposées :
 
