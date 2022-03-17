@@ -2,7 +2,7 @@
 
 ## Administrator guide
 
-- [Modification of VTL grammar](grammar.md)
+- [Modifications of the VTL grammar](grammar.md)
 
 ## Developer guide
 
