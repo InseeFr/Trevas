@@ -1,5 +1,6 @@
 package fr.insee.vtl.spark;
 
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import org.apache.spark.sql.Column;
 
 import java.util.*;
@@ -8,43 +9,23 @@ import static org.apache.spark.sql.functions.*;
 
 public class SparkAggrFuncExprBuilder {
 
-    private final List<AbstractMap.SimpleImmutableEntry<String, String>> operations;
-    private final List<AbstractMap.SimpleImmutableEntry<String, String>> aliases;
-    private List<Column> tailExpressions;
-    private Column headExpression;
-    private final int accuracy = 1000000;
 
-    public SparkAggrFuncExprBuilder(List<AbstractMap.SimpleImmutableEntry<String, String>> operations,
-                                    List<AbstractMap.SimpleImmutableEntry<String, String>> aliases) throws Exception {
-        this.operations = operations;
-        this.aliases = aliases;
-        this.parseExpressions();
-    }
+    private static final int accuracy = 1000000;
 
-    public List<Column> getTailExpressions() {
-        return tailExpressions;
-    }
 
-    public Column getHeadExpression() {
-        return headExpression;
-    }
-
-    private void parseExpressions() throws Exception {
-        tailExpressions = new ArrayList<>();
-        // get head expression
-        headExpression = buildExpression(operations.get(0).getKey(), operations.get(0).getValue(), aliases.get(0).getValue());
-
+    public static List<Column> getExpressions(Map<String, String> operations, Map<String, String> aliases) throws UnsupportedOperationException {
+        List<Column> expressions = new ArrayList<>();
+        // get keys
+        Set<String> keys = aliases.keySet();
         // get the tail expression
-        int index = 1;
-        while (index < operations.size()) {
-            tailExpressions.add(buildExpression(operations.get(index).getKey(), operations.get(index).getValue(), aliases.get(index).getValue()));
-            index++;
+        for (String key : keys) {
+            expressions.add(buildExpression(aliases.get(key), operations.get(key), key));
         }
-
+        return expressions;
 
     }
 
-    private Column buildExpression(String colName, String action, String aliasColName) throws Exception {
+    private static Column buildExpression(String colName, String action, String aliasColName) throws UnsupportedOperationException {
 
         Column expression;
         switch (action.toLowerCase(Locale.ROOT)) {
@@ -82,7 +63,7 @@ public class SparkAggrFuncExprBuilder {
                 expression = collect_list(colName).alias(aliasColName);
                 break;
             default:
-                throw new Exception("Unknown aggregation action");
+                throw new UnsupportedOperationException("unknown aggregation action: "+action);
         }
         return expression;
     }
