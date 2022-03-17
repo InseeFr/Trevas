@@ -7,67 +7,56 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SparkAggrFuncExprBuilderTest {
 
-    private List<AbstractMap.SimpleImmutableEntry<String, String>> operations;
-    private List<AbstractMap.SimpleImmutableEntry<String, String>> aliases;
+    private Map<String, String> operations;
+    private Map<String, String> aliases;
 
     @BeforeEach
     public void setup() {
-        operations = new ArrayList<>();
 
-        AbstractMap.SimpleImmutableEntry<String, String> entry1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sum");
-        AbstractMap.SimpleImmutableEntry<String, String> entry2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avg");
-        AbstractMap.SimpleImmutableEntry<String, String> entry3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "count");
-        AbstractMap.SimpleImmutableEntry<String, String> entry4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "max");
-        AbstractMap.SimpleImmutableEntry<String, String> entry5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "max");
-        AbstractMap.SimpleImmutableEntry<String, String> entry6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "min");
-        AbstractMap.SimpleImmutableEntry<String, String> entry7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "min");
-        AbstractMap.SimpleImmutableEntry<String, String> entry8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "median");
-        AbstractMap.SimpleImmutableEntry<String, String> entry9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "median");
-        operations.add(entry1);
-        operations.add(entry2);
-        operations.add(entry3);
-        operations.add(entry4);
-        operations.add(entry5);
-        operations.add(entry6);
-        operations.add(entry7);
-        operations.add(entry8);
-        operations.add(entry9);
 
-        aliases = new ArrayList<>();
+        operations = new LinkedHashMap<>();
 
-        AbstractMap.SimpleImmutableEntry<String, String> a1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sumAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avgWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "countVal");
-        AbstractMap.SimpleImmutableEntry<String, String> a4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "maxAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "maxWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "minAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "minWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "medianAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "medianWeight");
+        operations.put("sumAge", "sum");
+        operations.put("avgWeight", "avg");
+        operations.put("countVal", "count");
+        operations.put("maxAge", "max");
+        operations.put("maxWeight", "max");
+        operations.put("minAge", "min");
+        operations.put("minWeight", "min");
+        operations.put("medianAge", "median");
+        operations.put("medianWeight", "median");
+        operations.put("stdPopAge", "stddev_pop");
+        operations.put("stdSampAge", "stddev_samp");
+        operations.put("varPopWeight", "var_pop");
+        operations.put("varSampWeight", "var_samp");
 
-        aliases.add(a1);
-        aliases.add(a2);
-        aliases.add(a3);
-        aliases.add(a4);
-        aliases.add(a5);
-        aliases.add(a6);
-        aliases.add(a7);
-        aliases.add(a8);
-        aliases.add(a9);
 
+        aliases = new LinkedHashMap<>();
+
+        aliases.put("sumAge", "age");
+        aliases.put("avgWeight", "weight");
+        aliases.put("countVal", "null");
+        aliases.put("maxAge", "age");
+        aliases.put("maxWeight", "weight");
+        aliases.put("minAge", "age");
+        aliases.put("minWeight", "weight");
+        aliases.put("medianAge", "age");
+        aliases.put("medianWeight", "weight");
+        aliases.put("stdPopAge", "age");
+        aliases.put("stdSampAge", "age");
+        aliases.put("varPopWeight", "weight");
+        aliases.put("varSampWeight", "weight");
     }
 
     @Test
     public void testGetExpressions() throws Exception {
 
-        String expectedHeadExpression="sum(age) AS sumAge";
         List<String> expectedExpression = new ArrayList<>();
+        expectedExpression.add("sum(age) AS sumAge");
         expectedExpression.add("avg(weight) AS avgWeight");
         expectedExpression.add("count(1) AS countVal");
         expectedExpression.add("max(age) AS maxAge");
@@ -76,18 +65,17 @@ public class SparkAggrFuncExprBuilderTest {
         expectedExpression.add("min(weight) AS minWeight");
         expectedExpression.add("percentile_approx(age, 0.5, 1000000) AS medianAge");
         expectedExpression.add("percentile_approx(weight, 0.5, 1000000) AS medianWeight");
+        expectedExpression.add("stddev_pop(age) AS stdPopAge");
+        expectedExpression.add("stddev_samp(age) AS stdSampAge");
+        expectedExpression.add("var_pop(weight) AS varPopWeight");
+        expectedExpression.add("var_samp(weight) AS varSampWeight");
 
 
-        SparkAggrFuncExprBuilder builder = new SparkAggrFuncExprBuilder(operations, aliases);
-        String headExpression = builder.getHeadExpression().toString();
-        List<Column> tailExpressions = builder.getTailExpressions();
-        //compare head
-        assertEquals(headExpression, expectedHeadExpression);
+        List<Column> expressions = SparkAggrFuncExprBuilder.getExpressions(operations, aliases);
 
-        //compare tail
-        for (int i=0;i<tailExpressions.size();i++) {
-
-            assertThat(tailExpressions.get(i).toString().equals(expectedExpression.get(i)));
+        //compare expression list
+        for (int i = 0; i < expressions.size(); i++) {
+            assertThat(expressions.get(i).toString().equals(expectedExpression.get(i)));
         }
     }
 

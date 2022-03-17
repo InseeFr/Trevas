@@ -398,7 +398,7 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
                         Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
                         Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
-                        Map.of("name", "toto", "country", "france", "age", 13L, "weight", 11D)
+                        Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
                 Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
@@ -407,10 +407,6 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        // test := ds1[aggr sumAge := sum(age) group by country];
-        // test := ds1[aggr sumAge := sum(age group by country)];
-        // test := ds1[aggr sumAge := sum(age group by country), totalWeight := sum(weight group by country)];
-        // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age)," +
