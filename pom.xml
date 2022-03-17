@@ -102,10 +102,10 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>3.3.9</version>
+                                    <version>11.0.4</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>11.0.4</version>
+                                    <version>3.3.9</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
