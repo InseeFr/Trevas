@@ -1,11 +1,11 @@
 package fr.insee.vtl.engine.processors;
 
+import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
 
 import javax.script.ScriptEngine;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -165,9 +165,27 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAggr(DatasetExpression expression, DataStructure structure,
-                                         Map<String, AggregationExpression> collectorMap,
-                                         Function<DataPoint, Map<String, Object>> keyExtractor) {
+    public DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
+        // TODO: Move to engine.
+        // Create a keyExtractor with the columns we group by.
+        var keyExtractor = new KeyExtractor(groupBy);
+
+        // Compute the new data structure.
+        Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
+        for (Dataset.Component component : expression.getDataStructure().values()) {
+            if (groupBy.contains(component.getName())) {
+                newStructure.put(component.getName(), component);
+            }
+        }
+        for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
+            newStructure.put(entry.getKey(), new Dataset.Component(
+                    entry.getKey(),
+                    entry.getValue().getType(),
+                    Dataset.Role.MEASURE)
+            );
+        }
+
+        Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {
