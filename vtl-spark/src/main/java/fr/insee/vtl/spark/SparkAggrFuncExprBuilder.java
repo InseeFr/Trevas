@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import org.apache.spark.sql.Column;
 
 import java.util.*;
