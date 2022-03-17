@@ -201,62 +201,31 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                          Map<String, AggregationExpression> collectorMap,
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
 
-        /*
-         * for the aggregation function map, we may have duplicate keys, if we use column as key.
-         * for example, column age, can have min, max, mean, etc. as function.
-         *
-         * For the aliasCol map, it is the same thing
-         *
-         * Solution1, we need to use Data Structure LinkedHashMap<String,List<String>> to store multiple actions on the
-         * same column, and preserve the order of insertion.
-         *
-         * Solution2, in solution one we can only guarantee the order of the same key. If user input with mix key order
-         * such as sum(age), min(weight), max(age). The column order of final result will be different. abandon the map
-         * use List<String> operations with col1:func1,
-         * List<String> aliases with col1:alias1
-         */
-        List<AbstractMap.SimpleImmutableEntry<String, String>> operations = new ArrayList<>();
 
-        AbstractMap.SimpleImmutableEntry<String, String> entry1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sum");
-        AbstractMap.SimpleImmutableEntry<String, String> entry2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avg");
-        AbstractMap.SimpleImmutableEntry<String, String> entry3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "count");
-        AbstractMap.SimpleImmutableEntry<String, String> entry4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "max");
-        AbstractMap.SimpleImmutableEntry<String, String> entry5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "max");
-        AbstractMap.SimpleImmutableEntry<String, String> entry6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "min");
-        AbstractMap.SimpleImmutableEntry<String, String> entry7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "min");
-        AbstractMap.SimpleImmutableEntry<String, String> entry8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "median");
-        AbstractMap.SimpleImmutableEntry<String, String> entry9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "median");
-        operations.add(entry1);
-        operations.add(entry2);
-        operations.add(entry3);
-        operations.add(entry4);
-        operations.add(entry5);
-        operations.add(entry6);
-        operations.add(entry7);
-        operations.add(entry8);
-        operations.add(entry9);
+        Map<String, String> operations = new LinkedHashMap<>();
 
-        List<AbstractMap.SimpleImmutableEntry<String, String>> aliases = new ArrayList<>();
+        operations.put("sumAge", "sum");
+        operations.put("avgWeight", "avg");
+        operations.put("countVal", "count");
+        operations.put("maxAge", "max");
+        operations.put("maxWeight", "max");
+        operations.put("minAge", "min");
+        operations.put("minWeight", "min");
+        operations.put("medianAge", "median");
+        operations.put("medianWeight", "median");
 
-        AbstractMap.SimpleImmutableEntry<String, String> a1 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "sumAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a2 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "avgWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a3 = new AbstractMap.SimpleImmutableEntry<String, String>("null", "countVal");
-        AbstractMap.SimpleImmutableEntry<String, String> a4 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "maxAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a5 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "maxWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a6 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "minAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a7 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "minWeight");
-        AbstractMap.SimpleImmutableEntry<String, String> a8 = new AbstractMap.SimpleImmutableEntry<String, String>("age", "medianAge");
-        AbstractMap.SimpleImmutableEntry<String, String> a9 = new AbstractMap.SimpleImmutableEntry<String, String>("weight", "medianWeight");
 
-        aliases.add(a1);
-        aliases.add(a2);
-        aliases.add(a3);
-        aliases.add(a4);
-        aliases.add(a5);
-        aliases.add(a6);
-        aliases.add(a7);
-        aliases.add(a8);
-        aliases.add(a9);
+        Map<String, String> aliases = new LinkedHashMap<>();
+
+        aliases.put("sumAge", "age");
+        aliases.put("avgWeight", "weight");
+        aliases.put("countVal", "null");
+        aliases.put("maxAge", "age");
+        aliases.put("maxWeight", "weight");
+        aliases.put("minAge", "age");
+        aliases.put("minWeight", "weight");
+        aliases.put("medianAge", "age");
+        aliases.put("medianWeight", "weight");
 
 
         return executeAggr(
@@ -267,35 +236,31 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColNames,
-                                         List<AbstractMap.SimpleImmutableEntry<String, String>> operations,
-                                         List<AbstractMap.SimpleImmutableEntry<String, String>> aliases) {
+                                         Map<String, String> operations,
+                                         Map<String, String> aliases) {
         /*
          * - agg(java.util.Map<String,String> exprs)
          * - agg(Column expr, scala.collection.Seq<Column> exprs)
          * */
+        // get source data set
         Dataset<Row> df = dataset.getSparkDataset();
 
-        SparkAggrFuncExprBuilder builder = null;
-        try {
-            builder = new SparkAggrFuncExprBuilder(operations, aliases);
-        } catch (Exception e) {
-            // log exception
-            // To do handle it here or propagate the exception to higher level
-        }
-        List<Column> columns = builder.getTailExpressions();
-        Column head = builder.getHeadExpression();
-        Seq<Column> tails = iterableAsScalaIterable(columns).toSeq();
-        // in scala, we can do groupBy(groupByColumns.head, groupByColumns.tail:_*), in java no way
-        // build groupByColumns
+        // build aggr function list
+        List<Column> columns = SparkAggrFuncExprBuilder.getExpressions(operations, aliases);
+
+
+        // build groupBy Column name scala Seq
         List<Column> groupByCols = new ArrayList<>();
         for (String colName : groupByColNames) {
             groupByCols.add(col(colName));
         }
         Seq<Column> groupByColumns = iterableAsScalaIterable(groupByCols).toSeq();
-        Dataset<Row> result = df.groupBy(groupByColumns)
-                .agg(head, tails);
 
-        result.show();
+        // call the final spark operations
+        Dataset<Row> result = df.groupBy(groupByColumns)
+                .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
+
+        // result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
