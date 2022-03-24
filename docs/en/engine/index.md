@@ -1,12 +1,12 @@
 # VTL Engine
 
-## Dependency
+## Maven dependency
 
 ```xml=
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-engine</artifactId>
-    <version>0.1.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -20,18 +20,32 @@ ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 
 ## Input variables
 
-Input variables can be declared to the engine by passing them in key/value form in a `Bindings` object.
+Input variables can be declared to the engine by passing them in key/value form as a `Bindings` object. Trevas provides a simple implementation base on a Java `Map`:
+
+```java=
+Map<String, Object> bindingsMap = new HashMap<>();
+bindingsMap.put("a", 1);
+Bindings bindings = new SimpleBindings(bindingsMap);
+ScriptContext context = engine.getContext();
+context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+```
+
+The map containing the bindings must be mutable (the script evaluation adds the output bindings to it). The following initialization would raise an exception (`UnsupportedOperationException`) during execution:
 
 ```java=
 Bindings bindings = new SimpleBindings(Map.of("a", 1));
-ScriptContext context = engine.getContext();
-context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+```
+
+However, it is possible to benefit from the conciseness of `Map.of()` by writing :
+
+```java=
+Bindings bindings = new SimpleBindings(new HashMap<>(Map.of("a", 1)));
 ```
 
 ## Script execution
 
 ```java=
-// The 'a' will be looked up in the engine bindings
+// The 'a' variable will be looked up in the bindings passed to the engine
 String script = "res := a + 1;";
 try {
     engine.eval(script);
