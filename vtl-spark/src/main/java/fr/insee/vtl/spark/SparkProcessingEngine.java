@@ -195,9 +195,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAggr(DatasetExpression expression, Structured.DataStructure structure,
+    public DatasetExpression executeAggr(DatasetExpression dataset, Structured.DataStructure structure,
                                          Map<String, AggregationExpression> collectorMap,
                                          Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
+                                         Map<String, String> operations, Map<String, String> aliases) {
         throw new UnsupportedOperationException("TODO");
     }
 
