@@ -411,7 +411,7 @@ public class SparkProcessingEngineTest {
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age)," +
                 "avgWeight := avg(weight)," +
-                "countVal := count(null)," +
+                "countVal := count()," +
                 "maxAge := max(age)," +
                 "maxWeight := max(weight)," +
                 "minAge := min(age)," +
