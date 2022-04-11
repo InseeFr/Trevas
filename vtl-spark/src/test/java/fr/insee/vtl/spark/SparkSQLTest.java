@@ -83,10 +83,10 @@ public class SparkSQLTest {
                 "col2 := COLVARCHAR || \" ok\", " +
                 "col3 := COLINTEGER + 1, " +
                 "col4 := COLINTEGER4 * 100, " +
-                "col5 := COLFLOAT - 0.1, " +
-                "col6 := COLFLOAT8 - 0.0009, " +
+                "col5 := round(COLFLOAT - 0.1, 1), " +
+                "col6 := round(COLFLOAT8 - 0.0009, 4), " +
                 "col7 := not(COLBOOLEAN), " +
-                "col8 := COLNUMERIC + 0.0001, " +
+                "col8 := round(COLNUMERIC + 0.0001, 4), " +
                 "col9 := COLBIGINT + 9999 " +
                 "]" +
                 "[keep ID, col1, col2, col3, col4, col5, col6, col7, col8, col9];");
@@ -96,7 +96,7 @@ public class SparkSQLTest {
                 line.stream().map(element -> {
                     if (element instanceof Double) {
                         BigDecimal bd = new BigDecimal(Double.toString((Double) element));
-                        bd = bd.setScale(2, RoundingMode.HALF_UP);
+                        bd = bd.setScale(10, RoundingMode.HALF_UP);
                         return bd.doubleValue();
                     }
                     return element;
@@ -104,10 +104,10 @@ public class SparkSQLTest {
         ).collect(Collectors.toList());
 
         assertThat(roundedDs2).containsExactlyInAnyOrder(
-                List.of(1L, "string1 ok", "string1 ok", 2L, 100L, 1.1D, 1.2D, false, 1.2001D, 10099L),
-                List.of(2L, "string2 ok", "string2 ok", 3L, 200L, 5.1D, 5.2D, true, 5.2001D, 10199L),
-                List.of(3L, "string3 ok", "string3 ok", 4L, 300L, 3.1D, 3.2D, false, 3.2001D, 10299L),
-                List.of(4L, "string4 ok", "string4 ok", 5L, 400L, 4.1D, 4.2D, true, 4.2001D, 10399L)
+                List.of(1L, "string1 ok", "string1 ok", 2L, 100L, 1.1D, 1.1991D, false, 1.2001D, 10099L),
+                List.of(2L, "string2 ok", "string2 ok", 3L, 200L, 5.1D, 5.1991D, true, 5.2001D, 10199L),
+                List.of(3L, "string3 ok", "string3 ok", 4L, 300L, 3.1D, 3.1991D, false, 3.2001D, 10299L),
+                List.of(4L, "string4 ok", "string4 ok", 5L, 400L, 4.1D, 4.1991D, true, 4.2001D, 10399L)
         );
     }
 }
