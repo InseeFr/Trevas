@@ -49,13 +49,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         this.spark = Objects.requireNonNull(spark);
     }
 
-    /**
-     * Constructor creating an engine with the currently active Spark session (or otherwise the default one).
-     */
-    public SparkProcessingEngine() {
-        this.spark = SparkSession.active();
-    }
-
     private static Map<String, Role> getRoleMap(Collection<Component> components) {
         return components.stream()
                 .collect(Collectors.toMap(
@@ -241,11 +234,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
         return new SparkDatasetExpression(new SparkDataset(result));
-    }
-
-    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
-                                         Map<String, String> operations, Map<String, String> aliases) {
-        throw new UnsupportedOperationException("TODO");
     }
 
     @Override

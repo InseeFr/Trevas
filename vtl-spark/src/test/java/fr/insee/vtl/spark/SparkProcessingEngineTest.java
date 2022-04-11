@@ -90,19 +90,6 @@ public class SparkProcessingEngineTest {
             spark.close();
     }
 
-    public void testLoadActiveSession() {
-        SparkSession spark = SparkSession.builder()
-                .appName("test")
-                .master("local")
-                .getOrCreate();
-        SparkSession.setActiveSession(spark);
-        try {
-
-        } finally {
-            spark.close();
-        }
-    }
-
     @Test
     public void testServiceLoader() {
         List<String> processingEngines = ServiceLoader.load(ProcessingEngineFactory.class).stream()
@@ -130,7 +117,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc age := age * 2, attribute wisdom := (weight + age) / 2];");
+        engine.eval("ds := ds1[calc test := between(age, 10, 11), age := age * 2, attribute wisdom := (weight + age) / 2];");
 
         var ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds).isInstanceOf(Dataset.class);

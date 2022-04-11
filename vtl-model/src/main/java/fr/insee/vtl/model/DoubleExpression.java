@@ -64,7 +64,7 @@ public abstract class DoubleExpression extends NumberExpression {
                 Double exprValue = (Double) expr.resolve(context);
                 if (exprValue == null) return null;
                 if (exprValue % 1 != 0)
-                    throw new UnsupportedOperationException(exprValue.toString() + " can not be casted into integer");
+                    throw new UnsupportedOperationException(exprValue + " can not be casted into integer");
                 return exprValue.longValue();
             });
         if (outputClass.equals(Double.class))
