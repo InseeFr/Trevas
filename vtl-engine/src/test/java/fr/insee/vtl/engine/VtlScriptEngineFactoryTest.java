@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class VtlScriptEngineFactoryTest {
 
     @Test
-    void testEngineConflict() {
+    public void testEngineConflict() {
         ScriptEngineManager manager = new ScriptEngineManager();
         manager.registerEngineName("vtl", new TestEngineFactory());
         ScriptEngine engine = manager.getEngineByName("vtl");
@@ -23,7 +23,7 @@ public class VtlScriptEngineFactoryTest {
     }
 
     @Test
-    void testEngineVersion() {
+    public void testEngineVersion() {
         ScriptEngine vtlEngine = new ScriptEngineManager().getEngineByName("vtl");
         assertThat(vtlEngine.getFactory().getEngineVersion())
                 .isEqualTo(getClass().getPackage().getImplementationVersion());
