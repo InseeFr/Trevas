@@ -26,25 +26,28 @@ public interface Structured {
     }
 
     /**
-     * The <code>Structure</code> class represent a structure component with its name, type and role.
+     * The <code>Structure</code> class represent a structure component with its name, type, role and nullable.
      */
     class Component implements Serializable {
 
         private final String name;
         private final Class<?> type;
         private final Dataset.Role role;
+        private final Boolean nullable;
 
         /**
-         * Constructor taking the name, type and role of the component.
+         * Constructor taking the name, type, role and nullable of the component.
          *
-         * @param name A string giving the name of the structure component to create
-         * @param type A <code>Class</code> giving the type of the structure component to create
-         * @param role A <code>Role</code> giving the role of the structure component to create
+         * @param name     A string giving the name of the structure component to create
+         * @param type     A <code>Class</code> giving the type of the structure component to create
+         * @param role     A <code>Role</code> giving the role of the structure component to create
+         * @param nullable A <code>Nullable</code> giving the nullable of the structure component to create
          */
-        public Component(String name, Class<?> type, Dataset.Role role) {
+        public Component(String name, Class<?> type, Dataset.Role role, Boolean nullable) {
             this.name = Objects.requireNonNull(name);
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
+            this.nullable = nullable;
         }
 
         /**
@@ -56,6 +59,7 @@ public interface Structured {
             this.name = component.getName();
             this.type = component.getType();
             this.role = component.getRole();
+            this.nullable = component.getNullable();
         }
 
         /**
@@ -112,14 +116,23 @@ public interface Structured {
             return role;
         }
 
+        /**
+         * Returns the nullable of component.
+         *
+         * @return The nullable of the component as a Boolean
+         */
+        public Boolean getNullable() {
+            return nullable;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Component component = (Component) o;
             return name.equals(component.name) &&
-                   type.equals(component.type) &&
-                   role == component.role;
+                    type.equals(component.type) &&
+                    role == component.role;
         }
 
         @Override
@@ -130,9 +143,9 @@ public interface Structured {
         @Override
         public String toString() {
             return "Component{" + name +
-                   ", type=" + type +
-                   ", role=" + role +
-                   '}';
+                    ", type=" + type +
+                    ", role=" + role +
+                    '}';
         }
     }
 
@@ -151,13 +164,14 @@ public interface Structured {
          * @param roles The roles of each component, by name
          * @throws IllegalArgumentException if the key set of types and roles are not equal.
          */
-        public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles) {
+        public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles,
+                             Map<String, Boolean> nullables) {
             super(types.size());
             if (!types.keySet().equals(roles.keySet())) {
                 throw new IllegalArgumentException("type and roles key sets inconsistent");
             }
             for (String column : types.keySet()) {
-                Component component = new Component(column, types.get(column), roles.get(column));
+                Component component = new Component(column, types.get(column), roles.get(column), nullables.get(column));
                 put(column, component);
             }
         }

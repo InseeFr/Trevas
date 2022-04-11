@@ -9,6 +9,8 @@ import fr.insee.vtl.model.Structured;
 import java.io.IOException;
 import java.util.Map;
 
+import static fr.insee.vtl.jackson.utils.NullableComponent.buildNullable;
+
 /**
  * <code>ComponentDeserializer</code> is a JSON deserializer specialized for dataset components.
  */
@@ -31,7 +33,7 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
     /**
      * Deserializes a JSON component into a <code>Structured.Component</code> object.
      *
-     * @param p The base JSON parser.
+     * @param p    The base JSON parser.
      * @param ctxt A deserialization context.
      * @return The deserialized dataset component.
      * @throws IOException In case of problem while processing the JSON component.
@@ -41,8 +43,9 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
         var node = ctxt.readTree(p);
         var name = node.get("name").asText();
         var type = node.get("type").asText();
-        var role = node.get("role").asText();
-        return new Dataset.Component(name, asType(type), Dataset.Role.valueOf(role));
+        var role = Dataset.Role.valueOf(node.get("role").asText());
+        var nullable = buildNullable(node.get("nullable"), role);
+        return new Dataset.Component(name, asType(type), role, nullable);
     }
 
     private Class<?> asType(String type) {

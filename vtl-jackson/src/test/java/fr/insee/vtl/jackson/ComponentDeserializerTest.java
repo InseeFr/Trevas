@@ -12,48 +12,48 @@ public class ComponentDeserializerTest extends AbstractMapperTest {
     @Test
     public void testCanDeserialize() throws JsonProcessingException {
 
-        var stringComponent = new Dataset.Component("NAME", String.class, Dataset.Role.IDENTIFIER);
-        var measureComponent = new Dataset.Component("NAME", String.class, Dataset.Role.MEASURE);
-        var attributeComponent = new Dataset.Component("NAME", String.class, Dataset.Role.ATTRIBUTE);
+        var stringComponent = new Dataset.Component("NAME", String.class, Dataset.Role.IDENTIFIER, null);
+        var measureComponent = new Dataset.Component("NAME", String.class, Dataset.Role.MEASURE, false);
+        var attributeComponent = new Dataset.Component("NAME", String.class, Dataset.Role.ATTRIBUTE, true);
 
-        var doubleComponent = new Dataset.Component("NAME", Double.class, Dataset.Role.IDENTIFIER);
-        var longComponent = new Dataset.Component("NAME", Long.class, Dataset.Role.IDENTIFIER);
-        var booleanComponent = new Dataset.Component("NAME", Boolean.class, Dataset.Role.IDENTIFIER);
+        var doubleComponent = new Dataset.Component("NAME", Double.class, Dataset.Role.IDENTIFIER, true);
+        var longComponent = new Dataset.Component("NAME", Long.class, Dataset.Role.IDENTIFIER, true);
+        var booleanComponent = new Dataset.Component("NAME", Boolean.class, Dataset.Role.IDENTIFIER, true);
 
         Dataset.Component component;
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"IDENTIFIER\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"IDENTIFIER\", \"nullable\": false }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(stringComponent);
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"NUMBER\", \"role\": \"IDENTIFIER\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"NUMBER\", \"role\": \"IDENTIFIER\", \"nullable\": true }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(doubleComponent);
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"INTEGER\", \"role\": \"IDENTIFIER\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"INTEGER\", \"role\": \"IDENTIFIER\", \"nullable\": true }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(longComponent);
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"BOOLEAN\", \"role\": \"IDENTIFIER\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"BOOLEAN\", \"role\": \"IDENTIFIER\", \"nullable\": true }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(booleanComponent);
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"MEASURE\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"MEASURE\", \"nullable\": false }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(measureComponent);
 
         component = mapper.readValue("" +
-                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"ATTRIBUTE\" }" +
+                "{ \"name\": \"NAME\", \"type\": \"STRING\", \"role\": \"ATTRIBUTE\", \"nullable\": true }" +
                 "", Structured.Component.class
         );
         assertThat(component).isEqualTo(attributeComponent);

@@ -75,7 +75,8 @@ public class JDBCDataset implements Dataset {
         for (int columnIdx = 1; columnIdx <= metaData.getColumnCount(); columnIdx++) {
             var name = metaData.getColumnName(columnIdx);
             Class<?> type = toVtlType(metaData.getColumnType(columnIdx));
-            components.add(new Component(name, type, Role.MEASURE));
+            // TODO: refine nullable strategy
+            components.add(new Component(name, type, Role.MEASURE, true));
         }
         return new DataStructure(components);
     }

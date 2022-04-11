@@ -25,11 +25,12 @@ public class InMemoryDataset implements Dataset {
      * @param types A mapping between the names and types of the columns as structure components.
      * @param roles A mapping between the names and roles of the columns as structure components.
      */
-    public InMemoryDataset(List<Map<String, Object>> data, Map<String, Class<?>> types, Map<String, Role> roles) {
+    public InMemoryDataset(List<Map<String, Object>> data, Map<String, Class<?>> types,
+                           Map<String, Role> roles, Map<String, Boolean> nullables) {
         if (!Objects.requireNonNull(types).keySet().equals(Objects.requireNonNull(roles).keySet())) {
             throw new IllegalArgumentException("types and role keys differ");
         }
-        this.structure = new DataStructure(types, roles);
+        this.structure = new DataStructure(types, roles, nullables);
         this.data = convert(data);
     }
 

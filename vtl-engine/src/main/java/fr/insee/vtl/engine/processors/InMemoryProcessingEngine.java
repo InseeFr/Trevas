@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static fr.insee.vtl.engine.utils.NullableComponent.buildNullable;
 import static fr.insee.vtl.model.Structured.*;
 
 /**
@@ -23,10 +24,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         // Copy the structure and mutate based on the expressions.
         var newStructure = new DataStructure(expression.getDataStructure());
         for (String columnName : expressions.keySet()) {
+            // TODO: refine nullable strategy
             newStructure.put(columnName, new Dataset.Component(
                     columnName,
                     expressions.get(columnName).getType(),
-                    roles.get(columnName))
+                    roles.get(columnName),
+                    true
+                    )
             );
         }
 
@@ -87,7 +91,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                                 : new Dataset.Component(
                                 fromTo.get(component.getName()),
                                 component.getType(),
-                                component.getRole())
+                                component.getRole(),
+                                buildNullable(component.getNullable(), component.getRole())
+                        )
                 ).collect(Collectors.toList());
         DataStructure renamedStructure = new DataStructure(structure);
         return new DatasetExpression() {
@@ -166,7 +172,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
-        // TODO: Move to engine.
         // Create a keyExtractor with the columns we group by.
         var keyExtractor = new KeyExtractor(groupBy);
 
@@ -178,10 +183,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
         }
         for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
+            // TODO: refine nullable strategy
             newStructure.put(entry.getKey(), new Dataset.Component(
                     entry.getKey(),
                     entry.getValue().getType(),
-                    Dataset.Role.MEASURE)
+                    Dataset.Role.MEASURE,
+                    true)
             );
         }
 

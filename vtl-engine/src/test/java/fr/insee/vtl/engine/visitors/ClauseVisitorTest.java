@@ -37,9 +37,9 @@ public class ClauseVisitorTest {
 
         var dataset = new InMemoryDataset(
                 List.of(
-                        new Structured.Component("name", String.class, Role.IDENTIFIER),
-                        new Structured.Component("age", Long.class, Role.MEASURE),
-                        new Structured.Component("weight", Long.class, Role.MEASURE)
+                        new Structured.Component("name", String.class, Role.IDENTIFIER, null),
+                        new Structured.Component("age", Long.class, Role.MEASURE, null),
+                        new Structured.Component("weight", Long.class, Role.MEASURE, null)
                 ),
                 Arrays.asList("Toto", null, 100L),
                 Arrays.asList("Hadrien", 10L, 11L),
@@ -75,7 +75,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -100,7 +101,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -133,7 +135,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -164,7 +167,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -190,7 +194,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -220,7 +225,8 @@ public class ClauseVisitorTest {
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
         var cases = List.of(
                 "res := ds1[aggr a :=         sum(name) group by country];",
@@ -254,7 +260,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -266,16 +273,16 @@ public class ClauseVisitorTest {
         // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
-                    "sumAge := sum(age)," +
-                    "avgWeight := avg(age)," +
-                    "countVal := count(null)," +
-                    "maxAge := max(age)," +
-                    "maxWeight := max(weight)," +
-                    "minAge := min(age)," +
-                    "minWeight := min(weight)," +
-                    "medianAge := median(age)," +
-                    "medianWeight := median(weight)" +
-                    " group by country];");
+                "sumAge := sum(age)," +
+                "avgWeight := avg(age)," +
+                "countVal := count(null)," +
+                "maxAge := max(age)," +
+                "maxWeight := max(weight)," +
+                "minAge := min(age)," +
+                "minWeight := min(weight)," +
+                "medianAge := median(age)," +
+                "medianWeight := median(weight)" +
+                " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5,
@@ -297,21 +304,22 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("res := ds2[aggr " +
-                    "stddev_popAge := stddev_pop(age), " +
-                    "stddev_popWeight := stddev_pop(weight), " +
-                    "stddev_sampAge := stddev_samp(age), " +
-                    "stddev_sampWeight := stddev_samp(weight), " +
-                    "var_popAge := var_pop(age), " +
-                    "var_popWeight := var_pop(weight), " +
-                    "var_sampAge := var_samp(age), " +
-                    "var_sampWeight := var_samp(weight)" +
-                    " group by country];");
+                "stddev_popAge := stddev_pop(age), " +
+                "stddev_popWeight := stddev_pop(weight), " +
+                "stddev_sampAge := stddev_samp(age), " +
+                "stddev_sampWeight := stddev_samp(weight), " +
+                "var_popAge := var_pop(age), " +
+                "var_popWeight := var_pop(weight), " +
+                "var_sampAge := var_samp(age), " +
+                "var_sampWeight := var_samp(weight)" +
+                " group by country];");
 
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 

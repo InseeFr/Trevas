@@ -37,9 +37,9 @@ public class SparkProcessingEngineTest {
                     List.of("d", 7L, 8L)
             ),
             List.of(
-                    new Component("name", String.class, Role.IDENTIFIER),
-                    new Component("age", Long.class, Role.MEASURE),
-                    new Component("weight", Long.class, Role.MEASURE)
+                    new Component("name", String.class, Role.IDENTIFIER, null),
+                    new Component("age", Long.class, Role.MEASURE, null),
+                    new Component("weight", Long.class, Role.MEASURE, null)
             )
     );
     private InMemoryDataset dataset2 = new InMemoryDataset(
@@ -50,9 +50,9 @@ public class SparkProcessingEngineTest {
                     List.of(14L, "c", 15L)
             ),
             List.of(
-                    new Component("age2", Long.class, Role.MEASURE),
-                    new Component("name", String.class, Role.IDENTIFIER),
-                    new Component("weight2", Long.class, Role.MEASURE)
+                    new Component("age2", Long.class, Role.MEASURE, null),
+                    new Component("name", String.class, Role.IDENTIFIER, null),
+                    new Component("weight2", Long.class, Role.MEASURE, null)
             )
     );
 
@@ -64,9 +64,9 @@ public class SparkProcessingEngineTest {
                     List.of(22L, "c", 23L)
             ),
             List.of(
-                    new Component("age3", Long.class, Role.MEASURE),
-                    new Component("name", String.class, Role.IDENTIFIER),
-                    new Component("weight3", Long.class, Role.MEASURE)
+                    new Component("age3", Long.class, Role.MEASURE, null),
+                    new Component("name", String.class, Role.IDENTIFIER, null),
+                    new Component("weight3", Long.class, Role.MEASURE, null)
             )
     );
 
@@ -125,7 +125,8 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -141,10 +142,10 @@ public class SparkProcessingEngineTest {
                 Map.of("name", "Franck", "age", 24L, "weight", 9L, "wisdom", 10.5D)
         ));
         assertThat(ds.getDataStructure()).containsValues(
-                new Component("name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE),
-                new Component("wisdom", Double.class, Role.ATTRIBUTE)
+                new Component("name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null),
+                new Component("wisdom", Double.class, Role.ATTRIBUTE, null)
         );
 
     }
@@ -171,13 +172,13 @@ public class SparkProcessingEngineTest {
         );
 
         assertThat(result.getDataStructure()).containsValues(
-                new Component("name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE),
-                new Component("age2", Long.class, Role.MEASURE),
-                new Component("weight2", Long.class, Role.MEASURE),
-                new Component("age3", Long.class, Role.MEASURE),
-                new Component("weight3", Long.class, Role.MEASURE)
+                new Component("name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null),
+                new Component("age2", Long.class, Role.MEASURE, null),
+                new Component("weight2", Long.class, Role.MEASURE, null),
+                new Component("age3", Long.class, Role.MEASURE, null),
+                new Component("weight3", Long.class, Role.MEASURE, null)
         );
     }
 
@@ -201,13 +202,13 @@ public class SparkProcessingEngineTest {
         );
 
         assertThat(resultInner.getDataStructure()).containsValues(
-                new Component("name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE),
-                new Component("age2", Long.class, Role.MEASURE),
-                new Component("weight2", Long.class, Role.MEASURE),
-                new Component("age3", Long.class, Role.MEASURE),
-                new Component("weight3", Long.class, Role.MEASURE)
+                new Component("name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null),
+                new Component("age2", Long.class, Role.MEASURE, null),
+                new Component("weight2", Long.class, Role.MEASURE, null),
+                new Component("age3", Long.class, Role.MEASURE, null),
+                new Component("weight3", Long.class, Role.MEASURE, null)
         );
     }
 
@@ -217,8 +218,8 @@ public class SparkProcessingEngineTest {
 
         var ds1 = new InMemoryDataset(
                 List.of(
-                        new Component("id", String.class, Role.IDENTIFIER),
-                        new Component("m1", Long.class, Role.MEASURE)
+                        new Component("id", String.class, Role.IDENTIFIER, null),
+                        new Component("m1", Long.class, Role.MEASURE, null)
                 ),
                 Arrays.asList("b", 1L),
                 Arrays.asList("c", 2L),
@@ -227,8 +228,8 @@ public class SparkProcessingEngineTest {
 
         var ds2 = new InMemoryDataset(
                 List.of(
-                        new Component("id", String.class, Role.IDENTIFIER),
-                        new Component("m1", Long.class, Role.MEASURE)
+                        new Component("id", String.class, Role.IDENTIFIER, null),
+                        new Component("m1", Long.class, Role.MEASURE, null)
                 ),
                 Arrays.asList("a", 4L),
                 Arrays.asList("b", 5L),
@@ -237,8 +238,8 @@ public class SparkProcessingEngineTest {
 
         var ds3 = new InMemoryDataset(
                 List.of(
-                        new Component("id", String.class, Role.IDENTIFIER),
-                        new Component("m1", Long.class, Role.MEASURE)
+                        new Component("id", String.class, Role.IDENTIFIER, null),
+                        new Component("m1", Long.class, Role.MEASURE, null)
                 ),
                 Arrays.asList("a", 7L),
                 Arrays.asList("d", 8L)
@@ -253,10 +254,10 @@ public class SparkProcessingEngineTest {
         var result = (Dataset) context.getAttribute("result");
 
         assertThat(result.getDataStructure().values()).containsExactly(
-                new Component("id", String.class, Role.IDENTIFIER),
-                new Component("dsOne#m1", Long.class, Role.MEASURE),
-                new Component("ds2#m1", Long.class, Role.MEASURE),
-                new Component("ds3#m1", Long.class, Role.MEASURE)
+                new Component("id", String.class, Role.IDENTIFIER, null),
+                new Component("dsOne#m1", Long.class, Role.MEASURE, null),
+                new Component("ds2#m1", Long.class, Role.MEASURE, null),
+                new Component("ds3#m1", Long.class, Role.MEASURE, null)
         );
 
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
@@ -346,15 +347,15 @@ public class SparkProcessingEngineTest {
         );
 
         assertThat(resultCross.getDataStructure().values()).containsExactly(
-                new Component("dsOne#name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE),
-                new Component("age2", Long.class, Role.MEASURE),
-                new Component("ds2#name", String.class, Role.IDENTIFIER),
-                new Component("weight2", Long.class, Role.MEASURE),
-                new Component("age3", Long.class, Role.MEASURE),
-                new Component("ds3#name", String.class, Role.IDENTIFIER),
-                new Component("weight3", Long.class, Role.MEASURE)
+                new Component("dsOne#name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null),
+                new Component("age2", Long.class, Role.MEASURE, null),
+                new Component("ds2#name", String.class, Role.IDENTIFIER, null),
+                new Component("weight2", Long.class, Role.MEASURE, null),
+                new Component("age3", Long.class, Role.MEASURE, null),
+                new Component("ds3#name", String.class, Role.IDENTIFIER, null),
+                new Component("weight3", Long.class, Role.MEASURE, null)
         );
     }
 
@@ -368,7 +369,8 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -383,9 +385,9 @@ public class SparkProcessingEngineTest {
         ));
 
         assertThat(ds.getDataStructure()).containsValues(
-                new Component("name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE)
+                new Component("name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null)
         );
 
 
@@ -401,7 +403,8 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -491,7 +494,8 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -507,9 +511,9 @@ public class SparkProcessingEngineTest {
                 Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
         );
         assertThat(ds.getDataStructure()).containsValues(
-                new Component("pseudo", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE),
-                new Component("weight", Long.class, Role.MEASURE)
+                new Component("pseudo", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null),
+                new Component("weight", Long.class, Role.MEASURE, null)
         );
     }
 
@@ -524,7 +528,8 @@ public class SparkProcessingEngineTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of()
         );
 
         ScriptContext context = engine.getContext();
@@ -549,8 +554,8 @@ public class SparkProcessingEngineTest {
                 Map.of("name", "Franck", "age", 12L)
         );
         assertThat(ds.getDataStructure()).containsValues(
-                new Component("name", String.class, Role.IDENTIFIER),
-                new Component("age", Long.class, Role.MEASURE)
+                new Component("name", String.class, Role.IDENTIFIER, null),
+                new Component("age", Long.class, Role.MEASURE, null)
         );
     }
 }

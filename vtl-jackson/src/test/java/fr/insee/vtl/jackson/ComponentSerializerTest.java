@@ -14,21 +14,21 @@ public class ComponentSerializerTest extends AbstractMapperTest {
     public void testSerializeComponents() throws JsonProcessingException {
 
         List<Dataset.Component> cases = List.of(
-                new Dataset.Component("name", Long.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("name", Long.class, Dataset.Role.MEASURE),
-                new Dataset.Component("name", Long.class, Dataset.Role.ATTRIBUTE),
+                new Dataset.Component("name", Long.class, Dataset.Role.IDENTIFIER, null),
+                new Dataset.Component("name", Long.class, Dataset.Role.MEASURE, null),
+                new Dataset.Component("name", Long.class, Dataset.Role.ATTRIBUTE, null),
 
-                new Dataset.Component("name", Double.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("name", Double.class, Dataset.Role.MEASURE),
-                new Dataset.Component("name", Double.class, Dataset.Role.ATTRIBUTE),
+                new Dataset.Component("name", Double.class, Dataset.Role.IDENTIFIER, null),
+                new Dataset.Component("name", Double.class, Dataset.Role.MEASURE, null),
+                new Dataset.Component("name", Double.class, Dataset.Role.ATTRIBUTE, null),
 
-                new Dataset.Component("name", Boolean.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("name", Boolean.class, Dataset.Role.MEASURE),
-                new Dataset.Component("name", Boolean.class, Dataset.Role.ATTRIBUTE),
+                new Dataset.Component("name", Boolean.class, Dataset.Role.IDENTIFIER, null),
+                new Dataset.Component("name", Boolean.class, Dataset.Role.MEASURE, null),
+                new Dataset.Component("name", Boolean.class, Dataset.Role.ATTRIBUTE, null),
 
-                new Dataset.Component("name", String.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("name", String.class, Dataset.Role.MEASURE),
-                new Dataset.Component("name", String.class, Dataset.Role.ATTRIBUTE)
+                new Dataset.Component("name", String.class, Dataset.Role.IDENTIFIER, null),
+                new Dataset.Component("name", String.class, Dataset.Role.MEASURE, null),
+                new Dataset.Component("name", String.class, Dataset.Role.ATTRIBUTE, null)
 
         );
 
