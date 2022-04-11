@@ -37,7 +37,7 @@ public class SparkSQLTest {
         statement.executeUpdate("" +
                 "create table if not exists ds1 (" +
                 "  id integer," +
-                "  colChar char, " +
+                "  colChar char(7), " +
                 "  colVarchar varchar, " +
                 "  colInteger int," +
                 "  colInteger4 int4," +
