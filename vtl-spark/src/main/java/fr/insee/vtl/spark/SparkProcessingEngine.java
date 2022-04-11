@@ -239,7 +239,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         List<Column> groupByColumns = groupBy.stream().map(name -> col(name)).collect(Collectors.toList());
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-        result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
