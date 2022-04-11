@@ -161,7 +161,7 @@
 | Name         | Symbol       |      Boolean       | Component | Dataset |
 | ------------ | :----------- | :----------------: | :-------: | :-----: |
 | If Then Else | if-then-else | :heavy_check_mark: |    :x:    |   :x:   |
-| Nvl          | nvl          |        :x:         |    :x:    |   :x:   |
+| Nvl          | nvl          | :heavy_check_mark: |    :x:    |   :x:   |
 
 #### VTL-ML - Clause operators
 
