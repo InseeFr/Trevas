@@ -243,6 +243,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
+    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
+                                         Map<String, String> operations, Map<String, String> aliases) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
     @Override
     public DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
         List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);

@@ -5,10 +5,7 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import scala.collection.JavaConverters;
 
 import java.util.*;
@@ -29,7 +26,7 @@ public class SparkDataset implements Dataset {
      * Constructor taking a Spark dataset and a mapping of component names and roles.
      *
      * @param sparkDataset a Spark dataset.
-     * @param roles a map between component names and their roles in the dataset.
+     * @param roles        a map between component names and their roles in the dataset.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
         this.sparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
@@ -49,8 +46,8 @@ public class SparkDataset implements Dataset {
      * Constructor taking a {@link Dataset}, a mapping of component names and roles, and a Spark session.
      *
      * @param vtlDataset a VTL dataset.
-     * @param roles a map between component names and their roles in the dataset.
-     * @param spark a Spark session to use for the creation of the Spark dataset.
+     * @param roles      a map between component names and their roles in the dataset.
+     * @param spark      a Spark session to use for the creation of the Spark dataset.
      */
     public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
         List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
@@ -67,7 +64,7 @@ public class SparkDataset implements Dataset {
     /**
      * Constructor taking a Spark dataset and a {@link DataStructure}.
      *
-     * @param sparkDataset Spark dataset
+     * @param sparkDataset  Spark dataset
      * @param dataStructure the structure of the dataset.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure dataStructure) {
@@ -86,6 +83,9 @@ public class SparkDataset implements Dataset {
                 casted = casted.withColumn(field.name(),
                         casted.col(field.name()).cast(LongType));
             } else if (FloatType.sameType(field.dataType())) {
+                casted = casted.withColumn(field.name(),
+                        casted.col(field.name()).cast(DoubleType));
+            } else if (DecimalType.class.equals(field.dataType().getClass())) {
                 casted = casted.withColumn(field.name(),
                         casted.col(field.name()).cast(DoubleType));
             }
@@ -130,6 +130,8 @@ public class SparkDataset implements Dataset {
             return Double.class;
         } else if (BooleanType.sameType(dataType)) {
             return Boolean.class;
+        } else if (DecimalType.class.equals(dataType.getClass())) {
+            return Double.class;
         } else {
             throw new UnsupportedOperationException("unsupported type " + dataType);
         }
