@@ -19,7 +19,7 @@ public class VtlScriptEngineFactoryTest {
         ScriptEngineManager manager = new ScriptEngineManager();
         manager.registerEngineName("vtl", new TestEngineFactory());
         ScriptEngine engine = manager.getEngineByName("vtl");
-        assertThat(engine).isNotNull();
+        assertThat(engine).isNotNull().isInstanceOf(VtlScriptEngine.class);
     }
 
     @Test
