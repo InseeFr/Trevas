@@ -15,7 +15,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 /**
  * <code>IfVisitor</code> is the base visitor for if-then-else expressions.
  */
-public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
+public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
@@ -24,7 +24,7 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
      *
      * @param expressionVisitor The visitor for the enclosing expression.
      */
-    public IfVisitor(ExpressionVisitor expressionVisitor) {
+    public ConditionalVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
@@ -74,6 +74,40 @@ public class IfVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return Boolean.TRUE.equals(conditionalValue) ?
                     clazz.cast(finalThenExpression.resolve(context)) :
                     clazz.cast(finalElseExpression.resolve(context));
+        });
+    }
+
+    /**
+     * Visits nvl expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the null value clause.
+     */
+    @Override
+    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+        ResolvableExpression expression = exprVisitor.visit(ctx.left);
+        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
+
+        if (isNull(expression)) {
+            return ResolvableExpression.withTypeCasting(defaultExpression.getType(), (clazz, context) ->
+                clazz.cast(defaultExpression.resolve(context))
+            );
+        }
+
+        Class<?> expressionType = expression.getType();
+        Class<?> defaultExpressionType = defaultExpression.getType();
+
+        if (!expressionType.equals(defaultExpressionType)) {
+            throw new VtlRuntimeException(
+                    new InvalidTypeException(expressionType, defaultExpressionType, ctx.right)
+            );
+        }
+
+        return ResolvableExpression.withTypeCasting(defaultExpressionType, (clazz, context) -> {
+            var resolvedExpression = expression.resolve(context);
+            return resolvedExpression == null ?
+                    clazz.cast(defaultExpression.resolve(context)) :
+                    clazz.cast(resolvedExpression);
         });
     }
 }

@@ -24,7 +24,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final ArithmeticExprOrConcatVisitor arithmeticExprOrConcatVisitor;
     private final UnaryVisitor unaryVisitor;
     private final ComparisonVisitor comparisonVisitor;
-    private final IfVisitor ifVisitor;
+    private final ConditionalVisitor conditionalVisitor;
     private final StringFunctionsVisitor stringFunctionsVisitor;
     private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
     private final NumericFunctionsVisitor numericFunctionsVisitor;
@@ -49,7 +49,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this);
         unaryVisitor = new UnaryVisitor(this);
         comparisonVisitor = new ComparisonVisitor(this);
-        ifVisitor = new IfVisitor(this);
+        conditionalVisitor = new ConditionalVisitor(this);
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
@@ -173,11 +173,23 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
      *
      * @param ctx The scripting context for the expression.
      * @return A <code>ResolvableExpression</code> resolving to the if or else clause resolution depending on the condition resolution.
-     * @see IfVisitor#visitIfExpr(VtlParser.IfExprContext)
+     * @see ConditionalVisitor#visitIfExpr(VtlParser.IfExprContext)
      */
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
-        return ifVisitor.visit(ctx);
+        return conditionalVisitor.visit(ctx);
+    }
+
+    /**
+     * Visits nvl expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the null value clause resolution.
+     * @see ConditionalVisitor#visitIfExpr(VtlParser.IfExprContext)
+     */
+    @Override
+    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+        return conditionalVisitor.visit(ctx);
     }
 
     /*
