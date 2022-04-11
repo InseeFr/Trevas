@@ -183,13 +183,25 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var groupBy = new GroupByVisitor(dataStructure).visit(ctx);
 
         // TODO: Move to engine
+        Structured.DataStructure normalizedStructure = normalizedDataset.getDataStructure();
         Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
         for (VtlParser.AggrFunctionClauseContext functionCtx : ctx.aggregateClause().aggrFunctionClause()) {
             String alias = getName(functionCtx.componentID());
+            Structured.Component normalizedComponent = normalizedStructure.get(alias);
             var aggregationFunction = convertToAggregation(
                     // Note that here we replace the expression by the name of the columns.
                     (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                    ResolvableExpression.withType(Number.class, c -> (Number) c.get(alias))
+                    new ResolvableExpression() {
+                        @Override
+                        public Object resolve(Map<String, Object> context) {
+                            return context.get(alias);
+                        }
+
+                        @Override
+                        public Class<?> getType() {
+                            return normalizedComponent.getType();
+                        }
+                    }
             );
             collectorMap.put(alias, aggregationFunction);
         }
