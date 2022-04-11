@@ -189,20 +189,6 @@ public interface Structured {
         public DataStructure(DataStructure dataStructure) {
             super(dataStructure);
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DataStructure objects = (DataStructure) o;
-            // TODO: Optimize
-            return Objects.equals(new HashSet<>(values()), new HashSet<>(objects.values()));
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(values());
-        }
     }
 
     /**
