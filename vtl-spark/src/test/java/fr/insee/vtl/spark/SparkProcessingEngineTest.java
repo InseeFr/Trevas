@@ -409,7 +409,7 @@ public class SparkProcessingEngineTest {
 
 
         engine.eval("res := ds1[aggr " +
-                "sumAge := sum(age)," +
+                "sumAge := sum(age*2)," +
                 "avgWeight := avg(weight)," +
                 "countVal := count()," +
                 "maxAge := max(age)," +
@@ -421,11 +421,11 @@ public class SparkProcessingEngineTest {
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("country", "france", "sumAge", 36L, "avgWeight", 10.0D,
+                Map.of("country", "france", "sumAge", 72L, "avgWeight", 10.0D,
                         "countVal", 3L, "maxAge", 13L, "maxWeight", 11.0D,
                         "minAge", 11L, "minWeight", 9D, "medianAge", 12L,
                         "medianWeight", 10.0D),
-                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 11.0,
+                Map.of("country", "norway", "sumAge", 20L, "avgWeight", 11.0,
                         "countVal", 1L, "maxAge", 10L, "maxWeight", 11.0D,
                         "minAge", 10L, "minWeight", 11D, "medianAge", 10L,
                         "medianWeight", 11D)
