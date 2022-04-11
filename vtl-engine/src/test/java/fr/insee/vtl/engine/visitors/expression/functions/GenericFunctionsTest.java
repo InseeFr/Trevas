@@ -71,10 +71,10 @@ public class GenericFunctionsTest {
         engine.eval("f := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
         assertThat((Instant) context.getAttribute("f")).isEqualTo("1998-12-31T00:00:00.000Z");
         assertThatThrownBy(() -> {
-            engine.eval("cast(\"\", integer);");
+            engine.eval("a := cast(\"\", integer);");
         }).isInstanceOf(ScriptException.class);
         assertThatThrownBy(() -> {
-            engine.eval("cast(\"\", number);");
+            engine.eval("a := cast(\"\", number);");
         }).isInstanceOf(ScriptException.class);
 
         // Cast Boolean to...
