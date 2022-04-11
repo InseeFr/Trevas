@@ -2,10 +2,7 @@ package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.model.Structured;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -17,8 +14,8 @@ public class KeyExtractor implements Function<Structured.DataPoint, Map<String, 
 
     private final Set<String> columns;
 
-    public KeyExtractor(Set<String> columns) {
-        this.columns = columns;
+    public KeyExtractor(Collection<String> columns) {
+        this.columns = new HashSet<>(columns);
     }
 
     @Override

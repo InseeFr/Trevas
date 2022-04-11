@@ -15,14 +15,20 @@ import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static fr.insee.vtl.model.AggregationExpression.*;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
+import static org.apache.spark.sql.functions.avg;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.max;
+import static org.apache.spark.sql.functions.min;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.*;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 /**
@@ -31,6 +37,8 @@ import static scala.collection.JavaConverters.iterableAsScalaIterable;
 public class SparkProcessingEngine implements ProcessingEngine {
 
     private final SparkSession spark;
+
+    public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
 
     /**
      * Constructor taking an existing Spark session.
@@ -194,11 +202,45 @@ public class SparkProcessingEngine implements ProcessingEngine {
         throw new UnsupportedOperationException("TODO");
     }
 
+    // TODO: (expression instanceof MinAggregationExpression)
+    // TODO column = stddev_pop(columnName);
+    private static Column convertAggregation(String columnName, AggregationExpression expression) throws UnsupportedOperationException {
+        Column column;
+        if (expression instanceof MinAggregationExpression) {
+            column = min(columnName);
+        } else if (expression instanceof MaxAggregationExpression) {
+            column = max(columnName);
+        } else if (expression instanceof AverageAggregationExpression) {
+            column = avg(columnName);
+        } else if (expression instanceof SumAggregationExpression) {
+            column = sum(columnName);
+        } else if (expression instanceof CountAggregationExpression) {
+            column = count("*");
+        } else if (expression instanceof MedianAggregationExpression) {
+            column = percentile_approx(col(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+        } else if (expression instanceof StdDevSampAggregationExpression) {
+            column = stddev_samp(columnName);
+        } else if (expression instanceof VarPopAggregationExpression) {
+            column = var_pop(columnName);
+        } else if (expression instanceof VarSampAggregationExpression) {
+            column = var_samp(columnName);
+        } else {
+            throw new UnsupportedOperationException("unknown aggregation " + expression.getClass());
+        }
+        return column.alias(columnName);
+    }
+
     @Override
-    public DatasetExpression executeAggr(DatasetExpression dataset, Structured.DataStructure structure,
-                                         Map<String, AggregationExpression> collectorMap,
-                                         Function<Structured.DataPoint, Map<String, Object>> keyExtractor) {
-        throw new UnsupportedOperationException("TODO");
+    public DatasetExpression executeAggr(DatasetExpression dataset, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
+        SparkDataset sparkDataset = asSparkDataset(dataset);
+        List<Column> columns = collectorMap.entrySet().stream()
+                .map(e -> convertAggregation(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+        List<Column> groupByColumns = groupBy.stream().map(name -> col(name)).collect(Collectors.toList());
+        Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
+                .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
+        result.show();
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
@@ -259,8 +301,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
      * Utility method used for the implementation of the different types of join operations.
      *
      * @param sparkDatasets a list datasets.
-     * @param identifiers the list of identifiers to join on.
-     * @param type the type of join operation.
+     * @param identifiers   the list of identifiers to join on.
+     * @param type          the type of join operation.
      * @return The dataset resulting from the join operation.
      */
     public Dataset<Row> executeJoin(List<Dataset<Row>> sparkDatasets, List<String> identifiers, String type) {
