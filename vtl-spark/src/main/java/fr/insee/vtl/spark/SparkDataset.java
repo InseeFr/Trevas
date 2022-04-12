@@ -102,6 +102,7 @@ public class SparkDataset implements Dataset {
     public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
+            // TODO: refine nullable strategy
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),

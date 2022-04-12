@@ -103,6 +103,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             if (oldNames.contains(newName) && !expressions.containsKey(newName)) {
                 newFields.add(oldSchema.apply(newName));
             } else {
+                // TODO: refine nullable strategy
                 newFields.add(DataTypes.createStructField(
                         newName,
                         fromVtlType(expressions.get(newName).getType()),

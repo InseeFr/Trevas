@@ -67,10 +67,10 @@ public class SparkDatasetTest {
         fr.insee.vtl.model.Dataset expectedDataset = new InMemoryDataset(
                 List.of(List.of("string", 1L, true, 1.5D)),
                 List.of(
-                        new Component("string", String.class, fr.insee.vtl.model.Dataset.Role.MEASURE, null),
-                        new Component("integer", Long.class, fr.insee.vtl.model.Dataset.Role.MEASURE, null),
-                        new Component("boolean", Boolean.class, fr.insee.vtl.model.Dataset.Role.MEASURE, null),
-                        new Component("float", Double.class, fr.insee.vtl.model.Dataset.Role.MEASURE, null)
+                        new Component("string", String.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
+                        new Component("integer", Long.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
+                        new Component("boolean", Boolean.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
+                        new Component("float", Double.class, fr.insee.vtl.model.Dataset.Role.MEASURE)
                 )
         );
 

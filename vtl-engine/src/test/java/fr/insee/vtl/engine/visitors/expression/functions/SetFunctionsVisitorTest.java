@@ -41,17 +41,17 @@ public class SetFunctionsVisitorTest {
         InMemoryDataset dataset2 = new InMemoryDataset(
                 List.of(),
                 List.of(
-                        new Component("age", Long.class, Dataset.Role.MEASURE, null),
-                        new Component("name", String.class, Dataset.Role.IDENTIFIER, null),
-                        new Component("weight", Long.class, Dataset.Role.MEASURE, null)
+                        new Component("age", Long.class, Dataset.Role.MEASURE),
+                        new Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Component("weight", Long.class, Dataset.Role.MEASURE)
                 )
         );
         InMemoryDataset dataset3 = new InMemoryDataset(
                 List.of(),
                 List.of(
-                        new Component("name2", String.class, Dataset.Role.IDENTIFIER, null),
-                        new Component("age", Long.class, Dataset.Role.MEASURE, null),
-                        new Component("weight", Long.class, Dataset.Role.MEASURE, null)
+                        new Component("name2", String.class, Dataset.Role.IDENTIFIER),
+                        new Component("age", Long.class, Dataset.Role.MEASURE),
+                        new Component("weight", Long.class, Dataset.Role.MEASURE)
                 )
         );
         ScriptContext context = engine.getContext();
@@ -73,8 +73,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         ScriptContext context = engine.getContext();
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset);
@@ -91,7 +90,7 @@ public class SetFunctionsVisitorTest {
 
     @Test
     public void testUnionDifferentStructure() throws ScriptException {
-        var structure = new Structured.DataStructure(Map.of("id", String.class), Map.of("id", Dataset.Role.IDENTIFIER), Map.of());
+        var structure = new Structured.DataStructure(Map.of("id", String.class), Map.of("id", Dataset.Role.IDENTIFIER));
         InMemoryDataset ds1 = new InMemoryDataset(structure, List.of("1"), List.of("2"), List.of("3"), List.of("4"));
         InMemoryDataset ds2 = new InMemoryDataset(structure, List.of("3"), List.of("4"), List.of("5"), List.of("6"));
         var bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -99,13 +98,13 @@ public class SetFunctionsVisitorTest {
         bindings.put("ds2", ds2);
 
         engine.eval("ds1 := ds1 [calc A := \"A\"];\n" +
-                    "ds1 := ds1 [calc B := \"B\"];\n" +
-                    "\n" +
-                    "ds2 := ds2 [calc B := \"B\"];\n" +
-                    "ds2 := ds2 [calc A := \"A\"];\n" +
-                    "\n" +
-                    "ds3 := union(ds1, ds2);\n" +
-                    "ds4 := union(ds2, ds1);");
+                "ds1 := ds1 [calc B := \"B\"];\n" +
+                "\n" +
+                "ds2 := ds2 [calc B := \"B\"];\n" +
+                "ds2 := ds2 [calc A := \"A\"];\n" +
+                "\n" +
+                "ds3 := union(ds1, ds2);\n" +
+                "ds4 := union(ds2, ds1);");
 
         var ds3 = (Dataset) bindings.get("ds3");
         var ds4 = (Dataset) bindings.get("ds4");
@@ -157,8 +156,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Nico", "age", 11L, "weight", 10L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
                 List.of(
@@ -166,8 +164,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Franck", "weight", 9L, "age", 12L)
                 ),
                 Map.of("name", String.class, "weight", Long.class, "age", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         ScriptContext context = engine.getContext();
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);
@@ -193,8 +190,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Nico", "age", 11L, "weight", 10L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
                 List.of(
@@ -202,8 +198,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset3 = new InMemoryDataset(
                 List.of(
@@ -211,8 +206,7 @@ public class SetFunctionsVisitorTest {
                         Map.of("name", "Franck2", "age", 12L, "weight", 9L)
                 ),
                 Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE),
-                Map.of()
+                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();

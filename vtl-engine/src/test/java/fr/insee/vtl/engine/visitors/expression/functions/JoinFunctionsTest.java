@@ -10,7 +10,10 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
@@ -19,9 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JoinFunctionsTest {
 
-    private ScriptEngine engine;
-
-    private InMemoryDataset ds1 = new InMemoryDataset(
+    private final InMemoryDataset ds1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 1L),
                     List.of("a", 2L, 2L),
@@ -31,13 +32,12 @@ public class JoinFunctionsTest {
                     List.of("c", 2L, 6L)
             ),
             List.of(
-                    new Structured.Component("id1", String.class, Role.IDENTIFIER, null),
-                    new Structured.Component("id2", Long.class, Role.IDENTIFIER, null),
-                    new Structured.Component("m1", Long.class, Role.MEASURE, null)
+                    new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                    new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                    new Structured.Component("m1", Long.class, Role.MEASURE)
             )
     );
-
-    private InMemoryDataset ds2 = new InMemoryDataset(
+    private final InMemoryDataset ds2 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 7L),
                     List.of("a", 2L, 8L),
@@ -47,11 +47,12 @@ public class JoinFunctionsTest {
                     List.of("d", 4L, 12L)
             ),
             List.of(
-                    new Structured.Component("id1", String.class, Role.IDENTIFIER, null),
-                    new Structured.Component("id2", Long.class, Role.IDENTIFIER, null),
-                    new Structured.Component("m2", Long.class, Role.MEASURE, null)
+                    new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                    new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                    new Structured.Component("m2", Long.class, Role.MEASURE)
             )
     );
+    private ScriptEngine engine;
 
     @BeforeEach
     public void setUp() {
@@ -110,8 +111,8 @@ public class JoinFunctionsTest {
                         List.of("Nico", 11L)
                 ),
                 List.of(
-                        new Structured.Component("name", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("age", Long.class, Role.MEASURE, null)
+                        new Structured.Component("name", String.class, Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Role.MEASURE)
                 )
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
@@ -120,8 +121,8 @@ public class JoinFunctionsTest {
                         List.of("Nico", 22L)
                 ),
                 List.of(
-                        new Structured.Component("name", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("age", Long.class, Role.MEASURE, null)
+                        new Structured.Component("name", String.class, Role.IDENTIFIER),
+                        new Structured.Component("age", Long.class, Role.MEASURE)
                 )
         );
 
@@ -146,8 +147,7 @@ public class JoinFunctionsTest {
                         Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue")
                 ),
                 Map.of("id", String.class, "measure1", Long.class, "measure2", Long.class, "color", String.class),
-                Map.of("id", Role.IDENTIFIER, "measure1", Role.MEASURE, "measure2", Role.MEASURE, "color", Role.MEASURE),
-                Map.of()
+                Map.of("id", Role.IDENTIFIER, "measure1", Role.MEASURE, "measure2", Role.MEASURE, "color", Role.MEASURE)
         );
 
         InMemoryDataset dataset2 = new InMemoryDataset(
@@ -156,8 +156,7 @@ public class JoinFunctionsTest {
                         Map.of("id", "K003", "intermezzo", 0L, "measure2", 7L, "measure1", 3L, "stale", "")
                 ),
                 Map.of("id", String.class, "intermezzo", Long.class, "measure2", Long.class, "measure1", Long.class, "stale", String.class),
-                Map.of("id", Role.IDENTIFIER, "intermezzo", Role.MEASURE, "measure2", Role.MEASURE, "measure1", Role.MEASURE, "stale", Role.MEASURE),
-                Map.of()
+                Map.of("id", Role.IDENTIFIER, "intermezzo", Role.MEASURE, "measure2", Role.MEASURE, "measure1", Role.MEASURE, "stale", Role.MEASURE)
         );
 
         engine.getContext().setAttribute("ds1", dataset1, ScriptContext.ENGINE_SCOPE);
@@ -226,8 +225,8 @@ public class JoinFunctionsTest {
 
         var ds1 = new InMemoryDataset(
                 List.of(
-                        new Structured.Component("id", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("m1", Long.class, Role.MEASURE, null)
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
                 Arrays.asList("b", 1L),
                 Arrays.asList("c", 2L),
@@ -236,8 +235,8 @@ public class JoinFunctionsTest {
 
         var ds2 = new InMemoryDataset(
                 List.of(
-                        new Structured.Component("id", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("m1", Long.class, Role.MEASURE, null)
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
                 Arrays.asList("a", 4L),
                 Arrays.asList("b", 5L),
@@ -246,8 +245,8 @@ public class JoinFunctionsTest {
 
         var ds3 = new InMemoryDataset(
                 List.of(
-                        new Structured.Component("id", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("m1", Long.class, Role.MEASURE, null)
+                        new Structured.Component("id", String.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
                 Arrays.asList("a", 7L),
                 Arrays.asList("d", 8L)
@@ -262,10 +261,10 @@ public class JoinFunctionsTest {
         var result = (Dataset) context.getAttribute("result");
 
         assertThat(result.getDataStructure().values()).containsExactly(
-                new Structured.Component("id", String.class, Role.IDENTIFIER, null),
-                new Structured.Component("dsOne#m1", Long.class, Role.MEASURE, null),
-                new Structured.Component("ds2#m1", Long.class, Role.MEASURE, null),
-                new Structured.Component("ds3#m1", Long.class, Role.MEASURE, null)
+                new Structured.Component("id", String.class, Role.IDENTIFIER),
+                new Structured.Component("dsOne#m1", Long.class, Role.MEASURE),
+                new Structured.Component("ds2#m1", Long.class, Role.MEASURE),
+                new Structured.Component("ds3#m1", Long.class, Role.MEASURE)
         );
 
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
@@ -289,9 +288,9 @@ public class JoinFunctionsTest {
                         List.of("b", 2L, 4L)
                 ),
                 List.of(
-                        new Structured.Component("id1", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("id2", Long.class, Role.IDENTIFIER, null),
-                        new Structured.Component("m1", Long.class, Role.MEASURE, null)
+                        new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                        new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("m1", Long.class, Role.MEASURE)
                 )
         );
 
@@ -301,9 +300,9 @@ public class JoinFunctionsTest {
                         List.of("a", 2L, 8L)
                 ),
                 List.of(
-                        new Structured.Component("id1", String.class, Role.IDENTIFIER, null),
-                        new Structured.Component("id2", Long.class, Role.IDENTIFIER, null),
-                        new Structured.Component("m2", Long.class, Role.MEASURE, null)
+                        new Structured.Component("id1", String.class, Role.IDENTIFIER),
+                        new Structured.Component("id2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("m2", Long.class, Role.MEASURE)
                 )
         );
 

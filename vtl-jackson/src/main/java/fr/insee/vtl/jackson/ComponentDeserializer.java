@@ -9,8 +9,6 @@ import fr.insee.vtl.model.Structured;
 import java.io.IOException;
 import java.util.Map;
 
-import static fr.insee.vtl.jackson.utils.NullableComponent.buildNullable;
-
 /**
  * <code>ComponentDeserializer</code> is a JSON deserializer specialized for dataset components.
  */
@@ -44,7 +42,7 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
         var name = node.get("name").asText();
         var type = node.get("type").asText();
         var role = Dataset.Role.valueOf(node.get("role").asText());
-        var nullable = buildNullable(node.get("nullable"), role);
+        var nullable = node.get("nullable") != null ? node.get("nullable").asBoolean() : null;
         return new Dataset.Component(name, asType(type), role, nullable);
     }
 

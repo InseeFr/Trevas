@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.insee.vtl.engine.utils.NullableComponent.buildNullable;
 import static fr.insee.vtl.model.Structured.*;
 
 /**
@@ -26,10 +25,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         for (String columnName : expressions.keySet()) {
             // TODO: refine nullable strategy
             newStructure.put(columnName, new Dataset.Component(
-                    columnName,
-                    expressions.get(columnName).getType(),
-                    roles.get(columnName),
-                    true
+                            columnName,
+                            expressions.get(columnName).getType(),
+                            roles.get(columnName),
+                            true
                     )
             );
         }
@@ -92,7 +91,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                                 fromTo.get(component.getName()),
                                 component.getType(),
                                 component.getRole(),
-                                buildNullable(component.getNullable(), component.getRole())
+                                component.getNullable()
                         )
                 ).collect(Collectors.toList());
         DataStructure renamedStructure = new DataStructure(structure);
