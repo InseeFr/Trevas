@@ -110,12 +110,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
             if (columnNames.contains(name)) {
                 continue;
             }
+            // Execute the ResolvableExpression by wrapping it in a UserDefinedFunction.
             ResolvableExpression expression = expressions.get(name);
-            DataType type = fromVtlType(expression.getType());
             UserDefinedFunction exprFunction = udf((Row row) -> {
                 SparkRowMap context = new SparkRowMap(row);
                 return expression.resolve(context);
-            }, type);
+            }, fromVtlType(expression.getType()));
             interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
         }
         return interpreted;
