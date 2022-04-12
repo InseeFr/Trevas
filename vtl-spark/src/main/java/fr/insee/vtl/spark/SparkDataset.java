@@ -62,17 +62,6 @@ public class SparkDataset implements Dataset {
     }
 
     /**
-     * Constructor taking a Spark dataset and a {@link DataStructure}.
-     *
-     * @param sparkDataset  Spark dataset
-     * @param dataStructure the structure of the dataset.
-     */
-    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure dataStructure) {
-        this.sparkDataset = Objects.requireNonNull(sparkDataset);
-        this.dataStructure = Objects.requireNonNull(dataStructure);
-    }
-
-    /**
      * Cast integer and float types to long and double.
      */
     private static org.apache.spark.sql.Dataset<Row> castIfNeeded(org.apache.spark.sql.Dataset<Row> sparkDataset) {
