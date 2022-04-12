@@ -47,14 +47,6 @@ public class GenericFunctionsTest {
     }
 
     @Test
-    public void t() {
-        DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate parse = LocalDate.parse("2020-01-02", maskFormatter);
-        System.out.println(parse.atStartOfDay());
-        System.out.println(parse);
-    }
-
-    @Test
     public void testCastExprDataset() throws ScriptException {
         ScriptContext context = engine.getContext();
 
@@ -128,7 +120,7 @@ public class GenericFunctionsTest {
         assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
         assertThatThrownBy(() -> {
             engine.eval("a := cast(current_date(),string);");
-        }).isInstanceOf(InvalidArgumentException.class).hasMessage("missing mask");
+        }).isInstanceOf(InvalidArgumentException.class).hasMessage("cannot cast date: no mask specified");
 
         // Test unsupported basic scalar type
         assertThatThrownBy(() -> {

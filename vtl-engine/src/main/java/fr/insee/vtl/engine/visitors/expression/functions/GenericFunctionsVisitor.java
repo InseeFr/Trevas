@@ -91,10 +91,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return DoubleExpression.castTo(expression, outputClass);
         }
         if (Instant.class.equals(expression.getType())) {
-            return InstantExpression.castTo(expression, outputClass, mask)
-                    .handleException(IllegalArgumentException.class, iae ->
-                            new VtlRuntimeException(new InvalidArgumentException(iae.getMessage(), ctx))
-                    );
+            if (mask == null || mask.isEmpty()) {
+                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", ctx));
+            }
+            return InstantExpression.castTo(expression, outputClass, mask);
         }
         throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }
