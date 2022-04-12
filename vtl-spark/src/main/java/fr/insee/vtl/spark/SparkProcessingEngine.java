@@ -151,13 +151,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         var result = rename(dataset.getSparkDataset(), fromTo);
 
-        var roleMap = getRoleMap(dataset);
+        var originalRoles = getRoleMap(dataset);
+        var renamedRoles = new LinkedHashMap<>(originalRoles);
         for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
-            var role = roleMap.remove(fromToEntry.getKey());
-            roleMap.put(fromToEntry.getValue(), role);
+            renamedRoles.put(fromToEntry.getValue(), originalRoles.get(fromToEntry.getKey()));
         }
 
-        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+        return new SparkDatasetExpression(new SparkDataset(result, renamedRoles));
     }
 
     public Dataset<Row> rename(Dataset<Row> dataset, Map<String, String> fromTo) {

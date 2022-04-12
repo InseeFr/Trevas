@@ -118,8 +118,8 @@ public class SparkDataset implements Dataset {
             components.add(new Component(
                     field.name(),
                     toVtlType(field.dataType()),
-                    roles.get(field.name()),
-                    true
+                    roles.getOrDefault(field.name(), Role.MEASURE),
+                    null
             ));
         }
         return new DataStructure(components);
