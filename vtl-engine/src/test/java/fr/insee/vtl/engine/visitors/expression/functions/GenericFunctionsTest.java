@@ -40,9 +40,7 @@ public class GenericFunctionsTest {
         assertThat((Instant) context.getAttribute("e")).isNull();
         engine.eval("f := cast(\"2000-01-31\", date);");
         assertThat((Instant) context.getAttribute("f")).isNull();
-        engine.eval("g := cast(current_date(), string);");
-        assertThat((String) context.getAttribute("g")).isNull();
-        engine.eval("h := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
+        engine.eval("g := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
         assertThat((String) context.getAttribute("g")).isNull();
     }
 
