@@ -304,10 +304,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public  ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
-        String text = ctx.getText();
         ResolvableExpression expr = super.visitFunctionsExpression(ctx);
         if (Objects.isNull(expr)) {
-            throw new  VtlRuntimeException(new UnimplementedException("This function is not yet implemented.", ctx));
+            VtlParser.FunctionsContext functionsContext = ctx.functions();
+            String functionName = functionsContext.getStart().getText();
+            throw new  VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", ctx));
         }
         return expr;
     }
