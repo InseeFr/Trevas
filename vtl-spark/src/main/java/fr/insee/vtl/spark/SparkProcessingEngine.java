@@ -75,20 +75,22 @@ public class SparkProcessingEngine implements ProcessingEngine {
         SparkDataset dataset = asSparkDataset(expression);
         Dataset<Row> ds = dataset.getSparkDataset();
 
-        // Rename all the columns to avoid conflicts (ala SSA).
-        Map<String, String> namesToAliases = new HashMap<>();
+        // Rename all the columns to avoid conflicts (static single assignment).
         Map<String, String> aliasesToName = new HashMap<>();
+        Map<String, ResolvableExpression> renamedExpressions = new LinkedHashMap<>();
+        Map<String, String> renamedExpressionString = new LinkedHashMap<>();
         for (var name : expressions.keySet()) {
-            String alias = name + "_" + namesToAliases.size();
-            namesToAliases.put(name, alias);
+            String alias = name + "_" + aliasesToName.size();
+            renamedExpressions.put(alias, expressions.get(name));
+            renamedExpressionString.put(alias, expressionStrings.get(name));
             aliasesToName.put(alias, name);
         }
 
         // First pass with interpreted spark expressions
-        Dataset<Row> interpreted = executeCalcInterpreted(ds, expressionStrings, namesToAliases);
+        Dataset<Row> interpreted = executeCalcInterpreted(ds, renamedExpressionString);
 
         // Execute the rest using the resolvable expressions
-        Dataset<Row> evaluated = executeCalcEvaluated(interpreted, expressions, namesToAliases);
+        Dataset<Row> evaluated = executeCalcEvaluated(interpreted, renamedExpressions);
 
         // Rename the columns back to their original names
         Dataset<Row> renamed = rename(evaluated, aliasesToName);
@@ -100,30 +102,30 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(renamed, roleMap));
     }
 
-    private Dataset<Row> executeCalcEvaluated(Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions, Map<String, String> alias) {
+    private Dataset<Row> executeCalcEvaluated(Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions) {
         var columnNames = Set.of(interpreted.columns());
         Column structColumns = struct(columnNames.stream().map(colName -> col(colName)).toArray(Column[]::new));
         for (var name : expressions.keySet()) {
             // Ignore the columns that already exist.
-            if (columnNames.contains(alias.get(name))) {
+            if (columnNames.contains(name)) {
                 continue;
             }
             ResolvableExpression expression = expressions.get(name);
             DataType type = fromVtlType(expression.getType());
-            UserDefinedFunction upperUdf = udf((Row row) -> {
+            UserDefinedFunction exprFunction = udf((Row row) -> {
                 SparkRowMap context = new SparkRowMap(row);
                 return expression.resolve(context);
             }, type);
-            interpreted = interpreted.withColumn(alias.get(name), upperUdf.apply(structColumns));
+            interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
         }
         return interpreted;
     }
 
-    private Dataset<Row> executeCalcInterpreted(Dataset<Row> result, Map<String, String> expressionStrings, Map<String, String> alias) {
+    private Dataset<Row> executeCalcInterpreted(Dataset<Row> result, Map<String, String> expressionStrings) {
         for (String name : expressionStrings.keySet()) {
             try {
                 String expression = expressionStrings.get(name);
-                result = result.withColumn(alias.get(name), expr(expression));
+                result = result.withColumn(name, expr(expression));
             } catch (Exception ignored) {
             }
         }
