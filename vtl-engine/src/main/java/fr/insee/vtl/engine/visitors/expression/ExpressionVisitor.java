@@ -1,5 +1,8 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.UnimplementedException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.*;
 import fr.insee.vtl.model.DatasetExpression;
@@ -297,5 +300,16 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
         ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine);
         return clauseVisitor.visit(ctx.clause);
+    }
+
+    @Override
+    public  ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
+        ResolvableExpression expr = super.visitFunctionsExpression(ctx);
+        if (Objects.isNull(expr)) {
+            VtlParser.FunctionsContext functionsContext = ctx.functions();
+            String functionName = functionsContext.getStart().getText();
+            throw new  VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", ctx));
+        }
+        return expr;
     }
 }
