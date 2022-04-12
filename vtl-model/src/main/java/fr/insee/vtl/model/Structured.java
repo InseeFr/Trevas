@@ -26,25 +26,55 @@ public interface Structured {
     }
 
     /**
-     * The <code>Structure</code> class represent a structure component with its name, type and role.
+     * The <code>Structure</code> class represent a structure component with its name, type, role and nullable.
      */
     class Component implements Serializable {
 
         private final String name;
         private final Class<?> type;
         private final Dataset.Role role;
+        private final Boolean nullable;
+
+        /**
+         * Refines the nullable attribute of a <code>Component</code> regarding its role.
+         *
+         * @param initialNullable   The dataset nullable attribute.
+         * @param role              The role of the component as a value of the <code>Role</code> enumeration
+         * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
+         */
+        private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
+            if (role.equals(Dataset.Role.IDENTIFIER)) return false;
+            if (initialNullable == null) return true;
+            return initialNullable;
+        }
 
         /**
          * Constructor taking the name, type and role of the component.
          *
-         * @param name A string giving the name of the structure component to create
-         * @param type A <code>Class</code> giving the type of the structure component to create
-         * @param role A <code>Role</code> giving the role of the structure component to create
+         * @param name     A string giving the name of the structure component to create
+         * @param type     A <code>Class</code> giving the type of the structure component to create
+         * @param role     A <code>Role</code> giving the role of the structure component to create
          */
         public Component(String name, Class<?> type, Dataset.Role role) {
             this.name = Objects.requireNonNull(name);
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
+            this.nullable = buildNullable(null, role);
+        }
+
+        /**
+         * Constructor taking the name, type, role and nullable of the component.
+         *
+         * @param name     A string giving the name of the structure component to create
+         * @param type     A <code>Class</code> giving the type of the structure component to create
+         * @param role     A <code>Role</code> giving the role of the structure component to create
+         * @param nullable A <code>Nullable</code> giving the nullable of the structure component to create
+         */
+        public Component(String name, Class<?> type, Dataset.Role role, Boolean nullable) {
+            this.name = Objects.requireNonNull(name);
+            this.type = Objects.requireNonNull(type);
+            this.role = Objects.requireNonNull(role);
+            this.nullable = buildNullable(nullable, role);
         }
 
         /**
@@ -56,6 +86,7 @@ public interface Structured {
             this.name = component.getName();
             this.type = component.getType();
             this.role = component.getRole();
+            this.nullable = component.getNullable();
         }
 
         /**
@@ -112,14 +143,23 @@ public interface Structured {
             return role;
         }
 
+        /**
+         * Returns the nullable of component.
+         *
+         * @return The nullable of the component as a Boolean
+         */
+        public Boolean getNullable() {
+            return nullable;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Component component = (Component) o;
             return name.equals(component.name) &&
-                   type.equals(component.type) &&
-                   role == component.role;
+                    type.equals(component.type) &&
+                    role == component.role;
         }
 
         @Override
@@ -130,9 +170,9 @@ public interface Structured {
         @Override
         public String toString() {
             return "Component{" + name +
-                   ", type=" + type +
-                   ", role=" + role +
-                   '}';
+                    ", type=" + type +
+                    ", role=" + role +
+                    '}';
         }
     }
 
@@ -158,6 +198,26 @@ public interface Structured {
             }
             for (String column : types.keySet()) {
                 Component component = new Component(column, types.get(column), roles.get(column));
+                put(column, component);
+            }
+        }
+
+        /**
+         * Creates a DataStructure with type, role and nullable maps.
+         *
+         * @param types The types of each component, by name
+         * @param roles The roles of each component, by name
+         * @param nullables The nullables of each component, by name
+         * @throws IllegalArgumentException if the key set of types and roles are not equal.
+         */
+        public DataStructure(Map<String, Class<?>> types, Map<String, Dataset.Role> roles,
+                             Map<String, Boolean> nullables) {
+            super(types.size());
+            if (!types.keySet().equals(roles.keySet())) {
+                throw new IllegalArgumentException("type and roles key sets inconsistent");
+            }
+            for (String column : types.keySet()) {
+                Component component = new Component(column, types.get(column), roles.get(column), nullables.get(column));
                 put(column, component);
             }
         }

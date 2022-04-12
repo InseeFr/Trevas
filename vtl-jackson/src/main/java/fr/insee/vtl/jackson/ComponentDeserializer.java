@@ -31,7 +31,7 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
     /**
      * Deserializes a JSON component into a <code>Structured.Component</code> object.
      *
-     * @param p The base JSON parser.
+     * @param p    The base JSON parser.
      * @param ctxt A deserialization context.
      * @return The deserialized dataset component.
      * @throws IOException In case of problem while processing the JSON component.
@@ -41,8 +41,9 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
         var node = ctxt.readTree(p);
         var name = node.get("name").asText();
         var type = node.get("type").asText();
-        var role = node.get("role").asText();
-        return new Dataset.Component(name, asType(type), Dataset.Role.valueOf(role));
+        var role = Dataset.Role.valueOf(node.get("role").asText());
+        var nullable = node.get("nullable") != null ? node.get("nullable").asBoolean() : null;
+        return new Dataset.Component(name, asType(type), role, nullable);
     }
 
     private Class<?> asType(String type) {

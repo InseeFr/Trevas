@@ -6,7 +6,8 @@
       {
         "name": "CONTINENT",
         "type": "STRING",
-        "role": "IDENTIFIER"
+        "role": "IDENTIFIER",
+        "nullable": true
       },
       {
         "name": "COUNTRY",
@@ -16,12 +17,14 @@
       {
         "name": "POP",
         "type": "INTEGER",
-        "role": "MEASURE"
+        "role": "MEASURE",
+        "nullable": false
       },
       {
         "name": "AREA",
         "type": "NUMBER",
-        "role": "MEASURE"
+        "role": "MEASURE",
+        "nullable": true
       }
     ],
     "data": [

@@ -10,7 +10,10 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
@@ -19,9 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JoinFunctionsTest {
 
-    private ScriptEngine engine;
-
-    private InMemoryDataset ds1 = new InMemoryDataset(
+    private final InMemoryDataset ds1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 1L),
                     List.of("a", 2L, 2L),
@@ -36,8 +37,7 @@ public class JoinFunctionsTest {
                     new Structured.Component("m1", Long.class, Role.MEASURE)
             )
     );
-
-    private InMemoryDataset ds2 = new InMemoryDataset(
+    private final InMemoryDataset ds2 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 7L),
                     List.of("a", 2L, 8L),
@@ -52,6 +52,7 @@ public class JoinFunctionsTest {
                     new Structured.Component("m2", Long.class, Role.MEASURE)
             )
     );
+    private ScriptEngine engine;
 
     @BeforeEach
     public void setUp() {

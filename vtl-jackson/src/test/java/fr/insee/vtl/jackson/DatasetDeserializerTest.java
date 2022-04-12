@@ -18,10 +18,10 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
         var dataset = mapper.readValue(jsonStream, Dataset.class);
 
         assertThat(dataset.getDataStructure().values()).containsExactly(
-                new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("COUNTRY", String.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("POP", Long.class, Dataset.Role.MEASURE),
-                new Dataset.Component("AREA", Double.class, Dataset.Role.MEASURE)
+                new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER, false),
+                new Dataset.Component("COUNTRY", String.class, Dataset.Role.IDENTIFIER, false),
+                new Dataset.Component("POP", Long.class, Dataset.Role.MEASURE, false),
+                new Dataset.Component("AREA", Double.class, Dataset.Role.MEASURE, true)
         );
 
         List<Object> nulls = new ArrayList<>();
@@ -45,10 +45,10 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
         var dataset = mapper.readValue(jsonStream, Dataset.class);
 
         assertThat(dataset.getDataStructure().values()).containsExactly(
-                new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("COUNTRY", String.class, Dataset.Role.IDENTIFIER),
-                new Dataset.Component("POP", Long.class, Dataset.Role.MEASURE),
-                new Dataset.Component("AREA", Double.class, Dataset.Role.MEASURE)
+                new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER, false),
+                new Dataset.Component("COUNTRY", String.class, Dataset.Role.IDENTIFIER, false),
+                new Dataset.Component("POP", Long.class, Dataset.Role.MEASURE, true),
+                new Dataset.Component("AREA", Double.class, Dataset.Role.MEASURE, true)
         );
 
         List<Object> nulls = new ArrayList<>();

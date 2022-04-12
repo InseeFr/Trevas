@@ -254,7 +254,8 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of("name", false, "country", true)
         );
 
         ScriptContext context = engine.getContext();
@@ -266,16 +267,16 @@ public class ClauseVisitorTest {
         // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
 
         engine.eval("res := ds1[aggr " +
-                    "sumAge := sum(age)," +
-                    "avgWeight := avg(age)," +
-                    "countVal := count(null)," +
-                    "maxAge := max(age)," +
-                    "maxWeight := max(weight)," +
-                    "minAge := min(age)," +
-                    "minWeight := min(weight)," +
-                    "medianAge := median(age)," +
-                    "medianWeight := median(weight)" +
-                    " group by country];");
+                "sumAge := sum(age)," +
+                "avgWeight := avg(age)," +
+                "countVal := count(null)," +
+                "maxAge := max(age)," +
+                "maxWeight := max(weight)," +
+                "minAge := min(age)," +
+                "minWeight := min(weight)," +
+                "medianAge := median(age)," +
+                "medianWeight := median(weight)" +
+                " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5,
@@ -303,15 +304,15 @@ public class ClauseVisitorTest {
         context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("res := ds2[aggr " +
-                    "stddev_popAge := stddev_pop(age), " +
-                    "stddev_popWeight := stddev_pop(weight), " +
-                    "stddev_sampAge := stddev_samp(age), " +
-                    "stddev_sampWeight := stddev_samp(weight), " +
-                    "var_popAge := var_pop(age), " +
-                    "var_popWeight := var_pop(weight), " +
-                    "var_sampAge := var_samp(age), " +
-                    "var_sampWeight := var_samp(weight)" +
-                    " group by country];");
+                "stddev_popAge := stddev_pop(age), " +
+                "stddev_popWeight := stddev_pop(weight), " +
+                "stddev_sampAge := stddev_samp(age), " +
+                "stddev_sampWeight := stddev_samp(weight), " +
+                "var_popAge := var_pop(age), " +
+                "var_popWeight := var_pop(weight), " +
+                "var_sampAge := var_samp(age), " +
+                "var_sampWeight := var_samp(weight)" +
+                " group by country];");
 
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 

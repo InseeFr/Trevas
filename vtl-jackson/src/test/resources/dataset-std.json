@@ -3,22 +3,26 @@
     {
       "name": "CONTINENT",
       "type": "STRING",
-      "role": "IDENTIFIER"
+      "role": "IDENTIFIER",
+      "nullable": false
     },
     {
       "name": "COUNTRY",
       "type": "STRING",
-      "role": "IDENTIFIER"
+      "role": "IDENTIFIER",
+      "nullable": false
     },
     {
       "name": "POP",
       "type": "INTEGER",
-      "role": "MEASURE"
+      "role": "MEASURE",
+      "nullable": true
     },
     {
       "name": "AREA",
       "type": "NUMBER",
-      "role": "MEASURE"
+      "role": "MEASURE",
+      "nullable": true
     }
   ],
   "dataPoints": [

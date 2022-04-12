@@ -6,7 +6,6 @@ import fr.insee.vtl.model.Dataset.Role;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import org.apache.spark.sql.SparkSession;
-import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ public class SparkProcessingEngineTest {
     private SparkSession spark;
     private ScriptEngine engine;
 
-    private InMemoryDataset dataset1 = new InMemoryDataset(
+    private final InMemoryDataset dataset1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 2L),
                     List.of("b", 3L, 4L),
@@ -42,7 +41,7 @@ public class SparkProcessingEngineTest {
                     new Component("weight", Long.class, Role.MEASURE)
             )
     );
-    private InMemoryDataset dataset2 = new InMemoryDataset(
+    private final InMemoryDataset dataset2 = new InMemoryDataset(
             List.of(
                     List.of(9L, "a", 10L),
                     List.of(11L, "b", 12L),
@@ -56,7 +55,7 @@ public class SparkProcessingEngineTest {
             )
     );
 
-    private InMemoryDataset dataset3 = new InMemoryDataset(
+    private final InMemoryDataset dataset3 = new InMemoryDataset(
             List.of(
                     List.of(16L, "a", 17L),
                     List.of(18L, "b", 19L),
@@ -390,6 +389,7 @@ public class SparkProcessingEngineTest {
 
 
     }
+
     @Test
     public void testAggregateClause() throws ScriptException {
 

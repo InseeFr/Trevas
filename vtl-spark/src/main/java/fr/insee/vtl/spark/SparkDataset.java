@@ -102,6 +102,7 @@ public class SparkDataset implements Dataset {
     public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
+            // TODO: refine nullable strategy
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
@@ -180,10 +181,12 @@ public class SparkDataset implements Dataset {
             StructType schema = sparkDataset.schema();
             List<Component> components = new ArrayList<>();
             for (StructField field : JavaConverters.asJavaCollection(schema)) {
+                // TODO: refine nullable strategy
                 components.add(new Component(
                         field.name(),
                         toVtlType(field.dataType()),
-                        roles.getOrDefault(field.name(), Role.MEASURE)
+                        roles.getOrDefault(field.name(), Role.MEASURE),
+                        true
                 ));
             }
             dataStructure = new DataStructure(components);
