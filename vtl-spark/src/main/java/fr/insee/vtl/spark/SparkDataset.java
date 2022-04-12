@@ -62,17 +62,6 @@ public class SparkDataset implements Dataset {
     }
 
     /**
-     * Constructor taking a Spark dataset and a {@link DataStructure}.
-     *
-     * @param sparkDataset  Spark dataset
-     * @param dataStructure the structure of the dataset.
-     */
-    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure dataStructure) {
-        this.sparkDataset = Objects.requireNonNull(sparkDataset);
-        this.dataStructure = Objects.requireNonNull(dataStructure);
-    }
-
-    /**
      * Cast integer and float types to long and double.
      */
     private static org.apache.spark.sql.Dataset<Row> castIfNeeded(org.apache.spark.sql.Dataset<Row> sparkDataset) {
@@ -110,6 +99,19 @@ public class SparkDataset implements Dataset {
             ));
         }
         return DataTypes.createStructType(schema);
+    }
+
+    public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles) {
+        List<Component> components = new ArrayList<>();
+        for (StructField field : JavaConverters.asJavaCollection(schema)) {
+            components.add(new Component(
+                    field.name(),
+                    toVtlType(field.dataType()),
+                    roles.getOrDefault(field.name(), Role.MEASURE),
+                    null
+            ));
+        }
+        return new DataStructure(components);
     }
 
     /**
@@ -178,18 +180,7 @@ public class SparkDataset implements Dataset {
     @Override
     public Structured.DataStructure getDataStructure() {
         if (dataStructure == null) {
-            StructType schema = sparkDataset.schema();
-            List<Component> components = new ArrayList<>();
-            for (StructField field : JavaConverters.asJavaCollection(schema)) {
-                // TODO: refine nullable strategy
-                components.add(new Component(
-                        field.name(),
-                        toVtlType(field.dataType()),
-                        roles.getOrDefault(field.name(), Role.MEASURE),
-                        true
-                ));
-            }
-            dataStructure = new DataStructure(components);
+            dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
         }
         return dataStructure;
     }

@@ -1,22 +1,17 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.model.*;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.types.DataType;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static fr.insee.vtl.model.AggregationExpression.*;
 import static fr.insee.vtl.model.Dataset.Component;
@@ -47,13 +42,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
      */
     public SparkProcessingEngine(SparkSession spark) {
         this.spark = Objects.requireNonNull(spark);
-    }
-
-    /**
-     * Constructor creating an engine with the currently active Spark session (or otherwise the default one).
-     */
-    public SparkProcessingEngine() {
-        this.spark = SparkSession.active();
     }
 
     private static Map<String, Role> getRoleMap(Collection<Component> components) {
@@ -87,63 +75,61 @@ public class SparkProcessingEngine implements ProcessingEngine {
         SparkDataset dataset = asSparkDataset(expression);
         Dataset<Row> ds = dataset.getSparkDataset();
 
-        // Compute the new schema.
-        // TODO: Use conversion from DataStructure.
-        StructType oldSchema = ds.schema();
-        List<String> oldNames = Arrays.asList(oldSchema.fieldNames());
-        List<String> newNames = new ArrayList<>(oldNames);
-        for (String exprName : expressions.keySet()) {
-            if (!newNames.contains(exprName)) {
-                newNames.add(exprName);
-            }
+        // Rename all the columns to avoid conflicts (static single assignment).
+        Map<String, String> aliasesToName = new HashMap<>();
+        Map<String, ResolvableExpression> renamedExpressions = new LinkedHashMap<>();
+        Map<String, String> renamedExpressionString = new LinkedHashMap<>();
+        for (var name : expressions.keySet()) {
+            String alias = name + "_" + aliasesToName.size();
+            renamedExpressions.put(alias, expressions.get(name));
+            renamedExpressionString.put(alias, expressionStrings.get(name));
+            aliasesToName.put(alias, name);
         }
 
-        List<StructField> newFields = new ArrayList<>();
-        for (String newName : newNames) {
-            if (oldNames.contains(newName) && !expressions.containsKey(newName)) {
-                newFields.add(oldSchema.apply(newName));
-            } else {
-                // TODO: refine nullable strategy
-                newFields.add(DataTypes.createStructField(
-                        newName,
-                        fromVtlType(expressions.get(newName).getType()),
-                        true
-                ));
-            }
-        }
-        StructType newSchema = DataTypes.createStructType(newFields);
+        // First pass with interpreted spark expressions
+        Dataset<Row> interpreted = executeCalcInterpreted(ds, renamedExpressionString);
+
+        // Execute the rest using the resolvable expressions
+        Dataset<Row> evaluated = executeCalcEvaluated(interpreted, renamedExpressions);
+
+        // Rename the columns back to their original names
+        Dataset<Row> renamed = rename(evaluated, aliasesToName);
 
         // Create the new role map.
         var roleMap = getRoleMap(dataset);
         roleMap.putAll(roles);
 
-        try {
-            // Try with expressions first.
-            var expressionsList = expressionStrings.entrySet().stream().map(expressionEntry -> String.format(
-                    "%s as %s", expressionEntry.getValue(), expressionEntry.getKey()
-            )).collect(Collectors.toList());
-            Dataset<Row> result = ds.selectExpr(Stream.concat(
-                    // Get back the old columns.
-                    newNames.stream().filter(name -> !expressionStrings.containsKey(name)),
-                    expressionsList.stream()
-            ).toArray(String[]::new));
-            return new SparkDatasetExpression(new SparkDataset(result, roleMap));
-        } catch (Exception e) {
-            Dataset<Row> result = ds.map((MapFunction<Row, Row>) row -> {
+        return new SparkDatasetExpression(new SparkDataset(renamed, roleMap));
+    }
+
+    private Dataset<Row> executeCalcEvaluated(Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions) {
+        var columnNames = Set.of(interpreted.columns());
+        Column structColumns = struct(columnNames.stream().map(colName -> col(colName)).toArray(Column[]::new));
+        for (var name : expressions.keySet()) {
+            // Ignore the columns that already exist.
+            if (columnNames.contains(name)) {
+                continue;
+            }
+            // Execute the ResolvableExpression by wrapping it in a UserDefinedFunction.
+            ResolvableExpression expression = expressions.get(name);
+            UserDefinedFunction exprFunction = udf((Row row) -> {
                 SparkRowMap context = new SparkRowMap(row);
-                Object[] objects = new Object[newSchema.size()];
-                for (String name : newSchema.fieldNames()) {
-                    int index = newSchema.fieldIndex(name);
-                    if (expressions.containsKey(name)) {
-                        objects[index] = expressions.get(name).resolve(context);
-                    } else {
-                        objects[index] = row.get(index);
-                    }
-                }
-                return new GenericRowWithSchema(objects, newSchema);
-            }, RowEncoder.apply(newSchema));
-            return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+                return expression.resolve(context);
+            }, fromVtlType(expression.getType()));
+            interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
         }
+        return interpreted;
+    }
+
+    private Dataset<Row> executeCalcInterpreted(Dataset<Row> result, Map<String, String> expressionStrings) {
+        for (String name : expressionStrings.keySet()) {
+            try {
+                String expression = expressionStrings.get(name);
+                result = result.withColumn(name, expr(expression));
+            } catch (Exception ignored) {
+            }
+        }
+        return result;
     }
 
     @Override
@@ -165,24 +151,27 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         SparkDataset dataset = asSparkDataset(expression);
 
-        List<Column> columns = new ArrayList<>();
-        for (String name : dataset.getColumnNames()) {
-            var column = new Column(name);
-            if (fromTo.containsKey(name)) {
-                column = column.as(fromTo.get(name));
-            }
-            columns.add(column);
-        }
+        var result = rename(dataset.getSparkDataset(), fromTo);
 
-        Dataset<Row> result = dataset.getSparkDataset().select(iterableAsScalaIterable(columns).toSeq());
-
-        var roleMap = getRoleMap(dataset);
+        var originalRoles = getRoleMap(dataset);
+        var renamedRoles = new LinkedHashMap<>(originalRoles);
         for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
-            var role = roleMap.remove(fromToEntry.getKey());
-            roleMap.put(fromToEntry.getValue(), role);
+            renamedRoles.put(fromToEntry.getValue(), originalRoles.get(fromToEntry.getKey()));
         }
 
-        return new SparkDatasetExpression(new SparkDataset(result, roleMap));
+        return new SparkDatasetExpression(new SparkDataset(result, renamedRoles));
+    }
+
+    public Dataset<Row> rename(Dataset<Row> dataset, Map<String, String> fromTo) {
+        List<Column> columns = new ArrayList<>();
+        for (String name : dataset.columns()) {
+            if (fromTo.containsKey(name)) {
+                columns.add(col(name).as(fromTo.get(name)));
+            } else if (!fromTo.containsValue(name)) {
+                columns.add(col(name));
+            }
+        }
+        return dataset.select(iterableAsScalaIterable(columns).toSeq());
     }
 
     @Override
@@ -241,11 +230,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
         return new SparkDatasetExpression(new SparkDataset(result));
-    }
-
-    public DatasetExpression executeAggr(SparkDataset dataset, List<String> groupByColumns,
-                                         Map<String, String> operations, Map<String, String> aliases) {
-        throw new UnsupportedOperationException("TODO");
     }
 
     @Override
