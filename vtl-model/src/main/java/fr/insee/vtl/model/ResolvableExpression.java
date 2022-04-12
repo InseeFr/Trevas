@@ -9,7 +9,14 @@ import java.util.function.Function;
  */
 public interface ResolvableExpression extends TypedExpression, Serializable {
 
-    default <T extends Exception> ResolvableExpression handleErrors(Class<T> clazz, Function<T, RuntimeException> handler) {
+    /**
+     * Return a ResolvableException that will handle the exception thrown by the resolution function using the
+     * handler.
+     *
+     * @param clazz   the class of the exception to handle
+     * @param handler the exception handler
+     */
+    default <T extends Exception> ResolvableExpression handleException(Class<T> clazz, Function<T, RuntimeException> handler) {
         var that = this;
         return new ResolvableExpression() {
             @Override
@@ -31,6 +38,7 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
             }
         };
     }
+
     /**
      * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
      *

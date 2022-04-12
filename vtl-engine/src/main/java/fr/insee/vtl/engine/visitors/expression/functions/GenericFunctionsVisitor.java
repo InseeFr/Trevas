@@ -78,7 +78,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
         if (String.class.equals(expression.getType())) {
             return StringExpression.castTo(expression, outputClass, mask)
-                    .handleErrors(NumberFormatException.class, nfe -> new VtlRuntimeException(
+                    .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
                             new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
         }
         if (Boolean.class.equals(expression.getType())) {
