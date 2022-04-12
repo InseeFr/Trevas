@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -75,7 +77,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return ResolvableExpression.ofType(outputClass, null);
         }
         if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass, mask);
+            return StringExpression.castTo(expression, outputClass, mask)
+                    .handleErrors(NumberFormatException.class, nfe -> new VtlRuntimeException(
+                            new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
         }
         if (Boolean.class.equals(expression.getType())) {
             return BooleanExpression.castTo(expression, outputClass);
