@@ -91,7 +91,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return DoubleExpression.castTo(expression, outputClass);
         }
         if (Instant.class.equals(expression.getType())) {
-            return InstantExpression.castTo(expression, outputClass, mask);
+            return InstantExpression.castTo(expression, outputClass, mask)
+                    .handleException(IllegalArgumentException.class, iae ->
+                            new VtlRuntimeException(new InvalidArgumentException(iae.getMessage(), ctx))
+                    );
         }
         throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }

@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -125,6 +126,9 @@ public class GenericFunctionsTest {
         engine.eval("d := cast(\"1998-31-12\", date, \"YYYY-DD-MM\");");
         engine.eval("strDate := cast(d, string, \"YYYY/MM\");");
         assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
+        assertThatThrownBy(() -> {
+            engine.eval("a := cast(current_date(),string);");
+        }).isInstanceOf(InvalidArgumentException.class).hasMessage("missing mask");
 
         // Test unsupported basic scalar type
         assertThatThrownBy(() -> {
