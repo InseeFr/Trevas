@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,18 +40,8 @@ public class GenericFunctionsTest {
         assertThat((Instant) context.getAttribute("e")).isNull();
         engine.eval("f := cast(\"2000-01-31\", date);");
         assertThat((Instant) context.getAttribute("f")).isNull();
-        engine.eval("g := cast(current_date(), string);");
+        engine.eval("g := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
         assertThat((String) context.getAttribute("g")).isNull();
-        engine.eval("h := cast(cast(\"2000-01-31\", date), string, \"YYYY\");");
-        assertThat((String) context.getAttribute("g")).isNull();
-    }
-
-    @Test
-    public void t() {
-        DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate parse = LocalDate.parse("2020-01-02", maskFormatter);
-        System.out.println(parse.atStartOfDay());
-        System.out.println(parse);
     }
 
     @Test
@@ -125,6 +116,9 @@ public class GenericFunctionsTest {
         engine.eval("d := cast(\"1998-31-12\", date, \"YYYY-DD-MM\");");
         engine.eval("strDate := cast(d, string, \"YYYY/MM\");");
         assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
+        assertThatThrownBy(() -> {
+            engine.eval("a := cast(current_date(),string);");
+        }).isInstanceOf(InvalidArgumentException.class).hasMessage("cannot cast date: no mask specified");
 
         // Test unsupported basic scalar type
         assertThatThrownBy(() -> {

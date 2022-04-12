@@ -50,7 +50,6 @@ public abstract class InstantExpression implements ResolvableExpression {
     public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass, String mask) {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
-                if (mask == null) return null;
                 Instant exprValue = (Instant) expr.resolve(context);
                 if (exprValue == null) return null;
                 DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
