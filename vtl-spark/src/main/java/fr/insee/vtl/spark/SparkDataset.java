@@ -112,6 +112,19 @@ public class SparkDataset implements Dataset {
         return DataTypes.createStructType(schema);
     }
 
+    public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles) {
+        List<Component> components = new ArrayList<>();
+        for (StructField field : JavaConverters.asJavaCollection(schema)) {
+            components.add(new Component(
+                    field.name(),
+                    toVtlType(field.dataType()),
+                    roles.get(field.name()),
+                    true
+            ));
+        }
+        return new DataStructure(components);
+    }
+
     /**
      * Translates a Spark data type into a VTL data type.
      *
@@ -178,18 +191,7 @@ public class SparkDataset implements Dataset {
     @Override
     public Structured.DataStructure getDataStructure() {
         if (dataStructure == null) {
-            StructType schema = sparkDataset.schema();
-            List<Component> components = new ArrayList<>();
-            for (StructField field : JavaConverters.asJavaCollection(schema)) {
-                // TODO: refine nullable strategy
-                components.add(new Component(
-                        field.name(),
-                        toVtlType(field.dataType()),
-                        roles.getOrDefault(field.name(), Role.MEASURE),
-                        true
-                ));
-            }
-            dataStructure = new DataStructure(components);
+            dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
         }
         return dataStructure;
     }

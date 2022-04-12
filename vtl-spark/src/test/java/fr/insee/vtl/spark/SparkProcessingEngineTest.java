@@ -102,7 +102,7 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
-    public void testCalcClause() throws ScriptException {
+    public void testCalcClause() throws ScriptException, InterruptedException {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
@@ -122,13 +122,14 @@ public class SparkProcessingEngineTest {
         var ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds).isInstanceOf(Dataset.class);
         assertThat(ds.getDataAsMap()).isEqualTo(List.of(
-                Map.of("name", "Hadrien", "age", 20L, "weight", 11L, "wisdom", 10.5D),
-                Map.of("name", "Nico", "age", 22L, "weight", 10L, "wisdom", 10.5D),
-                Map.of("name", "Franck", "age", 24L, "weight", 9L, "wisdom", 10.5D)
+                Map.of("name", "Hadrien", "age", 20L, "test", true, "weight", 11L, "wisdom", 10.5D),
+                Map.of("name", "Nico", "age", 22L, "test", true, "weight", 10L, "wisdom", 10.5D),
+                Map.of("name", "Franck", "age", 24L, "test", false, "weight", 9L, "wisdom", 10.5D)
         ));
         assertThat(ds.getDataStructure()).containsValues(
                 new Component("name", String.class, Role.IDENTIFIER),
                 new Component("age", Long.class, Role.MEASURE),
+                new Component("test", Boolean.class, Role.MEASURE),
                 new Component("weight", Long.class, Role.MEASURE),
                 new Component("wisdom", Double.class, Role.ATTRIBUTE)
         );
