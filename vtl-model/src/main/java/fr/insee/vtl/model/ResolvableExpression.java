@@ -34,7 +34,7 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
 
             @Override
             public Class<?> getType() {
-                return this.getType();
+                return that.getType();
             }
         };
     }
