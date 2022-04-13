@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Démarrage · Java VTL 2.1</title>
+        <title>Démarrage · Trevas</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -223,7 +223,7 @@
 
     
         
-        <li class="header">Guide utilisateur</li>
+        <li class="header">Guide de l'utilisateur</li>
         
         
     
@@ -232,7 +232,7 @@
                 <a href="coverage.html">
             
                     
-                    Couverture fonctionnelle du moteur d'exécution VTL 2.0
+                    Couverture fonctionnelle
             
                 </a>
             
@@ -286,18 +286,20 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="d&#xE9;marrage">D&#xE9;marrage</h1>
-<p>Trevas est un projet multi-modules.</p>
+<p>Trevas est un projet multi-modules. Les modules suivants sont d&#xE9;finis.</p>
 <h2 id="modules">Modules</h2>
 <h3 id="vtl-engine">VTL-Engine</h3>
-<p>Moteur d&apos;ex&#xE9;cution.</p>
+<p>Moteur d&apos;ex&#xE9;cution et son impl&#xE9;mentation Java basique.</p>
 <h3 id="vtl-model">VTL-Model</h3>
-<p>Mod&#xE8;le permettant de d&#xE9;finir les objets utilis&#xE9;s au sein du moteur.</p>
+<p>Mod&#xE8;le d&#xE9;finissant les objets utilis&#xE9;s dans le moteur.</p>
 <h3 id="vtl-parser">VTL-Parser</h3>
-<p>Parser VTL auto-g&#xE9;n&#xE9;r&#xE9; par <a href="https://www.antlr.org/" target="_blank">Antlr</a> &#xE0; partir de la <a href="https://github.com/InseeFr/Trevas/tree/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser" target="_blank">description formelle de VTL 2.0</a>.</p>
+<p>Parseur g&#xE9;n&#xE9;r&#xE9; par <a href="https://www.antlr.org/" target="_blank">Antlr</a> &#xE0; partir de la <a href="https://github.com/InseeFr/Trevas/tree/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser" target="_blank">grammaire formelle de VTL 2.0</a>.</p>
 <h3 id="vtl-spark">VTL-Spark</h3>
-<p>Module permettant la r&#xE9;solution de transformations VTL par <a href="https://spark.apache.org/" target="_blank">Spark</a>.</p>
+<p>Module permettant l&apos;ex&#xE9;cution de transformations VTL par <a href="https://spark.apache.org/" target="_blank">Spark</a>.</p>
 <h3 id="vtl-jackson">VTL-Jackson</h3>
-<p>Module de s&#xE9;rialisation / d&#xE9;serialisation json de Dataset.</p>
+<p>Module de s&#xE9;rialisation / d&#xE9;s&#xE9;rialisation JSON de jeux de donn&#xE9;es.</p>
+<h3 id="vtl-jdbc">VTL-JDBC</h3>
+<p>Outils pour l&apos;utilisation de sources de donn&#xE9;es SQL.</p>
 
                                 
                                 </section>
@@ -341,7 +343,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Démarrage","level":"2.1","depth":1,"next":{"title":"Engine","level":"2.2","depth":1,"path":"engine/index.md","ref":"engine/index.md","articles":[{"title":"InMemory","level":"2.2.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},{"title":"Spark","level":"2.2.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]}]},"previous":{"title":"Modifications de la grammaire VTL","level":"1.2","depth":1,"path":"grammar.md","ref":"grammar.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"getting-started.md","mtime":"2022-02-04T09:33:45.921Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-02-04T09:34:29.134Z"},"basePath":".","book":{"language":"fr"}});
+            gitbook.page.hasChanged({"page":{"title":"Démarrage","level":"2.1","depth":1,"next":{"title":"Engine","level":"2.2","depth":1,"path":"engine/index.md","ref":"engine/index.md","articles":[{"title":"InMemory","level":"2.2.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},{"title":"Spark","level":"2.2.2","depth":2,"path":"engine/spark.md","ref":"engine/spark.md","articles":[]}]},"previous":{"title":"Modifications de la grammaire VTL","level":"1.2","depth":1,"path":"grammar.md","ref":"grammar.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Trevas","language":"fr","gitbook":"*"},"file":{"path":"getting-started.md","mtime":"2022-04-13T12:32:19.027Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-04-13T12:33:05.393Z"},"basePath":".","book":{"language":"fr"}});
         });
     </script>
 </div>

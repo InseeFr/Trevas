@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Engine · Java VTL 2.1</title>
+        <title>Engine · Trevas</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -223,7 +223,7 @@
 
     
         
-        <li class="header">Guide utilisateur</li>
+        <li class="header">Guide de l'utilisateur</li>
         
         
     
@@ -232,7 +232,7 @@
                 <a href="../coverage.html">
             
                     
-                    Couverture fonctionnelle du moteur d'exécution VTL 2.0
+                    Couverture fonctionnelle
             
                 </a>
             
@@ -286,25 +286,33 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="vtl-engine">VTL Engine</h1>
-<h2 id="d&#xE9;pendance">D&#xE9;pendance</h2>
+<h2 id="d&#xE9;pendance-maven">D&#xE9;pendance Maven</h2>
 <pre class="language-"><code class="lang-xml="><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dependency</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>groupId</span><span class="token punctuation">&gt;</span></span>fr.insee.trevas<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>groupId</span><span class="token punctuation">&gt;</span></span>
     <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>artifactId</span><span class="token punctuation">&gt;</span></span>vtl-engine<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>artifactId</span><span class="token punctuation">&gt;</span></span>
-    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>0.1.0<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>version</span><span class="token punctuation">&gt;</span></span>0.3.0<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>version</span><span class="token punctuation">&gt;</span></span>
 <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dependency</span><span class="token punctuation">&gt;</span></span>
 </code></pre>
 <h2 id="instanciation-du-moteur-dex&#xE9;cution">Instanciation du moteur d&apos;ex&#xE9;cution</h2>
-<p>Le moteur d&apos;ex&#xE9;cution r&#xE9;pondant &#xE0; la norme <a href="https://docs.oracle.com/javase/10/scripting/java-scripting-api.htm#JSJSG109" target="_blank"><code>Script Engine</code></a>, il est instanciable via l&apos;instruction suivante :</p>
+<p>Le moteur d&apos;ex&#xE9;cution r&#xE9;pondant &#xE0; la sp&#xE9;cification <a href="https://docs.oracle.com/javase/10/scripting/java-scripting-api.htm#JSJSG109" target="_blank"><code>Script Engine</code></a>, il est instanciable via l&apos;instruction suivante :</p>
 <pre class="language-"><code class="lang-java=">ScriptEngine engine = new ScriptEngineManager().getEngineByName(&quot;vtl&quot;);
 </code></pre>
 <h2 id="variable-entrantes">Variable entrantes</h2>
-<p>Des variables peuvent &#xEA;tre d&#xE9;clar&#xE9;es en entr&#xE9;e du moteur, en les affectant sous forme de cl&#xE9;s / valeurs au sein d&apos;un objet <code>Bindings</code>.</p>
-<pre class="language-"><code class="lang-java=">Bindings bindings = new SimpleBindings(Map.of(&quot;a&quot;, 1));
+<p>Des variables peuvent &#xEA;tre d&#xE9;clar&#xE9;es en entr&#xE9;e du moteur, en les affectant sous forme de cl&#xE9;s / valeurs au sein d&apos;un objet <code>Bindings</code>. Trevas fournit une impl&#xE9;mentation simple bas&#xE9;e sur une <code>Map</code> Java :</p>
+<pre class="language-"><code class="lang-java=">Map<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>String,</span> <span class="token attr-name">Object</span><span class="token punctuation">&gt;</span></span> bindingsMap = new HashMap&lt;&gt;();
+bindingsMap.put(&quot;a&quot;, 1);
+Bindings bindings = new SimpleBindings(bindingsMap);
 ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 </code></pre>
+<p>La map contenant les bindings doit &#xEA;tre mutable (l&apos;&#xE9;valuation du script y ajoute les bindings en sortie). L&apos;initialisation suivante provoquerait une exception (<code>UnsupportedOperationException</code>) lors de l&apos;ex&#xE9;cution :</p>
+<pre class="language-"><code class="lang-java=">Bindings bindings = new SimpleBindings(Map.of(&quot;a&quot;, 1));
+</code></pre>
+<p>Il est toutefois possible de b&#xE9;n&#xE9;ficier de la concision de <code>Map.of()</code> en &#xE9;crivant :</p>
+<pre class="language-"><code class="lang-java=">Bindings bindings = new SimpleBindings(new HashMap&lt;&gt;(Map.of(&quot;a&quot;, 1)));
+</code></pre>
 <h2 id="ex&#xE9;cution-dun-script">Ex&#xE9;cution d&apos;un script</h2>
-<pre class="language-"><code class="lang-java=">// la variable &apos;a&apos; sera recherch&#xE9;e dans les bindings du moteur
+<pre class="language-"><code class="lang-java=">// La variable &apos;a&apos; sera recherch&#xE9;e dans les bindings pass&#xE9;s au moteur
 String script = &quot;res := a + 1;&quot;;
 try {
     engine.eval(script);
@@ -320,10 +328,10 @@ try {
 <pre class="language-"><code class="lang-java=">outputBindings.get(&quot;res&quot;);
 </code></pre>
 <h2 id="dataset">Dataset</h2>
-<p>Les tables de donn&#xE9;es sont repr&#xE9;sent&#xE9;es sous forme de <code>Dataset</code>.</p>
-<p>Les <code>Dataset</code> sont compos&#xE9;s d&apos;une <code>dataStructure</code> et de <code>dataPoints</code>.</p>
-<p>Les <code>dataStructure</code> sont compos&#xE9;es de <code>Component</code>, ayant un <code>name</code>, un <code>role</code> et un <code>type</code>.</p>
-<p>Les valeurs des variables ayant pour r&#xF4;le <code>IDENTIFIER</code> des <code>dataPoints</code> doivent &#xEA;tre uniques.</p>
+<p>Les jeux de donn&#xE9;es sont repr&#xE9;sent&#xE9;es sous forme de <code>Dataset</code>.</p>
+<p>Un <code>Dataset</code> est compos&#xE9; d&apos;une <code>dataStructure</code> et d&apos;une liste de membres <code>dataPoint</code>.</p>
+<p>La <code>dataStructure</code> est compos&#xE9;e de membres <code>Component</code>, ayant chacun un <code>name</code>, un <code>role</code> et un <code>type</code>.</p>
+<p>Les valeurs des variables des <code>dataPoint</code>s ayant pour r&#xF4;le <code>IDENTIFIER</code> doivent &#xEA;tre uniques.</p>
 <p>Deux instances de <code>Dataset</code> sont expos&#xE9;es :</p>
 <ul>
 <li><code>InMemoryDataset</code> : permet de d&#xE9;finir un Dataset au sein de la JVM (<a href="in-memory.html">voir en d&#xE9;tail</a>)</li>
@@ -372,7 +380,7 @@ try {
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Engine","level":"2.2","depth":1,"next":{"title":"InMemory","level":"2.2.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},"previous":{"title":"Démarrage","level":"2.1","depth":1,"path":"getting-started.md","ref":"getting-started.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Java VTL 2.1","language":"fr","gitbook":"*"},"file":{"path":"engine/index.md","mtime":"2022-02-04T09:33:45.921Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-02-04T09:34:29.134Z"},"basePath":"..","book":{"language":"fr"}});
+            gitbook.page.hasChanged({"page":{"title":"Engine","level":"2.2","depth":1,"next":{"title":"InMemory","level":"2.2.1","depth":2,"path":"engine/in-memory.md","ref":"engine/in-memory.md","articles":[]},"previous":{"title":"Démarrage","level":"2.1","depth":1,"path":"getting-started.md","ref":"getting-started.md","articles":[]},"dir":"ltr"},"config":{"plugins":["edit-link","prism","-highlight","github","anchorjs","image-captions","include-codeblock","collapsible-chapters","advanced-emoji"],"root":"./","styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"prism":{},"github":{"url":"https://github.com/InseeFr/VTL-Tools.git"},"search":{},"collapsible-chapters":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"advanced-emoji":{"embedEmojis":false},"include-codeblock":{"check":false,"edit":false,"fixlang":false,"lang":"","template":"default","theme":"chrome","unindent":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"edit-link":{"label":"Edit This Page","base":"https://github.com/InseeFr/VTL-Tools/tree/master/docs"},"theme-default":{"styles":{"website":"gitbook.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false},"anchorjs":{},"image-captions":{"variable_name":"_pictures"}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{"_pictures":[]},"title":"Trevas","language":"fr","gitbook":"*"},"file":{"path":"engine/index.md","mtime":"2022-04-13T12:32:19.027Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2022-04-13T12:33:05.393Z"},"basePath":"..","book":{"language":"fr"}});
         });
     </script>
 </div>
