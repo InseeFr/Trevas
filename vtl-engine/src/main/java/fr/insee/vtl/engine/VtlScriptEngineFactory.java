@@ -27,7 +27,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public String getEngineVersion() {
-        return "0.1.3";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     /**

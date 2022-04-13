@@ -137,4 +137,17 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
     public Set<Entry<K, V>> entrySet() {
         return delegate.entrySet();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IndexedHashMap<?, ?> that = (IndexedHashMap<?, ?>) o;
+        return this.delegate.equals(that.delegate);
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
 }

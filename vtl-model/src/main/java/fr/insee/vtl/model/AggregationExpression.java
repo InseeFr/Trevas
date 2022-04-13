@@ -22,9 +22,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * @param aggregation Collector of data points.
      * @param type        Expected type for aggregation results.
      */
-    public AggregationExpression(Collector<Structured.DataPoint, ?, ? extends Object> aggregation, Class<?> type) {
+    public <T> AggregationExpression(Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
         this.aggregation = aggregation;
         this.type = type;
+    }
+
+    /**
+     * Constructor based on an input expression, a data point collector and an expected type.
+     * The input expression is applied to each data point before it is accepted by the data point collector.
+     *
+     * @param expression The input resolvable expression.
+     * @param collector  The data point collector.
+     * @param type       The expected type of the aggregation expression results.
+     */
+    public <T> AggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+        this(Collectors.mapping(expression::resolve, collector), type);
     }
 
     /**
@@ -33,7 +45,13 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      * @return The counting expression.
      */
     public static AggregationExpression count() {
-        return withType(Collectors.counting(), Long.class);
+        return new CountAggregationExpression(Collectors.counting(), Long.class);
+    }
+
+    public static class CountAggregationExpression extends AggregationExpression {
+        private <T> CountAggregationExpression(Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
+            super(aggregation, type);
+        }
     }
 
     /**
@@ -44,12 +62,26 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression avg(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.averagingLong(value -> (Long) value), Double.class);
+            return new AverageAggregationExpression(
+                    expression,
+                    Collectors.averagingLong(value -> (Long) value),
+                    Double.class
+            );
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.averagingDouble(value -> (Double) value), Double.class);
+            return new AverageAggregationExpression(
+                    expression,
+                    Collectors.averagingDouble(value -> (Double) value),
+                    Double.class
+            );
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
+        }
+    }
+
+    public static class AverageAggregationExpression extends AggregationExpression {
+        public <T> AverageAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
         }
     }
 
@@ -61,12 +93,18 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression sum(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.summingLong(value -> (Long) value), Long.class);
+            return new SumAggregationExpression(expression, Collectors.summingLong(value -> (Long) value), Long.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.summingDouble(value -> (Double) value), Double.class);
+            return new SumAggregationExpression(expression, Collectors.summingDouble(value -> (Double) value), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
+        }
+    }
+
+    public static class SumAggregationExpression extends AggregationExpression {
+        public <T> SumAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
         }
     }
 
@@ -78,12 +116,18 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression median(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Long) v, medianCollectorLong()), Double.class);
+            return new MedianAggregationExpression(expression, Collectors.mapping(v -> (Long) v, medianCollectorLong()), Double.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Double) v, medianCollectorDouble()), Double.class);
+            return new MedianAggregationExpression(expression, Collectors.mapping(v -> (Double) v, medianCollectorDouble()), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
+        }
+    }
+
+    public static class MedianAggregationExpression extends AggregationExpression {
+        public <T> MedianAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
         }
     }
 
@@ -98,15 +142,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
             Collector<Long, ?, Optional<Long>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
             Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
             Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-            return withExpression(expression, res, Long.class);
+            return new MaxAggregationExpression(expression, res, Long.class);
         } else if (Double.class.equals(expression.getType())) {
             Collector<Double, ?, Optional<Double>> maxBy = Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
             Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
             Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-            return withExpression(expression, res, Double.class);
+            return new MaxAggregationExpression(expression, res, Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
+        }
+    }
+
+    public static class MaxAggregationExpression extends AggregationExpression {
+        public <T> MaxAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
         }
     }
 
@@ -121,15 +171,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
             Collector<Long, ?, Optional<Long>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
             Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
             Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-            return withExpression(expression, res, Long.class);
+            return new MinAggregationExpression(expression, res, Long.class);
         } else if (Double.class.equals(expression.getType())) {
             Collector<Double, ?, Optional<Double>> maxBy = Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
             Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
             Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-            return withExpression(expression, res, Double.class);
+            return new MinAggregationExpression(expression, res, Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
+        }
+    }
+
+    public static class MinAggregationExpression extends AggregationExpression {
+        public <T> MinAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
         }
     }
 
@@ -141,14 +197,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression stdDevPop(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevPopCollectorLong()), Double.class);
+            return new StdDevPopAggregationExpression(expression, Collectors.mapping(v -> (Long) v, stdDevPopCollectorLong()), Double.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevPopCollectorDouble()), Double.class);
+            return new StdDevPopAggregationExpression(expression, Collectors.mapping(v -> (Double) v, stdDevPopCollectorDouble()), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
         }
     }
+
+    public static class StdDevPopAggregationExpression extends AggregationExpression {
+        public <T> StdDevPopAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
+        }
+    }
+
 
     /**
      * Returns an aggregation expression that give sample standard deviation of an expression on data points and returns a double number.
@@ -158,14 +221,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression stdDevSamp(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Long) v, stdDevSampCollectorLong()), Double.class);
+            return new StdDevSampAggregationExpression(expression, Collectors.mapping(v -> (Long) v, stdDevSampCollectorLong()), Double.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Double) v, stdDevSampCollectorDouble()), Double.class);
+            return new StdDevSampAggregationExpression(expression, Collectors.mapping(v -> (Double) v, stdDevSampCollectorDouble()), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
         }
     }
+
+    public static class StdDevSampAggregationExpression extends AggregationExpression {
+        public <T> StdDevSampAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
+        }
+    }
+
 
     /**
      * Returns an aggregation expression that give population variance of an expression on data points and returns a double number.
@@ -175,14 +245,21 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression varPop(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Long) v, varPopCollectorLong()), Double.class);
+            return new VarPopAggregationExpression(expression, Collectors.mapping(v -> (Long) v, varPopCollectorLong()), Double.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Double) v, varPopCollectorDouble()), Double.class);
+            return new VarPopAggregationExpression(expression, Collectors.mapping(v -> (Double) v, varPopCollectorDouble()), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
         }
     }
+
+    public static class VarPopAggregationExpression extends AggregationExpression {
+        public <T> VarPopAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
+        }
+    }
+
 
     /**
      * Returns an aggregation expression that give sample variance of an expression on data points and returns a double number.
@@ -192,37 +269,19 @@ public class AggregationExpression implements Collector<Structured.DataPoint, Ob
      */
     public static AggregationExpression varSamp(ResolvableExpression expression) {
         if (Long.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Long) v, varSampCollectorLong()), Double.class);
+            return new VarSampAggregationExpression(expression, Collectors.mapping(v -> (Long) v, varSampCollectorLong()), Double.class);
         } else if (Double.class.equals(expression.getType())) {
-            return withExpression(expression, Collectors.mapping(v -> (Double) v, varSampCollectorDouble()), Double.class);
+            return new VarSampAggregationExpression(expression, Collectors.mapping(v -> (Double) v, varSampCollectorDouble()), Double.class);
         } else {
             // Type asserted in visitor.
             throw new Error("unexpected type");
         }
     }
 
-    /**
-     * Returns an aggregation expression based on a data point collector and an expected type.
-     *
-     * @param collector The data point collector.
-     * @param type      The expected type of the aggregation expression results.
-     * @return The aggregation expression.
-     */
-    public static AggregationExpression withType(Collector<Structured.DataPoint, ?, ?> collector, Class<?> type) {
-        return new AggregationExpression(collector, type);
-    }
-
-    /**
-     * Returns an aggregation expression based on an input expression, a data point collector and an expected type.
-     * The input expression is applied to each data point before it is accepted by the data point collector.
-     *
-     * @param expression The input resolvable expression.
-     * @param collector  The data point collector.
-     * @param type       The expected type of the aggregation expression results.
-     * @return The resolvable expression.
-     */
-    public static <T> AggregationExpression withExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
-        return new AggregationExpression(Collectors.mapping(expression::resolve, collector), type);
+    public static class VarSampAggregationExpression extends AggregationExpression {
+        public <T> VarSampAggregationExpression(ResolvableExpression expression, Collector<Object, ?, T> collector, Class<T> type) {
+            super(expression, collector, type);
+        }
     }
 
     private static Collector<Long, List<Long>, Double> medianCollectorLong() {

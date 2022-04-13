@@ -112,19 +112,19 @@
 
 #### VTL-ML - Aggregate operators
 
-| Name                               | Symbol      |      InMemory      | Spark |
-| ---------------------------------- | :---------- | :----------------: | :---: |
-| Aggregate invocation               |             | :heavy_check_mark: |  :x:  |
-| Counting the number of data points | count       | :heavy_check_mark: |  :x:  |
-| Minimum value                      | min         | :heavy_check_mark: |  :x:  |
-| Maximum value                      | max         | :heavy_check_mark: |  :x:  |
-| Median value                       | median      | :heavy_check_mark: |  :x:  |
-| Sum                                | sum         | :heavy_check_mark: |  :x:  |
-| Average value                      | avg         | :heavy_check_mark: |  :x:  |
-| Population standard deviation      | stddev_pop  | :heavy_check_mark: |  :x:  |
-| Sample standard deviation          | stddev_samp | :heavy_check_mark: |  :x:  |
-| Population variance                | var_pop     | :heavy_check_mark: |  :x:  |
-| Sample variance                    | var_samp    | :heavy_check_mark: |  :x:  |
+| Name                               | Symbol      |      InMemory      |       Spark        |
+|------------------------------------|:------------|:------------------:|:------------------:|
+| Aggregate invocation               |             | :heavy_check_mark: | :heavy_check_mark: |
+| Counting the number of data points | count       | :heavy_check_mark: | :heavy_check_mark: |
+| Minimum value                      | min         | :heavy_check_mark: | :heavy_check_mark: |
+| Maximum value                      | max         | :heavy_check_mark: | :heavy_check_mark: |
+| Median value                       | median      | :heavy_check_mark: | :heavy_check_mark: |
+| Sum                                | sum         | :heavy_check_mark: | :heavy_check_mark: |
+| Average value                      | avg         | :heavy_check_mark: | :heavy_check_mark: |
+| Population standard deviation      | stddev_pop  | :heavy_check_mark: | :heavy_check_mark: |
+| Sample standard deviation          | stddev_samp | :heavy_check_mark: | :heavy_check_mark: |
+| Population variance                | var_pop     | :heavy_check_mark: | :heavy_check_mark: |
+| Sample variance                    | var_samp    | :heavy_check_mark: | :heavy_check_mark: |
 
 #### VTL-ML - Analytic operators
 
@@ -161,7 +161,7 @@
 | Name         | Symbol       |      Boolean       | Component | Dataset |
 | ------------ | :----------- | :----------------: | :-------: | :-----: |
 | If Then Else | if-then-else | :heavy_check_mark: |    :x:    |   :x:   |
-| Nvl          | nvl          |        :x:         |    :x:    |   :x:   |
+| Nvl          | nvl          | :heavy_check_mark: |    :x:    |   :x:   |
 
 #### VTL-ML - Clause operators
 

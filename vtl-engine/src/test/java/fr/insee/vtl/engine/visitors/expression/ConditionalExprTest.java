@@ -12,7 +12,7 @@ import javax.script.ScriptException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class IfExprTest {
+public class ConditionalExprTest {
 
     private ScriptEngine engine;
 
@@ -38,6 +38,19 @@ public class IfExprTest {
         assertThat(context.getAttribute("s")).isEqualTo("true");
         engine.eval("l := if false then 1 else 0;");
         assertThat(context.getAttribute("l")).isEqualTo(0L);
+    }
+
+    @Test
+    public void testNvlExpr() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("s := nvl(\"toto\", \"default\");");
+        assertThat(context.getAttribute("s")).isEqualTo("toto");
+        engine.eval("s := nvl(null, \"default\");");
+        assertThat(context.getAttribute("s")).isEqualTo("default");
+        assertThatThrownBy(() -> {
+            engine.eval("s := nvl(3, \"toto\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"toto\" to be Long");
     }
 
     @Test

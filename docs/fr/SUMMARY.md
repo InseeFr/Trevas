@@ -13,6 +13,6 @@
 - [Jackson](jackson/index.md)
 - [Utilisation](usage.md)
 
-## Guide utilisateur
+## Guide de l'utilisateur
 
-- [Couverture fonctionnelle du moteur d'exécution VTL 2.0](coverage.md)
+- [Couverture fonctionnelle](coverage.md)

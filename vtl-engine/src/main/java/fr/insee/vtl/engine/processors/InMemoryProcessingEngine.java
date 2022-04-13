@@ -1,11 +1,11 @@
 package fr.insee.vtl.engine.processors;
 
+import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
 
 import javax.script.ScriptEngine;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,10 +23,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         // Copy the structure and mutate based on the expressions.
         var newStructure = new DataStructure(expression.getDataStructure());
         for (String columnName : expressions.keySet()) {
+            // TODO: refine nullable strategy
             newStructure.put(columnName, new Dataset.Component(
-                    columnName,
-                    expressions.get(columnName).getType(),
-                    roles.get(columnName))
+                            columnName,
+                            expressions.get(columnName).getType(),
+                            roles.get(columnName),
+                            true
+                    )
             );
         }
 
@@ -87,7 +90,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                                 : new Dataset.Component(
                                 fromTo.get(component.getName()),
                                 component.getType(),
-                                component.getRole())
+                                component.getRole(),
+                                component.getNullable()
+                        )
                 ).collect(Collectors.toList());
         DataStructure renamedStructure = new DataStructure(structure);
         return new DatasetExpression() {
@@ -165,9 +170,28 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAggr(DatasetExpression expression, DataStructure structure,
-                                         Map<String, AggregationExpression> collectorMap,
-                                         Function<DataPoint, Map<String, Object>> keyExtractor) {
+    public DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
+        // Create a keyExtractor with the columns we group by.
+        var keyExtractor = new KeyExtractor(groupBy);
+
+        // Compute the new data structure.
+        Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
+        for (Dataset.Component component : expression.getDataStructure().values()) {
+            if (groupBy.contains(component.getName())) {
+                newStructure.put(component.getName(), component);
+            }
+        }
+        for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
+            // TODO: refine nullable strategy
+            newStructure.put(entry.getKey(), new Dataset.Component(
+                    entry.getKey(),
+                    entry.getValue().getType(),
+                    Dataset.Role.MEASURE,
+                    true)
+            );
+        }
+
+        Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
         return new DatasetExpression() {
             @Override
             public Dataset resolve(Map<String, Object> context) {

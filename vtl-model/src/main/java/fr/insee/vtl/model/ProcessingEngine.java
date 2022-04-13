@@ -2,7 +2,6 @@ package fr.insee.vtl.model;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static fr.insee.vtl.model.Structured.*;
 
@@ -63,9 +62,8 @@ public interface ProcessingEngine {
      * <p>
      * The API of this method is not stable yet.
      */
-    DatasetExpression executeAggr(DatasetExpression expression, DataStructure structure,
-                                  Map<String, AggregationExpression> collectorMap,
-                                  Function<DataPoint, Map<String, Object>> keyExtractor);
+    DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy,
+                                  Map<String, AggregationExpression> collectorMap);
 
     /**
      * Execute a left join transformations on the dataset expressions.

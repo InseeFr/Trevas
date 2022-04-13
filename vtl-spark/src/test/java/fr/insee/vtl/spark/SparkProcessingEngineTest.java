@@ -28,7 +28,7 @@ public class SparkProcessingEngineTest {
     private SparkSession spark;
     private ScriptEngine engine;
 
-    private InMemoryDataset dataset1 = new InMemoryDataset(
+    private final InMemoryDataset dataset1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 2L),
                     List.of("b", 3L, 4L),
@@ -41,7 +41,7 @@ public class SparkProcessingEngineTest {
                     new Component("weight", Long.class, Role.MEASURE)
             )
     );
-    private InMemoryDataset dataset2 = new InMemoryDataset(
+    private final InMemoryDataset dataset2 = new InMemoryDataset(
             List.of(
                     List.of(9L, "a", 10L),
                     List.of(11L, "b", 12L),
@@ -55,7 +55,7 @@ public class SparkProcessingEngineTest {
             )
     );
 
-    private InMemoryDataset dataset3 = new InMemoryDataset(
+    private final InMemoryDataset dataset3 = new InMemoryDataset(
             List.of(
                     List.of(16L, "a", 17L),
                     List.of(18L, "b", 19L),
@@ -90,19 +90,6 @@ public class SparkProcessingEngineTest {
             spark.close();
     }
 
-    public void testLoadActiveSession() {
-        SparkSession spark = SparkSession.builder()
-                .appName("test")
-                .master("local")
-                .getOrCreate();
-        SparkSession.setActiveSession(spark);
-        try {
-
-        } finally {
-            spark.close();
-        }
-    }
-
     @Test
     public void testServiceLoader() {
         List<String> processingEngines = ServiceLoader.load(ProcessingEngineFactory.class).stream()
@@ -115,7 +102,7 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
-    public void testCalcClause() throws ScriptException {
+    public void testCalcClause() throws ScriptException, InterruptedException {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
@@ -130,18 +117,19 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc age := age * 2, attribute wisdom := (weight + age) / 2];");
+        engine.eval("ds := ds1[calc test := between(age, 10, 11), age := age * 2, attribute wisdom := (weight + age) / 2];");
 
         var ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds).isInstanceOf(Dataset.class);
         assertThat(ds.getDataAsMap()).isEqualTo(List.of(
-                Map.of("name", "Hadrien", "age", 20L, "weight", 11L, "wisdom", 10.5D),
-                Map.of("name", "Nico", "age", 22L, "weight", 10L, "wisdom", 10.5D),
-                Map.of("name", "Franck", "age", 24L, "weight", 9L, "wisdom", 10.5D)
+                Map.of("name", "Hadrien", "age", 20L, "test", true, "weight", 11L, "wisdom", 10.5D),
+                Map.of("name", "Nico", "age", 22L, "test", true, "weight", 10L, "wisdom", 10.5D),
+                Map.of("name", "Franck", "age", 24L, "test", false, "weight", 9L, "wisdom", 10.5D)
         ));
         assertThat(ds.getDataStructure()).containsValues(
                 new Component("name", String.class, Role.IDENTIFIER),
                 new Component("age", Long.class, Role.MEASURE),
+                new Component("test", Boolean.class, Role.MEASURE),
                 new Component("weight", Long.class, Role.MEASURE),
                 new Component("wisdom", Double.class, Role.ATTRIBUTE)
         );
@@ -387,6 +375,98 @@ public class SparkProcessingEngineTest {
                 new Component("weight", Long.class, Role.MEASURE)
         );
 
+
+    }
+
+    @Test
+    public void testAggregateClause() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
+                        Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
+                ),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1[aggr " +
+                "sumAge := sum(age*2)," +
+                "avgWeight := avg(weight)," +
+                "countVal := count()," +
+                "maxAge := max(age)," +
+                "maxWeight := max(weight)," +
+                "minAge := min(age)," +
+                "minWeight := min(weight)," +
+                "medianAge := median(age)," +
+                "medianWeight := median(weight)" +
+                " group by country];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("country", "france", "sumAge", 72L, "avgWeight", 10.0D,
+                        "countVal", 3L, "maxAge", 13L, "maxWeight", 11.0D,
+                        "minAge", 11L, "minWeight", 9D, "medianAge", 12L,
+                        "medianWeight", 10.0D),
+                Map.of("country", "norway", "sumAge", 20L, "avgWeight", 11.0,
+                        "countVal", 1L, "maxAge", 10L, "maxWeight", 11.0D,
+                        "minAge", 10L, "minWeight", 11D, "medianAge", 10L,
+                        "medianWeight", 11D)
+        );
+
+//        InMemoryDataset dataset2 = new InMemoryDataset(
+//                List.of(
+//                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+//                        Map.of("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
+//                        Map.of("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
+//                        Map.of("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
+//                        Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
+//                ),
+//                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+//                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+//        );
+//
+//        context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
+//
+//        engine.eval("res := ds2[aggr " +
+//                "stddev_popAge := stddev_pop(age), " +
+//                "stddev_popWeight := stddev_pop(weight), " +
+//                "stddev_sampAge := stddev_samp(age), " +
+//                "stddev_sampWeight := stddev_samp(weight), " +
+//                "var_popAge := var_pop(age), " +
+//                "var_popWeight := var_pop(weight), " +
+//                "var_sampAge := var_samp(age), " +
+//                "var_sampWeight := var_samp(weight)" +
+//                " group by country];");
+//
+//        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+//
+//        var fr = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0);
+//
+//        assertThat((Double) fr.get("stddev_popAge")).isCloseTo(1.118, Percentage.withPercentage(2));
+//        assertThat((Double) fr.get("stddev_popWeight")).isCloseTo(3.640, Percentage.withPercentage(2));
+//        assertThat((Double) fr.get("stddev_sampAge")).isCloseTo(1.290, Percentage.withPercentage(2));
+//        assertThat((Double) fr.get("stddev_sampWeight")).isCloseTo(4.2, Percentage.withPercentage(2));
+//        assertThat((Double) fr.get("var_popAge")).isEqualTo(1.25);
+//        assertThat((Double) fr.get("var_popWeight")).isEqualTo(13.25);
+//        assertThat((Double) fr.get("var_sampAge")).isCloseTo(1.666, Percentage.withPercentage(2));
+//        assertThat((Double) fr.get("var_sampWeight")).isCloseTo(17.666, Percentage.withPercentage(2));
+//
+//        var no = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(1);
+//
+//        assertThat((Double) no.get("stddev_popAge")).isEqualTo(0.0);
+//        assertThat((Double) no.get("stddev_popWeight")).isEqualTo(0.0);
+//        assertThat((Double) no.get("stddev_sampAge")).isEqualTo(0.0);
+//        assertThat((Double) no.get("stddev_sampWeight")).isEqualTo(0.0);
+//        assertThat((Double) no.get("var_popAge")).isEqualTo(0.0);
+//        assertThat((Double) no.get("var_popWeight")).isEqualTo(0.0);
+//        assertThat((Double) no.get("var_sampAge")).isEqualTo(0.0);
+//        assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
 
     }
 

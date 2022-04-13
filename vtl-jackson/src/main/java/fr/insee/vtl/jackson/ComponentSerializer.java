@@ -41,6 +41,7 @@ public class ComponentSerializer extends StdSerializer<Structured.Component> {
         gen.writeObjectField("name", value.getName());
         gen.writeObjectField("type", TYPES.get(value.getType()));
         gen.writeObjectField("role", value.getRole());
+        gen.writeObjectField("nullable", value.getNullable());
         gen.writeEndObject();
     }
 }
