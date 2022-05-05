@@ -3,17 +3,16 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
-import fr.insee.vtl.model.ListExpression;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
@@ -61,12 +60,16 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     /**
      * This method handles the comparison between two expressions
+     *
      * @param leftExpression
      * @param rightExpression
-     * @param comparisonFn a lambda or a method reference
+     * @param comparisonFn    a lambda or a method reference
      * @return a VTL boolean expression
      */
-    public BooleanExpression compareExpressions(ResolvableExpression leftExpression, ResolvableExpression rightExpression, BiFunction<Comparable, Comparable, Boolean> comparisonFn) {
+    public BooleanExpression compareExpressions(
+            ResolvableExpression leftExpression,
+            ResolvableExpression rightExpression,
+            VtlBiFunction<Comparable, Comparable, Boolean> comparisonFn) {
         return BooleanExpression.of(context -> {
             Comparable leftValue;
             Comparable rightValue;
