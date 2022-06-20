@@ -469,6 +469,30 @@ public class SparkProcessingEngineTest {
 //        assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
 
     }
+    @Test
+    public void testAnClause() throws ScriptException {
+
+        InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
+                        Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
+                ),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := count ( ds1 over ( partition by country ) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        );
+
+    }
 
     @Test
     public void testRename() throws ScriptException {
