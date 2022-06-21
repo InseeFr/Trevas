@@ -470,26 +470,53 @@ public class SparkProcessingEngineTest {
 
     }
     @Test
-    public void testAnClause() throws ScriptException {
+    public void testAnWithPartitionClause() throws ScriptException {
 
         InMemoryDataset dataset = new InMemoryDataset(
                 List.of(
-                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
-                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
-                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
-                        Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
-                ),
-                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7D)
+
+                        ),
+                Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class,"Me_2",Double.class),
+                Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE,"Me_2", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-
-        engine.eval("res := count ( ds1 over ( partition by country ) )");
+        // Test case 1
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Id_3|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3|   1|
+            |   A|  XX|2001|   4|   9|
+            |   A|  XX|2002|   7|   5|
+            |   A|  XX|2003|   6|   8|
+            |   A|  YY|2000|   9|   3|
+            |   A|  YY|2001|   5|   4|
+            |   A|  YY|2002|  10|   2|
+            |   A|  YY|2003|   5|   7|
+            +----+----+----+----+----+
+        * */
+        engine.eval("res := count ( ds1 over ( partition by Id_1 ) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 8L,"Me_2",8L)
         );
 
     }
