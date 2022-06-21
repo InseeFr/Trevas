@@ -19,12 +19,12 @@ InMemoryDataset dataset = new InMemoryDataset(
                 Map.of()
 );
 
-bindings.put("dataset", dataset);
+bindings.put("myDataset", dataset);
 
 ScriptContext context = engine.getContext();
 context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
-String script = "res := dataset[filter var3 > 6];";
+String script = "res := myDataset[filter var3 > 6];";
 
 try {
     engine.eval(script);
