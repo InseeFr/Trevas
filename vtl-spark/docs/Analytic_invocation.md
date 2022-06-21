@@ -81,8 +81,38 @@ Output :
 ### Additional constraints
 
 - The analytic invocation cannot be nested in other Aggregate or Analytic invocations.
-The analytic operations at component level can be invoked within the calc clause, both as part of a Join operator
+- The analytic operations at component level can be invoked within the calc clause, both as part of a Join operator
 and the calc operator (see the parameter calcExpr of those operators).
-The basic scalar types of firstOperand and additionalOperand (if any) must be compliant with the specific basic
+- The basic scalar types of firstOperand and additionalOperand (if any) must be compliant with the specific basic
 scalar types required by the invoked operator (the required basic scalar types are described in the table at the
 beginning of this chapter and in the sections of the various operators below).
+
+### Behaviour
+
+The analytic Operator is applied as usual to all the Measures of the input Data Set (if invoked at Data Set level) or
+to the specified Component of the input Data Set (if invoked at Component level). In both cases, the operator
+calculates the desired output values for each Data Point of the input Data Set.
+The behaviour of the analytic operations can be procedurally described as follows:
+- The Data Points of the input Data Set are first partitioned (according to partitionBy) and then ordered
+(according to orderBy).
+- The operation is performed for each Data Point (named “current Data Point”) of the input Data Set. For each
+input Data Point, one output Data Point is returned, having the same values of the Identifiers. The analytic
+operator is applied to a “window” which includes a set of Data Points of the input Data Set and returns the
+values of the Measure(s) of the output Data Point.
+    - If windowClause is not specified, then the set of Data Points which contribute to the analytic operation is
+         the whole partition which the current Data Point belongs to
+    - If windowClause is specified, then the set of Data Points is the one specified by windowClause (see
+         windowsClause and LimitClause explained above).
+
+For the invocation at Data Set level, the resulting Data Set has the same Measures as the input Data Set
+`firstOperand`. For the invocation at Component level, the resulting Data Set has the Measures of the input Data
+Set plus the Measures explicitly calculated through the `calc` clause.
+
+For the invocation at Data Set level, the Attribute propagation rule is applied. For invocation at Component level,
+the Attributes calculated within the calc clause are maintained in the result; for all the other Attributes that are
+defined as viral, the Attribute propagation rule is applied (for the semantics, see the Attribute Propagation Rule
+section in the User Manual).
+
+As mentioned, the Analytic invocation at component level can be done within the `calc` clause, both as part of a
+Join operator and the `calc` operator (see the parameter aggrCalc of those operators), therefore, for a better
+comprehension fo the behaviour at Component level, see also those operators
