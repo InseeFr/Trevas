@@ -28,6 +28,22 @@ public class SparkProcessingEngineTest {
     private SparkSession spark;
     private ScriptEngine engine;
 
+    private final InMemoryDataset anCountDS1  = new InMemoryDataset(
+            List.of(
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9D),
+                                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5D),
+                                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8D),
+                                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3D),
+                                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4D),
+                                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2D),
+                                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7D)
+
+                                ),
+                                Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class,"Me_2",Double.class),
+            Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE,"Me_2", Role.MEASURE)
+            );
+
     private final InMemoryDataset dataset1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 2L),
@@ -469,45 +485,49 @@ public class SparkProcessingEngineTest {
 //        assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
 
     }
+
+
     @Test
-    public void testAnWithPartitionClause() throws ScriptException {
+    public void testAnCountWithPartitionClause() throws ScriptException {
 
-        InMemoryDataset dataset = new InMemoryDataset(
-                List.of(
-                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1D),
-                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9D),
-                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5D),
-                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8D),
-                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3D),
-                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4D),
-                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2D),
-                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7D)
-
-                        ),
-                Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class,"Me_2",Double.class),
-                Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE,"Me_2", Role.MEASURE)
-        );
-
-        ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-        // Test case 1
+        // Analytical function Test case 1 : count on window with partition
         /* Input dataset
         *   +----+----+----+----+----+
-            |Id_1|Id_2|Id_3|Me_1|Me_2|
+            |Id_1|Id_2|Year|Me_1|Me_2|
             +----+----+----+----+----+
-            |   A|  XX|2000|   3|   1|
-            |   A|  XX|2001|   4|   9|
-            |   A|  XX|2002|   7|   5|
-            |   A|  XX|2003|   6|   8|
-            |   A|  YY|2000|   9|   3|
-            |   A|  YY|2001|   5|   4|
-            |   A|  YY|2002|  10|   2|
-            |   A|  YY|2003|   5|   7|
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
             +----+----+----+----+----+
         * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
         engine.eval("res := count ( ds1 over ( partition by Id_1 ) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame need to check mutable or not mutable on Mesaument column
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|count_Me_2|
+            +----+----+----+----+----+----------+----------+
+            |   A|  XX|2000|   3| 1.0|         8|         8|
+            |   A|  XX|2001|   4| 9.0|         8|         8|
+            |   A|  XX|2002|   7| 5.0|         8|         8|
+            |   A|  XX|2003|   6| 8.0|         8|         8|
+            |   A|  YY|2000|   9| 3.0|         8|         8|
+            |   A|  YY|2001|   5| 4.0|         8|         8|
+            |   A|  YY|2002|  10| 2.0|         8|         8|
+            |   A|  YY|2003|   5| 7.0|         8|         8|
+            +----+----+----+----+----+----------+----------+
+        * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 8L,"Me_2",8L),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 8L,"Me_2",8L),
@@ -520,6 +540,173 @@ public class SparkProcessingEngineTest {
         );
 
     }
+
+    @Test
+    public void testAnCountWithPartitionOrderByClause() throws ScriptException {
+
+        // Analytical function Test case 2 : count on window with partition and orderBy
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|count_Me_2|
+            +----+----+----+----+----+----------+----------+
+            |   A|  XX|2000|   3| 1.0|         4|         4|
+            |   A|  XX|2001|   4| 9.0|         4|         4|
+            |   A|  XX|2002|   7| 5.0|         4|         4|
+            |   A|  XX|2003|   6| 8.0|         4|         4|
+            |   A|  YY|2000|   9| 3.0|         8|         8|
+            |   A|  YY|2001|   5| 4.0|         8|         8|
+            |   A|  YY|2002|  10| 2.0|         8|         8|
+            |   A|  YY|2003|   5| 7.0|         8|         8|
+            +----+----+----+----+----+----------+----------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 8L,"Me_2",8L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 8L,"Me_2",8L)
+        );
+
+    }
+
+    @Test
+    public void testAnCountWithPartitionOrderByDPClause() throws ScriptException {
+
+        // Analytical function count test case 3 : count on window with partition, orderBy and data points
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|count_Me_2|
+            +----+----+----+----+----+----------+----------+
+            |   A|  XX|2000|   3| 1.0|         3|         3|
+            |   A|  XX|2001|   4| 9.0|         4|         4|
+            |   A|  XX|2002|   7| 5.0|         5|         5|
+            |   A|  XX|2003|   6| 8.0|         5|         5|
+            |   A|  YY|2000|   9| 3.0|         5|         5|
+            |   A|  YY|2001|   5| 4.0|         5|         5|
+            |   A|  YY|2002|  10| 2.0|         4|         4|
+            |   A|  YY|2003|   5| 7.0|         3|         3|
+            +----+----+----+----+----+----------+----------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5L,"Me_2",5L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5L,"Me_2",5L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5L,"Me_2",5L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",5L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 3L,"Me_2",3L)
+        );
+
+    }
+
+    @Test
+    public void testAnCountWithPartitionOrderByRangeClause() throws ScriptException {
+
+        // Analytical function count test case 4 : count on window with partition, orderBy and range
+        // Because range build window based on the ordered column value, and Id_2 is string, so we change
+        // the order by column to year.
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|count_Me_2|
+            +----+----+----+----+----+----------+----------+
+            |   A|  XX|2000|   3| 1.0|         4|         4|
+            |   A|  YY|2000|   9| 3.0|         4|         4|
+            |   A|  XX|2001|   4| 9.0|         6|         6|
+            |   A|  YY|2001|   5| 4.0|         6|         6|
+            |   A|  XX|2002|   7| 5.0|         6|         6|
+            |   A|  YY|2002|  10| 2.0|         6|         6|
+            |   A|  XX|2003|   6| 8.0|         4|         4|
+            |   A|  YY|2003|   5| 7.0|         4|         4|
+            +----+----+----+----+----+----------+----------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L,"Me_2",6L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",6L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 6L,"Me_2",6L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6L,"Me_2",6L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4L,"Me_2",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 4L,"Me_2",4L)
+        );
+
+    }
+
 
     @Test
     public void testRename() throws ScriptException {
