@@ -1335,7 +1335,7 @@ public class SparkProcessingEngineTest {
     @Test
     public void testAnMaxWithPartitionOrderByClause() throws ScriptException {
 
-        // Analytical function Test case 2 : min on window with partition and order by
+        // Analytical function Test case 2 : max on window with partition and order by
         /* Input dataset
         *   +----+----+----+----+----+
             |Id_1|Id_2|Year|Me_1|Me_2|
@@ -1501,9 +1501,231 @@ public class SparkProcessingEngineTest {
      * Test case for analytic function Avg
      *
      * */
+    @Test
+    public void testAnAvgWithPartitionClause() throws ScriptException {
 
+        // Analytical function Test case 1 : avg on window with partition
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 ) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|avg_Me_1|avg_Me_2|
+            +----+----+----+----+----+--------+--------+
+            |   A|  XX|2000|   3| 1.0|     5.0|    5.75|
+            |   A|  XX|2001|   4| 9.0|     5.0|    5.75|
+            |   A|  XX|2002|   7| 5.0|     5.0|    5.75|
+            |   A|  XX|2003|   6| 8.0|     5.0|    5.75|
+            |   A|  YY|2000|   9| 3.0|    7.25|     4.0|
+            |   A|  YY|2001|   5| 4.0|    7.25|     4.0|
+            |   A|  YY|2002|  10| 2.0|    7.25|     4.0|
+            |   A|  YY|2003|   5| 7.0|    7.25|     4.0|
+            +----+----+----+----+----+--------+--------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7.25D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.25D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.25D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.25D,"Me_2",4.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnAvgWithPartitionOrderByClause() throws ScriptException {
+
+        // Analytical function Test case 2 : avg on window with partition and order by
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|         avg_Me_1|avg_Me_2|
+            +----+----+----+----+----+-----------------+--------+
+            |   A|  XX|2000|   3| 1.0|              3.0|     1.0|
+            |   A|  XX|2001|   4| 9.0|              3.5|     5.0|
+            |   A|  XX|2002|   7| 5.0|4.666666666666667|     5.0|
+            |   A|  XX|2003|   6| 8.0|              5.0|    5.75|
+            |   A|  YY|2000|   9| 3.0|              9.0|     3.0|
+            |   A|  YY|2001|   5| 4.0|              7.0|     3.5|
+            |   A|  YY|2002|  10| 2.0|              8.0|     3.0|
+            |   A|  YY|2003|   5| 7.0|             7.25|     4.0|
+            +----+----+----+----+----+-----------------+--------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3.5D,"Me_2",5.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.67D,"Me_2",5.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9.0D,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.0D,"Me_2",3.5D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 8.0D,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.25D,"Me_2",4.0D)
+        );
+
+    }
+
+
+    @Test
+    public void testAnAvgWithPartitionOrderByDPClause() throws ScriptException {
+
+        // Analytical function count test case 3 : avg on window with partition, orderBy and data points
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|         avg_Me_1|         avg_Me_2|
+            +----+----+----+----+----+-----------------+-----------------+
+            |   A|  XX|2000|   3| 1.0|4.666666666666667|              5.0|
+            |   A|  XX|2001|   4| 9.0|              5.0|             5.75|
+            |   A|  XX|2002|   7| 5.0|              5.8|              5.2|
+            |   A|  XX|2003|   6| 8.0|              6.2|              5.8|
+            |   A|  YY|2000|   9| 3.0|              7.4|              4.4|
+            |   A|  YY|2001|   5| 4.0|              7.0|              4.8|
+            |   A|  YY|2002|  10| 2.0|             7.25|              4.0|
+            |   A|  YY|2003|   5| 7.0|6.666666666666667|4.333333333333333|
+            +----+----+----+----+----+-----------------+-----------------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.67D,"Me_2",5.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D,"Me_2",5.75D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5.8D,"Me_2",5.2D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6.2D,"Me_2",5.8D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7.4D,"Me_2",4.4D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.0D,"Me_2",4.8D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.25D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6.67D,"Me_2",4.33D)
+        );
+
+    }
+
+    @Test
+    public void testAnAvgWithPartitionOrderByRangeClause() throws ScriptException {
+
+        // Analytical function count test case 5 : avg on window with partition, orderBy and range
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|         avg_Me_1|         avg_Me_2|
+            +----+----+----+----+----+-----------------+-----------------+
+            |   A|  XX|2000|   3| 1.0|             5.25|             4.25|
+            |   A|  YY|2000|   9| 3.0|             5.25|             4.25|
+            |   A|  XX|2001|   4| 9.0|6.333333333333333|              4.0|
+            |   A|  YY|2001|   5| 4.0|6.333333333333333|              4.0|
+            |   A|  XX|2002|   7| 5.0|6.166666666666667|5.833333333333333|
+            |   A|  YY|2002|  10| 2.0|6.166666666666667|5.833333333333333|
+            |   A|  XX|2003|   6| 8.0|              7.0|              5.5|
+            |   A|  YY|2003|   5| 7.0|              7.0|              5.5|
+            +----+----+----+----+----+-----------------+-----------------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.25D,"Me_2",4.25D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.25D,"Me_2",4.25D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6.33D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6.33D,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 6.17D,"Me_2",5.83D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.17D,"Me_2",5.83D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.0D,"Me_2",5.5D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.0D,"Me_2",5.5D)
+        );
+
+    }
     /*
      * End of Avg test case */
+
+    /*
+     * Test case for analytic function Median
+     *
+     * */
+
+    /*
+     * End of Median test case */
 
     @Test
     public void testRename() throws ScriptException {
