@@ -1273,6 +1273,238 @@ public class SparkProcessingEngineTest {
 
     /*
      * End of Min test case */
+
+
+    /*
+     * Test case for analytic function Max
+     *
+     * */
+    @Test
+    public void testAnMaxWithPartitionClause() throws ScriptException {
+
+        // Analytical function Test case 1 : max on window with partition
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 ) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|max_Me_1|max_Me_2|
+            +----+----+----+----+----+--------+--------+
+            |   A|  XX|2000|   3| 1.0|       7|     9.0|
+            |   A|  XX|2001|   4| 9.0|       7|     9.0|
+            |   A|  XX|2002|   7| 5.0|       7|     9.0|
+            |   A|  XX|2003|   6| 8.0|       7|     9.0|
+            |   A|  YY|2000|   9| 3.0|      10|     7.0|
+            |   A|  YY|2001|   5| 4.0|      10|     7.0|
+            |   A|  YY|2002|  10| 2.0|      10|     7.0|
+            |   A|  YY|2003|   5| 7.0|      10|     7.0|
+            +----+----+----+----+----+--------+--------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 10L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 10L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 10L,"Me_2",7.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnMaxWithPartitionOrderByClause() throws ScriptException {
+
+        // Analytical function Test case 2 : min on window with partition and order by
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|max_Me_1|max_Me_2|
+            +----+----+----+----+----+--------+--------+
+            |   A|  XX|2000|   3| 1.0|       3|     1.0|
+            |   A|  XX|2001|   4| 9.0|       4|     9.0|
+            |   A|  XX|2002|   7| 5.0|       7|     9.0|
+            |   A|  XX|2003|   6| 8.0|       7|     9.0|
+            |   A|  YY|2000|   9| 3.0|       9|     3.0|
+            |   A|  YY|2001|   5| 4.0|       9|     4.0|
+            |   A|  YY|2002|  10| 2.0|      10|     4.0|
+            |   A|  YY|2003|   5| 7.0|      10|     7.0|
+            +----+----+----+----+----+--------+--------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 9L,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 10L,"Me_2",7.0D)
+        );
+
+    }
+
+
+    @Test
+    public void testAnMaxWithPartitionOrderByDPClause() throws ScriptException {
+
+        // Analytical function count test case 3 : max on window with partition, orderBy and data points
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("res := max ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|max_Me_1|max_Me_2|
+            +----+----+----+----+----+--------+--------+
+            |   A|  XX|2000|   3| 1.0|       7|     9.0|
+            |   A|  XX|2001|   4| 9.0|       7|     9.0|
+            |   A|  XX|2002|   7| 5.0|       9|     9.0|
+            |   A|  XX|2003|   6| 8.0|       9|     9.0|
+            |   A|  YY|2000|   9| 3.0|      10|     8.0|
+            |   A|  YY|2001|   5| 4.0|      10|     8.0|
+            |   A|  YY|2002|  10| 2.0|      10|     7.0|
+            |   A|  YY|2003|   5| 7.0|      10|     7.0|
+            +----+----+----+----+----+--------+--------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 9L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 9L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 10L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 10L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 10L,"Me_2",7.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnMaxWithPartitionOrderByRangeClause() throws ScriptException {
+
+        // Analytical function count test case 5 : min on window with partition, orderBy and range
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * The result data frame
+        *
+        *   +----+----+----+----+----+----------+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|max_Me_1|max_Me_2|
+            +----+----+----+----+----+--------+--------+
+            |   A|  XX|2000|   3| 1.0|       9|     9.0|
+            |   A|  YY|2000|   9| 3.0|       9|     9.0|
+            |   A|  XX|2001|   4| 9.0|      10|     9.0|
+            |   A|  YY|2001|   5| 4.0|      10|     9.0|
+            |   A|  XX|2002|   7| 5.0|      10|     9.0|
+            |   A|  YY|2002|  10| 2.0|      10|     9.0|
+            |   A|  XX|2003|   6| 8.0|      10|     8.0|
+            |   A|  YY|2003|   5| 7.0|      10|     8.0|
+            +----+----+----+----+----+--------+--------+
+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 9L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 9L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 10L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 10L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 10L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 10L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 10L,"Me_2",8.0D)
+        );
+
+    }
+    /*
+     * End of Max test case */
+
+    /*
+     * Test case for analytic function Avg
+     *
+     * */
+
+    /*
+     * End of Avg test case */
+
     @Test
     public void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
