@@ -621,7 +621,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -905,7 +905,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1183,7 +1183,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1407,7 +1407,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := max ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        engine.eval("res := max ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1629,7 +1629,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Id_2 data points between -2 and 2) )");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
