@@ -1,11 +1,14 @@
 package fr.insee.vtl.spark;
 
+import com.twitter.chill.AllScalaRegistrarCompat_0_9_5;
 import fr.insee.vtl.model.*;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.expressions.WindowSpec;
 import org.apache.spark.sql.types.DataType;
 import scala.collection.Seq;
 
@@ -18,6 +21,7 @@ import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
+import static org.apache.spark.sql.expressions.Window.*;
 import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.max;
@@ -25,6 +29,8 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
 import static org.apache.spark.sql.functions.*;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
+
+import scala.collection.JavaConverters;
 
 /**
  * The <code>SparkProcessingEngine</code> class is an implementation of a VTL engine using Apache Spark.
@@ -230,6 +236,77 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
         return new SparkDatasetExpression(new SparkDataset(result));
+    }
+
+    //@Override
+    //todo
+    public DatasetExpression executeAnalytic(DatasetExpression dataset, String funcName, List<String> partitionCols,
+                                             Map<String, String> orderCols, String windowFrame, String windowStar, String windowEnd) throws Exception {
+        //step1: build window spec
+        // 1.1 apply partition spec
+        WindowSpec windowSpec = null;
+        if (partitionCols != null && partitionCols.size() > 0) {
+            windowSpec = partitionBy(partitionCols.get(0), getTailAsSeq(partitionCols));
+        }
+
+        // 1.2 apply orderBy spec
+        Seq<Column> orders = buildOrderCol(orderCols);
+        if (windowSpec != null) windowSpec = windowSpec.orderBy(orders);
+        else windowSpec = orderBy(orders);
+
+        // 1.3 apply window frame spec
+        Long start = buildStartEnd(windowStar);
+        Long end = buildStartEnd(windowEnd);
+        if (windowSpec != null) {
+            if (windowFrame.equals("DataPoints"))
+                windowSpec = windowSpec.rowsBetween(start, end);
+            else if (windowFrame.equals("Range"))
+                windowSpec = windowSpec.rangeBetween(start, end);
+        } else throw new Exception("WindowFrame must contain partition or orderBy clause");
+
+        // step 2: call analytic func on window spec
+
+        // step3: convert back
+        return new SparkDatasetExpression(new SparkDataset(null));
+    }
+
+
+    // helper function returns the tails of a list as a Seq
+    public static <T> Seq<T> getTailAsSeq(List<T> inputList) {
+        List<T> tailList = inputList.subList(1, inputList.size() - 1);
+        return JavaConverters.asScalaIteratorConverter(tailList.iterator()).asScala().toSeq();
+    }
+
+    public static Long buildStartEnd(String inputIndex) {
+        switch (inputIndex) {
+            case "unbounded preceding":
+                return Window.unboundedPreceding();
+            case "unbounded following":
+                return Window.unboundedFollowing();
+            case "current row":
+                return Window.currentRow();
+            default:
+                try {
+                    return Long.parseLong(inputIndex);
+                } catch (NumberFormatException nfe) {
+                    throw new UnsupportedOperationException("Unknown windows frame index");
+                }
+
+        }
+    }
+
+    private static final String DESC_SPEC = "desc";
+
+    public static Seq<Column> buildOrderCol(Map<String, String> orderCols) {
+        List<Column> orders = new ArrayList<>();
+        for (Map.Entry<String, String> entry : orderCols.entrySet()) {
+            if (entry.getValue().equals(DESC_SPEC)) {
+                orders.add(col(entry.getKey()).desc());
+            } else {
+                orders.add(col(entry.getKey()));
+            }
+        }
+        return JavaConverters.asScalaIteratorConverter(orders.iterator()).asScala().toSeq();
     }
 
     @Override
