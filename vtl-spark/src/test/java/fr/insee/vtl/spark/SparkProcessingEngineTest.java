@@ -2887,18 +2887,19 @@ public class SparkProcessingEngineTest {
 
         // Analytical function Test case 1 : rank on window with partition and asc order
         /* Input dataset
-        *   +----+----+----+----+----+
-            |Id_1|Id_2|Year|Me_1|Me_2|
-            +----+----+----+----+----+
-            |   A|  XX|2000|   3| 1.0|
-            |   A|  XX|2001|   4| 9.0|
-            |   A|  XX|2002|   7| 5.0|
-            |   A|  XX|2003|   6| 8.0|
-            |   A|  YY|2000|   9| 3.0|
-            |   A|  YY|2001|   5| 4.0|
-            |   A|  YY|2002|  10| 2.0|
-            |   A|  YY|2003|   5| 7.0|
-            +----+----+----+----+----+
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+
         * */
         ScriptContext context = engine.getContext();
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
@@ -2938,26 +2939,27 @@ public class SparkProcessingEngineTest {
     @Test
     public void testAnRankDesc() throws ScriptException {
 
-        // Analytical function Test case 1 : rank on window with partition and desc order
+        // Analytical function Test case 2 : rank on window with partition and desc order
         /* Input dataset
-        *   +----+----+----+----+----+
-            |Id_1|Id_2|Year|Me_1|Me_2|
-            +----+----+----+----+----+
-            |   A|  XX|2000|   3| 1.0|
-            |   A|  XX|2001|   4| 9.0|
-            |   A|  XX|2002|   7| 5.0|
-            |   A|  XX|2003|   6| 8.0|
-            |   A|  YY|2000|   9| 3.0|
-            |   A|  YY|2001|   5| 4.0|
-            |   A|  YY|2002|  10| 2.0|
-            |   A|  YY|2003|   5| 7.0|
-            +----+----+----+----+----+
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+
         * */
         ScriptContext context = engine.getContext();
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := ds1 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year desc) )]");
+        engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year desc) )]");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2995,8 +2997,238 @@ public class SparkProcessingEngineTest {
      *
      * */
 
+    @Test
+    public void testAnFirstWithPartitionClause() throws ScriptException {
+
+        // Analytical function Test case 1 : first on window with partition
+        /* Input dataset
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+----------+----------+
+        |Id_1|Id_2|Year|Me_1|Me_2|first_Me_1|first_Me_2|
+        +----+----+----+----+----+----------+----------+
+        |   A|  XX|1993|   3| 1.0|         3|       1.0|
+        |   A|  XX|1994|   4| 9.0|         3|       1.0|
+        |   A|  XX|1995|   7| 5.0|         3|       1.0|
+        |   A|  XX|1996|   6| 8.0|         3|       1.0|
+        |   A|  YY|1993|   9| 3.0|         9|       3.0|
+        |   A|  YY|1994|   5| 4.0|         9|       3.0|
+        |   A|  YY|1995|  10| 2.0|         9|       3.0|
+        |   A|  YY|1996|   2| 7.0|         9|       3.0|
+        +----+----+----+----+----+----------+----------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 9L,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 9L,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 9L,"Me_2",3.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnFirstPartitionOrderByDesc() throws ScriptException {
+
+        // Analytical function Test case 2 : first on window with partition and desc order
+        /* Input dataset
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+----------+----------+
+        |Id_1|Id_2|Year|Me_1|Me_2|first_Me_1|first_Me_2|
+        +----+----+----+----+----+----------+----------+
+        |   A|  XX|1996|   6| 8.0|         6|       8.0|
+        |   A|  XX|1995|   7| 5.0|         6|       8.0|
+        |   A|  XX|1994|   4| 9.0|         6|       8.0|
+        |   A|  XX|1993|   3| 1.0|         6|       8.0|
+        |   A|  YY|1996|   2| 7.0|         2|       7.0|
+        |   A|  YY|1995|  10| 2.0|         2|       7.0|
+        |   A|  YY|1994|   5| 4.0|         2|       7.0|
+        |   A|  YY|1993|   9| 3.0|         2|       7.0|
+        +----+----+----+----+----+----------+----------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 6L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 6L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 6L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 2L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 2L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 2L,"Me_2",7.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L,"Me_2",7.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnFirstWithPartitionOrderByDPClause() throws ScriptException {
+
+        // Analytical function Test case 3 : first on window with partition, order by and data points
+        /* Input dataset
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+----------+----------+
+        |Id_1|Id_2|Year|Me_1|Me_2|first_Me_1|first_Me_2|
+        +----+----+----+----+----+----------+----------+
+        |   A|  XX|1993|   3| 1.0|         3|       1.0|
+        |   A|  XX|1994|   4| 9.0|         3|       1.0|
+        |   A|  XX|1995|   7| 5.0|         3|       1.0|
+        |   A|  XX|1996|   6| 8.0|         4|       9.0|
+        |   A|  YY|1993|   9| 3.0|         7|       5.0|
+        |   A|  YY|1994|   5| 4.0|         6|       8.0|
+        |   A|  YY|1995|  10| 2.0|         9|       3.0|
+        |   A|  YY|1996|   2| 7.0|         5|       4.0|
+        +----+----+----+----+----+----------+----------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 4L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 7L,"Me_2",5.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 6L,"Me_2",8.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 9L,"Me_2",3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 5L,"Me_2",4.0D)
+        );
+
+    }
+
+    @Test
+    public void testAnFirstPartitionOrderByRangeClause() throws ScriptException {
+
+        // Analytical function Test case 4 : first on window with partition, order by and range
+        /* Input dataset
+        +----+----+----+----+----+
+        |Id_1|Id_2|Year|Me_1|Me_2|
+        +----+----+----+----+----+
+        |   A|  XX|1993|   3| 1.0|
+        |   A|  XX|1994|   4| 9.0|
+        |   A|  XX|1995|   7| 5.0|
+        |   A|  XX|1996|   6| 8.0|
+        |   A|  YY|1993|   9| 3.0|
+        |   A|  YY|1994|   5| 4.0|
+        |   A|  YY|1995|  10| 2.0|
+        |   A|  YY|1996|   2| 7.0|
+        +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+----------+----------+
+        |Id_1|Id_2|Year|Me_1|Me_2|first_Me_1|first_Me_2|
+        +----+----+----+----+----+----------+----------+
+        |   A|  XX|1993|   3| 1.0|         3|       1.0|
+        |   A|  YY|1993|   9| 3.0|         3|       1.0|
+        |   A|  XX|1994|   4| 9.0|         3|       1.0|
+        |   A|  YY|1994|   5| 4.0|         3|       1.0|
+        |   A|  XX|1995|   7| 5.0|         4|       9.0|
+        |   A|  YY|1995|  10| 2.0|         4|       9.0|
+        |   A|  XX|1996|   6| 8.0|         7|       5.0|
+        |   A|  YY|1996|   2| 7.0|         7|       5.0|
+        +----+----+----+----+----+----------+----------+
+        * */
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 3L,"Me_2",1.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 4L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 4L,"Me_2",9.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 7L,"Me_2",5.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 7L,"Me_2",5.0D)
+        );
+
+    }
+
     /*
      * End of first test case */
+
+    /*
+     * Test case for analytic function last
+     *
+     * */
+
+    /*
+     * End of last test case */
+
+    /*
+     * Test case for analytic function lead
+     *
+     * */
+
+    /*
+     * End of lead test case */
 
 
     @Test
