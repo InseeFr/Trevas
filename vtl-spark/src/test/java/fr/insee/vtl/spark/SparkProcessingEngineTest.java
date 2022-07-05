@@ -529,7 +529,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 ) )");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -583,7 +583,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2) )");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -637,7 +637,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -694,7 +694,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -757,7 +757,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := sum ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -811,7 +811,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2) )");
+        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -866,7 +866,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( order by Id_1, Id_2, Year ) )");
+        engine.eval("res := sum ( ds1 over ( order by Id_1, Id_2, Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -921,7 +921,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -976,7 +976,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := sum ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1040,7 +1040,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1093,7 +1093,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1146,7 +1146,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( order by Id_1, Id_2, Year ) )");
+        engine.eval("res := min ( ds1 over ( order by Id_1, Id_2, Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1199,7 +1199,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1254,7 +1254,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1317,7 +1317,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1370,7 +1370,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := max ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1423,7 +1423,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := max ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := max ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1478,7 +1478,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1539,7 +1539,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1592,7 +1592,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1645,7 +1645,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1700,7 +1700,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1762,7 +1762,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := median ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := median ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1815,7 +1815,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := median ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := median ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1868,7 +1868,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1923,7 +1923,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -1986,7 +1986,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2040,7 +2040,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2093,7 +2093,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2148,7 +2148,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2211,7 +2211,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2265,7 +2265,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2325,7 +2325,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2381,7 +2381,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2443,7 +2443,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := var_pop ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2497,7 +2497,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := var_pop ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2551,7 +2551,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2607,7 +2607,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2669,7 +2669,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2723,7 +2723,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) )");
+        engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2782,7 +2782,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := var_samp ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := var_samp ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2839,7 +2839,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2905,7 +2905,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year) )]");
+        engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year) )];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -2959,7 +2959,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year desc) )]");
+        engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year desc) )];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3020,7 +3020,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2) )");
+        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3073,7 +3073,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) )");
+        engine.eval("res :=  first_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3127,7 +3127,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3180,7 +3180,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Year range between -1 and 1) )");
+        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3294,7 +3294,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) )");
+        engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3348,7 +3348,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := last_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )");
+        engine.eval("res := last_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3401,7 +3401,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := last_value ( ds1 over ( partition by Id_1, Id_2 order by Year range between -1 and 1) )");
+        engine.eval("res := last_value ( ds1 over ( partition by Id_1, Id_2 order by Year range between -1 and 1) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3466,7 +3466,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := lead ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) )");
+        engine.eval("res := lead ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3531,7 +3531,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", anCountDS2 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := lag ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) )");
+        engine.eval("res := lag ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -3606,7 +3606,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds", anDS , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := ratio_to_report ( ds over ( partition by Id_1, Id_2 ) )");
+        engine.eval("res := ratio_to_report ( ds over ( partition by Id_1, Id_2 ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
