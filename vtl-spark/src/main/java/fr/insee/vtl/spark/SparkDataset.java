@@ -81,6 +81,13 @@ public class SparkDataset implements Dataset {
         }
         return casted;
     }
+    public List<String> getMeasurementCols(){
+        List<String> measurementCols=new ArrayList<>();
+        for(Map.Entry<String, Role> entry : this.roles.entrySet()){
+            if (entry.getValue()==Role.MEASURE) measurementCols.add(entry.getKey());
+        }
+        return measurementCols;
+    }
 
     /**
      * Transforms a {@link DataStructure} into a Spark schema.
