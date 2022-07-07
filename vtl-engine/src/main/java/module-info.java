@@ -21,6 +21,8 @@ module fr.insee.vtl.engine {
     exports fr.insee.vtl.engine.processors;
     provides ProcessingEngineFactory with InMemoryProcessingEngine.Factory;
 
+    opens fr.insee.vtl.engine;
+
     requires org.antlr.antlr4.runtime;
 
     // TODO: Consider removing these.

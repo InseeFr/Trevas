@@ -24,7 +24,6 @@ public class VtlKernel extends BaseKernel {
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
         ScriptEngineManager mgr = new ScriptEngineManager();
         var engine = mgr.getEngineByExtension("vtl");
-        System.out.println("Loaded VTL engine " + engine.getFactory().getEngineVersion());
 
         if (args.length < 1)
             throw new IllegalArgumentException("Missing connection file argument");
@@ -64,9 +63,9 @@ public class VtlKernel extends BaseKernel {
 
     @Override
     public DisplayData eval(String expr) throws Exception {
-        this.engine.eval(expr);
+        Object eval = this.engine.eval(expr);
         DisplayData displayData = new DisplayData();
-        displayData.putText("Hello, World!");
+        displayData.putText("Result: " + eval.toString());
         return displayData;
     }
 
