@@ -78,7 +78,19 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var columnRole = calcCtx.componentRole() == null
                     ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
+
+            AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, datasetExpression);
+            if (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext) {
+                VtlParser.FunctionsExpressionContext functionExprCtx = (VtlParser.FunctionsExpressionContext) calcCtx.expr();
+                if (functionExprCtx.functions() instanceof VtlParser.AnalyticFunctionsContext) {
+                    VtlParser.AnalyticFunctionsContext anFuncCtx = (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
+                    DatasetExpression datasetExpression1 = analyticsVisitor.visit(anFuncCtx);
+                }
+            }
+
             ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
+
+
             expressions.put(columnName, calc);
             expressionStrings.put(columnName, getSource(calcCtx.expr()));
             roles.put(columnName, columnRole);

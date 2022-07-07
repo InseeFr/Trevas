@@ -65,6 +65,14 @@ public interface ProcessingEngine {
     DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy,
                                   Map<String, AggregationExpression> collectorMap);
 
+    public DatasetExpression executeAnalytic(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy,
+            Analytics.WindowSpec window
+    );
+
     /**
      * Execute a left join transformations on the dataset expressions.
      *

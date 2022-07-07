@@ -239,6 +239,17 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
+    @Override
+    public DatasetExpression executeAnalytic(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy,
+            Analytics.WindowSpec window
+    ) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
     //@Override
     //todo
     public DatasetExpression executeAnalytic(DatasetExpression dataset, String funcName, List<String> partitionCols,
