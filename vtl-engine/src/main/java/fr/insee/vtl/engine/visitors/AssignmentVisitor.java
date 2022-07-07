@@ -28,8 +28,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         this.context = Objects.requireNonNull(context);
         expressionVisitor = new ExpressionVisitor(
                 context.getBindings(ScriptContext.ENGINE_SCOPE),
-                processingEngine
-        );
+                processingEngine,
+                context);
     }
 
     @Override

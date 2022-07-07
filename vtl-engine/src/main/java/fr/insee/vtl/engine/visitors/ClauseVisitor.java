@@ -10,6 +10,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
+import javax.script.ScriptContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,12 +32,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
      * @param datasetExpression The dataset expression containing the clause expression.
      * @param processingEngine  The processing engine for dataset expressions.
      */
-    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
+    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine, ScriptContext context) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
         Map<String, Object> componentMap = datasetExpression.getDataStructure().values().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine);
+        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine, context);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 

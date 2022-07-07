@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.*;
 import fr.insee.vtl.model.DatasetExpression;
@@ -11,6 +10,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import javax.script.ScriptContext;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,6 +37,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final TimeFunctionsVisitor timeFunctionsVisitor;
     private final ProcessingEngine processingEngine;
+    private final ScriptContext scriptContext;
 
     /**
      * Constructor taking a scripting context and a processing engine.
@@ -44,7 +45,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
      * @param context          The map representing the context.
      * @param processingEngine The processing engine.
      */
-    public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine) {
+    // TODO: Use script context to get bindings
+    public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine, ScriptContext scriptContext) {
         Objects.requireNonNull(context);
         varIdVisitor = new VarIdVisitor(context);
         booleanVisitor = new BooleanVisitor(this);
@@ -58,10 +60,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
-        genericFunctionsVisitor = new GenericFunctionsVisitor(this);
+        genericFunctionsVisitor = new GenericFunctionsVisitor(this, scriptContext);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         timeFunctionsVisitor = new TimeFunctionsVisitor();
         this.processingEngine = Objects.requireNonNull(processingEngine);
+        this.scriptContext = Objects.requireNonNull(scriptContext);
     }
 
     /**
@@ -298,17 +301,17 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
-        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine);
+        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine, scriptContext);
         return clauseVisitor.visit(ctx.clause);
     }
 
     @Override
-    public  ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
+    public ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
         ResolvableExpression expr = super.visitFunctionsExpression(ctx);
         if (Objects.isNull(expr)) {
             VtlParser.FunctionsContext functionsContext = ctx.functions();
             String functionName = functionsContext.getStart().getText();
-            throw new  VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", ctx));
+            throw new VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", ctx));
         }
         return expr;
     }

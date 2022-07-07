@@ -1,16 +1,25 @@
 package fr.insee.vtl.engine;
 
+import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.Structured;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,12 +74,55 @@ public class VtlScriptEngineTest {
     }
 
     @Test
+    public void testFunctions() throws ScriptException, NoSuchMethodException {
+        engine.put("$vtl.functions.testTrim", Trim.class.getMethod("upper", String.class));
+        engine.put("$vtl.functions.testUpper", Trim.class.getMethod("upper", String.class));
+        Method nicoMethod = Trim.class.getMethod("nico", String.class);
+        engine.put("$vtl.functions.testNico", nicoMethod);
+        engine.put("$vtl.functions.loadS3", Fun.toMethod(Trim::loadS3));
+
+        engine.eval("" +
+                "test := loadS3();" +
+                "test := test[calc test := 1234];" +
+                "");
+        System.out.println(engine.get("test"));
+    }
+
+    @Test
     public void testSyntaxError() {
         assertThatThrownBy(() -> {
-                engine.eval("var := 40 + 42");
+            engine.eval("var := 40 + 42");
         })
                 .isInstanceOf(VtlSyntaxException.class)
                 .hasMessage("missing ';' at '<EOF>'")
-        .is(atPosition(0, 14 ,14));
+                .is(atPosition(0, 14, 14));
+    }
+
+    public static class Trim {
+        public static String trim(String str) {
+            return str.trim();
+        }
+
+        public static String upper(String str) {
+            return str.toUpperCase();
+        }
+
+        public static String nico(String str) {
+            return "TOTO " + str;
+        }
+
+        public static Dataset loadS3() {
+            return new InMemoryDataset(
+                    List.of(
+                            new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                            new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
+                            new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
+                    ),
+                    Arrays.asList("Toto", null, 100L),
+                    Arrays.asList("Hadrien", 10L, 11L),
+                    Arrays.asList("Nico", 11L, 10L),
+                    Arrays.asList("Franck", 12L, 9L)
+            );
+        }
     }
 }
