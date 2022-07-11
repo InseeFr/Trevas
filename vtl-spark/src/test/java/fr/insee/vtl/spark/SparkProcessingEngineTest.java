@@ -529,7 +529,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 ) );");
+        engine.eval("res := ds1 [ calc count_Me_1:= count ( Me_1 over ( partition by Id_1 ) )];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -548,7 +548,9 @@ public class SparkProcessingEngineTest {
             |   A|  YY|2003|   5| 7.0|         8|         8|
             +----+----+----+----+----+----------+----------+
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 8L,"Me_2",8L),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 8L,"Me_2",8L),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 8L,"Me_2",8L),
@@ -636,8 +638,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
 
-
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
+        engine.eval("res := ds1 [ calc count_Me_1:= count ( Me_1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) )];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
