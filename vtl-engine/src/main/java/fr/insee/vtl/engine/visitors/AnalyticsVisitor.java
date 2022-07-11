@@ -142,13 +142,18 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
     }
 
+    private String toTargetColName(VtlParser.ExprContext expr){
+        return expr.getText();
+    }
 
 
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
+
         return processingEngine.executeAnalytic(
                 dataset,
                 toFunctionEnum(ctx.op, ctx),
+                toTargetColName(ctx.expr()),
                 toPartitionBy(ctx.partition),
                 toOrderBy(ctx.orderBy),
                 toWindowSpec(ctx.windowing)

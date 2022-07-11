@@ -68,6 +68,7 @@ public interface ProcessingEngine {
     public DatasetExpression executeAnalytic(
             DatasetExpression dataset,
             Analytics.Function function,
+            String targetColName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window

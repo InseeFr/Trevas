@@ -221,7 +221,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAnalytic(DatasetExpression dataset, Analytics.Function function, List<String> partitionBy, Map<String, Analytics.Order> orderBy, Analytics.WindowSpec window) {
+    public DatasetExpression executeAnalytic(DatasetExpression dataset, Analytics.Function function, String targetColName, List<String> partitionBy, Map<String, Analytics.Order> orderBy, Analytics.WindowSpec window) {
         throw new UnsupportedOperationException();
     }
 
