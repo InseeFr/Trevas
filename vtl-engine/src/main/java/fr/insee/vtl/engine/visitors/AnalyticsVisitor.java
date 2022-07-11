@@ -28,6 +28,12 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         this.dataset = dataset;
     }
 
+    /**
+     * Convert the analytic expression function name from token type to Enum type Analytics.Function
+     * @param op The function name of the analytic expression with type token
+     * @param ctx The context of the parse tree
+     * @return The function name of the analytic expression with Enum type Analytics.Function
+     */
     private Analytics.Function toFunctionEnum(Token op, ParseTree ctx) {
         switch (op.getType()) {
             case VtlParser.SUM:
@@ -61,6 +67,25 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
     }
 
+    /**
+     *  Convert the partitionByClause to a list of <colName> which the dataset are partitionBy
+     * @param partition The parse tree context of PartitionByClause
+     * @return a list of <colName> which the dataset are partitionBy
+     */
+    private List<String> toPartitionBy(VtlParser.PartitionByClauseContext partition) {
+        if (partition == null) {
+            return null;
+        }
+        return partition.componentID().stream()
+                .map(ClauseVisitor::getName)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Convert the orderByClause to a pair of <colName,order(e.g. asc, desc)>
+     * @param orderByCtx The parse tree context of OrderByClause
+     * @return a map of <colName,order(e.g. asc, desc)> which the dataset are orderedBy
+     */
     private Map<String, Analytics.Order> toOrderBy(VtlParser.OrderByClauseContext orderByCtx) {
         if (orderByCtx == null) {
             return null;
@@ -77,16 +102,33 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         return orderBy;
     }
 
-    private List<String> toPartitionBy(VtlParser.PartitionByClauseContext partition) {
-        if (partition == null) {
+    /**
+     * Convert the windowSpec clause expression to a class WindowSpec (e.g. datapoints or range)
+     * @param windowing the parse tree context of window frame
+     * @return an object of windowSpec class that will be RangeWindow(from,to) or DataPointWindow(from, to)
+     */
+    private Analytics.WindowSpec toWindowSpec(VtlParser.WindowingClauseContext windowing) {
+        if (windowing == null) {
             return null;
         }
-        return partition.componentID().stream()
-                .map(ClauseVisitor::getName)
-                .collect(Collectors.toList());
+        Long from = toRangeLong(windowing.from_);
+        Long to = toRangeLong(windowing.to_);
+        if (windowing.RANGE() != null) {
+            return new Analytics.RangeWindow(from, to);
+        } else {
+            return new Analytics.DataPointWindow(from, to);
+        }
     }
 
-    // between -2 following and -2 preceding
+
+    /**
+     * Convert the range expression to Long.
+     * Note in vtl the from and to of the range can be reversed. For example: data points between -2 following and -2 preceding
+     * is correct
+     * @param ctx the parse tree context of window range clause
+     * @return long
+     */
+
     private Long toRangeLong(VtlParser.LimitClauseItemContext ctx) {
         if (ctx.CURRENT() != null) {
             return 0L;
@@ -100,18 +142,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
     }
 
-    private Analytics.WindowSpec toWindowSpec(VtlParser.WindowingClauseContext windowing) {
-        if (windowing == null) {
-            return null;
-        }
-        Long from = toRangeLong(windowing.from_);
-        Long to = toRangeLong(windowing.to_);
-        if (windowing.RANGE() != null) {
-            return new Analytics.RangeWindow(from, to);
-        } else {
-            return new Analytics.DataPointWindow(from, to);
-        }
-    }
+
 
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
