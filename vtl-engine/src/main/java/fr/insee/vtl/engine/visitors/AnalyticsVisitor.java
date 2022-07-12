@@ -94,9 +94,9 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         for (VtlParser.OrderByItemContext item : orderByCtx.orderByItem()) {
             String columnName = ClauseVisitor.getName(item.componentID());
             if (item.DESC() != null) {
-                orderBy.put(columnName, Analytics.Order.ASC);
-            } else {
                 orderBy.put(columnName, Analytics.Order.DESC);
+            } else {
+                orderBy.put(columnName, Analytics.Order.ASC);
             }
         }
         return orderBy;
@@ -150,7 +150,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
 
-        return processingEngine.executeAnalytic(
+        return processingEngine.executeSimpleAnalytic(
                 dataset,
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),

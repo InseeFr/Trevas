@@ -65,7 +65,7 @@ public interface ProcessingEngine {
     DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy,
                                   Map<String, AggregationExpression> collectorMap);
 
-    public DatasetExpression executeAnalytic(
+    public DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
             Analytics.Function function,
             String targetColName,
