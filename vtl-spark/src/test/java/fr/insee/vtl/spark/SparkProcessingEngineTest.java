@@ -815,14 +815,228 @@ public class SparkProcessingEngineTest {
         List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         assertThat(actual).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"max_Me_1",3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"max_Me_1",3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"max_Me_1",4L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"max_Me_1",4L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"max_Me_1",9L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"max_Me_1",5L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"max_Me_1",9L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"max_Me_1",5L)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"median_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"median_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"median_Me_1",4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"median_Me_1",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"median_Me_1",9L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"median_Me_1",5L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"median_Me_1",9L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"median_Me_1",5L)
+        );
+
+    }
+
+    @Test
+    public void testAnStdPopWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc stddev_pop_Me_1:= stddev_pop ( Me_1 over ( partition by Id_1,Id_2 order by Year) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+------------------+
+        |Id_1|Id_2|Year|Me_1|Me_2|   stddev_pop_Me_1|
+        +----+----+----+----+----+------------------+
+        |   A|  XX|2000|   3| 1.0|               0.0|
+        |   A|  XX|2001|   4| 9.0|               0.5|
+        |   A|  XX|2002|   7| 5.0| 1.699673171197595|
+        |   A|  XX|2003|   6| 8.0|1.5811388300841895|
+        |   A|  YY|2000|   9| 3.0|               0.0|
+        |   A|  YY|2001|   5| 4.0|               2.0|
+        |   A|  YY|2002|  10| 2.0| 2.160246899469287|
+        |   A|  YY|2003|   5| 7.0| 2.277608394786075|
+        +----+----+----+----+----+------------------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"stddev_pop_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"stddev_pop_Me_1",0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"stddev_pop_Me_1",1.70D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"stddev_pop_Me_1",1.58D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"stddev_pop_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"stddev_pop_Me_1",2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"stddev_pop_Me_1",2.16D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"stddev_pop_Me_1",2.27D)
+        );
+
+    }
+    @Test
+    public void testAnStdSampWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc stddev_samp_Me_1:= stddev_samp ( Me_1 over ( partition by Id_1,Id_2 order by Year) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+------------------+
+        |Id_1|Id_2|Year|Me_1|Me_2|  stddev_samp_Me_1|
+        +----+----+----+----+----+------------------+
+        |   A|  XX|2000|   3| 1.0|              null|
+        |   A|  XX|2001|   4| 9.0|0.7071067811865476|
+        |   A|  XX|2002|   7| 5.0|2.0816659994661326|
+        |   A|  XX|2003|   6| 8.0|1.8257418583505536|
+        |   A|  YY|2000|   9| 3.0|              null|
+        |   A|  YY|2001|   5| 4.0|2.8284271247461903|
+        |   A|  YY|2002|  10| 2.0|2.6457513110645907|
+        |   A|  YY|2003|   5| 7.0|2.6299556396765835|
+        +----+----+----+----+----+------------------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"stddev_samp_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"stddev_samp_Me_1",0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"stddev_samp_Me_1",1.70D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"stddev_samp_Me_1",1.58D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"stddev_samp_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"stddev_samp_Me_1",2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"stddev_samp_Me_1",2.16D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"stddev_samp_Me_1",2.27D)
+        );
+
+    }
+
+    @Test
+    public void testAnVarPopWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc var_pop_Me_1:= var_pop ( Me_1 over ( partition by Id_1,Id_2 order by Year) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+------------------+
+        |Id_1|Id_2|Year|Me_1|Me_2|      var_pop_Me_1|
+        +----+----+----+----+----+------------------+
+        |   A|  XX|2000|   3| 1.0|               0.0|
+        |   A|  XX|2001|   4| 9.0|              0.25|
+        |   A|  XX|2002|   7| 5.0| 2.888888888888889|
+        |   A|  XX|2003|   6| 8.0|2.4999999999999996|
+        |   A|  YY|2000|   9| 3.0|               0.0|
+        |   A|  YY|2001|   5| 4.0|               4.0|
+        |   A|  YY|2002|  10| 2.0| 4.666666666666667|
+        |   A|  YY|2003|   5| 7.0|            5.1875|
+        +----+----+----+----+----+------------------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"stddev_pop_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"stddev_pop_Me_1",0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"stddev_pop_Me_1",1.70D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"stddev_pop_Me_1",1.58D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"stddev_pop_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"stddev_pop_Me_1",2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"stddev_pop_Me_1",2.16D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"stddev_pop_Me_1",2.27D)
+        );
+
+    }
+    @Test
+    public void testAnVarSampWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc var_samp_Me_1:= var_samp ( Me_1 over ( partition by Id_1,Id_2 order by Year) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        +----+----+----+----+----+------------------+
+        |Id_1|Id_2|Year|Me_1|Me_2|     var_samp_Me_1|
+        +----+----+----+----+----+------------------+
+        |   A|  XX|2000|   3| 1.0|              null|
+        |   A|  XX|2001|   4| 9.0|               0.5|
+        |   A|  XX|2002|   7| 5.0| 4.333333333333333|
+        |   A|  XX|2003|   6| 8.0|3.3333333333333326|
+        |   A|  YY|2000|   9| 3.0|              null|
+        |   A|  YY|2001|   5| 4.0|               8.0|
+        |   A|  YY|2002|  10| 2.0|               7.0|
+        |   A|  YY|2003|   5| 7.0| 6.916666666666667|
+        +----+----+----+----+----+------------------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"stddev_samp_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"stddev_samp_Me_1",0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"stddev_samp_Me_1",1.70D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"stddev_samp_Me_1",1.58D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"stddev_samp_Me_1",0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"stddev_samp_Me_1",2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"stddev_samp_Me_1",2.16D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"stddev_samp_Me_1",2.27D)
         );
 
     }
