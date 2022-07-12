@@ -42,6 +42,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
 
+
     /**
      * Constructor taking an existing Spark session.
      *
@@ -240,7 +241,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeAnalytic(
+    public DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
             Analytics.Function function,
             String targetColName,
@@ -259,7 +260,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // 1.2 apply orderBy spec
 
         // check if it has orderBy clause
-        if (orderBy !=null && orderBy.size() > 0) {
+        if (orderBy != null && orderBy.size() > 0) {
             Seq<Column> orders = buildOrderCol(orderBy);
             // if it has partitionBy clause, add orderBy after partitionBy
             if (windowSpec != null) windowSpec = windowSpec.orderBy(orders);
@@ -292,41 +293,42 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result;
         switch (function) {
             case COUNT:
-                result = evalCount(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("count_"+targetColName, count(targetColName).over(windowSpec));
                 break;
             case SUM:
-                result = evalSum(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("sum_"+targetColName, sum(targetColName).over(windowSpec));
                 break;
             case MIN:
-                result = evalMin(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("min_"+targetColName, min(targetColName).over(windowSpec));
                 break;
             case MAX:
-                result = evalMax(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("max_"+targetColName, max(targetColName).over(windowSpec));
                 break;
             case AVG:
-                result = evalAvg(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("avg_"+targetColName, avg(targetColName).over(windowSpec));
                 break;
             case MEDIAN:
-                result = evalMedian(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("median_"+targetColName, percentile_approx(col(targetColName), lit(0.5),
+                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec));
                 break;
             case STDDEV_POP:
-                result = evalStdPop(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("stddev_pop_"+targetColName, stddev_pop(targetColName).over(windowSpec));
                 break;
             case STDDEV_SAMP:
-                result = evalStdSamp(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("stddev_samp_"+targetColName, stddev_samp(targetColName).over(windowSpec));
                 break;
             case VAR_POP:
-                result = evalVarPop(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("var_pop_"+targetColName, var_pop(targetColName).over(windowSpec));
                 break;
             case VAR_SAMP:
-                result = evalVarSamp(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("var_samp_"+targetColName, var_samp(targetColName).over(windowSpec));
                 break;
 
             case FIRST_VALUE:
-                result = evalFirst(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("first_"+targetColName, first(targetColName).over(windowSpec));
                 break;
             case LAST_VALUE:
-                result = evalLast(sparkDataset.getSparkDataset(), measureCols, windowSpec);
+                result = sparkDataset.getSparkDataset().withColumn("last_"+targetColName, last(targetColName).over(windowSpec));
                 break;
 //            case "rank":
 //                result = evalRank(sparkDataset.getSparkDataset(), resColName, windowSpec);
@@ -345,7 +347,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         }
         // step3: convert back
-
+        result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
@@ -392,12 +394,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     private Dataset<Row> evalMedian(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        double MEDIAN_PERCENTILE = 0.5;
-        long PRECISION = 10000000;
+
         String tmpColName = "median_";
         for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, percentile_approx(col(colName), lit(MEDIAN_PERCENTILE),
-                    lit(PRECISION)).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+            df = df.withColumn(tmpColName + colName, percentile_approx(col(colName), lit(0.5),
+                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
         }
         return df;
     }
@@ -484,14 +485,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     // helper function returns the tails of a list as a Seq
     public static <T> Seq<T> getTailAsSeq(List<T> inputList) {
-        if (inputList.size()<=1) return null;
+        if (inputList.size() <= 1) return null;
         List<T> tailList = inputList.subList(1, inputList.size() - 1);
         return JavaConverters.asScalaIteratorConverter(tailList.iterator()).asScala().toSeq();
     }
 
-    public static Seq<Column> colNameToCol(List<String> inputColNames){
-        List<Column> cols=new ArrayList<>();
-        for (String colName: inputColNames){
+    public static Seq<Column> colNameToCol(List<String> inputColNames) {
+        List<Column> cols = new ArrayList<>();
+        for (String colName : inputColNames) {
             cols.add(col(colName));
         }
         return JavaConverters.asScalaIteratorConverter(cols.iterator()).asScala().toSeq();
