@@ -137,7 +137,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         } else if (ctx.UNBOUNDED() != null && ctx.FOLLOWING() != null) {
             return Long.MAX_VALUE;
         } else if (ctx.INTEGER_CONSTANT() != null) {
-            return Long.parseLong(ctx.getText());
+            return Long.parseLong(ctx.getChild(0).getText());
         }
         throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
     }

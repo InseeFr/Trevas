@@ -559,6 +559,114 @@ public class SparkProcessingEngineTest {
     }
 
     @Test
+    public void testAnCountDPWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc count_Me_1:= count ( Me_1 over ( partition by Id_1,Id_2 order by Year data points between 2 preceding and 2 following) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        *   +----+----+----+----+----+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|
+            +----+----+----+----+----+----------+
+            |   A|  XX|2000|   3| 1.0|         1|
+            |   A|  XX|2001|   4| 9.0|         2|
+            |   A|  XX|2002|   7| 5.0|         3|
+            |   A|  XX|2003|   6| 8.0|         4|
+            |   A|  YY|2000|   9| 3.0|         1|
+            |   A|  YY|2001|   5| 4.0|         2|
+            |   A|  YY|2002|  10| 2.0|         3|
+            |   A|  YY|2003|   5| 7.0|         4|
+            +----+----+----+----+----+----------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"count_Me_1",1L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"count_Me_1",2L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"count_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"count_Me_1",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"count_Me_1",1L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"count_Me_1",2L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"count_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"count_Me_1",4L)
+        );
+
+    }
+
+    @Test
+    public void testAnCountRangeWithCalcClause() throws ScriptException {
+
+        /* Input dataset
+        *   +----+----+----+----+----+
+            |Id_1|Id_2|Year|Me_1|Me_2|
+            +----+----+----+----+----+
+            |   A|  XX|2000|   3| 1.0|
+            |   A|  XX|2001|   4| 9.0|
+            |   A|  XX|2002|   7| 5.0|
+            |   A|  XX|2003|   6| 8.0|
+            |   A|  YY|2000|   9| 3.0|
+            |   A|  YY|2001|   5| 4.0|
+            |   A|  YY|2002|  10| 2.0|
+            |   A|  YY|2003|   5| 7.0|
+            +----+----+----+----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", anCountDS1 , ScriptContext.ENGINE_SCOPE);
+
+
+        engine.eval("res := ds1 [ calc count_Me_1:= count ( Me_1 over ( partition by Id_1,Id_2 order by Year range between 2 preceding and 2 following) )];");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        *
+        *   +----+----+----+----+----+----------+
+            |Id_1|Id_2|Year|Me_1|Me_2|count_Me_1|
+            +----+----+----+----+----+----------+
+            |   A|  XX|2000|   3| 1.0|         1|
+            |   A|  XX|2001|   4| 9.0|         2|
+            |   A|  XX|2002|   7| 5.0|         3|
+            |   A|  XX|2003|   6| 8.0|         4|
+            |   A|  YY|2000|   9| 3.0|         1|
+            |   A|  YY|2001|   5| 4.0|         2|
+            |   A|  YY|2002|  10| 2.0|         3|
+            |   A|  YY|2003|   5| 7.0|         4|
+            +----+----+----+----+----+----------+
+        * */
+        List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L,"Me_2",1.0D,"count_Me_1",1L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L,"Me_2",9.0D,"count_Me_1",2L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L,"Me_2",5.0D,"count_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L,"Me_2",8.0D,"count_Me_1",4L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L,"Me_2",3.0D,"count_Me_1",1L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L,"Me_2",4.0D,"count_Me_1",2L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L,"Me_2",2.0D,"count_Me_1",3L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L,"Me_2",7.0D,"count_Me_1",4L)
+        );
+
+    }
+
+    @Test
     public void testAnSumWithCalcClause() throws ScriptException {
 
         /* Input dataset

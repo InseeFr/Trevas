@@ -273,15 +273,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
             if (windowSpec != null) {
                 // if it's a data point
                 if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = windowSpec.rowsBetween(window.getLower(), window.getUpper());
+                    windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
                 } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = windowSpec.rangeBetween(window.getLower(), window.getUpper());
+                    windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
                 }
             } else {
                 if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = Window.rowsBetween(window.getLower(), window.getUpper());
+                    windowSpec = Window.rowsBetween(-window.getLower(), window.getUpper());
                 } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = Window.rangeBetween(window.getLower(), window.getUpper());
+                    windowSpec = Window.rangeBetween(-window.getLower(), window.getUpper());
                 }
             }
         }
