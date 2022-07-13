@@ -66,6 +66,8 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return Analytics.Function.LAG;
             case VtlParser.RATIO_TO_REPORT:
                 return Analytics.Function.RATIO_TO_REPORT;
+            case VtlParser.RANK:
+                return Analytics.Function.RANK;
             default:
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("not an analytic function", ctx)

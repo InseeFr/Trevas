@@ -422,6 +422,32 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
+    @Override
+    public DatasetExpression executeRankAn(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            List<String> partitionBy,
+    Map<String, Analytics.Order> orderBy) {
+        if (!function.equals(Analytics.Function.RANK))
+            throw new UnsupportedOperationException("Unknown analytic function");
+
+        SparkDataset sparkDataset = asSparkDataset(dataset);
+        //step1: build window spec
+        WindowSpec windowSpec = buildWindowSpec(partitionBy,orderBy);
+
+        // step 2: call analytic func on window spec
+        // 2.1 get all measurement column
+        // without calc clause, all measure columns need to be transformed by the analytic function
+        List<String> measureCols = sparkDataset.getMeasurementCols();
+       String rankColName="rank_col";
+        // 2.2 add the result column for the calc clause
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(rankColName, rank().over(windowSpec));
+        // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
+        // step3: convert back
+        result.show();
+        return new SparkDatasetExpression(new SparkDataset(result));
+    }
+
     public static Dataset<Row> evalCount(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
         String tmpColName = "count_";
         for (String colName : measureCols) {

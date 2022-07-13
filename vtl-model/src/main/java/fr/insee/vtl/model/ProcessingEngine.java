@@ -106,6 +106,17 @@ public interface ProcessingEngine {
             String targetColName,
             List<String> partitionBy
         );
+    /**
+     * Execute rank analytic function on the dataset expression based on a given
+     * window specification.
+     *
+     * Note rank can only take a window specification with partitionBy, orderBy. orderBy is mandatory
+     * */
+    DatasetExpression executeRankAn(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy);
 
     /**
      * Execute a left join transformations on the dataset expressions.
