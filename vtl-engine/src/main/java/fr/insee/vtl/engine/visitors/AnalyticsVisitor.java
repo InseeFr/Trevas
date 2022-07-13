@@ -60,6 +60,11 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return Analytics.Function.FIRST_VALUE;
             case VtlParser.LAST_VALUE:
                 return Analytics.Function.LAST_VALUE;
+            case VtlParser.LEAD:
+                return Analytics.Function.LEAD;
+            case VtlParser.LAG:
+                return Analytics.Function.LAG;
+
             default:
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("not an analytic function", ctx)
@@ -146,6 +151,9 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         return expr.getText();
     }
 
+    private int toOffset(VtlParser.SignedIntegerContext offet) {
+        return Integer.parseInt(offet.getText());
+    }
 
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
@@ -162,8 +170,18 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
-        throw new VtlRuntimeException(new VtlScriptException("not implemented", ctx));
+        return processingEngine.executeLeadOrLagAn(
+                dataset,
+                toFunctionEnum(ctx.op, ctx),
+                toTargetColName(ctx.expr()),
+                toOffset(ctx.offet),
+                toPartitionBy(ctx.partition),
+                toOrderBy(ctx.orderBy)
+
+        );
     }
+
+
 
     @Override
     public DatasetExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {

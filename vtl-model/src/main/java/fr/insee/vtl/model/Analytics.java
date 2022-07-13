@@ -18,7 +18,7 @@ public class Analytics {
         VAR_POP,
         VAR_SAMP,
         FIRST_VALUE,
-        LAST_VALUE,
+        LAST_VALUE, LEAD,LAG,
     }
 
     public static abstract class WindowSpec {

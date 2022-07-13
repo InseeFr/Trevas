@@ -65,13 +65,31 @@ public interface ProcessingEngine {
     DatasetExpression executeAggr(DatasetExpression expression, List<String> groupBy,
                                   Map<String, AggregationExpression> collectorMap);
 
-    public DatasetExpression executeSimpleAnalytic(
+    /**
+     * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a given
+     * window specification (e.g. partitionBy, orderBy, datapoints)
+     * */
+    DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
             Analytics.Function function,
             String targetColName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window
+    );
+
+    /**
+     * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a given
+     * window specification (e.g. partitionBy, orderBy)
+     * */
+    DatasetExpression executeLeadOrLagAn(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            String targetColName,
+            int offset,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy
+
     );
 
     /**
