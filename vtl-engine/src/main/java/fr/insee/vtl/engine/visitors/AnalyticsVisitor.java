@@ -64,7 +64,8 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return Analytics.Function.LEAD;
             case VtlParser.LAG:
                 return Analytics.Function.LAG;
-
+            case VtlParser.RATIO_TO_REPORT:
+                return Analytics.Function.RATIO_TO_REPORT;
             default:
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("not an analytic function", ctx)
@@ -185,6 +186,13 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
-        throw new VtlRuntimeException(new VtlScriptException("not implemented", ctx));
+        return processingEngine.executeRatioToReportAn(
+                dataset,
+                toFunctionEnum(ctx.op, ctx),
+                toTargetColName(ctx.expr()),
+                toPartitionBy(ctx.partition)
+
+
+        );
     }
 }

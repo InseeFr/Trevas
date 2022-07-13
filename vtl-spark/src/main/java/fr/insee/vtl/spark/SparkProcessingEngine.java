@@ -240,14 +240,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
-    public static WindowSpec buildWindowSpec(List<String> partitionBy,
-                                             Map<String, Analytics.Order> orderBy) {
+    private static WindowSpec buildWindowSpec(List<String> partitionBy) {
+        return buildWindowSpec(partitionBy, null, null);
+    }
+
+    private static WindowSpec buildWindowSpec(List<String> partitionBy,
+                                              Map<String, Analytics.Order> orderBy) {
         return buildWindowSpec(partitionBy, orderBy, null);
     }
 
-    public static WindowSpec buildWindowSpec(List<String> partitionBy,
-                                             Map<String, Analytics.Order> orderBy,
-                                             Analytics.WindowSpec window) {
+    private static WindowSpec buildWindowSpec(List<String> partitionBy,
+                                              Map<String, Analytics.Order> orderBy,
+                                              Analytics.WindowSpec window) {
         WindowSpec windowSpec = null;
         // 1.1 apply partition spec
         if (partitionBy != null && partitionBy.size() > 0) {
@@ -386,6 +390,33 @@ public class SparkProcessingEngine implements ProcessingEngine {
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
         }
+        // step3: convert back
+        result.show();
+        return new SparkDatasetExpression(new SparkDataset(result));
+    }
+
+    @Override
+    public DatasetExpression executeRatioToReportAn(
+            DatasetExpression dataset,
+            Analytics.Function function,
+            String targetColName,
+            List<String> partitionBy) {
+        if (!function.equals(Analytics.Function.RATIO_TO_REPORT))
+            throw new UnsupportedOperationException("Unknown analytic function");
+
+        SparkDataset sparkDataset = asSparkDataset(dataset);
+        //step1: build window spec
+        WindowSpec windowSpec = buildWindowSpec(partitionBy);
+
+        // step 2: call analytic func on window spec
+        // 2.1 get all measurement column
+        // without calc clause, all measure columns need to be transformed by the analytic function
+        List<String> measureCols = sparkDataset.getMeasurementCols();
+        String totalColName = "total_" + targetColName;
+        // 2.2 add the result column for the calc clause
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(targetColName).over(windowSpec)).
+                withColumn("ratio_to_report" + targetColName, col(targetColName).divide(col(totalColName))).drop(totalColName);
+        // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
         return new SparkDatasetExpression(new SparkDataset(result));

@@ -231,6 +231,11 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
+    public DatasetExpression executeRatioToReportAn(DatasetExpression dataset, Analytics.Function function, String targetColName, List<String> partitionBy) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
         var iterator = datasets.values().iterator();
         var leftMost = iterator.next();
