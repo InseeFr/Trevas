@@ -47,9 +47,10 @@ anFunction:
 
 ## Step 4. Implement the evaluation logic in ProcessingEngine
 
+
 ### 4.1 Define method signature in the interface
 
-Note to make low level evaluation logic independent of the parser. The `ProcessingEngine` is an interface. For now, trevas
-has two concrete implementations of this interface (e.g. spark, in-memory) 
+Note to make low level evaluation logic independent of the parser. The `ProcessingEngine` (fr/insee/vtl/model/ProcessingEngine.java) 
+is an interface. For now, trevas has two concrete implementations of this interface (e.g. spark, in-memory) 
 
 ### 4.2 Implement the method in the concrete ProcessingEngine implementation. 
