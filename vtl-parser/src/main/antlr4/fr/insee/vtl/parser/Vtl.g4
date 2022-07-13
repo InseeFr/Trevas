@@ -296,6 +296,7 @@ aggrOperatorsGrouping:
         LPAREN expr OVER LPAREN (partition=partitionByClause? orderBy=orderByClause? windowing=windowingClause?)RPAREN RPAREN       #anSimpleFunction
     | op=(LAG |LEAD)  LPAREN expr (COMMA offset=signedInteger(defaultValue=constant)?)?  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause)   RPAREN RPAREN    # lagOrLeadAn
     | op=RATIO_TO_REPORT LPAREN expr OVER  LPAREN (partition=partitionByClause) RPAREN RPAREN                                                                           # ratioToReportAn
+    | op=RANK LPAREN OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause )RPAREN RPAREN #rankAn
 ;
 
 // anFunctionComponent:
