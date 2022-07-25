@@ -22,10 +22,12 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final ProcessingEngine processingEngine;
     private final DatasetExpression dataset;
+    private final String targetColumnName;
 
-    public AnalyticsVisitor(ProcessingEngine processingEngine, DatasetExpression dataset) {
+    public AnalyticsVisitor(ProcessingEngine processingEngine, DatasetExpression dataset, String targetColumnName) {
         this.processingEngine = processingEngine;
         this.dataset = dataset;
+        this.targetColumnName = targetColumnName;
     }
 
     /**
@@ -163,6 +165,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         return processingEngine.executeSimpleAnalytic(
                 dataset,
+                this.targetColumnName,
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),
                 toPartitionBy(ctx.partition),
@@ -175,6 +178,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
     public DatasetExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
         return processingEngine.executeLeadOrLagAn(
                 dataset,
+                this.targetColumnName,
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),
                 toOffset(ctx.offet),
@@ -190,6 +194,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
     public DatasetExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
         return processingEngine.executeRatioToReportAn(
                 dataset,
+                this.targetColumnName,
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),
                 toPartitionBy(ctx.partition)

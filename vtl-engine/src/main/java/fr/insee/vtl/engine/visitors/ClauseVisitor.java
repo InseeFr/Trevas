@@ -82,7 +82,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                     ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
 
-            AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, currentDatasetExpression);
+            AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, currentDatasetExpression, columnName);
             if (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext) {
                 VtlParser.FunctionsExpressionContext functionExprCtx = (VtlParser.FunctionsExpressionContext) calcCtx.expr();
                 if (functionExprCtx.functions() instanceof VtlParser.AnalyticFunctionsContext) {

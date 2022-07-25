@@ -71,8 +71,9 @@ public interface ProcessingEngine {
      * */
     DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window
@@ -86,8 +87,9 @@ public interface ProcessingEngine {
      * */
     DatasetExpression executeLeadOrLagAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             int offset,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy
@@ -102,8 +104,9 @@ public interface ProcessingEngine {
      * */
     DatasetExpression executeRatioToReportAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             List<String> partitionBy
         );
     /**
@@ -114,6 +117,7 @@ public interface ProcessingEngine {
      * */
     DatasetExpression executeRankAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy);

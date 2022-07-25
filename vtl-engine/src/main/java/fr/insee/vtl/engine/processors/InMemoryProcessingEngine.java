@@ -221,22 +221,23 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeSimpleAnalytic(DatasetExpression dataset, Analytics.Function function, String targetColName, List<String> partitionBy, Map<String, Analytics.Order> orderBy, Analytics.WindowSpec window) {
+    public DatasetExpression executeSimpleAnalytic(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, List<String> partitionBy, Map<String, Analytics.Order> orderBy, Analytics.WindowSpec window) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public DatasetExpression executeLeadOrLagAn(DatasetExpression dataset, Analytics.Function function, String targetColName, int offset, List<String> partitionBy, Map<String, Analytics.Order> orderBy) {
+    public DatasetExpression executeLeadOrLagAn(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, int offset, List<String> partitionBy, Map<String, Analytics.Order> orderBy) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public DatasetExpression executeRatioToReportAn(DatasetExpression dataset, Analytics.Function function, String targetColName, List<String> partitionBy) {
+    public DatasetExpression executeRatioToReportAn(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, List<String> partitionBy) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public DatasetExpression executeRankAn(DatasetExpression dataset,
+                                           String targetColumnName,
                                            Analytics.Function function,
                                            List<String> partitionBy,
                                            Map<String, Analytics.Order> orderBy) {

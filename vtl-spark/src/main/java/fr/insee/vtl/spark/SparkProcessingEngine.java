@@ -291,8 +291,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window
@@ -307,44 +308,45 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         List<String> measureCols = sparkDataset.getMeasurementCols();
         Dataset<Row> result;
+        // TODO: return Column to extract sparkDataset.getSparkDataset().withColumn(targetColumnName, ,,,)
         switch (function) {
             case COUNT:
-                result = sparkDataset.getSparkDataset().withColumn("count_" + targetColName, count(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, count(columnName).over(windowSpec));
                 break;
             case SUM:
-                result = sparkDataset.getSparkDataset().withColumn("sum_" + targetColName, sum(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, sum(columnName).over(windowSpec));
                 break;
             case MIN:
-                result = sparkDataset.getSparkDataset().withColumn("min_" + targetColName, min(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, min(columnName).over(windowSpec));
                 break;
             case MAX:
-                result = sparkDataset.getSparkDataset().withColumn("max_" + targetColName, max(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, max(columnName).over(windowSpec));
                 break;
             case AVG:
-                result = sparkDataset.getSparkDataset().withColumn("avg_" + targetColName, avg(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, avg(columnName).over(windowSpec));
                 break;
             case MEDIAN:
-                result = sparkDataset.getSparkDataset().withColumn("median_" + targetColName, percentile_approx(col(targetColName), lit(0.5),
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, percentile_approx(col(columnName), lit(0.5),
                         lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec));
                 break;
             case STDDEV_POP:
-                result = sparkDataset.getSparkDataset().withColumn("stddev_pop_" + targetColName, stddev_pop(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, stddev_pop(columnName).over(windowSpec));
                 break;
             case STDDEV_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn("stddev_samp_" + targetColName, stddev_samp(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, stddev_samp(columnName).over(windowSpec));
                 break;
             case VAR_POP:
-                result = sparkDataset.getSparkDataset().withColumn("var_pop_" + targetColName, var_pop(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, var_pop(columnName).over(windowSpec));
                 break;
             case VAR_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn("var_samp_" + targetColName, var_samp(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, var_samp(columnName).over(windowSpec));
                 break;
 
             case FIRST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn("first_" + targetColName, first(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, first(columnName).over(windowSpec));
                 break;
             case LAST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn("last_" + targetColName, last(targetColName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, last(columnName).over(windowSpec));
                 break;
 //            case "rank":
 //                result = evalRank(sparkDataset.getSparkDataset(), resColName, windowSpec);
@@ -365,8 +367,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeLeadOrLagAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             int offset,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy) {
@@ -382,10 +385,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result;
         switch (function) {
             case LEAD:
-                result = sparkDataset.getSparkDataset().withColumn("lead_" + targetColName, lead(targetColName, offset).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, lead(columnName, offset).over(windowSpec));
                 break;
             case LAG:
-                result = sparkDataset.getSparkDataset().withColumn("lead_" + targetColName, lag(targetColName, offset).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, lag(columnName, offset).over(windowSpec));
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
@@ -398,8 +401,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeRatioToReportAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
-            String targetColName,
+            String columnName,
             List<String> partitionBy) {
         if (!function.equals(Analytics.Function.RATIO_TO_REPORT))
             throw new UnsupportedOperationException("Unknown analytic function");
@@ -412,10 +416,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // 2.1 get all measurement column
         // without calc clause, all measure columns need to be transformed by the analytic function
         List<String> measureCols = sparkDataset.getMeasurementCols();
-        String totalColName = "total_" + targetColName;
+        String totalColName = "total_" + columnName;
         // 2.2 add the result column for the calc clause
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(targetColName).over(windowSpec)).
-                withColumn("ratio_to_report" + targetColName, col(targetColName).divide(col(totalColName))).drop(totalColName);
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(columnName).over(windowSpec)).
+                withColumn(targetColumnName, col(columnName).divide(col(totalColName))).drop(totalColName);
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
@@ -425,6 +429,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeRankAn(
             DatasetExpression dataset,
+            String targetColumnName,
             Analytics.Function function,
             List<String> partitionBy,
     Map<String, Analytics.Order> orderBy) {
@@ -439,9 +444,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // 2.1 get all measurement column
         // without calc clause, all measure columns need to be transformed by the analytic function
         List<String> measureCols = sparkDataset.getMeasurementCols();
-       String rankColName="rank_col";
         // 2.2 add the result column for the calc clause
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(rankColName, rank().over(windowSpec));
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColumnName, rank().over(windowSpec));
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
