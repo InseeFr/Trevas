@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -50,7 +51,14 @@ public abstract class InstantExpression implements ResolvableExpression {
     public static ResolvableExpression castTo(ResolvableExpression expr, Class<?> outputClass, String mask) {
         if (outputClass.equals(String.class))
             return StringExpression.of(context -> {
-                Instant exprValue = (Instant) expr.resolve(context);
+
+                var value = expr.resolve(context);
+                Instant exprValue;
+                if (value instanceof LocalDate) {
+                    exprValue = ((LocalDate) value).atStartOfDay().toInstant(ZoneOffset.UTC);
+                } else {
+                    exprValue = (Instant) value;
+                }
                 if (exprValue == null) return null;
                 DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
                 return maskFormatter.format(exprValue.atOffset(ZoneOffset.UTC));

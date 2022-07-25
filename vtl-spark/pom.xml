@@ -7,25 +7,25 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>0.4.1</version>
+        <version>0.4.2</version>
     </parent>
 
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
 	<description>Trevas engine for Apache Spark</description>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>0.4.1</version>
+            <version>0.4.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>0.4.1</version>
+            <version>0.4.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.1.212</version>
+            <version>2.1.214</version>
             <scope>test</scope>
         </dependency>
 
