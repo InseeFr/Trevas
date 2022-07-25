@@ -6,6 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.internal.SQLConf;
 import org.apache.spark.sql.types.DataType;
 import scala.collection.Seq;
 
@@ -41,6 +42,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
      * @param spark The Spark session to use for the engine.
      */
     public SparkProcessingEngine(SparkSession spark) {
+        spark.conf().set("spark.sql.datetime.java8API.enabled", true);
         this.spark = Objects.requireNonNull(spark);
     }
 

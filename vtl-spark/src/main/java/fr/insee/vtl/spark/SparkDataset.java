@@ -8,6 +8,8 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.*;
 import scala.collection.JavaConverters;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,9 +52,7 @@ public class SparkDataset implements Dataset {
      * @param spark      a Spark session to use for the creation of the Spark dataset.
      */
     public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
-        List<Row> rows = vtlDataset.getDataPoints().stream().map(points ->
-                RowFactory.create(points.toArray(new Object[]{}))
-        ).collect(Collectors.toList());
+        List<Row> rows = vtlDataset.getDataPoints().stream().map(points -> RowFactory.create(points.toArray(new Object[]{}))).collect(Collectors.toList());
 
         // TODO: Handle nullable with component
         StructType schema = toSparkSchema(vtlDataset.getDataStructure());
@@ -135,6 +135,10 @@ public class SparkDataset implements Dataset {
             return Boolean.class;
         } else if (DecimalType.class.equals(dataType.getClass())) {
             return Double.class;
+        } else if (DateType.sameType(dataType)) {
+            return Instant.class;
+        } else if (TimestampType.sameType(dataType)) {
+            return Instant.class;
         } else {
             throw new UnsupportedOperationException("unsupported type " + dataType);
         }
@@ -155,6 +159,10 @@ public class SparkDataset implements Dataset {
             return DoubleType;
         } else if (Boolean.class.equals(type)) {
             return BooleanType;
+        } else if (Instant.class.equals(type)) {
+            return TimestampType;
+        } else if (LocalDate.class.equals(type)) {
+            return DateType;
         } else {
             throw new UnsupportedOperationException("unsupported type " + type);
         }
