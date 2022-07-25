@@ -73,30 +73,37 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var expressions = new LinkedHashMap<String, ResolvableExpression>();
         var expressionStrings = new LinkedHashMap<String, String>();
         var roles = new LinkedHashMap<String, Dataset.Role>();
+        var currentDatasetExpression = datasetExpression;
+        // TODO: Refactor so we call the executeCalc for each CalcClauseItemContext the same way we call the
+        //  analytics functions.
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
             var columnName = getName(calcCtx.componentID());
             var columnRole = calcCtx.componentRole() == null
                     ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
 
-            AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, datasetExpression);
+            AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, currentDatasetExpression);
             if (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext) {
                 VtlParser.FunctionsExpressionContext functionExprCtx = (VtlParser.FunctionsExpressionContext) calcCtx.expr();
                 if (functionExprCtx.functions() instanceof VtlParser.AnalyticFunctionsContext) {
                     VtlParser.AnalyticFunctionsContext anFuncCtx = (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
-                    DatasetExpression datasetExpression1 = analyticsVisitor.visit(anFuncCtx);
+                    currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
                 }
+            } else {
+                ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
+
+                expressions.put(columnName, calc);
+                expressionStrings.put(columnName, getSource(calcCtx.expr()));
+                roles.put(columnName, columnRole);
             }
 
-            ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
-
-
-            expressions.put(columnName, calc);
-            expressionStrings.put(columnName, getSource(calcCtx.expr()));
-            roles.put(columnName, columnRole);
         }
 
-        return processingEngine.executeCalc(datasetExpression, expressions, roles, expressionStrings);
+        if (!expressionStrings.isEmpty()) {
+            currentDatasetExpression = processingEngine.executeCalc(currentDatasetExpression, expressions, roles, expressionStrings);
+        }
+
+        return currentDatasetExpression;
     }
 
     static String getSource(ParserRuleContext ctx) {
