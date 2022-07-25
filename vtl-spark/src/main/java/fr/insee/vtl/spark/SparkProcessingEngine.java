@@ -291,9 +291,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
-            String targetColumnName,
+            String targetColName,
             Analytics.Function function,
-            String columnName,
+            String sourceColName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window
@@ -308,53 +308,46 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         List<String> measureCols = sparkDataset.getMeasurementCols();
         Dataset<Row> result;
-        // TODO: return Column to extract sparkDataset.getSparkDataset().withColumn(targetColumnName, ,,,)
+        // TODO: return Column to extract sparkDataset.getSparkDataset().withColumn(targetColName, ,,,)
         switch (function) {
             case COUNT:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, count(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, count(sourceColName).over(windowSpec));
                 break;
             case SUM:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, sum(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, sum(sourceColName).over(windowSpec));
                 break;
             case MIN:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, min(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, min(sourceColName).over(windowSpec));
                 break;
             case MAX:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, max(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, max(sourceColName).over(windowSpec));
                 break;
             case AVG:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, avg(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, avg(sourceColName).over(windowSpec));
                 break;
             case MEDIAN:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, percentile_approx(col(columnName), lit(0.5),
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, percentile_approx(col(sourceColName), lit(0.5),
                         lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec));
                 break;
             case STDDEV_POP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, stddev_pop(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, stddev_pop(sourceColName).over(windowSpec));
                 break;
             case STDDEV_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, stddev_samp(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, stddev_samp(sourceColName).over(windowSpec));
                 break;
             case VAR_POP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, var_pop(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, var_pop(sourceColName).over(windowSpec));
                 break;
             case VAR_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, var_samp(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, var_samp(sourceColName).over(windowSpec));
                 break;
 
             case FIRST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, first(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, first(sourceColName).over(windowSpec));
                 break;
             case LAST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, last(columnName).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, last(sourceColName).over(windowSpec));
                 break;
-//            case "rank":
-//                result = evalRank(sparkDataset.getSparkDataset(), resColName, windowSpec);
-//                break;
-
-//            case "ratio_to_report":
-//                result = evalRatioToRep(sparkDataset.getSparkDataset(), measureCols, windowSpec);
-//                break;
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
 
@@ -367,9 +360,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeLeadOrLagAn(
             DatasetExpression dataset,
-            String targetColumnName,
+            String targetColName,
             Analytics.Function function,
-            String columnName,
+            String sourceColName,
             int offset,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy) {
@@ -385,10 +378,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result;
         switch (function) {
             case LEAD:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, lead(columnName, offset).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, lead(sourceColName, offset).over(windowSpec));
                 break;
             case LAG:
-                result = sparkDataset.getSparkDataset().withColumn(targetColumnName, lag(columnName, offset).over(windowSpec));
+                result = sparkDataset.getSparkDataset().withColumn(targetColName, lag(sourceColName, offset).over(windowSpec));
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
@@ -401,9 +394,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeRatioToReportAn(
             DatasetExpression dataset,
-            String targetColumnName,
+            String targetColName,
             Analytics.Function function,
-            String columnName,
+            String sourceColName,
             List<String> partitionBy) {
         if (!function.equals(Analytics.Function.RATIO_TO_REPORT))
             throw new UnsupportedOperationException("Unknown analytic function");
@@ -416,10 +409,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // 2.1 get all measurement column
         // without calc clause, all measure columns need to be transformed by the analytic function
         List<String> measureCols = sparkDataset.getMeasurementCols();
-        String totalColName = "total_" + columnName;
+        String totalColName = "total_" + sourceColName;
         // 2.2 add the result column for the calc clause
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(columnName).over(windowSpec)).
-                withColumn(targetColumnName, col(columnName).divide(col(totalColName))).drop(totalColName);
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(sourceColName).over(windowSpec)).
+                withColumn(targetColName, col(sourceColName).divide(col(totalColName))).drop(totalColName);
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
@@ -429,7 +422,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeRankAn(
             DatasetExpression dataset,
-            String targetColumnName,
+            String targetColName,
             Analytics.Function function,
             List<String> partitionBy,
     Map<String, Analytics.Order> orderBy) {
@@ -445,143 +438,144 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // without calc clause, all measure columns need to be transformed by the analytic function
         List<String> measureCols = sparkDataset.getMeasurementCols();
         // 2.2 add the result column for the calc clause
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColumnName, rank().over(windowSpec));
+        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColName, rank().over(windowSpec));
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
-    public static Dataset<Row> evalCount(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "count_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, count(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        df.show();
-        return df;
-    }
-
-    public static Dataset<Row> evalSum(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "sum_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, sum(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalMin(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "min_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, min(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalMax(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "max_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, max(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalAvg(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "avg_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, avg(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalMedian(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-
-        String tmpColName = "median_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, percentile_approx(col(colName), lit(0.5),
-                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalStdPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "stddev_pop_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, stddev_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalStdSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "stddev_samp_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, stddev_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalVarPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "var_pop_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, var_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalVarSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "var_samp";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, var_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    private Dataset<Row> evalRank(Dataset<Row> df, String resColName, WindowSpec windowSpec) {
-        return df.withColumn(resColName, rank().over(windowSpec));
-    }
-
-    public static Dataset<Row> evalFirst(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "first_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, first(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    public static Dataset<Row> evalLast(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "last_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, last(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    public static Dataset<Row> evalLead(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
-        String tmpColName = "lead_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, lead(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    public static Dataset<Row> evalLag(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
-        String tmpColName = "lag_";
-        for (String colName : measureCols) {
-            df = df.withColumn(tmpColName + colName, lag(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-        }
-        return df;
-    }
-
-    public static Dataset<Row> evalRatioToRep(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-        String tmpColName = "ratio_to_report_";
-
-        for (String colName : measureCols) {
-            String totalColName = "total_" + colName;
-            df = df.withColumn(totalColName, sum(colName).over(windowSpec)).
-                    withColumn(tmpColName + colName, col(colName).divide(col(totalColName))).drop(colName).withColumnRenamed(tmpColName + colName, colName).drop(totalColName);
-        }
-
-        return df;
-    }
+    // code for implicit analytic function without calc clause
+//    public static Dataset<Row> evalCount(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "count_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, count(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        df.show();
+//        return df;
+//    }
+//
+//    public static Dataset<Row> evalSum(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "sum_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, sum(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalMin(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "min_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, min(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalMax(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "max_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, max(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalAvg(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "avg_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, avg(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalMedian(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//
+//        String tmpColName = "median_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, percentile_approx(col(colName), lit(0.5),
+//                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalStdPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "stddev_pop_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, stddev_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalStdSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "stddev_samp_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, stddev_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalVarPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "var_pop_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, var_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalVarSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "var_samp";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, var_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    private Dataset<Row> evalRank(Dataset<Row> df, String resColName, WindowSpec windowSpec) {
+//        return df.withColumn(resColName, rank().over(windowSpec));
+//    }
+//
+//    public static Dataset<Row> evalFirst(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "first_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, first(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    public static Dataset<Row> evalLast(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "last_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, last(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    public static Dataset<Row> evalLead(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
+//        String tmpColName = "lead_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, lead(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    public static Dataset<Row> evalLag(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
+//        String tmpColName = "lag_";
+//        for (String colName : measureCols) {
+//            df = df.withColumn(tmpColName + colName, lag(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
+//        }
+//        return df;
+//    }
+//
+//    public static Dataset<Row> evalRatioToRep(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
+//        String tmpColName = "ratio_to_report_";
+//
+//        for (String colName : measureCols) {
+//            String totalColName = "total_" + colName;
+//            df = df.withColumn(totalColName, sum(colName).over(windowSpec)).
+//                    withColumn(tmpColName + colName, col(colName).divide(col(totalColName))).drop(colName).withColumnRenamed(tmpColName + colName, colName).drop(totalColName);
+//        }
+//
+//        return df;
+//    }
 
     // helper function returns the tails of a list as a Seq
     public static <T> Seq<T> getTailAsSeq(List<T> inputList) {

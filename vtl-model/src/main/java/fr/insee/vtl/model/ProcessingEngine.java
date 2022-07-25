@@ -73,7 +73,7 @@ public interface ProcessingEngine {
             DatasetExpression dataset,
             String targetColumnName,
             Analytics.Function function,
-            String columnName,
+            String sourceColumnName,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy,
             Analytics.WindowSpec window
@@ -89,7 +89,7 @@ public interface ProcessingEngine {
             DatasetExpression dataset,
             String targetColumnName,
             Analytics.Function function,
-            String columnName,
+            String sourceColumnName,
             int offset,
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy
@@ -106,7 +106,7 @@ public interface ProcessingEngine {
             DatasetExpression dataset,
             String targetColumnName,
             Analytics.Function function,
-            String columnName,
+            String sourceColumnName,
             List<String> partitionBy
         );
     /**
