@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark;
 
-import com.twitter.chill.AllScalaRegistrarCompat_0_9_5;
 import fr.insee.vtl.model.*;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -9,7 +8,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
-import org.apache.spark.sql.types.DataType;
+import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
@@ -21,26 +20,21 @@ import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
-import static org.apache.spark.sql.expressions.Window.*;
 import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.percentile_approx;
 import static org.apache.spark.sql.functions.*;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
-
-import scala.collection.JavaConverters;
 
 /**
  * The <code>SparkProcessingEngine</code> class is an implementation of a VTL engine using Apache Spark.
  */
 public class SparkProcessingEngine implements ProcessingEngine {
 
-    private final SparkSession spark;
-
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
+    private final SparkSession spark;
 
 
     /**
@@ -62,6 +56,110 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     private static Map<String, Role> getRoleMap(fr.insee.vtl.model.Dataset dataset) {
         return getRoleMap(dataset.getDataStructure().values());
+    }
+
+    // TODO: (expression instanceof MinAggregationExpression)
+    // TODO column = stddev_pop(columnName);
+    private static Column convertAggregation(String columnName, AggregationExpression expression) throws UnsupportedOperationException {
+        Column column;
+        if (expression instanceof MinAggregationExpression) {
+            column = min(columnName);
+        } else if (expression instanceof MaxAggregationExpression) {
+            column = max(columnName);
+        } else if (expression instanceof AverageAggregationExpression) {
+            column = avg(columnName);
+        } else if (expression instanceof SumAggregationExpression) {
+            column = sum(columnName);
+        } else if (expression instanceof CountAggregationExpression) {
+            column = count("*");
+        } else if (expression instanceof MedianAggregationExpression) {
+            column = percentile_approx(col(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+        } else if (expression instanceof StdDevSampAggregationExpression) {
+            column = stddev_samp(columnName);
+        } else if (expression instanceof VarPopAggregationExpression) {
+            column = var_pop(columnName);
+        } else if (expression instanceof VarSampAggregationExpression) {
+            column = var_samp(columnName);
+        } else {
+            throw new UnsupportedOperationException("unknown aggregation " + expression.getClass());
+        }
+        return column.alias(columnName);
+    }
+
+    private static WindowSpec buildWindowSpec(List<String> partitionBy) {
+        return buildWindowSpec(partitionBy, null, null);
+    }
+
+    private static WindowSpec buildWindowSpec(List<String> partitionBy,
+                                              Map<String, Analytics.Order> orderBy) {
+        return buildWindowSpec(partitionBy, orderBy, null);
+    }
+
+    private static WindowSpec buildWindowSpec(List<String> partitionBy,
+                                              Map<String, Analytics.Order> orderBy,
+                                              Analytics.WindowSpec window) {
+        WindowSpec windowSpec = null;
+        // 1.1 apply partition spec
+        if (partitionBy != null && partitionBy.size() > 0) {
+            windowSpec = Window.partitionBy(colNameToCol(partitionBy));
+        }
+        // 1.2 apply orderBy spec
+
+        // check if it has orderBy clause
+        if (orderBy != null && orderBy.size() > 0) {
+            Seq<Column> orders = buildOrderCol(orderBy);
+            // if it has partitionBy clause, add orderBy after partitionBy
+            if (windowSpec != null) windowSpec = windowSpec.orderBy(orders);
+                // if not, create a window spec to put orderBy clause
+            else windowSpec = Window.orderBy(orders);
+        }
+        // 1.3 apply window frame spec
+        if (window != null) {
+            // check if windowSpec has partitionBy, and/or orderBy before
+            if (windowSpec != null) {
+                // if it's a data point
+                if (window instanceof Analytics.DataPointWindow) {
+                    windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
+                } else if (window instanceof Analytics.RangeWindow) {
+                    windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
+                }
+            } else {
+                if (window instanceof Analytics.DataPointWindow) {
+                    windowSpec = Window.rowsBetween(-window.getLower(), window.getUpper());
+                } else if (window instanceof Analytics.RangeWindow) {
+                    windowSpec = Window.rangeBetween(-window.getLower(), window.getUpper());
+                }
+            }
+        }
+        return windowSpec;
+    }
+
+    public static Seq<Column> colNameToCol(List<String> inputColNames) {
+        List<Column> cols = new ArrayList<>();
+        for (String colName : inputColNames) {
+            cols.add(col(colName));
+        }
+        return JavaConverters.asScalaIteratorConverter(cols.iterator()).asScala().toSeq();
+    }
+
+    // helper function that builds order col expression with asc and desc spec
+    public static Seq<Column> buildOrderCol(Map<String, Analytics.Order> orderCols) {
+        List<Column> orders = new ArrayList<>();
+        for (Map.Entry<String, Analytics.Order> entry : orderCols.entrySet()) {
+            if (entry.getValue().equals(Analytics.Order.DESC)) {
+                orders.add(col(entry.getKey()).desc());
+            } else {
+                orders.add(col(entry.getKey()));
+            }
+        }
+        return JavaConverters.asScalaIteratorConverter(orders.iterator()).asScala().toSeq();
+    }
+
+    private static List<String> identifierNames(List<Component> components) {
+        return components.stream()
+                .filter(component -> IDENTIFIER.equals(component.getRole()))
+                .map(Component::getName)
+                .collect(Collectors.toList());
     }
 
     private SparkDataset asSparkDataset(DatasetExpression expression) {
@@ -200,34 +298,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         throw new UnsupportedOperationException("TODO");
     }
 
-    // TODO: (expression instanceof MinAggregationExpression)
-    // TODO column = stddev_pop(columnName);
-    private static Column convertAggregation(String columnName, AggregationExpression expression) throws UnsupportedOperationException {
-        Column column;
-        if (expression instanceof MinAggregationExpression) {
-            column = min(columnName);
-        } else if (expression instanceof MaxAggregationExpression) {
-            column = max(columnName);
-        } else if (expression instanceof AverageAggregationExpression) {
-            column = avg(columnName);
-        } else if (expression instanceof SumAggregationExpression) {
-            column = sum(columnName);
-        } else if (expression instanceof CountAggregationExpression) {
-            column = count("*");
-        } else if (expression instanceof MedianAggregationExpression) {
-            column = percentile_approx(col(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
-        } else if (expression instanceof StdDevSampAggregationExpression) {
-            column = stddev_samp(columnName);
-        } else if (expression instanceof VarPopAggregationExpression) {
-            column = var_pop(columnName);
-        } else if (expression instanceof VarSampAggregationExpression) {
-            column = var_samp(columnName);
-        } else {
-            throw new UnsupportedOperationException("unknown aggregation " + expression.getClass());
-        }
-        return column.alias(columnName);
-    }
-
     @Override
     public DatasetExpression executeAggr(DatasetExpression dataset, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
         SparkDataset sparkDataset = asSparkDataset(dataset);
@@ -238,54 +308,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
         return new SparkDatasetExpression(new SparkDataset(result));
-    }
-
-    private static WindowSpec buildWindowSpec(List<String> partitionBy) {
-        return buildWindowSpec(partitionBy, null, null);
-    }
-
-    private static WindowSpec buildWindowSpec(List<String> partitionBy,
-                                              Map<String, Analytics.Order> orderBy) {
-        return buildWindowSpec(partitionBy, orderBy, null);
-    }
-
-    private static WindowSpec buildWindowSpec(List<String> partitionBy,
-                                              Map<String, Analytics.Order> orderBy,
-                                              Analytics.WindowSpec window) {
-        WindowSpec windowSpec = null;
-        // 1.1 apply partition spec
-        if (partitionBy != null && partitionBy.size() > 0) {
-            windowSpec = Window.partitionBy(colNameToCol(partitionBy));
-        }
-        // 1.2 apply orderBy spec
-
-        // check if it has orderBy clause
-        if (orderBy != null && orderBy.size() > 0) {
-            Seq<Column> orders = buildOrderCol(orderBy);
-            // if it has partitionBy clause, add orderBy after partitionBy
-            if (windowSpec != null) windowSpec = windowSpec.orderBy(orders);
-                // if not, create a window spec to put orderBy clause
-            else windowSpec = Window.orderBy(orders);
-        }
-        // 1.3 apply window frame spec
-        if (window != null) {
-            // check if windowSpec has partitionBy, and/or orderBy before
-            if (windowSpec != null) {
-                // if it's a data point
-                if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
-                } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
-                }
-            } else {
-                if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = Window.rowsBetween(-window.getLower(), window.getUpper());
-                } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = Window.rangeBetween(-window.getLower(), window.getUpper());
-                }
-            }
-        }
-        return windowSpec;
     }
 
     @Override
@@ -306,7 +328,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // step 2: call analytic func on window spec
         // 2.1 get all measurement column
 
-        List<String> measureCols = sparkDataset.getMeasurementCols();
         Dataset<Row> result;
         // TODO: return Column to extract sparkDataset.getSparkDataset().withColumn(targetColName, ,,,)
         switch (function) {
@@ -341,7 +362,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
             case VAR_SAMP:
                 result = sparkDataset.getSparkDataset().withColumn(targetColName, var_samp(sourceColName).over(windowSpec));
                 break;
-
             case FIRST_VALUE:
                 result = sparkDataset.getSparkDataset().withColumn(targetColName, first(sourceColName).over(windowSpec));
                 break;
@@ -372,9 +392,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         WindowSpec windowSpec = buildWindowSpec(partitionBy, orderBy);
 
         // step 2: call analytic func on window spec
-        // 2.1 get all measurement column
-        // without calc clause, all measure columns need to be transformed by the analytic function
-        List<String> measureCols = sparkDataset.getMeasurementCols();
         Dataset<Row> result;
         switch (function) {
             case LEAD:
@@ -406,9 +423,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         WindowSpec windowSpec = buildWindowSpec(partitionBy);
 
         // step 2: call analytic func on window spec
-        // 2.1 get all measurement column
-        // without calc clause, all measure columns need to be transformed by the analytic function
-        List<String> measureCols = sparkDataset.getMeasurementCols();
         String totalColName = "total_" + sourceColName;
         // 2.2 add the result column for the calc clause
         Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(sourceColName).over(windowSpec)).
@@ -425,204 +439,20 @@ public class SparkProcessingEngine implements ProcessingEngine {
             String targetColName,
             Analytics.Function function,
             List<String> partitionBy,
-    Map<String, Analytics.Order> orderBy) {
+            Map<String, Analytics.Order> orderBy) {
         if (!function.equals(Analytics.Function.RANK))
             throw new UnsupportedOperationException("Unknown analytic function");
 
         SparkDataset sparkDataset = asSparkDataset(dataset);
         //step1: build window spec
-        WindowSpec windowSpec = buildWindowSpec(partitionBy,orderBy);
+        WindowSpec windowSpec = buildWindowSpec(partitionBy, orderBy);
 
         // step 2: call analytic func on window spec
-        // 2.1 get all measurement column
-        // without calc clause, all measure columns need to be transformed by the analytic function
-        List<String> measureCols = sparkDataset.getMeasurementCols();
-        // 2.2 add the result column for the calc clause
         Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColName, rank().over(windowSpec));
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
         // step3: convert back
         result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
-    }
-
-    // code for implicit analytic function without calc clause
-//    public static Dataset<Row> evalCount(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "count_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, count(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        df.show();
-//        return df;
-//    }
-//
-//    public static Dataset<Row> evalSum(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "sum_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, sum(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalMin(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "min_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, min(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalMax(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "max_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, max(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalAvg(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "avg_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, avg(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalMedian(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//
-//        String tmpColName = "median_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, percentile_approx(col(colName), lit(0.5),
-//                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalStdPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "stddev_pop_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, stddev_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalStdSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "stddev_samp_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, stddev_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalVarPop(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "var_pop_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, var_pop(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalVarSamp(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "var_samp";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, var_samp(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    private Dataset<Row> evalRank(Dataset<Row> df, String resColName, WindowSpec windowSpec) {
-//        return df.withColumn(resColName, rank().over(windowSpec));
-//    }
-//
-//    public static Dataset<Row> evalFirst(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "first_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, first(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    public static Dataset<Row> evalLast(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "last_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, last(colName).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    public static Dataset<Row> evalLead(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
-//        String tmpColName = "lead_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, lead(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    public static Dataset<Row> evalLag(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec, int step) {
-//        String tmpColName = "lag_";
-//        for (String colName : measureCols) {
-//            df = df.withColumn(tmpColName + colName, lag(colName, step).over(windowSpec)).drop(colName).withColumnRenamed(tmpColName + colName, colName);
-//        }
-//        return df;
-//    }
-//
-//    public static Dataset<Row> evalRatioToRep(Dataset<Row> df, List<String> measureCols, WindowSpec windowSpec) {
-//        String tmpColName = "ratio_to_report_";
-//
-//        for (String colName : measureCols) {
-//            String totalColName = "total_" + colName;
-//            df = df.withColumn(totalColName, sum(colName).over(windowSpec)).
-//                    withColumn(tmpColName + colName, col(colName).divide(col(totalColName))).drop(colName).withColumnRenamed(tmpColName + colName, colName).drop(totalColName);
-//        }
-//
-//        return df;
-//    }
-
-    // helper function returns the tails of a list as a Seq
-    public static <T> Seq<T> getTailAsSeq(List<T> inputList) {
-        if (inputList.size() <= 1) return null;
-        List<T> tailList = inputList.subList(1, inputList.size() - 1);
-        return JavaConverters.asScalaIteratorConverter(tailList.iterator()).asScala().toSeq();
-    }
-
-    public static Seq<Column> colNameToCol(List<String> inputColNames) {
-        List<Column> cols = new ArrayList<>();
-        for (String colName : inputColNames) {
-            cols.add(col(colName));
-        }
-        return JavaConverters.asScalaIteratorConverter(cols.iterator()).asScala().toSeq();
-    }
-
-    // helper function that builds window frame start end index based on parsed vtl expression
-    public static Long buildStartEnd(String inputIndex) {
-        switch (inputIndex) {
-            case "unbounded preceding":
-                return Window.unboundedPreceding();
-            case "unbounded following":
-                return Window.unboundedFollowing();
-            case "current row":
-                return Window.currentRow();
-            default:
-                try {
-                    return Long.parseLong(inputIndex);
-                } catch (NumberFormatException nfe) {
-                    throw new UnsupportedOperationException("Unknown windows frame index");
-                }
-
-        }
-    }
-
-
-    // helper function that builds order col expression with asc and desc spec
-    public static Seq<Column> buildOrderCol(Map<String, Analytics.Order> orderCols) {
-        List<Column> orders = new ArrayList<>();
-        for (Map.Entry<String, Analytics.Order> entry : orderCols.entrySet()) {
-            if (entry.getValue().equals(Analytics.Order.DESC)) {
-                orders.add(col(entry.getKey()).desc());
-            } else {
-                orders.add(col(entry.getKey()));
-            }
-        }
-        return JavaConverters.asScalaIteratorConverter(orders.iterator()).asScala().toSeq();
     }
 
     @Override
@@ -665,13 +495,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
             sparkDatasets.add(sparkDataset);
         }
         return sparkDatasets;
-    }
-
-    private static List<String> identifierNames(List<Component> components) {
-        return components.stream()
-                .filter(component -> IDENTIFIER.equals(component.getRole()))
-                .map(Component::getName)
-                .collect(Collectors.toList());
     }
 
     /**
