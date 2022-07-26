@@ -6,7 +6,6 @@ import fr.insee.vtl.model.Dataset.Role;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import org.apache.spark.sql.SparkSession;
-import org.assertj.core.api.ListAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,9 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkProcessingEngineTest {
 
-    private SparkSession spark;
-    private ScriptEngine engine;
-
     private final InMemoryDataset anCountDS1 = new InMemoryDataset(
             List.of(
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
@@ -41,7 +37,6 @@ public class SparkProcessingEngineTest {
             Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE, "Me_2", Role.MEASURE)
     );
-
     private final InMemoryDataset anCountDS2 = new InMemoryDataset(
             List.of(
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1D),
@@ -57,7 +52,6 @@ public class SparkProcessingEngineTest {
             Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE, "Me_2", Role.MEASURE)
     );
-
     private final InMemoryDataset dataset1 = new InMemoryDataset(
             List.of(
                     List.of("a", 1L, 2L),
@@ -84,7 +78,6 @@ public class SparkProcessingEngineTest {
                     new Component("weight2", Long.class, Role.MEASURE)
             )
     );
-
     private final InMemoryDataset dataset3 = new InMemoryDataset(
             List.of(
                     List.of(16L, "a", 17L),
@@ -98,9 +91,11 @@ public class SparkProcessingEngineTest {
                     new Component("weight3", Long.class, Role.MEASURE)
             )
     );
-    private final String DEFAULT_NULL_STR="null";
-    private static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue)
-    {
+    private final String DEFAULT_NULL_STR = "null";
+    private SparkSession spark;
+    private ScriptEngine engine;
+
+    private static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue) {
 
         // Replace the null value
         map = map.entrySet()
@@ -1046,10 +1041,9 @@ public class SparkProcessingEngineTest {
         List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         List<Map<String, Object>> actual = new ArrayList<>();
-        for(Map<String, Object> map:actualWithNull){
-            actual.add( replaceNullValues(map, DEFAULT_NULL_STR));
+        for (Map<String, Object> map : actualWithNull) {
+            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-
 
 
         assertThat(actual).containsExactly(
@@ -1161,8 +1155,8 @@ public class SparkProcessingEngineTest {
         List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         List<Map<String, Object>> actual = new ArrayList<>();
-        for(Map<String, Object> map:actualWithNull){
-            actual.add( replaceNullValues(map, DEFAULT_NULL_STR));
+        for (Map<String, Object> map : actualWithNull) {
+            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
         assertThat(actual).containsExactly(Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "var_samp_Me_1", "null"),
@@ -1219,8 +1213,8 @@ public class SparkProcessingEngineTest {
         List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         List<Map<String, Object>> actual = new ArrayList<>();
-        for(Map<String, Object> map:actualWithNull){
-            actual.add( replaceNullValues(map, DEFAULT_NULL_STR));
+        for (Map<String, Object> map : actualWithNull) {
+            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
         assertThat(actual).containsExactly(
@@ -1278,8 +1272,8 @@ public class SparkProcessingEngineTest {
         List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         List<Map<String, Object>> actual = new ArrayList<>();
-        for(Map<String, Object> map:actualWithNull){
-            actual.add( replaceNullValues(map, DEFAULT_NULL_STR));
+        for (Map<String, Object> map : actualWithNull) {
+            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
         assertThat(actual).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "lag_Me_1", "null"),
@@ -4501,8 +4495,6 @@ public class SparkProcessingEngineTest {
 //    }
 //    /*
 //     * End of ratio_to_report test case */
-
-
     @Test
     public void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
