@@ -13,7 +13,6 @@
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
         <module>vtl-jdbc</module>
-        <module>vtl-jupyter</module>
     </modules>
 
     <name>Trevas</name>
