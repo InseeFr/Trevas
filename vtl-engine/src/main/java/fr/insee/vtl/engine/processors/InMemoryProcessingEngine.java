@@ -221,6 +221,30 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
+    public DatasetExpression executeSimpleAnalytic(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, List<String> partitionBy, Map<String, Analytics.Order> orderBy, Analytics.WindowSpec window) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeLeadOrLagAn(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, int offset, List<String> partitionBy, Map<String, Analytics.Order> orderBy) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeRatioToReportAn(DatasetExpression dataset, String targetColumnName, Analytics.Function function, String columnName, List<String> partitionBy) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeRankAn(DatasetExpression dataset,
+                                           String targetColumnName,
+                                           Analytics.Function function,
+                                           List<String> partitionBy,
+                                           Map<String, Analytics.Order> orderBy) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
         var iterator = datasets.values().iterator();
         var leftMost = iterator.next();
