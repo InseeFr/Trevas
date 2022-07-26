@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
@@ -10,6 +11,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
+import javax.script.ScriptContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,12 +33,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
      * @param datasetExpression The dataset expression containing the clause expression.
      * @param processingEngine  The processing engine for dataset expressions.
      */
-    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine) {
+    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine, VtlScriptEngine engine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
         Map<String, Object> componentMap = datasetExpression.getDataStructure().values().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine);
+        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine, engine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
@@ -54,68 +56,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         return text;
     }
 
-    @Override
-    public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
-        // Normalize to keep operation.
-        var keep = ctx.op.getType() == VtlParser.KEEP;
-        var names = ctx.componentID().stream().map(ClauseVisitor::getName)
-                .collect(Collectors.toSet());
-        List<String> columnNames = datasetExpression.getDataStructure().values().stream().map(Dataset.Component::getName)
-                .filter(name -> keep == names.contains(name))
-                .collect(Collectors.toList());
-
-        return processingEngine.executeProject(datasetExpression, columnNames);
-    }
-
-    @Override
-    public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
-
-        var expressions = new LinkedHashMap<String, ResolvableExpression>();
-        var expressionStrings = new LinkedHashMap<String, String>();
-        var roles = new LinkedHashMap<String, Dataset.Role>();
-        for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
-            var columnName = getName(calcCtx.componentID());
-            var columnRole = calcCtx.componentRole() == null
-                    ? Dataset.Role.MEASURE
-                    : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
-            ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
-            expressions.put(columnName, calc);
-            expressionStrings.put(columnName, getSource(calcCtx.expr()));
-            roles.put(columnName, columnRole);
-        }
-
-        return processingEngine.executeCalc(datasetExpression, expressions, roles, expressionStrings);
-    }
-
     static String getSource(ParserRuleContext ctx) {
         var stream = ctx.getStart().getInputStream();
         return stream.getText(new Interval(
                 ctx.getStart().getStartIndex(),
                 ctx.getStop().getStopIndex()
         ));
-    }
-
-    @Override
-    public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
-        return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
-    }
-
-    @Override
-    public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
-        Map<String, String> fromTo = new LinkedHashMap<>();
-        Set<String> renamed = new HashSet<>();
-        for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-            var toNameString = getName(renameCtx.toName);
-            var fromNameString = getName(renameCtx.fromName);
-            if (!renamed.add(toNameString)) {
-                throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("duplicate column: %s", toNameString), renameCtx
-                ));
-            }
-            fromTo.put(fromNameString, toNameString);
-        }
-        return processingEngine.executeRename(datasetExpression, fromTo);
     }
 
     private static AggregationExpression convertToAggregation(VtlParser.AggrDatasetContext groupFunctionCtx, ResolvableExpression expression) {
@@ -151,6 +97,81 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         } else {
             throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
         }
+    }
+
+    @Override
+    public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
+        // Normalize to keep operation.
+        var keep = ctx.op.getType() == VtlParser.KEEP;
+        var names = ctx.componentID().stream().map(ClauseVisitor::getName)
+                .collect(Collectors.toSet());
+        List<String> columnNames = datasetExpression.getDataStructure().values().stream().map(Dataset.Component::getName)
+                .filter(name -> keep == names.contains(name))
+                .collect(Collectors.toList());
+
+        return processingEngine.executeProject(datasetExpression, columnNames);
+    }
+
+    @Override
+    public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
+
+        var expressions = new LinkedHashMap<String, ResolvableExpression>();
+        var expressionStrings = new LinkedHashMap<String, String>();
+        var roles = new LinkedHashMap<String, Dataset.Role>();
+        var currentDatasetExpression = datasetExpression;
+        // TODO: Refactor so we call the executeCalc for each CalcClauseItemContext the same way we call the
+        //  analytics functions.
+        for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
+            var columnName = getName(calcCtx.componentID());
+            var columnRole = calcCtx.componentRole() == null
+                    ? Dataset.Role.MEASURE
+                    : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
+
+            if ((calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext)
+                    && ((VtlParser.FunctionsExpressionContext) calcCtx.expr()).functions() instanceof VtlParser.AnalyticFunctionsContext
+            ) {
+                AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, currentDatasetExpression, columnName);
+                VtlParser.FunctionsExpressionContext functionExprCtx = (VtlParser.FunctionsExpressionContext) calcCtx.expr();
+                VtlParser.AnalyticFunctionsContext anFuncCtx = (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
+                currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
+            } else {
+                ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
+
+                expressions.put(columnName, calc);
+                expressionStrings.put(columnName, getSource(calcCtx.expr()));
+                roles.put(columnName, columnRole);
+            }
+
+        }
+
+        if (!expressionStrings.isEmpty()) {
+            currentDatasetExpression = processingEngine.executeCalc(currentDatasetExpression, expressions, roles, expressionStrings);
+        }
+
+        return currentDatasetExpression;
+    }
+
+    @Override
+    public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
+        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
+        return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
+    }
+
+    @Override
+    public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
+        Map<String, String> fromTo = new LinkedHashMap<>();
+        Set<String> renamed = new HashSet<>();
+        for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
+            var toNameString = getName(renameCtx.toName);
+            var fromNameString = getName(renameCtx.fromName);
+            if (!renamed.add(toNameString)) {
+                throw new VtlRuntimeException(new InvalidArgumentException(
+                        String.format("duplicate column: %s", toNameString), renameCtx
+                ));
+            }
+            fromTo.put(fromNameString, toNameString);
+        }
+        return processingEngine.executeRename(datasetExpression, fromTo);
     }
 
     @Override

@@ -66,6 +66,63 @@ public interface ProcessingEngine {
                                   Map<String, AggregationExpression> collectorMap);
 
     /**
+     * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a given
+     * window specification (e.g. partitionBy, orderBy, datapoints)
+     * */
+    DatasetExpression executeSimpleAnalytic(
+            DatasetExpression dataset,
+            String targetColumnName,
+            Analytics.Function function,
+            String sourceColumnName,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy,
+            Analytics.WindowSpec window
+    );
+
+    /**
+     * Execute lead/lag analytic function on the dataset expression based on a given
+     * window specification (e.g. partitionBy, orderBy).
+     *
+     * Note lead and lag can't take a window frame (e.g. data points, range)
+     * */
+    DatasetExpression executeLeadOrLagAn(
+            DatasetExpression dataset,
+            String targetColumnName,
+            Analytics.Function function,
+            String sourceColumnName,
+            int offset,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy
+
+    );
+
+    /**
+     * Execute ratio_to_report analytic function on the dataset expression based on a given
+     * window specification.
+     *
+     * Note ratio_to_report can only take a partitionBy window specification
+     * */
+    DatasetExpression executeRatioToReportAn(
+            DatasetExpression dataset,
+            String targetColumnName,
+            Analytics.Function function,
+            String sourceColumnName,
+            List<String> partitionBy
+        );
+    /**
+     * Execute rank analytic function on the dataset expression based on a given
+     * window specification.
+     *
+     * Note rank can only take a window specification with partitionBy, orderBy. orderBy is mandatory
+     * */
+    DatasetExpression executeRankAn(
+            DatasetExpression dataset,
+            String targetColumnName,
+            Analytics.Function function,
+            List<String> partitionBy,
+            Map<String, Analytics.Order> orderBy);
+
+    /**
      * Execute a left join transformations on the dataset expressions.
      *
      * @param datasets   a map of aliased datasets

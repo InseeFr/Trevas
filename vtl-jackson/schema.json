@@ -1,0 +1,71 @@
+{
+  "$id": "https://example.com/person.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VTL Dataset format",
+  "type": "object",
+  "patternProperties": {
+    "dataStructure|structure": {
+      "type": "array",
+      "item": {
+        "$ref": "#/$defs/structure"
+      }
+    },
+    "data|dataPoints": {
+      "type": "array",
+      "item": {
+        "$ref": "#/$defs/data"
+      }
+    }
+  },
+  "$defs": {
+    "data": {
+      "id": "/defs/data",
+      "type": "array",
+      "items": {
+        "type": "any"
+      }
+    },
+    "structure": {
+      "$id": "/defs/structure",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "String",
+            "INTEGER",
+            "Integer",
+            "NUMBER",
+            "Number",
+            "BOOLEAN",
+            "Boolean"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "IDENTIFIER",
+            "Identifier",
+            "MEASURE",
+            "Measure",
+            "ATTRIBUTE",
+            "Attribute"
+          ]
+        },
+        "nullable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "role"
+      ]
+    }
+  }
+}

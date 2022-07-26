@@ -28,16 +28,8 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         this.context = Objects.requireNonNull(context);
     }
 
-    /**
-     * Visits expressions with variable identifiers.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> or more specialized child resolving to the value of the variable.
-     * @throws VtlRuntimeException If the variable is not found in the context bindings.
-     */
     @Override
-    public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
-
+    public ResolvableExpression visitVarID(VtlParser.VarIDContext ctx) {
         final String variableName = ctx.getText();
 
         if (!context.containsKey(variableName)) {
