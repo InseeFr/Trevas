@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
@@ -106,6 +105,7 @@ public class VtlScriptEngineTest {
 
     @Test
     public void testSerialization() throws Exception {
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         var o = new PipedOutputStream();
         var i = new PipedInputStream(o, 8192);
         var out = new ObjectOutputStream(o);
@@ -113,7 +113,7 @@ public class VtlScriptEngineTest {
 
         var bar = StringExpression.of("bar");
         var baz = StringExpression.of("baz");
-        var exprVisitor = new ExpressionVisitor(Map.of(), new InMemoryProcessingEngine());
+        var exprVisitor = new ExpressionVisitor(Map.of(), new InMemoryProcessingEngine(), engine);
         var comparisonVisitor = new ComparisonVisitor(exprVisitor);
         var condition = comparisonVisitor.compareExpressions(bar, baz, VtlScriptEngineTest::isEqual);
         var expr = ResolvableExpression.withTypeCasting(String.class, (clazz, ctx) ->
