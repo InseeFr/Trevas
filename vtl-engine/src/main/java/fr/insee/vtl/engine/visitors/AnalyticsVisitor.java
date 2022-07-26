@@ -84,7 +84,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private List<String> toPartitionBy(VtlParser.PartitionByClauseContext partition) {
         if (partition == null) {
-            return null;
+            return List.of();
         }
         return partition.componentID().stream()
                 .map(ClauseVisitor::getName)
@@ -99,7 +99,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private Map<String, Analytics.Order> toOrderBy(VtlParser.OrderByClauseContext orderByCtx) {
         if (orderByCtx == null) {
-            return null;
+            return Map.of();
         }
         Map<String, Analytics.Order> orderBy = new LinkedHashMap<>();
         for (VtlParser.OrderByItemContext item : orderByCtx.orderByItem()) {
@@ -141,7 +141,6 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      * @param ctx the parse tree context of window range clause
      * @return long
      */
-
     private Long toRangeLong(VtlParser.LimitClauseItemContext ctx) {
         if (ctx.CURRENT() != null) {
             return 0L;
@@ -165,7 +164,6 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
-
         return processingEngine.executeSimpleAnalytic(
                 dataset,
                 this.targetColumnName,
@@ -200,8 +198,6 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),
                 toPartitionBy(ctx.partition)
-
-
         );
     }
 }

@@ -18,14 +18,14 @@ public class Analytics {
         VAR_POP,
         VAR_SAMP,
         FIRST_VALUE,
-        LAST_VALUE, LEAD,LAG, RATIO_TO_REPORT, RANK,
+        LAST_VALUE, LEAD, LAG, RATIO_TO_REPORT, RANK,
     }
 
-    public static abstract class WindowSpec {
+    public abstract static class WindowSpec {
         private final Long lower;
         private final Long upper;
 
-        public WindowSpec(Long lower, Long upper) {
+        WindowSpec(Long lower, Long upper) {
             this.lower = lower;
             this.upper = upper;
         }
