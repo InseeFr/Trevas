@@ -36,6 +36,7 @@ import static scala.collection.JavaConverters.iterableAsScalaIterable;
 public class SparkProcessingEngine implements ProcessingEngine {
 
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
+    public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
     private final SparkSession spark;
 
 
@@ -101,39 +102,25 @@ public class SparkProcessingEngine implements ProcessingEngine {
     private static WindowSpec buildWindowSpec(List<String> partitionBy,
                                               Map<String, Analytics.Order> orderBy,
                                               Analytics.WindowSpec window) {
-        WindowSpec windowSpec = null;
-        // 1.1 apply partition spec
-        if (partitionBy != null && partitionBy.size() > 0) {
-            windowSpec = Window.partitionBy(colNameToCol(partitionBy));
+        if (partitionBy == null) {
+            partitionBy = List.of();
         }
-        // 1.2 apply orderBy spec
 
-        // check if it has orderBy clause
-        if (orderBy != null && orderBy.size() > 0) {
-            Seq<Column> orders = buildOrderCol(orderBy);
-            // if it has partitionBy clause, add orderBy after partitionBy
-            if (windowSpec != null) windowSpec = windowSpec.orderBy(orders);
-                // if not, create a window spec to put orderBy clause
-            else windowSpec = Window.orderBy(orders);
+        WindowSpec windowSpec = Window.partitionBy(colNameToCol(partitionBy));
+
+        if (orderBy == null) {
+            orderBy = Map.of();
         }
-        // 1.3 apply window frame spec
+        windowSpec = windowSpec.orderBy(buildOrderCol(orderBy));
+
         if (window != null) {
-            // check if windowSpec has partitionBy, and/or orderBy before
-            if (windowSpec != null) {
-                // if it's a data point
-                if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
-                } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
-                }
-            } else {
-                if (window instanceof Analytics.DataPointWindow) {
-                    windowSpec = Window.rowsBetween(-window.getLower(), window.getUpper());
-                } else if (window instanceof Analytics.RangeWindow) {
-                    windowSpec = Window.rangeBetween(-window.getLower(), window.getUpper());
-                }
+            if (window instanceof Analytics.DataPointWindow) {
+                windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
+            } else if (window instanceof Analytics.RangeWindow) {
+                windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
             }
         }
+
         return windowSpec;
     }
 
@@ -371,7 +358,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 column = last(sourceColName).over(windowSpec);
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown analytic function");
+                throw UNKNOWN_ANALYTIC_FUNCTION;
 
         }
         var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
@@ -402,7 +389,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 column = lag(sourceColName, offset).over(windowSpec);
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown analytic function");
+                throw UNKNOWN_ANALYTIC_FUNCTION;
         }
         var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result));
@@ -416,7 +403,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             String sourceColName,
             List<String> partitionBy) {
         if (!function.equals(Analytics.Function.RATIO_TO_REPORT))
-            throw new UnsupportedOperationException("Unknown analytic function");
+            throw UNKNOWN_ANALYTIC_FUNCTION;
 
         SparkDataset sparkDataset = asSparkDataset(dataset);
         //step1: build window spec
@@ -439,7 +426,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             List<String> partitionBy,
             Map<String, Analytics.Order> orderBy) {
         if (!function.equals(Analytics.Function.RANK))
-            throw new UnsupportedOperationException("Unknown analytic function");
+            throw UNKNOWN_ANALYTIC_FUNCTION;
 
         SparkDataset sparkDataset = asSparkDataset(dataset);
         //step1: build window spec
