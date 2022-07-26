@@ -328,52 +328,50 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // step 2: call analytic func on window spec
         // 2.1 get all measurement column
 
-        Dataset<Row> result;
-        // TODO: return Column to extract sparkDataset.getSparkDataset().withColumn(targetColName, ,,,)
+        Column column;
         switch (function) {
             case COUNT:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, count(sourceColName).over(windowSpec));
+                column = count(sourceColName).over(windowSpec);
                 break;
             case SUM:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, sum(sourceColName).over(windowSpec));
+                column = sum(sourceColName).over(windowSpec);
                 break;
             case MIN:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, min(sourceColName).over(windowSpec));
+                column = min(sourceColName).over(windowSpec);
                 break;
             case MAX:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, max(sourceColName).over(windowSpec));
+                column = max(sourceColName).over(windowSpec);
                 break;
             case AVG:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, avg(sourceColName).over(windowSpec));
+                column = avg(sourceColName).over(windowSpec);
                 break;
             case MEDIAN:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, percentile_approx(col(sourceColName), lit(0.5),
-                        lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec));
+                column = percentile_approx(col(sourceColName), lit(0.5),
+                        lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec);
                 break;
             case STDDEV_POP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, stddev_pop(sourceColName).over(windowSpec));
+                column = stddev_pop(sourceColName).over(windowSpec);
                 break;
             case STDDEV_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, stddev_samp(sourceColName).over(windowSpec));
+                column = stddev_samp(sourceColName).over(windowSpec);
                 break;
             case VAR_POP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, var_pop(sourceColName).over(windowSpec));
+                column = var_pop(sourceColName).over(windowSpec);
                 break;
             case VAR_SAMP:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, var_samp(sourceColName).over(windowSpec));
+                column = var_samp(sourceColName).over(windowSpec);
                 break;
             case FIRST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, first(sourceColName).over(windowSpec));
+                column = first(sourceColName).over(windowSpec);
                 break;
             case LAST_VALUE:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, last(sourceColName).over(windowSpec));
+                column = last(sourceColName).over(windowSpec);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
 
         }
-        // step3: convert back
-        result.show();
+        var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
@@ -392,19 +390,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
         WindowSpec windowSpec = buildWindowSpec(partitionBy, orderBy);
 
         // step 2: call analytic func on window spec
-        Dataset<Row> result;
+        Column column;
         switch (function) {
             case LEAD:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, lead(sourceColName, offset).over(windowSpec));
+                column = lead(sourceColName, offset).over(windowSpec);
                 break;
             case LAG:
-                result = sparkDataset.getSparkDataset().withColumn(targetColName, lag(sourceColName, offset).over(windowSpec));
+                column = lag(sourceColName, offset).over(windowSpec);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown analytic function");
         }
-        // step3: convert back
-        result.show();
+        var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
@@ -428,8 +425,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(totalColName, sum(sourceColName).over(windowSpec)).
                 withColumn(targetColName, col(sourceColName).divide(col(totalColName))).drop(totalColName);
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
-        // step3: convert back
-        result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
@@ -450,8 +445,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // step 2: call analytic func on window spec
         Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColName, rank().over(windowSpec));
         // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
-        // step3: convert back
-        result.show();
         return new SparkDatasetExpression(new SparkDataset(result));
     }
 
