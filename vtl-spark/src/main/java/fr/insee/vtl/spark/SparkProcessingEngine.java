@@ -9,8 +9,6 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
 import scala.collection.JavaConverters;
-import org.apache.spark.sql.internal.SQLConf;
-import org.apache.spark.sql.types.DataType;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
@@ -113,12 +111,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         }
         windowSpec = windowSpec.orderBy(buildOrderCol(orderBy));
 
-        if (window != null) {
-            if (window instanceof Analytics.DataPointWindow) {
-                windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
-            } else if (window instanceof Analytics.RangeWindow) {
-                windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
-            }
+        if (window instanceof Analytics.DataPointWindow) {
+            windowSpec = windowSpec.rowsBetween(-window.getLower(), window.getUpper());
+        } else if (window instanceof Analytics.RangeWindow) {
+            windowSpec = windowSpec.rangeBetween(-window.getLower(), window.getUpper());
         }
 
         return windowSpec;
