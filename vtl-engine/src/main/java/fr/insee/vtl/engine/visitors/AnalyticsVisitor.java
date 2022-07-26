@@ -181,7 +181,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 this.targetColumnName,
                 toFunctionEnum(ctx.op, ctx),
                 toTargetColName(ctx.expr()),
-                toOffset(ctx.offet),
+                toOffset(ctx.offset),
                 toPartitionBy(ctx.partition),
                 toOrderBy(ctx.orderBy)
 
