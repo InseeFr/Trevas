@@ -3,10 +3,8 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
-import fr.insee.vtl.engine.visitors.expression.ConstantVisitor;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -32,7 +30,8 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     /**
      * Convert the analytic expression function name from token type to Enum type Analytics.Function
-     * @param op The function name of the analytic expression with type token
+     *
+     * @param op  The function name of the analytic expression with type token
      * @param ctx The context of the parse tree
      * @return The function name of the analytic expression with Enum type Analytics.Function
      */
@@ -78,7 +77,8 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     /**
-     *  Convert the partitionByClause to a list of <colName> which the dataset are partitionBy
+     * Convert the partitionByClause to a list of <colName> which the dataset are partitionBy
+     *
      * @param partition The parse tree context of PartitionByClause
      * @return a list of <colName> which the dataset are partitionBy
      */
@@ -93,6 +93,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     /**
      * Convert the orderByClause to a pair of <colName,order(e.g. asc, desc)>
+     *
      * @param orderByCtx The parse tree context of OrderByClause
      * @return a map of <colName,order(e.g. asc, desc)> which the dataset are orderedBy
      */
@@ -114,6 +115,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     /**
      * Convert the windowSpec clause expression to a class WindowSpec (e.g. datapoints or range)
+     *
      * @param windowing the parse tree context of window frame
      * @return an object of windowSpec class that will be RangeWindow(from,to) or DataPointWindow(from, to)
      */
@@ -135,6 +137,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      * Convert the range expression to Long.
      * Note in vtl the from and to of the range can be reversed. For example: data points between -2 following and -2 preceding
      * is correct
+     *
      * @param ctx the parse tree context of window range clause
      * @return long
      */
@@ -152,7 +155,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
     }
 
-    private String toTargetColName(VtlParser.ExprContext expr){
+    private String toTargetColName(VtlParser.ExprContext expr) {
         return expr.getText();
     }
 
@@ -187,7 +190,6 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         );
     }
-
 
 
     @Override
