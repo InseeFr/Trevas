@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.parser.VtlLexer;
@@ -13,10 +14,8 @@ import org.antlr.v4.runtime.*;
 import javax.script.*;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Optional;
-import java.util.ServiceLoader;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -39,6 +38,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
+    private Map<String, Method> methodCache;
 
     /**
      * Constructor taking a script engine factory.
@@ -127,7 +127,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                 throw first;
             }
 
-            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(context, getProcessingEngine());
+            AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, getProcessingEngine());
             Object lastValue = null;
             for (VtlParser.StatementContext stmt : start.statement()) {
                 lastValue = assignmentVisitor.visit(stmt);
@@ -188,5 +188,30 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     @Override
     public ScriptEngineFactory getFactory() {
         return factory;
+    }
+
+    public Optional<Method> findMethod(String name) {
+        if (methodCache == null) {
+            loadMethods();
+        }
+        return Optional.ofNullable(methodCache.get(name));
+    }
+
+    public Method registerMethod(String name, Method method) {
+        if (methodCache == null) {
+            loadMethods();
+        }
+        return methodCache.put(name, method);
+    }
+
+    private void loadMethods() {
+        methodCache = new LinkedHashMap<>();
+        ServiceLoader<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class);
+        for (FunctionProvider provider : providers) {
+            Map<String, Method> functions = provider.getFunctions(this);
+            for (String name : functions.keySet()) {
+                methodCache.put(name, functions.get(name));
+            }
+        }
     }
 }
