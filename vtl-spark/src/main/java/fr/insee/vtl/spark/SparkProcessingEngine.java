@@ -9,6 +9,8 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
 import scala.collection.JavaConverters;
+import org.apache.spark.sql.internal.SQLConf;
+import org.apache.spark.sql.types.DataType;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
@@ -43,6 +45,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
      * @param spark The Spark session to use for the engine.
      */
     public SparkProcessingEngine(SparkSession spark) {
+        spark.conf().set("spark.sql.datetime.java8API.enabled", true);
         this.spark = Objects.requireNonNull(spark);
     }
 
