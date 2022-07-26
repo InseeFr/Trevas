@@ -16,8 +16,6 @@ import org.junit.jupiter.api.Test;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -75,17 +73,15 @@ public class VtlScriptEngineTest {
 
     @Test
     public void testFunctions() throws ScriptException, NoSuchMethodException {
-        engine.put("$vtl.functions.testTrim", Trim.class.getMethod("upper", String.class));
-        engine.put("$vtl.functions.testUpper", Trim.class.getMethod("upper", String.class));
-        Method nicoMethod = Trim.class.getMethod("nico", String.class);
-        engine.put("$vtl.functions.testNico", nicoMethod);
-        engine.put("$vtl.functions.loadS3", Fun.toMethod(Trim::loadS3));
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        engine.registerMethod("testTrim", Trim.class.getMethod("trim", String.class));
+        engine.registerMethod("testUpper", Fun.toMethod(Trim::upper));
 
         engine.eval("" +
-                "test := loadS3();" +
-                "test := test[calc test := 1234];" +
+                "res := testUpper(\"  foo bar \");\n" +
+                "res := testTrim(res);" +
                 "");
-        System.out.println(engine.get("test"));
+        assertThat(engine.get("res")).isEqualTo("FOO BAR");
     }
 
     @Test
@@ -105,10 +101,6 @@ public class VtlScriptEngineTest {
 
         public static String upper(String str) {
             return str.toUpperCase();
-        }
-
-        public static String nico(String str) {
-            return "TOTO " + str;
         }
 
         public static Dataset loadS3() {

@@ -12,7 +12,6 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import javax.script.ScriptContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -27,17 +26,17 @@ import java.util.stream.Collectors;
  */
 public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final ScriptContext context;
+    private final VtlScriptEngine engine;
     private final ExpressionVisitor exprVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
-     * @param context
      * @param expressionVisitor The visitor for the enclosing expression.
+     * @param engine            The {@link VtlScriptEngine}.
      */
-    public GenericFunctionsVisitor(ExpressionVisitor expressionVisitor, ScriptContext context) {
-        this.context = context;
+    public GenericFunctionsVisitor(ExpressionVisitor expressionVisitor, VtlScriptEngine engine) {
+        this.engine = Objects.requireNonNull(engine);
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
@@ -64,23 +63,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
-    public Optional<Method> findMethod(String name) {
-        // TODO: Cache the methods
-        // TODO: Use another scope?
-        return context.getBindings(ScriptContext.ENGINE_SCOPE).entrySet().stream()
-                .filter(entry -> entry.getValue() instanceof Method)
-                .filter(entry -> entry.getKey().startsWith("$vtl.functions."))
-                .filter(entry -> entry.getKey().endsWith(name))
-                .map(Map.Entry::getValue)
-                .map(o -> (Method) o)
-                .findFirst();
-    }
-
     @Override
     public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
         // Strange name, this is the generic function syntax; fnName ( param, * ).
 
-        Method method = findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
+        Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
             throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
         });
         List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
@@ -88,6 +75,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return new DatasetExpression() {
 
                 private Dataset dataset;
+
                 @Override
                 public Dataset resolve(Map<String, Object> context) {
                     if (dataset == null) {

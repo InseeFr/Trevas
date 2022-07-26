@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
@@ -10,7 +11,6 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import javax.script.ScriptContext;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,7 +37,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final TimeFunctionsVisitor timeFunctionsVisitor;
     private final ProcessingEngine processingEngine;
-    private final ScriptContext scriptContext;
+    private final VtlScriptEngine engine;
 
     /**
      * Constructor taking a scripting context and a processing engine.
@@ -46,7 +46,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
      * @param processingEngine The processing engine.
      */
     // TODO: Use script context to get bindings
-    public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine, ScriptContext scriptContext) {
+    public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine, VtlScriptEngine engine) {
         Objects.requireNonNull(context);
         varIdVisitor = new VarIdVisitor(context);
         booleanVisitor = new BooleanVisitor(this);
@@ -60,11 +60,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
-        genericFunctionsVisitor = new GenericFunctionsVisitor(this, scriptContext);
+        genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         timeFunctionsVisitor = new TimeFunctionsVisitor();
         this.processingEngine = Objects.requireNonNull(processingEngine);
-        this.scriptContext = Objects.requireNonNull(scriptContext);
+        this.engine = Objects.requireNonNull(engine);
     }
 
     /**
@@ -79,15 +79,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return CONSTANT_VISITOR.visit(ctx);
     }
 
-    /**
-     * Visits expressions with variable identifiers.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> or more specialized child resolving to the value of the variable.
-     * @see VarIdVisitor#visitVarIdExpr(VtlParser.VarIdExprContext)
-     */
     @Override
-    public ResolvableExpression visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
+    public ResolvableExpression visitVarID(VtlParser.VarIDContext ctx) {
         return varIdVisitor.visit(ctx);
     }
 
@@ -301,7 +294,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
-        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine, scriptContext);
+        ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine, engine);
         return clauseVisitor.visit(ctx.clause);
     }
 

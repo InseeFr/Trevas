@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
@@ -32,12 +33,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
      * @param datasetExpression The dataset expression containing the clause expression.
      * @param processingEngine  The processing engine for dataset expressions.
      */
-    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine, ScriptContext context) {
+    public ClauseVisitor(DatasetExpression datasetExpression, ProcessingEngine processingEngine, VtlScriptEngine engine) {
         this.datasetExpression = Objects.requireNonNull(datasetExpression);
         // Here we "switch" to the dataset context.
         Map<String, Object> componentMap = datasetExpression.getDataStructure().values().stream()
                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine, context);
+        this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine, engine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 

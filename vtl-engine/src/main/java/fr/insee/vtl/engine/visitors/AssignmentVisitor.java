@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -15,27 +16,27 @@ import java.util.Objects;
  */
 public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
-    private final ScriptContext context;
+    private final VtlScriptEngine engine;
     private final ExpressionVisitor expressionVisitor;
 
     /**
-     * Constructor taking a scripting context and a processing engine.
+     * Constructor taking a scripting engine and a processing engine.
      *
-     * @param context The scripting context.
+     * @param engine           The scripting engine.
      * @param processingEngine The processing engine.
      */
-    public AssignmentVisitor(ScriptContext context, ProcessingEngine processingEngine) {
-        this.context = Objects.requireNonNull(context);
+    public AssignmentVisitor(VtlScriptEngine engine, ProcessingEngine processingEngine) {
+        this.engine = Objects.requireNonNull(engine);
         expressionVisitor = new ExpressionVisitor(
-                context.getBindings(ScriptContext.ENGINE_SCOPE),
+                engine.getBindings(ScriptContext.ENGINE_SCOPE),
                 processingEngine,
-                context);
+                engine);
     }
 
     @Override
     public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
         ResolvableExpression resolvableExpression = expressionVisitor.visit(ctx.expr());
-        Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         Object assignedObject = resolvableExpression.resolve(bindings);
         String variableIdentifier = ctx.varID().getText();
         bindings.put(variableIdentifier, assignedObject);
