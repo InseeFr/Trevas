@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine;
 
+import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
@@ -79,6 +82,19 @@ public class VtlScriptEngineTest {
     }
 
     @Test
+    public void testFunctions() throws ScriptException, NoSuchMethodException {
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        engine.registerMethod("testTrim", TextFunctions.class.getMethod("trim", String.class));
+        engine.registerMethod("testUpper", Fun.toMethod(TextFunctions::upper));
+
+        engine.eval("" +
+                "res := testUpper(\"  foo bar \");\n" +
+                "res := testTrim(res);" +
+                "");
+        assertThat(engine.get("res")).isEqualTo("FOO BAR");
+    }
+
+    @Test
     public void testSyntaxError() {
         assertThatThrownBy(() -> {
             engine.eval("var := 40 + 42");
@@ -107,6 +123,6 @@ public class VtlScriptEngineTest {
 
         var res = in.readObject();
         System.out.println(res);
-
     }
+
 }

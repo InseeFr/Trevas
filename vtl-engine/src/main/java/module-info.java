@@ -1,5 +1,7 @@
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
+import fr.insee.vtl.engine.functions.LevenshteinProvider;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 
@@ -17,9 +19,15 @@ module fr.insee.vtl.engine {
 
     uses ProcessingEngine;
     uses ProcessingEngineFactory;
+    uses FunctionProvider;
+
+    // exports fr.insee.vtl.engine.functions;
+    provides FunctionProvider with LevenshteinProvider;
 
     exports fr.insee.vtl.engine.processors;
     provides ProcessingEngineFactory with InMemoryProcessingEngine.Factory;
+
+    opens fr.insee.vtl.engine;
 
     requires org.antlr.antlr4.runtime;
 
