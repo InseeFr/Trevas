@@ -66,7 +66,7 @@
 | Not equal to          | <>               | :heavy_check_mark: |    :x:    |   :x:   |
 | Greater than          | >                | :heavy_check_mark: |    :x:    |   :x:   |
 | Less than             | <                | :heavy_check_mark: |    :x:    |   :x:   |
-| Greater or equal than | >=               | :heavy_check_mark: |    :x:    |   :x:   |
+| Greater or equal than | > =               | :heavy_check_mark: |    :x:    |   :x:   |
 | Less or equal than    | <=               | :heavy_check_mark: |    :x:    |   :x:   |
 | Between               | between          | :heavy_check_mark: |    :x:    |   :x:   |
 | Element of            | in / not_in      | :heavy_check_mark: |    :x:    |   :x:   |
@@ -128,25 +128,25 @@
 
 #### VTL-ML - Analytic operators
 
-| Name                               | Symbol          | InMemory | Spark |
-| ---------------------------------- | :-------------- | :------: | :---: |
-| Analytic invocation                |                 |   :x:    |  :x:  |
-| Counting the number of data points | count           |   :x:    |  :x:  |
-| Minimum value                      | min             |   :x:    |  :x:  |
-| Maximum value                      | max             |   :x:    |  :x:  |
-| Median value                       | median          |   :x:    |  :x:  |
-| Sum                                | sum             |   :x:    |  :x:  |
-| Average value                      | avg             |   :x:    |  :x:  |
-| Population standard deviation      | stddev_pop      |   :x:    |  :x:  |
-| Sample standard deviation          | stddev_samp     |   :x:    |  :x:  |
-| Population variance                | var_pop         |   :x:    |  :x:  |
-| Sample variance                    | var_samp        |   :x:    |  :x:  |
-| First value                        | first_value     |   :x:    |  :x:  |
-| Last value                         | last_value      |   :x:    |  :x:  |
-| Lag                                | lag             |   :x:    |  :x:  |
-| lead                               | lead            |   :x:    |  :x:  |
-| Rank                               | rank            |   :x:    |  :x:  |
-| Ratio to report                    | ratio_to_report |   :x:    |  :x:  |
+| Name                               | Symbol          | InMemory |       Spark        |
+|------------------------------------|:----------------|:--------:|:------------------:|
+| Analytic invocation                |                 |   :x:    | :heavy_check_mark: |
+| Counting the number of data points | count           |   :x:    | :heavy_check_mark: |
+| Minimum value                      | min             |   :x:    | :heavy_check_mark: |
+| Maximum value                      | max             |   :x:    | :heavy_check_mark: |
+| Median value                       | median          |   :x:    | :heavy_check_mark: |
+| Sum                                | sum             |   :x:    | :heavy_check_mark: |
+| Average value                      | avg             |   :x:    | :heavy_check_mark: |
+| Population standard deviation      | stddev_pop      |   :x:    | :heavy_check_mark: |
+| Sample standard deviation          | stddev_samp     |   :x:    | :heavy_check_mark: |
+| Population variance                | var_pop         |   :x:    | :heavy_check_mark: |
+| Sample variance                    | var_samp        |   :x:    | :heavy_check_mark: |
+| First value                        | first_value     |   :x:    | :heavy_check_mark: |
+| Last value                         | last_value      |   :x:    | :heavy_check_mark: |
+| Lag                                | lag             |   :x:    | :heavy_check_mark: |
+| lead                               | lead            |   :x:    | :heavy_check_mark: |
+| Rank                               | rank            |   :x:    | :heavy_check_mark: |
+| Ratio to report                    | ratio_to_report |   :x:    | :heavy_check_mark: |
 
 #### VTL-ML - Data validation operators
 
