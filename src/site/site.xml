@@ -2,24 +2,37 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/DECORATION/1.8.0"
          xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd" name="Trevas">
 
-    <!-- Utilisation du template de site fluido -->
+    <!-- Use the Fluido skin (https://maven.apache.org/skins/maven-fluido-skin/) -->
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-fluido-skin</artifactId>
         <version>1.11.1</version>
     </skin>
 
-    <!-- Affichage de la date et de la version à droite dans le bandeau du haut -->
+    <custom>
+        <fluidoSkin>
+            <googleSearch>
+                <sitesearch>trevas.info</sitesearch>
+            </googleSearch>
+            <gitHub>
+                <projectId>InseeFr/Trevas/</projectId>
+                <ribbonOrientation>right-top</ribbonOrientation>
+                <ribbonColor>darkblue</ribbonColor>
+            </gitHub>
+        </fluidoSkin>
+    </custom>
+
+    <!-- Display the date and version number on the top right -->
     <publishDate position="right"/>
     <version position="right"/>
     <bannerLeft>
-        <name>Left Banner</name>
+        <name>Trevas</name>
         <src>img/trevas-150.png</src>
         <href>http://www.trevas.info</href>
     </bannerLeft>
     <body>
         <breadcrumbs>
-            <item name="Accueil" href="index.html"/>
+            <item name="Home" href="index.html"/>
         </breadcrumbs>
         <menu ref="parent" inherit="top"/>
         <menu ref="modules" inherit="top"/>
