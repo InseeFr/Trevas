@@ -56,7 +56,7 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
             }
 
             @Override
-            public Class<?> getType() {
+            public Class<T> getType() {
                 return clazz;
             }
 
