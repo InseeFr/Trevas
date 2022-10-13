@@ -142,9 +142,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             return ResolvableExpression.ofType(outputClass, null);
         }
         if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass, mask)
-                    .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
-                            new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
+            return StringExpression.castTo(expression, outputClass, mask);
+            // Antlr context is not serializable
+            // TODO: Find a way to make ctx serializable
+            //        .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
+            //                new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
         }
         if (Boolean.class.equals(expression.getType())) {
             return BooleanExpression.castTo(expression, outputClass);
