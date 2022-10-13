@@ -2,42 +2,11 @@ package fr.insee.vtl.model;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * <code>ResolvableExpression</code> is the base interface for VTL expressions that can be resolved in a given context.
  */
 public interface ResolvableExpression extends TypedExpression, Serializable {
-
-    /**
-     * Return a ResolvableException that will handle the exception thrown by the resolution function using the
-     * handler.
-     *
-     * @param clazz   the class of the exception to handle
-     * @param handler the exception handler
-     */
-    default <T extends Exception> ResolvableExpression handleException(Class<T> clazz, Function<T, RuntimeException> handler) {
-        var that = this;
-        return new ResolvableExpression() {
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                try {
-                    return that.resolve(context);
-                } catch (Exception e) {
-                    if (clazz.isInstance(e)) {
-                        throw handler.apply(clazz.cast(e));
-                    } else {
-                        throw e;
-                    }
-                }
-            }
-
-            @Override
-            public Class<?> getType() {
-                return that.getType();
-            }
-        };
-    }
 
     /**
      * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
@@ -107,6 +76,36 @@ public interface ResolvableExpression extends TypedExpression, Serializable {
                 return clazz;
             }
 
+        };
+    }
+
+    /**
+     * Return a ResolvableException that will handle the exception thrown by the resolution function using the
+     * handler.
+     *
+     * @param clazz   the class of the exception to handle
+     * @param handler the exception handler
+     */
+    default <T extends Exception> ResolvableExpression handleException(Class<T> clazz, VtlFunction<T, RuntimeException> handler) {
+        var that = this;
+        return new ResolvableExpression() {
+            @Override
+            public Object resolve(Map<String, Object> context) {
+                try {
+                    return that.resolve(context);
+                } catch (Exception e) {
+                    if (clazz.isInstance(e)) {
+                        throw handler.apply(clazz.cast(e));
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            @Override
+            public Class<T> getType() {
+                return (Class<T>) that.getType();
+            }
         };
     }
 
