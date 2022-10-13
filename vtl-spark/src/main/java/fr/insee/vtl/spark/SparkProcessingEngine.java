@@ -465,6 +465,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
     }
 
+    @Override
+    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+        return null;
+    }
+
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {

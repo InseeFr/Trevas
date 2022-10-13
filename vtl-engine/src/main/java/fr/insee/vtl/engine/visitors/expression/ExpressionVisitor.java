@@ -36,6 +36,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private final GenericFunctionsVisitor genericFunctionsVisitor;
     private final DistanceFunctionsVisitor distanceFunctionsVisitor;
     private final TimeFunctionsVisitor timeFunctionsVisitor;
+    private final ValidationFunctionsVisitor validationFunctionsVisitor;
     private final ProcessingEngine processingEngine;
     private final VtlScriptEngine engine;
 
@@ -63,6 +64,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         timeFunctionsVisitor = new TimeFunctionsVisitor();
+        validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
         this.engine = Objects.requireNonNull(engine);
     }
@@ -282,6 +284,18 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitTimeFunctions(VtlParser.TimeFunctionsContext ctx) {
         return timeFunctionsVisitor.visit(ctx.timeOperators());
+    }
+
+    /**
+     * Visits expressions involving validation functions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the validation function.
+     * @see TimeFunctionsVisitor
+     */
+    @Override
+    public ResolvableExpression visitValidationFunctions(VtlParser.ValidationFunctionsContext ctx) {
+        return validationFunctionsVisitor.visit(ctx.validationOperators());
     }
 
     /**

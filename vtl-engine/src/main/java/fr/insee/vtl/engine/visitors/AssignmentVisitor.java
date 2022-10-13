@@ -42,4 +42,13 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         bindings.put(variableIdentifier, assignedObject);
         return assignedObject;
     }
+
+    @Override
+    public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
+        // TODO
+        // Treat here or need a method defined in processignEngine?
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindings.put(ctx.rulesetID().getText(), null);
+        return null;
+    }
 }
