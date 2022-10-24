@@ -22,6 +22,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SparkProcessingEngineTest {
 
+    private final InMemoryDataset unionDS1 = new InMemoryDataset(
+            List.of(
+                    Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                    Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                    Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
+
+            ),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
+    );
+
+    private final InMemoryDataset unionDS2 = new InMemoryDataset(
+            List.of(
+                    Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                    Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
+
+                    ),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
+    );
     private final InMemoryDataset anCountDS1 = new InMemoryDataset(
             List.of(
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
@@ -4527,6 +4547,64 @@ public class SparkProcessingEngineTest {
 //    }
 //    /*
 //     * End of ratio_to_report test case */
+
+    /*Test case for union operator*/
+    @Test
+    public void testUnionWithoutDup() throws ScriptException {
+         // Union Test case 1 : union on two df without duplicate
+        /* Input dataset ds1
+        +----+----+-----+-----+----+
+        |Id_1|Id_2| Id_3| Id_4|Me_1|
+        +----+----+-----+-----+----+
+        |2012|   B|Total|Total|   5|
+        |2012|   G|Total|Total|   2|
+        |2012|   F|Total|Total|   3|
+        +----+----+-----+-----+----+
+
+        ****************************
+        * Input dataset ds2
+        +----+----+-----+-----+----+
+        |Id_1|Id_2| Id_3| Id_4|Me_1|
+        +----+----+-----+-----+----+
+        |2012|   N|Total|Total|  23|
+        |2012|   S|Total|Total|   5|
+        +----+----+-----+-----+----+
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", unionDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("res := union ( ds1, ds2 ) ;");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+        * result df
+        +----+----+-----+-----+----+
+        |Id_1|Id_2| Id_3| Id_4|Me_1|
+        +----+----+-----+-----+----+
+        |2012|   B|Total|Total|   5|
+        |2012|   G|Total|Total|   2|
+        |2012|   F|Total|Total|   3|
+        |2012|   N|Total|Total|  23|
+        |2012|   S|Total|Total|   5|
+        +----+----+-----+-----+----+
+        * */
+
+        List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+
+        List<Map<String, Object>> actual = new ArrayList<>();
+        for (Map<String, Object> map : actualWithNull) {
+            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
+                Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
+
+        );
+    }
     @Test
     public void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
