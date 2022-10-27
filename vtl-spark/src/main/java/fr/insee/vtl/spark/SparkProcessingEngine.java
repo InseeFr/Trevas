@@ -285,7 +285,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     private boolean checkColNameCompatibility(List<DatasetExpression> datasets){
         boolean result=true;
         List<String> baseColNames=datasets.get(0).getColumnNames();
-        for(int i=1;i<=datasets.size()+1;i++){
+        for(int i=1;i<=datasets.size()-1;i++){
             List<String> currentColNames=datasets.get(i).getColumnNames();
             if(!baseColNames.equals(currentColNames)) {
                 result=false;
@@ -306,7 +306,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         for(String colName:colNames){
             if (structure.get(colName).getRole().equals(IDENTIFIER)) idColList.add(colName);
         }
-        System.out.println(colNames);
         int size = datasets.size();
 
         if(size==1){
@@ -320,9 +319,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
             Dataset<Row> result = df1.union(df2).dropDuplicates(idColList.toArray(new String[0]));
             return new SparkDatasetExpression(new SparkDataset(result));
         }
-        else {}
-
-        return null;
+        else {
+            Dataset<Row> result=asSparkDataset(datasets.get(0)).getSparkDataset();
+            for (int i=1;i<=datasets.size()-1;i++){
+                Dataset<Row> current=asSparkDataset(datasets.get(i)).getSparkDataset();
+                result=result.union(current);
+            }
+            result=result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
+            result.show();
+            return new SparkDatasetExpression(new SparkDataset(result));
+        }
     }
 
     @Override
