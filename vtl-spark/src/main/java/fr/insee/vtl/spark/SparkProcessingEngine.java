@@ -284,10 +284,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     private boolean checkColNameCompatibility(List<DatasetExpression> datasets){
         boolean result=true;
-        List<String> baseColNames=datasets.get(0).getColumnNames();
+        IndexedHashMap<String, Component> baseStructure = datasets.get(0).getDataStructure();
         for(int i=1;i<=datasets.size()-1;i++){
-            List<String> currentColNames=datasets.get(i).getColumnNames();
-            if(!baseColNames.equals(currentColNames)) {
+            // check if current structure equals base structure
+            IndexedHashMap<String, Component> curretStructure = datasets.get(i).getDataStructure();
+            if(!baseStructure.equals(curretStructure)) {
                 result=false;
                 break;
             }
@@ -297,6 +298,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
         DatasetExpression dataset = datasets.get(0);
+
         if (!checkColNameCompatibility(datasets)) throw new UnsupportedOperationException("The schema of the dataset is not" +
                 "compatible");
         // get Id column list
@@ -326,7 +328,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 result=result.union(current);
             }
             result=result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
-            result.show();
+            result.select("Id_1","Id_2","Id_3","Id_4","Me_1").show();
             return new SparkDatasetExpression(new SparkDataset(result));
         }
     }
