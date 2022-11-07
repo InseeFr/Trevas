@@ -3,20 +3,18 @@ package fr.insee.vtl.spark;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Dataset.Role;
-import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import org.apache.spark.sql.SparkSession;
-import org.assertj.core.api.BooleanAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,7 @@ public class SparkProcessingEngineTest {
                     Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
     );
 
@@ -42,8 +40,8 @@ public class SparkProcessingEngineTest {
                     Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
                     Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
 
-                    ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            ),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
     );
 
@@ -53,7 +51,7 @@ public class SparkProcessingEngineTest {
                     Map.of("Id_1", "2012", "Id_2", "M", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
                     Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
     );
 
@@ -63,7 +61,7 @@ public class SparkProcessingEngineTest {
                     Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
                     Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class,"Me_1", Long.class),
+            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Id_4", Role.IDENTIFIER, "Me_1", Role.MEASURE)
     );
 
@@ -71,7 +69,7 @@ public class SparkProcessingEngineTest {
             List.of(
                     Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Me_1", 5L),
                     Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Me_1", 2L),
-                    Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total",  "Me_1", 3L)
+                    Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Me_1", 3L)
             ),
             Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Me_1", Long.class),
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Id_3", Role.IDENTIFIER, "Me_1", Role.MEASURE)
@@ -580,6 +578,7 @@ public class SparkProcessingEngineTest {
 
     }
 
+    @Disabled
     @Test
     public void testValidateDPruleset() throws ScriptException {
 
@@ -4583,10 +4582,9 @@ public class SparkProcessingEngineTest {
 //     * End of ratio_to_report test case */
 
     /*Test case for union operator*/
-
     @Test
     public void testUnionTwoWithoutDup() throws ScriptException {
-         // Union Test case 1 : union on two df without duplicate
+        // Union Test case 1 : union on two df without duplicate
         /* Input dataset ds1
         +----+----+-----+-----+----+
         |Id_1|Id_2| Id_3| Id_4|Me_1|
@@ -4608,7 +4606,7 @@ public class SparkProcessingEngineTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", unionDS1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
-        engine.eval("res := union ( ds1, ds2 ) ;");
+        engine.eval("res := union (ds1, ds2);");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -4674,7 +4672,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", unionDS1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds3", unionDS3, ScriptContext.ENGINE_SCOPE);
-        engine.eval("res := union ( ds1, ds2, ds3 ) ;");
+        engine.eval("res := union (ds1, ds2, ds3);");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -4745,7 +4743,7 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds1", unionDS1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds4", unionDS4, ScriptContext.ENGINE_SCOPE);
-        engine.eval("res := union ( ds1, ds2, ds4 ) ;");
+        engine.eval("res := union (ds1, ds2, ds4);");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -4816,15 +4814,16 @@ public class SparkProcessingEngineTest {
         context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds5", unionDS5, ScriptContext.ENGINE_SCOPE);
 
-        ;
         // engine.getContext().getAttribute("res");
-        Exception exception =assertThrows(fr.insee.vtl.engine.exceptions.InvalidArgumentException.class, ()->{engine.eval("res := union ( ds1, ds2, ds5 ) ;");});
+        Exception exception = assertThrows(fr.insee.vtl.engine.exceptions.InvalidArgumentException.class, () -> {
+            engine.eval("res := union ( ds1, ds2, ds5 ) ;");
+        });
         String expectedMessage = "dataset structure of ds5 is incompatible";
         String actualMessage = exception.getMessage();
         System.out.println(actualMessage);
         assertTrue(actualMessage.contains(expectedMessage));
-
     }
+
     @Test
     public void testRename() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(

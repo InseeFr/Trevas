@@ -99,7 +99,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return buildWindowSpec(partitionBy, orderBy, null);
     }
 
-//    todo need to add unit test
+    //    todo need to add unit test
     private static WindowSpec buildWindowSpec(List<String> partitionBy,
                                               Map<String, Analytics.Order> orderBy,
                                               Analytics.WindowSpec window) {
@@ -282,53 +282,52 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)));
     }
 
-    private boolean checkColNameCompatibility(List<DatasetExpression> datasets){
-        boolean result=true;
+    private boolean checkColNameCompatibility(List<DatasetExpression> datasets) {
+        boolean result = true;
         IndexedHashMap<String, Component> baseStructure = datasets.get(0).getDataStructure();
-        for(int i=1;i<=datasets.size()-1;i++){
+        for (int i = 1; i <= datasets.size() - 1; i++) {
             // check if current structure equals base structure
             IndexedHashMap<String, Component> curretStructure = datasets.get(i).getDataStructure();
-            if(!baseStructure.equals(curretStructure)) {
-                result=false;
+            if (!baseStructure.equals(curretStructure)) {
+                result = false;
                 break;
             }
         }
         return result;
     }
+
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
         DatasetExpression dataset = datasets.get(0);
 
-        if (!checkColNameCompatibility(datasets)) throw new UnsupportedOperationException("The schema of the dataset is not" +
-                "compatible");
+        if (!checkColNameCompatibility(datasets))
+            throw new UnsupportedOperationException("The schema of the dataset is not" +
+                    "compatible");
         // get Id column list
-        List<String> colNames=datasets.get(0).getColumnNames();
+        List<String> colNames = datasets.get(0).getColumnNames();
         ArrayList<String> idColList = new ArrayList<>();
         IndexedHashMap<String, Component> structure = dataset.getDataStructure();
-        for(String colName:colNames){
+        for (String colName : colNames) {
             if (structure.get(colName).getRole().equals(IDENTIFIER)) idColList.add(colName);
         }
         int size = datasets.size();
 
-        if(size==1){
+        if (size == 1) {
 
             return datasets.get(0);
-        }
-        else if(size==2)
-        {
+        } else if (size == 2) {
             Dataset<Row> df1 = asSparkDataset(datasets.get(0)).getSparkDataset();
             Dataset<Row> df2 = asSparkDataset(datasets.get(1)).getSparkDataset();
             Dataset<Row> result = df1.union(df2).dropDuplicates(idColList.toArray(new String[0]));
             return new SparkDatasetExpression(new SparkDataset(result));
-        }
-        else {
-            Dataset<Row> result=asSparkDataset(datasets.get(0)).getSparkDataset();
-            for (int i=1;i<=datasets.size()-1;i++){
-                Dataset<Row> current=asSparkDataset(datasets.get(i)).getSparkDataset();
-                result=result.union(current);
+        } else {
+            Dataset<Row> result = asSparkDataset(datasets.get(0)).getSparkDataset();
+            for (int i = 1; i <= datasets.size() - 1; i++) {
+                Dataset<Row> current = asSparkDataset(datasets.get(i)).getSparkDataset();
+                result = result.union(current);
             }
-            result=result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
-            result.select("Id_1","Id_2","Id_3","Id_4","Me_1").show();
+            result = result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
+            result.select("Id_1", "Id_2", "Id_3", "Id_4", "Me_1").show();
             return new SparkDatasetExpression(new SparkDataset(result));
         }
     }
