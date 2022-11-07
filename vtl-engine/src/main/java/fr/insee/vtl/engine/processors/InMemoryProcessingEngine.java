@@ -284,6 +284,11 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return leftMost;
     }
 
+    @Override
+    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Returns a structure with the common identifiers only once.
      */
