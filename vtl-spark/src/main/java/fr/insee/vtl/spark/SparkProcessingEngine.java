@@ -301,8 +301,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         DatasetExpression dataset = datasets.get(0);
 
         if (!checkColNameCompatibility(datasets))
-            throw new UnsupportedOperationException("The schema of the dataset is not" +
-                    "compatible");
+            throw new UnsupportedOperationException("The schema of the dataset is not compatible");
         // get Id column list
         List<String> colNames = datasets.get(0).getColumnNames();
         ArrayList<String> idColList = new ArrayList<>();
@@ -313,7 +312,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         int size = datasets.size();
 
         if (size == 1) {
-
             return datasets.get(0);
         } else if (size == 2) {
             Dataset<Row> df1 = asSparkDataset(datasets.get(0)).getSparkDataset();
@@ -327,7 +325,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 result = result.union(current);
             }
             result = result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
-            result.select("Id_1", "Id_2", "Id_3", "Id_4", "Me_1").show();
             return new SparkDatasetExpression(new SparkDataset(result));
         }
     }
