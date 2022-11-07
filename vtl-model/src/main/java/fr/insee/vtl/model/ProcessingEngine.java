@@ -158,4 +158,12 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers);
 
+    /**
+     * Execute a validation DP ruleset on the dataset expressions.
+     *
+     * @param datasetExpression datasets
+     * @return the result of the validation DP ruleset transformation
+     */
+    DatasetExpression executeValidateDPruleset(DatasetExpression datasetExpression);
+
 }
