@@ -7,26 +7,26 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>0.4.6</version>
+        <version>0.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vtl-jdbc</artifactId>
     <name>VTL JDBC</name>
     <description>Dataset wrapper around JDBC result set. Useful to expose SQL tables as VTL datasets</description>
-    <version>0.4.6</version>
+    <version>0.5.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>0.4.6</version>
+            <version>0.5.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>0.4.6</version>
+            <version>0.5.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
 
