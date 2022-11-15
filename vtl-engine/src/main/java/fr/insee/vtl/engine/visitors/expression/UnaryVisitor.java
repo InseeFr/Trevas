@@ -49,28 +49,44 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     private ResolvableExpression handleUnaryPlus(VtlParser.ExprContext exprContext) {
         ResolvableExpression expression = assertNumber(exprVisitor.visit(exprContext), exprContext);
         if (TypeChecking.isLong(expression))
-            return ResolvableExpression.withType(Long.class, context ->
-                    (Long) expression.resolve(context)
+            return ResolvableExpression.withType(Long.class, context -> {
+                        Object resolved = expression.resolve(context);
+                        if (resolved == null) return null;
+                        return (Long) resolved;
+                    }
             );
-        return ResolvableExpression.withType(Double.class, context ->
-                (Double) expression.resolve(context)
+        return ResolvableExpression.withType(Double.class, context -> {
+                    Object resolved = expression.resolve(context);
+                    if (resolved == null) return null;
+                    return (Double) resolved;
+                }
         );
     }
 
     private ResolvableExpression handleUnaryMinus(VtlParser.ExprContext exprContext) {
         ResolvableExpression expression = assertNumber(exprVisitor.visit(exprContext), exprContext);
         if (TypeChecking.isLong(expression))
-            return ResolvableExpression.withType(Long.class, context ->
-                    -((Long) expression.resolve(context))
+            return ResolvableExpression.withType(Long.class, context -> {
+                        Object resolved = expression.resolve(context);
+                        if (resolved == null) return null;
+                        return -((Long) resolved);
+                    }
             );
-        return ResolvableExpression.withType(Double.class, context ->
-                -((Double) expression.resolve(context))
+        return ResolvableExpression.withType(Double.class, context -> {
+                    Object resolved = expression.resolve(context);
+                    if (resolved == null) return null;
+                    return -((Double) resolved);
+                }
         );
     }
 
     private ResolvableExpression handleUnaryNot(VtlParser.ExprContext exprContext) {
         ResolvableExpression expression = assertBoolean(exprVisitor.visit(exprContext), exprContext);
-        return ResolvableExpression.withType(Boolean.class, context ->
-                !((Boolean) expression.resolve(context)));
+        return ResolvableExpression.withType(Boolean.class, context -> {
+                    Object resolved = expression.resolve(context);
+                    if (resolved == null) return null;
+                    return !((Boolean) resolved);
+                }
+        );
     }
 }
