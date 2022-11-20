@@ -5,6 +5,7 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Dataset.Role;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -4582,6 +4583,37 @@ public class SparkProcessingEngineTest {
 //     * End of ratio_to_report test case */
 
     /*Test case for union operator*/
+    @Test
+    public void testDataStructureAfterUnion() throws ScriptException {
+        // Union Test case 1 : After union, the result should have the same data structure as the input dataframe
+        /* Input dataset ds1 and ds2 has below data structure
+       Component{Id_1, type=class java.lang.String, role=IDENTIFIER}
+       Component{Id_2, type=class java.lang.String, role=IDENTIFIER}
+       Component{Id_3, type=class java.lang.String, role=IDENTIFIER}
+       Component{Id_4, type=class java.lang.String, role=IDENTIFIER}
+       Component{Me_1, type=class java.lang.Long, role=MEASURE}
+        * */
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", unionDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", unionDS2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("res := union (ds1, ds2);");
+        assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+
+        /*
+         * the result df should have the same data structure
+         * */
+
+        Collection<Component> actualStructure = ((SparkDataset) engine.getContext().getAttribute("res")).getDataStructure().values();
+
+        assertThat(actualStructure).containsExactly(
+                new Component("Id_1", String.class, Role.IDENTIFIER),
+                new Component("Id_2", String.class, Role.IDENTIFIER),
+                new Component("Id_3", String.class, Role.IDENTIFIER),
+                new Component("Id_4", String.class, Role.IDENTIFIER),
+                new Component("Me_1", Long.class, Role.MEASURE)
+        );
+    }
+
     @Test
     public void testUnionTwoWithoutDup() throws ScriptException {
         // Union Test case 1 : union on two df without duplicate
