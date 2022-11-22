@@ -4604,7 +4604,7 @@ public class SparkProcessingEngineTest {
 
         Collection<Component> actualStructure = ((SparkDataset) engine.getContext().getAttribute("res")).getDataStructure().values();
 
-        assertThat(actualStructure).containsExactly(
+        assertThat(actualStructure).containsExactlyInAnyOrder(
                 new Component("Id_1", String.class, Role.IDENTIFIER),
                 new Component("Id_2", String.class, Role.IDENTIFIER),
                 new Component("Id_3", String.class, Role.IDENTIFIER),
