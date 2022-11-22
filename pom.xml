@@ -5,7 +5,7 @@
     <groupId>fr.insee.trevas</groupId>
     <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.4.6</version>
+    <version>0.4.7</version>
     <modules>
         <module>vtl-parser</module>
         <module>vtl-model</module>
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.9.0-RC1</version>
+            <version>5.9.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

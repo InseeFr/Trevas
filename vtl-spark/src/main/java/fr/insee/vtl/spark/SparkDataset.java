@@ -5,15 +5,33 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.*;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import scala.Predef;
 import scala.collection.JavaConverters;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.apache.spark.sql.types.DataTypes.*;
+import static org.apache.spark.sql.types.DataTypes.BooleanType;
+import static org.apache.spark.sql.types.DataTypes.DateType;
+import static org.apache.spark.sql.types.DataTypes.DoubleType;
+import static org.apache.spark.sql.types.DataTypes.FloatType;
+import static org.apache.spark.sql.types.DataTypes.IntegerType;
+import static org.apache.spark.sql.types.DataTypes.LongType;
+import static org.apache.spark.sql.types.DataTypes.StringType;
+import static org.apache.spark.sql.types.DataTypes.TimestampType;
+import static scala.collection.JavaConverters.mapAsScalaMap;
 
 /**
  * The <code>SparkDataset</code> class is a wrapper around a Spark dataframe.
@@ -31,7 +49,9 @@ public class SparkDataset implements Dataset {
      * @param roles        a map between component names and their roles in the dataset.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
-        this.sparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        var dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
+        this.sparkDataset = addMetadata(castedSparkDataset, dataStructure);
         this.roles = Objects.requireNonNull(roles);
     }
 
@@ -41,7 +61,7 @@ public class SparkDataset implements Dataset {
      * @param sparkDataset a Spark dataset.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
-        this.sparkDataset = sparkDataset;
+        this.sparkDataset = castIfNeeded(sparkDataset);
     }
 
     /**
@@ -82,6 +102,15 @@ public class SparkDataset implements Dataset {
         return casted;
     }
 
+    private static org.apache.spark.sql.Dataset<Row> addMetadata(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure structure) {
+        var casted = sparkDataset;
+        for (StructField field : JavaConverters.asJavaCollection(toSparkSchema(structure))) {
+            String name = field.name();
+            casted = casted.withColumn(name, casted.col(name), field.metadata());
+        }
+        return casted;
+    }
+
     /**
      * Transforms a {@link DataStructure} into a Spark schema.
      *
@@ -92,10 +121,13 @@ public class SparkDataset implements Dataset {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
             // TODO: refine nullable strategy
+            var md = mapAsScalaMap(Map.of("vtlRole", (Object) component.getRole().name()))
+                    .toMap(Predef.$conforms());
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
-                    true
+                    true,
+                    new Metadata(md)
             ));
         }
         return DataTypes.createStructType(schema);
@@ -104,10 +136,17 @@ public class SparkDataset implements Dataset {
     public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles) {
         List<Component> components = new ArrayList<>();
         for (StructField field : JavaConverters.asJavaCollection(schema)) {
+
+            Role fieldRole = roles.getOrDefault(field.name(), Role.MEASURE);
+            if (field.metadata().contains("vtlRole")) {
+                var roleName = field.metadata().getString("vtlRole");
+                fieldRole = Role.valueOf(roleName);
+            }
+
             components.add(new Component(
                     field.name(),
                     toVtlType(field.dataType()),
-                    roles.getOrDefault(field.name(), Role.MEASURE),
+                    fieldRole,
                     null
             ));
         }

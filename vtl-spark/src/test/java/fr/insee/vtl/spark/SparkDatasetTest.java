@@ -1,24 +1,31 @@
 package fr.insee.vtl.spark;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.apache.spark.api.java.function.FilterFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.model.Structured.Component;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SparkDatasetTest {
 
     private SparkSession spark;
+    private ScriptEngine engine;
 
     @BeforeEach
     public void setUp() {
@@ -26,6 +33,10 @@ public class SparkDatasetTest {
                 .appName("test")
                 .master("local")
                 .getOrCreate();
+
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        engine = mgr.getEngineByExtension("vtl");
+        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
     }
 
     @Test
@@ -76,6 +87,47 @@ public class SparkDatasetTest {
 
         assertThat(sparkDataset.getDataStructure()).isEqualTo(expectedDataset.getDataStructure());
         assertThat(sparkDataset.getDataPoints()).isEqualTo(expectedDataset.getDataPoints());
+
+    }
+
+    @Test
+    public void testParquetMetadataReading(@TempDir Path tmpDirectory) {
+        SparkDataset sparkDataset = new SparkDataset(
+                spark.read().parquet("src/main/resources/input_sample"),
+                Map.of(
+                        "year", fr.insee.vtl.model.Dataset.Role.IDENTIFIER,
+                        "student_number", fr.insee.vtl.model.Dataset.Role.ATTRIBUTE
+                )
+        );
+        assertTrue(sparkDataset.getDataStructure().get("year").isIdentifier());
+        assertTrue(sparkDataset.getDataStructure().get("student_number").isAttribute());
+
+        // Write the file as parquet and read again.
+        sparkDataset.getSparkDataset().write().mode(SaveMode.Overwrite).parquet(tmpDirectory.toString());
+        SparkDataset readSparkDataset = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
+
+        assertTrue(readSparkDataset.getDataStructure().get("year").isIdentifier());
+        assertTrue(readSparkDataset.getDataStructure().get("student_number").isAttribute());
+    }
+
+    @Test
+    public void testParquetMetadataWriting(@TempDir Path tmpDirectory) throws ScriptException {
+        SparkDataset sparkDataset = new SparkDataset(spark.read().parquet("src/main/resources/input_sample"));
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", sparkDataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := ds1[calc identifier school_id := school_id, attribute year := year];");
+
+        SparkDataset ds = (SparkDataset) engine.getContext().getAttribute("ds");
+        ds.getSparkDataset()
+                .write()
+                .mode(SaveMode.Overwrite)
+                .parquet(tmpDirectory.toString());
+
+        SparkDataset sparkDataset2 = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
+
+        assertTrue(sparkDataset2.getDataStructure().get("school_id").isIdentifier());
+        assertTrue(sparkDataset2.getDataStructure().get("year").isAttribute());
 
     }
 }
