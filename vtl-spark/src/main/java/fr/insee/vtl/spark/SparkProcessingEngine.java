@@ -60,7 +60,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return getRoleMap(dataset.getDataStructure().values());
     }
 
-    // TODO: (expression instanceof MinAggregationExpression)
+    // TODO (expression instanceof MinAggregationExpression)
     // TODO column = stddev_pop(columnName);
     private static Column convertAggregation(String columnName, AggregationExpression expression) throws UnsupportedOperationException {
         Column column;
