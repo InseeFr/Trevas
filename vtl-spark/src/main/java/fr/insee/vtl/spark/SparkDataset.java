@@ -55,10 +55,6 @@ public class SparkDataset implements Dataset {
         this.roles = Objects.requireNonNull(roles);
     }
 
-    // loadS3('s3a://') -> vtl.Dataset()
-    // readSpark('s3a://foo/bar') -> spark.read()... -> new SparkDataset(ds)
-
-
     /**
      * Constructor taking a Spark dataset.
      *
