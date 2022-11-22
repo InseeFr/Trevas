@@ -5,16 +5,21 @@ import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.model.Structured.Component;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SparkDatasetTest {
 
@@ -80,9 +85,22 @@ public class SparkDatasetTest {
     }
 
     @Test
-    public void testParquetMetadataReading() {
-        Dataset<Row> parquet = spark.read().parquet("src/main/resources/input_sample");
-        SparkDataset sparkDataset = new SparkDataset(parquet);
-        sparkDataset.getSparkDataset().write().parquet("src/main/resources/output_sample");
+    public void testParquetMetadataReading(@TempDir Path tmpDirectory) {
+        SparkDataset sparkDataset = new SparkDataset(
+                spark.read().parquet("src/main/resources/input_sample"),
+                Map.of(
+                        "year", fr.insee.vtl.model.Dataset.Role.IDENTIFIER,
+                        "student_number", fr.insee.vtl.model.Dataset.Role.ATTRIBUTE
+                )
+        );
+        assertTrue(sparkDataset.getDataStructure().get("year").isIdentifier());
+        assertTrue(sparkDataset.getDataStructure().get("student_number").isAttribute());
+
+        // Write the file as parquet and read again.
+        sparkDataset.getSparkDataset().write().mode(SaveMode.Overwrite).parquet(tmpDirectory.toString());
+        SparkDataset readSparkDataset = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
+
+        assertTrue(readSparkDataset.getDataStructure().get("year").isIdentifier());
+        assertTrue(readSparkDataset.getDataStructure().get("student_number").isAttribute());
     }
 }
