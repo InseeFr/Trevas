@@ -116,17 +116,18 @@ public class SparkDatasetTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", sparkDataset, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc identifier school_id := school_id, identifier year := year];");
+        engine.eval("ds := ds1[calc identifier school_id := school_id, attribute year := year];");
 
         SparkDataset ds = (SparkDataset) engine.getContext().getAttribute("ds");
         ds.getSparkDataset()
                 .write()
                 .mode(SaveMode.Overwrite)
-                .parquet("src/main/resources/output_sample");
+                .parquet(tmpDirectory.toString());
 
         SparkDataset sparkDataset2 = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
 
-        assertThat(sparkDataset2.getDataStructure().get("year").getRole()).isEqualTo(fr.insee.vtl.model.Dataset.Role.IDENTIFIER);
+        assertTrue(sparkDataset2.getDataStructure().get("school_id").isIdentifier());
+        assertTrue(sparkDataset2.getDataStructure().get("year").isAttribute());
 
     }
 }
