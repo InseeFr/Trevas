@@ -6,6 +6,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.*;
+import scala.Predef;
 import scala.collection.JavaConverters;
 
 import java.time.Instant;
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.types.DataTypes.*;
+import static scala.collection.JavaConverters.mapAsScalaMap;
 
 /**
  * The <code>SparkDataset</code> class is a wrapper around a Spark dataframe.
@@ -34,6 +36,10 @@ public class SparkDataset implements Dataset {
         this.sparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
         this.roles = Objects.requireNonNull(roles);
     }
+
+    // loadS3('s3a://') -> vtl.Dataset()
+    // readSpark('s3a://foo/bar') -> spark.read()... -> new SparkDataset(ds)
+
 
     /**
      * Constructor taking a Spark dataset.
@@ -92,10 +98,13 @@ public class SparkDataset implements Dataset {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
             // TODO: refine nullable strategy
+            var md = mapAsScalaMap(Map.of("vtlRole", (Object) component.getRole()))
+                    .toMap(Predef.$conforms());
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
-                    true
+                    true,
+                    new Metadata(md)
             ));
         }
         return DataTypes.createStructType(schema);
@@ -104,10 +113,17 @@ public class SparkDataset implements Dataset {
     public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles) {
         List<Component> components = new ArrayList<>();
         for (StructField field : JavaConverters.asJavaCollection(schema)) {
+
+            Role fieldRole = roles.getOrDefault(field.name(), Role.MEASURE);
+            var roleFromMD = field.metadata().map().get("vtlRole").get();
+            if (roleFromMD instanceof Role) {
+                fieldRole = (Role) roleFromMD;
+            }
+
             components.add(new Component(
                     field.name(),
                     toVtlType(field.dataType()),
-                    roles.getOrDefault(field.name(), Role.MEASURE),
+                    fieldRole,
                     null
             ));
         }

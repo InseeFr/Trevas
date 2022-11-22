@@ -78,4 +78,11 @@ public class SparkDatasetTest {
         assertThat(sparkDataset.getDataPoints()).isEqualTo(expectedDataset.getDataPoints());
 
     }
+
+    @Test
+    public void testParquetMetadataReading() {
+        Dataset<Row> parquet = spark.read().parquet("src/main/resources/input_sample");
+        SparkDataset sparkDataset = new SparkDataset(parquet);
+        sparkDataset.getSparkDataset().write().parquet("src/main/resources/output_sample");
+    }
 }
