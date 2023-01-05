@@ -137,10 +137,14 @@ public class SparkDataset implements Dataset {
         List<Component> components = new ArrayList<>();
         for (StructField field : JavaConverters.asJavaCollection(schema)) {
 
-            Role fieldRole = roles.getOrDefault(field.name(), Role.MEASURE);
-            if (field.metadata().contains("vtlRole")) {
+            Role fieldRole;
+            if (roles.containsKey(field.name())) {
+                fieldRole = roles.get(field.name());
+            } else if (field.metadata().contains("vtlRole")) {
                 var roleName = field.metadata().getString("vtlRole");
                 fieldRole = Role.valueOf(roleName);
+            } else {
+                fieldRole = Role.MEASURE;
             }
 
             components.add(new Component(
