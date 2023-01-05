@@ -112,22 +112,30 @@ public class SparkDatasetTest {
 
     @Test
     public void testParquetMetadataWriting(@TempDir Path tmpDirectory) throws ScriptException {
-        SparkDataset sparkDataset = new SparkDataset(spark.read().parquet("src/main/resources/input_sample"));
+        SparkDataset datasetWithoutMetadata = new SparkDataset(spark.read().parquet("src/main/resources/input_sample"));
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", sparkDataset, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds", datasetWithoutMetadata, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("ds := ds1[calc identifier school_id := school_id, attribute year := year];");
+        engine.eval("ds1 := ds[calc identifier school_id := school_id, attribute year := year];");
 
-        SparkDataset ds = (SparkDataset) engine.getContext().getAttribute("ds");
-        ds.getSparkDataset()
+        SparkDataset dsWithRoles = (SparkDataset) engine.getContext().getAttribute("ds1");
+        dsWithRoles.getSparkDataset()
                 .write()
                 .mode(SaveMode.Overwrite)
                 .parquet(tmpDirectory.toString());
 
-        SparkDataset sparkDataset2 = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
+        SparkDataset dsWithMetadata = new SparkDataset(spark.read().parquet(tmpDirectory.toString()));
 
-        assertTrue(sparkDataset2.getDataStructure().get("school_id").isIdentifier());
-        assertTrue(sparkDataset2.getDataStructure().get("year").isAttribute());
+        assertTrue(dsWithMetadata.getDataStructure().get("school_id").isIdentifier());
+        assertTrue(dsWithMetadata.getDataStructure().get("year").isAttribute());
 
+        context.setAttribute("ds2", dsWithMetadata, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds3 := ds2[calc attribute school_id := school_id, identifier year := year];");
+
+        SparkDataset dsWithMetadataAndRoles = (SparkDataset) engine.getContext().getAttribute("ds3");
+
+        assertTrue(dsWithMetadataAndRoles.getDataStructure().get("school_id").isAttribute());
+        assertTrue(dsWithMetadataAndRoles.getDataStructure().get("year").isIdentifier());
     }
 }
