@@ -1,0 +1,26 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.Trevas": {
+    "message": "Trevas",
+    "description": "The label for category Trevas in sidebar docs"
+  },
+  "sidebar.docs.category.Coverage": {
+    "message": "Coverage",
+    "description": "The label for category Coverage in sidebar docs"
+  },
+  "sidebar.docs.category.VTL": {
+    "message": "VTL",
+    "description": "The label for category VTL in sidebar docs"
+  },
+  "sidebar.docs.category.Client apps": {
+    "message": "Client apps",
+    "description": "The label for category Client apps in sidebar docs"
+  },
+  "sidebar.docs.link.Home": {
+    "message": "Home",
+    "description": "The label for link Home in sidebar docs, linking to /"
+  }
+}

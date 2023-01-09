@@ -1,0 +1,30 @@
+---
+id: index-data-sources
+title: Mode de base - Sources de données
+sidebar_label: Vue d'ensemble
+slug: /developer-guide/basic-mode/data-sources
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Card from '@theme/Card';
+
+### Bonnes pratiques Trevas
+<p>
+	Le format <a href={useBaseUrl('/developer-guide/basic-mode/data-sources/json')}>JSON</a> est le seul permettant de stocker et gérer les métadonnées VTL lorsque le moteur Trevas est instancié en mode de base.
+</p>
+<p>
+	Il est donc fortement conseillé d'utiliser ce format.
+</p>
+
+<div className="row">
+	<div className="col">
+		<Card title="JDBC" page={useBaseUrl('/developer-guide/basic-mode/data-sources/jdbc')} />
+	</div>
+	<div className="col">
+		<Card title="JSON" page={useBaseUrl('/developer-guide/basic-mode/data-sources/json')} />
+	</div>
+	<div className="col">
+		<Card title="Others" page={useBaseUrl('/developer-guide/basic-mode/data-sources/others')} />
+	</div>
+</div>
