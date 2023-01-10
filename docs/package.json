@@ -10,6 +10,9 @@
 	"scripts": {
 		"docusaurus": "docusaurus",
 		"start": "docusaurus start",
+		"start-fr": "docusaurus start --locale fr",
+		"start-zh-CN": "docusaurus start --locale zh-CN",
+		"start-no": "docusaurus start --locale no",
 		"build": "docusaurus build",
 		"swizzle": "docusaurus swizzle",
 		"deploy": "docusaurus deploy",
@@ -20,8 +23,9 @@
 		"clear": "docusaurus clear",
 		"serve": "docusaurus serve",
 		"build-serve": "yarn build && yarn serve",
-		"write-translations": "docusaurus write-translations --locale fr",
-		"write-heading-ids": "docusaurus write-heading-ids"
+		"write-translations-fr": "docusaurus write-translations --locale fr",
+		"write-translations-zh-CN": "docusaurus write-translations --locale zh-CN",
+		"write-translations-no": "docusaurus write-translations --locale no"
 	},
 	"dependencies": {
 		"@abrookins-redis/redis-sitesearch-frontend": "^1.0.2",

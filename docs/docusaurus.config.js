@@ -15,7 +15,7 @@ module.exports = {
 	// to replace "en" with "zh-Hans".
 	i18n: {
 		defaultLocale: 'en',
-		locales: ['en', 'fr'],
+		locales: ['en', 'fr', 'zh-CN', 'no'],
 	},
 	customFields: {
 		authors: {
@@ -146,7 +146,7 @@ module.exports = {
 			require.resolve('docusaurus-lunr-search'),
 			{
 				indexBaseUrl: true,
-				languages: ['en', 'fr'],
+				languages: ['en', 'fr', 'no'],
 			},
 		],
 	],

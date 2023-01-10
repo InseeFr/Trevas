@@ -1,0 +1,76 @@
+---
+id: index-vtl
+title: VTL
+sidebar_label: Overview
+slug: /user-guide/vtl
+custom_edit_url: null
+---
+
+## Documentation
+
+La documentation de VTL est accessible sur le site officiel [SDMX](https://sdmx.org/) :
+
+- [Manuel utilisateur](https://sdmx.org/wp-content/uploads/VTL-2.0-User-Manual-20180416-final.pdf)
+- [Manuel de référence](https://sdmx.org/wp-content/uploads/VTL-2.0-Reference-Manual-20180712-final.pdf)
+
+## Jeux de données
+
+Les jeux de données VTL doivent être décrit par des métadonnées. Les différentes colonnes ont un `type` et un `role`.
+
+Par défaut, dans Trevas, une colonne sans type ni rôle se verra affecter le `type` `string` et le `role` `measure`.
+
+L'utilisateur aura ensuite la possibilité de muter ces attributs au sein de son script, via les opérateurs `calc` et `cast` notamment.
+
+## Exemple simple
+
+En considérant `ds_1` définit comme suit :
+
+|      | id_1       | id_2       | me_1    |
+| ---- | ---------- | ---------- | ------- |
+| type | string     | string     | string  |
+| role | identifier | identifier | measure |
+
+| id_1    | id_2 | me_1  |
+| ------- | ---- | ----- |
+| "75001" | "75" | "10"  |
+| "75002" | "75" | "100" |
+| "70001" | "70" | "5"   |
+| "70002" | "70" | "70"  |
+
+Pour obtenir la somme de `me_1` par `id_2`, il faut que seul `id_2` ait pour rôle `identifier` et que le type de `me_1` soit `integer`. On applique donc le script suivant :
+
+```
+ds_2 := ds_1[calc measure id_2 := id_2, me_1 := cast(me_1, integer)];
+```
+
+`ds_2` est alors :
+
+|      | id_1    | id_2       | me_1    |
+| ---- | ------- | ---------- | ------- |
+| type | string  | string     | integer |
+| role | measure | identifier | measure |
+
+| id_1    | id_2 | me_1 |
+| ------- | ---- | ---- |
+| "75001" | "75" | 10   |
+| "75002" | "75" | 100  |
+| "70001" | "70" | 5    |
+| "70002" | "70" | 70   |
+
+On peut dorénavant appliquer l'opérateur `aggr` :
+
+```
+ds_3 := ds_2[aggr sum_me_1 := sum(me_1) group by id_2];
+```
+
+Et obtenir `ds_3` :
+
+|      | id_2       | sum_me_1 |
+| ---- | ---------- | -------- |
+| type | string     | integer  |
+| role | identifier | measure  |
+
+| id_2 | me_1 |
+| ---- | ---- |
+| "75" | 110  |
+| "70" | 75   |
