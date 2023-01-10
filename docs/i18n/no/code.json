@@ -313,5 +313,9 @@
 	"theme.tags.tagsPageTitle": {
 		"message": "Tagger",
 		"description": "The title of the tag list page"
+	},
+	"Sponsors": {
+		"message": "Sponsors",
+		"description": "Sponsors title"
 	}
 }
