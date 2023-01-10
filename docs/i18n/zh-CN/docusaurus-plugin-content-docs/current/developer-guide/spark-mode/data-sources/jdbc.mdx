@@ -1,14 +1,14 @@
 ---
 id: jdbc
-title: Spark mode - JDBC source
-sidebar_label: JDBC
+title: Spark 模式 - JDBC数据源
+sidebar_label: JDBC数据源
 slug: /developer-guide/spark-mode/data-sources/jdbc
 custom_edit_url: null
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Lecture
+### 读取JDBC数据源
 
 ```java
 Dataset<Row> sparkDataset = spark.read()
@@ -22,7 +22,7 @@ Dataset<Row> sparkDataset = spark.read()
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-Dans cet exemple, le projet doit contenir la dépendance du Driver postgresql
+在下面的例子中，项目必须包含 postgresql Driver 的依赖
 ```xml
 <dependency>
     <groupId>org.postgresql</groupId>
@@ -31,8 +31,8 @@ Dans cet exemple, le projet doit contenir la dépendance du Driver postgresql
 </dependency>
 ```
 
-Voir l'ensemble des options supportées dans la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html#data-source-option).
+查看所有支持的选项 [官方文档](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html#data-source-option).
 
-### Écriture
+### 写入
 
-Le format JDBC n'est pas conseillé pour écrire des `Dataset` Trevas (voir <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>ici</a>)
+不建议使用jdbc格式来编写Trevas的`Dataset` (请看 <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>这里</a>)

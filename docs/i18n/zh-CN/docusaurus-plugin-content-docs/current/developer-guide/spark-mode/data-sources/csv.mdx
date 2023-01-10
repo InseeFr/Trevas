@@ -1,14 +1,14 @@
 ---
 id: csv
-title: Spark mode - CSV source
-sidebar_label: CSV
+title: Spark模式 - CSV 数据源
+sidebar_label: CSV数据源
 slug: /developer-guide/spark-mode/data-sources/csv
 custom_edit_url: null
 ---
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Lecture
+### 读取csv数据源
 
 ```java
 Dataset<Row> sparkDataset = spark.read()
@@ -18,8 +18,8 @@ Dataset<Row> sparkDataset = spark.read()
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-Voir l'ensemble des options supportées dans la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
+查看所有支持的选项 [官方文档](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
 
-### Écriture
+### 写入
 
-Le format CSV n'est pas conseillé pour écrire des `Dataset` Trevas (voir <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>ici</a>)
+不建议使用 CSV 格式来编写 Trevas `Dataset` (请看 <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>这里</a>)

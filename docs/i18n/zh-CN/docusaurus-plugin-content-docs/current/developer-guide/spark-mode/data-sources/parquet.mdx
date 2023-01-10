@@ -1,6 +1,6 @@
 ---
 id: parquet
-title: Spark mode - Parquet source
+title: Spark 模式 - Parquet 数据源
 sidebar_label: Parquet
 slug: /developer-guide/spark-mode/data-sources/parquet
 custom_edit_url: null
@@ -8,30 +8,29 @@ custom_edit_url: null
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Métadonnées
+### 元数据
 
-Les métadonnées des jeux de données Parquet sont inférées du schéma.
+Parquet数据集的元数据是从parquet的架构中推断出来的
 
-#### Types
+#### 数据类型
+Trevas引擎负责在Parquet数据类型和Trevas支持的数据类型之间进行转换。
 
-Trevas assure la conversion entre les types Parquet et les types supportés par le moteur Trevas.
+#### 数据角色
 
-#### Roles
+VTL的数据角色由Trevas引擎添加到Parquet数据集中，方法是向每个字段描述添加元数据“vtlRole”。
+在默认情况下，所有Parquet数据集中没有角色的列将在Trevas中具有角色“MEASURE”。
 
-Les rôles VTL sont ajoutés par Trevas au schéma Parquet, via l'adjonction d'une métadonnée `vtlRole` sur chaque descriptif de champ.
 
-Par défaut, les colonnes sans rôle dans le schéma Parquet auront pour rôle `MEASURE` dans Trevas.
+VTL 允许数据角色在脚本中进行演变 (请看 <a href={useBaseUrl('/user-guide/vtl')}>这里</a>)
 
-VTL permet de faire évoluer les rôles au sein des scripts (voir <a href={useBaseUrl('/user-guide/vtl')}>ici</a>)
-
-### Lecture
+### 读取
 
 ```java
 Dataset<Row> sparkDataset = spark.read().parquet("folder_path");
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-### Écriture
+### 写入
 
 ```java
 // Trevas Spark Dataset
