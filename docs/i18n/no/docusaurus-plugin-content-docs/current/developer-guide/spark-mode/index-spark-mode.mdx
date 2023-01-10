@@ -8,9 +8,9 @@ custom_edit_url: null
 
 ### SparkDataset
 
-Les datasets `SparkDataset` permettent de représenter les tables statistiques dans une application Java utilisant Trevas en mode Spark.
+`SparkDataset` datasett brukes til å representere statistiske tabeller i en Java-applikasjon som bruker Trevas i Spark-modus.
 
-### Importer le module Spark de Trevas
+### Importer Spark-modul fra Trevas
 
 ```xml
 <dependency>
@@ -22,19 +22,19 @@ Les datasets `SparkDataset` permettent de représenter les tables statistiques d
 
 ### Session Spark
 
-Afin d'exécuter du VTL via Trevas en mode Spark, il faut instancier une session Spark.
+For å kjøre VTL via Trevas i Spark-modus, må du instansiere en Spark-økt.
 
-La session peut être :
+Økten kan være :
 
-- locale (exécution sur le serveur Java)
-- statique (exécution sur une instance Spark préalablement installée sur un serveur)
-- dynamique (exécution dynamique au sein d'un cluster Kubernetes)
+- lokal (kjører på Java-serveren)
+- statisk (kjører på en Spark-forekomst som tidligere er installert på en server)
+- dynamisk (kjører dynamisk i en Kubernetes-klynge)
 
 ```java
 SparkSession spark = SparkSession.builder().master("local").getOrCreate();
 ```
 
-### Exemple
+### Eksempel
 
 ```java
 ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -59,11 +59,11 @@ Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_S
 SparkDataset result = (SparkDataset) outputBindings.get("res");
 ```
 
-### Exécution distribuée
+### Distribuert utførelse
 
-Que ce soit en mode statique ou dynamique, l'éxecution distribuée des traitements nécessite que les exécuteurs instanciés par le master soient en capacité de résoudre les traitements VTL.
+Enten i statisk eller dynamisk modus, den distribuerte utførelse av prosessering krever at eksekutørene instansiert av masteren er i stand til å løse VTL-behandlingen.
 
-Il faut alors fournir les jar Trevas aux exécuteurs via l'options `spark.jars` de l'objet `SparkConf` :
+Det er da nødvendig å gi Trevas-krukkene til utførerne via `spark.jars` alternativet til `SparkConf` objektet :
 
 ```java
 SparkSession.Builder sparkBuilder = SparkSession.builder()
@@ -79,13 +79,13 @@ sparkBuilder.config(conf);
 SparkSession spark = sparkBuilder.getOrCreate();
 ```
 
-### Exécution dans un cluster Kubernetes
+### Kjører i en Kubernetes klynge
 
-De nombreuses options sont détaillées dans la [documentation officielle](https://spark.apache.org/docs/latest/running-on-kubernetes.html#docker-images)
+Mange alternativer er beskrevet i den [offisielle dokumentasjonen](https://spark.apache.org/docs/latest/running-on-kubernetes.html#docker-images)
 
-Parmi celles-ci, une option est particulièrement importante : l'image Docker qui permettra au exécuteurs de résoudre les traitements VTL.
+Blant disse er ett alternativ spesielt viktig: Docker-bildet som vil tillate eksekutører å løse VTL-behandling.
 
-Une image à façon est disponible [ici](https://github.com/InseeFrLab/Trevas-Spark-Hadoop).
+Et tilpasset bilde er tilgjengelig [her](https://github.com/InseeFrLab/Trevas-Spark-Hadoop).
 
 ```java
 SparkSession.Builder sparkBuilder = SparkSession.builder()
