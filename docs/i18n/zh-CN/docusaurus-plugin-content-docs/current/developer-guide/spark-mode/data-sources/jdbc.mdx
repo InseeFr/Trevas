@@ -8,7 +8,7 @@ custom_edit_url: null
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### 读取JDBC数据源
+### 读取 JDBC 数据源
 
 ```java
 Dataset<Row> sparkDataset = spark.read()
@@ -23,6 +23,7 @@ SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
 在下面的例子中，项目必须包含 postgresql Driver 的依赖
+
 ```xml
 <dependency>
     <groupId>org.postgresql</groupId>
@@ -35,4 +36,4 @@ SparkDataset dataset = new SparkDataset(sparkDataset);
 
 ### 写入
 
-不建议使用jdbc格式来编写Trevas的`Dataset` (请看 <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>这里</a>)
+不建议使用 jdbc 格式来编写 Trevas 的`Dataset` (请看 <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>这里</a>)
