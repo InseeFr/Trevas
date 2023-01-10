@@ -1,0 +1,44 @@
+---
+id: index-basic-mode
+title: Mode de base
+sidebar_label: Vue d'ensemble
+slug: /developer-guide/basic-mode
+custom_edit_url: null
+---
+
+### InMemoryDataset
+
+Les datasets `InMemoryDataset` permettent de représenter les tables statistiques dans une application Java.
+
+### Exemple
+
+```java
+ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
+
+Bindings bindings = new SimpleBindings();
+
+InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("var1", "x", "var2", "y", "var3", 5),
+                        Map.of("var1", "xx", "var2", "yy", "var3", 10)
+                ),
+                Map.of("var1", String.class, "var2", String.class, "var3", Long.class),
+                Map.of("var1", Role.IDENTIFIER, "var2", Role.ATTRIBUTE, "var3", Role.MEASURE)
+);
+bindings.put("myDataset", dataset);
+engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+
+String script = "res := myDataset[filter var3 > 6];";
+
+try {
+    engine.eval(script);
+} catch (ScriptException e) {
+    e.printStackTrace();
+}
+
+Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
+InMemoryDataset result = (InMemoryDataset) outputBindings.get("res");
+
+System.out.println(result.getDataPoints().size());
+// 1
+```

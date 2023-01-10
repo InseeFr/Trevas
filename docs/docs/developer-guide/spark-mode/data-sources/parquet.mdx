@@ -1,0 +1,46 @@
+---
+id: parquet
+title: Spark mode - Parquet source
+sidebar_label: Parquet
+slug: /developer-guide/spark-mode/data-sources/parquet
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+### Métadonnées
+
+Les métadonnées des jeux de données Parquet sont inférées du schéma.
+
+#### Types
+
+Trevas assure la conversion entre les types Parquet et les types supportés par le moteur Trevas.
+
+#### Roles
+
+Les rôles VTL sont ajoutés par Trevas au schéma Parquet, via l'adjonction d'une métadonnée `vtlRole` sur chaque descriptif de champ.
+
+Par défaut, les colonnes sans rôle dans le schéma Parquet auront pour rôle `MEASURE` dans Trevas.
+
+VTL permet de faire évoluer les rôles au sein des scripts (voir <a href={useBaseUrl('/user-guide/vtl')}>ici</a>)
+
+### Lecture
+
+```java
+Dataset<Row> sparkDataset = spark.read().parquet("folder_path");
+SparkDataset dataset = new SparkDataset(sparkDataset);
+```
+
+### Écriture
+
+```java
+// Trevas Spark Dataset
+SparkDataset dataset = ...;
+
+// Spark Dataset
+Dataset<Row> sparkDataset = dataset.getSparkDataset();
+
+sparkDataset.write()
+            .mode(SaveMode.Overwrite)
+            .parquet("folder_path");
+```

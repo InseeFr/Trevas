@@ -1,0 +1,33 @@
+---
+id: jdbc
+title: Basic mode - JDBC source
+sidebar_label: JDBC
+slug: /developer-guide/basic-mode/data-sources/jdbc
+custom_edit_url: null
+---
+
+### Importer le module JDBC de Trevas
+
+```xml
+<dependency>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>vtl-jdbc</artifactId>
+    <version>0.4.8</version>
+</dependency>
+```
+
+### Utilisation du module `vtl-jdbc`
+
+```java
+connection = DriverManager.getConnection(...);
+
+Statement statement = connection.createStatement();
+
+JDBCDataset jdbcDataset = new JDBCDataset(() -> {
+    try {
+        return statement.executeQuery("select * from ds1;");
+    } catch (SQLException se) {
+        throw new RuntimeException(se);
+    }
+});
+```

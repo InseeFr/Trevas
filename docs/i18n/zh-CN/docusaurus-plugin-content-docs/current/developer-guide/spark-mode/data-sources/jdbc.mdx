@@ -1,0 +1,38 @@
+---
+id: jdbc
+title: Spark mode - JDBC source
+sidebar_label: JDBC
+slug: /developer-guide/spark-mode/data-sources/jdbc
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+### Lecture
+
+```java
+Dataset<Row> sparkDataset = spark.read()
+                    .format("jdbc")
+                    .option("url", "myUrl")
+                    .option("user", "myUser")
+                    .option("password", "myPwd")
+                    .option("query", "myQuery")
+                    .option("driver", "org.postgresql.Driver")
+                    .load();
+SparkDataset dataset = new SparkDataset(sparkDataset);
+```
+
+Dans cet exemple, le projet doit contenir la dépendance du Driver postgresql
+```xml
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>42.5.1</version>
+</dependency>
+```
+
+Voir l'ensemble des options supportées dans la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html#data-source-option).
+
+### Écriture
+
+Le format JDBC n'est pas conseillé pour écrire des `Dataset` Trevas (voir <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>ici</a>)
