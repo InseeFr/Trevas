@@ -1,10 +1,10 @@
 {
   "Page not found": {
-    "message": "Page not found",
+    "message": "未找到该网页",
     "description": "404 message"
   },
   "Back to homepage": {
-    "message": "Back to homepage",
+    "message": "返回首页",
     "description": "404 Back to homepage"
   },
   "Trevas": {
@@ -12,43 +12,43 @@
     "description": "Box title Trevas"
   },
   "Getting started with Trevas Java VTL engine": {
-    "message": "Getting started with Trevas Java VTL engine",
+    "message": "开始使用 Trevas Java VTL 引擎",
     "description": "Box description Trevas"
   },
   "See more": {
-    "message": "See more",
+    "message": "查看更多",
     "description": "See more"
   },
   "Engine coverage": {
-    "message": "Engine coverage",
+    "message": "VTL语言覆盖率",
     "description": "Box title coverage"
   },
   "Check the current coverage of VTL in Trevas engine": {
-    "message": "Check the current coverage of VTL in Trevas engine",
+    "message": "检查当前VTL语言在Trevas引擎中的覆盖率",
     "description": "Box description coverage"
   },
   "VTL user guide": {
-    "message": "VTL user guide",
+    "message": "VTL 用户指南",
     "description": "Box title VTL"
   },
   "Discover examples of VTL scripts": {
-    "message": "Discover examples of VTL scripts",
+    "message": " 查看VTL脚本示例",
     "description": "Box description VTL"
   },
   "Client apps": {
-    "message": "Client apps",
+    "message": "客户端应用",
     "description": "Box title client apps"
   },
   "Discover applications that embed Trevas": {
-    "message": "Discover applications that embed Trevas",
+    "message": "查看哪些应用在使用Trevas",
     "description": "Box description client apps"
   },
   "Search": {
-    "message": "Search",
+    "message": "搜索",
     "description": "Search placeholder"
   },
   "Loading...": {
-    "message": "Loading...",
+    "message": "加载中...",
     "description": "Loading placeholder"
   },
   "theme.ErrorPageContent.title": {
