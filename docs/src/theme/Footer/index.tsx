@@ -63,6 +63,19 @@ function Footer() {
 								/>
 							</a>
 							<a
+								href="https://www.casd.eu/"
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								<img
+									src={useBaseUrl('/img/logo_casd.svg')}
+									alt="Logo CASD"
+									width="100px"
+									height="auto"
+									className="sponsor"
+								/>
+							</a>
+							<a
 								href="http://making-sense.info/"
 								target="_blank"
 								rel="noreferrer noopener"
@@ -71,19 +84,6 @@ function Footer() {
 									src={useBaseUrl('/img/logo_ms.jpg')}
 									alt="Logo Making Sense"
 									width="36px"
-									className="sponsor"
-								/>
-							</a>
-							<a
-								href="https://www.casd.eu/"
-								target="_blank"
-								rel="noreferrer noopener"
-							>
-								<img
-									src={useBaseUrl('/img/logo_casd.png')}
-									alt="Logo CASD"
-									width="52px"
-									height="auto"
 									className="sponsor"
 								/>
 							</a>
