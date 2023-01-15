@@ -8,7 +8,7 @@ custom_edit_url: null
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Lecture
+### Read
 
 ```java
 Dataset<Row> sparkDataset = spark.read()
@@ -22,8 +22,7 @@ Dataset<Row> sparkDataset = spark.read()
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-Dans cet exemple, le projet doit contenir la dépendance du Driver postgresql
-
+In this example, the project must include a dependency to the PostgreSQL driver:
 ```xml
 <dependency>
     <groupId>org.postgresql</groupId>
@@ -32,8 +31,8 @@ Dans cet exemple, le projet doit contenir la dépendance du Driver postgresql
 </dependency>
 ```
 
-Voir l'ensemble des options supportées dans la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html#data-source-option).
+See all supported options in the [official documentation](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html#data-source-option).
 
-### Écriture
+### Write
 
-Le format JDBC n'est pas conseillé pour écrire des `Dataset` Trevas (voir <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>ici</a>)
+Le format JDBC format is not recommended for writing Trevas `Dataset`s (see <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>here</a>)

@@ -8,22 +8,22 @@ custom_edit_url: null
 
 ## Documentation
 
-La documentation de VTL est accessible sur le site officiel [SDMX](https://sdmx.org/) :
+The VTL documentation is available on the official [SDMX](https://sdmx.org/) web site:
 
-- [Manuel utilisateur](https://sdmx.org/wp-content/uploads/VTL-2.0-User-Manual-20180416-final.pdf)
-- [Manuel de référence](https://sdmx.org/wp-content/uploads/VTL-2.0-Reference-Manual-20180712-final.pdf)
+- [User manual](https://sdmx.org/wp-content/uploads/VTL-2.0-User-Manual-20180416-final.pdf)
+- [Reference manual](https://sdmx.org/wp-content/uploads/VTL-2.0-Reference-Manual-20180712-final.pdf)
 
-## Jeux de données
+## Datasets
 
-Les jeux de données VTL doivent être décrit par des métadonnées. Les différentes colonnes ont un `type` et un `role`.
+VTL datasets must be described by metadata. The different columns have a `type` and a `role`.
 
-Par défaut, dans Trevas, une colonne sans type ni rôle se verra affecter le `type` `string` et le `role` `measure`.
+By default, in Trevas, a column without type or role will be assigned a `string` `type` and a `measure` `role`.
 
-L'utilisateur aura ensuite la possibilité de muter ces attributs au sein de son script, via les opérateurs `calc` et `cast` notamment.
+The user will then be able to mutate these attributes in the script, in particular via the `calc` and `cast` operators.
 
-## Exemple simple
+## Simple example
 
-En considérant `ds_1` définit comme suit :
+Considering `ds_1` defined as follows:
 
 |      | id_1       | id_2       | me_1    |
 | ---- | ---------- | ---------- | ------- |
@@ -37,13 +37,13 @@ En considérant `ds_1` définit comme suit :
 | "70001" | "70" | "5"   |
 | "70002" | "70" | "70"  |
 
-Pour obtenir la somme de `me_1` par `id_2`, il faut que seul `id_2` ait pour rôle `identifier` et que le type de `me_1` soit `integer`. On applique donc le script suivant :
+To obbtain the sum of `me_1` by `id_2`, only `id_2` has to have the `identifier` role and `me_1` has to have the `integer` type. The following scipt is thus applied:
 
 ```
 ds_2 := ds_1[calc measure id_2 := id_2, me_1 := cast(me_1, integer)];
 ```
 
-`ds_2` est alors :
+`ds_2` is then:
 
 |      | id_1    | id_2       | me_1    |
 | ---- | ------- | ---------- | ------- |
@@ -57,13 +57,13 @@ ds_2 := ds_1[calc measure id_2 := id_2, me_1 := cast(me_1, integer)];
 | "70001" | "70" | 5    |
 | "70002" | "70" | 70   |
 
-On peut dorénavant appliquer l'opérateur `aggr` :
+It is now possible to apply the `aggr` operator:
 
 ```
 ds_3 := ds_2[aggr sum_me_1 := sum(me_1) group by id_2];
 ```
 
-Et obtenir `ds_3` :
+To obtain `ds_3`:
 
 |      | id_2       | sum_me_1 |
 | ---- | ---------- | -------- |
