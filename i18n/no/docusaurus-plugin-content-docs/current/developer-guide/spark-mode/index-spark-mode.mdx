@@ -1,0 +1,99 @@
+---
+id: index-spark-mode
+title: Spark modus
+sidebar_label: Oversikt
+slug: /developer-guide/spark-mode
+custom_edit_url: null
+---
+
+### SparkDataset
+
+`SparkDataset` datasett brukes til å representere statistiske tabeller i en Java-applikasjon som bruker Trevas i Spark-modus.
+
+### Importer Spark-modul fra Trevas
+
+```xml
+<dependency>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>vtl-spark</artifactId>
+    <version>0.4.8</version>
+</dependency>
+```
+
+### Session Spark
+
+For å kjøre VTL via Trevas i Spark-modus, må du instansiere en Spark-økt.
+
+Økten kan være :
+
+- lokal (kjører på Java-serveren)
+- statisk (kjører på en Spark-forekomst som tidligere er installert på en server)
+- dynamisk (kjører dynamisk i en Kubernetes-klynge)
+
+```java
+SparkSession spark = SparkSession.builder().master("local").getOrCreate();
+```
+
+### Eksempel
+
+```java
+ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
+
+Bindings bindings = new SimpleBindings();
+SparkDataset dataset = new SparkDataset(spark.read().parquet("folder_path"));
+bindings.put("myDataset", dataset);
+
+engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+engine.put("$vtl.engine.processing_engine_names", "spark");
+engine.put("$vtl.spark.session", spark);
+
+String script = "res := myDataset[filter var3 > 6];";
+
+try {
+    engine.eval(script);
+} catch (ScriptException e) {
+    e.printStackTrace();
+}
+
+Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
+SparkDataset result = (SparkDataset) outputBindings.get("res");
+```
+
+### Distribuert utførelse
+
+Enten i statisk eller dynamisk modus, den distribuerte utførelse av prosessering krever at eksekutørene instansiert av masteren er i stand til å løse VTL-behandlingen.
+
+Det er da nødvendig å gi Trevas-krukkene til utførerne via `spark.jars` alternativet til `SparkConf` objektet :
+
+```java
+SparkSession.Builder sparkBuilder = SparkSession.builder()
+SparkConf conf = new SparkConf();
+conf.set("spark.jars", String.join(",",
+                    "/vtl-spark.jar",
+                    "/vtl-model.jar",
+                    "/vtl-parser.jar",
+                    "/vtl-engine.jar",
+            ));
+sparkBuilder.config(conf);
+...
+SparkSession spark = sparkBuilder.getOrCreate();
+```
+
+### Kjører i en Kubernetes klynge
+
+Mange alternativer er beskrevet i den [offisielle dokumentasjonen](https://spark.apache.org/docs/latest/running-on-kubernetes.html#docker-images)
+
+Blant disse er ett alternativ spesielt viktig: Docker-bildet som vil tillate eksekutører å løse VTL-behandling.
+
+Et tilpasset bilde er tilgjengelig [her](https://github.com/InseeFrLab/Trevas-Spark-Hadoop).
+
+```java
+SparkSession.Builder sparkBuilder = SparkSession.builder()
+SparkConf conf = new SparkConf();
+conf.set("spark.kubernetes.container.image", "inseefrlab/spark-hadoop:trevas-0.4.7-spark-3.2.1-hadoop-3.3.1-postgresql-42.3.3-postgis-2021.1.0");
+conf.set("spark.kubernetes.container.pullPolicy", "IfNotPresent");
+sparkBuilder.config(conf);
+sparkBuilder.master("k8s://...")
+...
+SparkSession spark = sparkBuilder.getOrCreate();
+```

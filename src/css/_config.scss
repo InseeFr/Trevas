@@ -1,0 +1,120 @@
+$trevas-purple: #9211ff;
+$trevas-purple-secondary: #30122f;
+$trevas-dark: #1e1e1e;
+$primary-blue: #161f31;
+$secondary-blue: #0565ff;
+$red: #dc382c;
+$white: #ffffff;
+$black: #000000;
+$primary-black: #0c0e10;
+$secondary-black: #2e2e2e;
+$zircon: #f8faff;
+$grey: #707070;
+$grey-light: #e0dfdf;
+$grey-dark: #c2c0c0;
+$purple: #5961ff;
+$purple-hover: #3f41a0;
+$purple-light: #f2f5fe;
+$purple-lighter: #f9faff;
+
+$trevas-font-light: 'Futura Light';
+$trevas-font-light-italic: 'Futura Light Italic';
+$trevas-font-book: 'Futura Book';
+$trevas-font-book-italic: 'Futura Book Italic';
+$trevas-font-medium: 'Futura Medium';
+$trevas-font-medium-italic: 'Futura Medium Italic';
+$trevas-font-heavy: 'Futura Heavy';
+$trevas-font-heavy-italic: 'Futura Heavy Italic';
+
+$lato: 'Lato', sans-serif;
+
+$roboto: 'Roboto Mono', monospace;
+
+:root {
+	--chill: #e3ebed;
+	--ui: #dfdfdf;
+	--primary-blue: #161f31;
+	--secondary-blue: #0565ff;
+	--red: #dc382c;
+	--white: #ffffff;
+	--black: #000000;
+	--primary-black: #0c0e10;
+	--secondary-black: #2e2e2e;
+	--zircon: #f8faff;
+	--grey: #707070;
+	--grey-light: #e0dfdf;
+	--grey-dark: #c2c0c0;
+	--violet: #3e41a0;
+	--purple: #5961ff;
+	--purple-hover: #3f41a0;
+	--purple-light: #f2f5fe;
+	--purple-lighter: #f9faff;
+}
+
+/* dark mode */
+
+@mixin light {
+	html[data-theme='light'] & {
+		@content;
+	}
+}
+
+@mixin dark {
+	html[data-theme='dark'] & {
+		@content;
+	}
+}
+
+body {
+	@include light {
+		background-color: white;
+	}
+	@include dark {
+		background-color: #000000;
+	}
+	.menu__link:not(.menu__link--active) {
+		@include light {
+			color: black;
+		}
+	}
+}
+
+@keyframes spin {
+	from {
+		transform: rotateY(0deg);
+	}
+	to {
+		transform: rotateY(760deg);
+	}
+}
+
+/* media queries */
+@mixin desktop {
+	@media only screen and (min-width: 997px) {
+		@content;
+	}
+}
+
+@mixin desktop-tablet {
+	@media only screen and (min-width: 751px) {
+		@content;
+	}
+}
+
+@mixin tablet {
+	@media only screen and (min-width: 751px) and (max-width: 996px) {
+		@content;
+	}
+}
+
+@mixin tablet-mobile {
+	@media only screen and (max-width: 996px) {
+		@content;
+	}
+}
+
+@mixin mobile {
+	@media only screen and (max-width: 750px) {
+		@content;
+	}
+}
