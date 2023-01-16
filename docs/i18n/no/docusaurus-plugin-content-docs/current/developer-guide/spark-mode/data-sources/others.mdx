@@ -6,7 +6,7 @@ slug: /developer-guide/spark-mode/data-sources/others
 custom_edit_url: null
 ---
 
-### Constructeur `SparkDataset`
+### `SparkDataset` bygger
 
 ```java
 StructType schema = DataTypes.createStructType(List.of(
@@ -24,6 +24,6 @@ Dataset<Row> dataFrame = spark.createDataFrame(List.of(
 fr.insee.vtl.model.Dataset sparkDataset = new SparkDataset(dataFrame);
 ```
 
-### Autres formats supportés par Spark
+### Andre formater som støttes av Spark
 
-Voir la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources.html)
+Se den [offisielle dokumentasjonen](https://spark.apache.org/docs/latest/sql-data-sources.html)

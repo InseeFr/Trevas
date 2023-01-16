@@ -6,7 +6,7 @@ slug: /developer-guide/basic-mode/data-sources/json
 custom_edit_url: null
 ---
 
-### Importer le module jackson de Trevas
+### Import Trevas Jackson module
 
 ```xml
 <dependency>
@@ -16,9 +16,9 @@ custom_edit_url: null
 </dependency>
 ```
 
-### Schéma
+### SchEma
 
-La représentation JSON d'un `Dataset` est définie ainsi :
+The JSON representation of a `Dataset` is defined as follows:
 
 ```json
 {
@@ -36,11 +36,11 @@ La représentation JSON d'un `Dataset` est définie ainsi :
 }
 ```
 
-### Utilisation du module `vtl-jackson`
+### Usage of the `vtl-jackson` module
 
-#### Déclaration globale
+#### Global declaration
 
-Le module peut être déclaré globalement à l'échelle du projet client.
+The module can be globally declared at the scope of the client project.
 
 ```java
 public ObjectMapper objectMapper() {
@@ -49,7 +49,7 @@ public ObjectMapper objectMapper() {
 }
 ```
 
-#### Exemple de désérialisation
+#### Deserialization example
 
 ```java
 ObjectMapper objectMapper = new ObjectMapper();

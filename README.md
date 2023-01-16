@@ -23,6 +23,8 @@ Other implementations can be easily developed for different contexts.
 
 The documentation can be found in the [docs](https://github.com/InseeFr/Trevas/tree/master/docs) folder and [browsed online](https://inseefr.github.io/Trevas).
 
+If you want to contribute, see this [guide](docs/CONTRIBUTING.md).
+
 ## Requirements
 
 Open JDK 11.0.4 + is required.

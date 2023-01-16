@@ -8,30 +8,30 @@ custom_edit_url: null
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Métadonnées
+### Metadata
 
-Les métadonnées des jeux de données Parquet sont inférées du schéma.
+The metadata of the Parquet data sets are inferred from the schema.
 
 #### Types
 
-Trevas assure la conversion entre les types Parquet et les types supportés par le moteur Trevas.
+Trevas takes care of the conversion between the Parquet types and the types supported by the Trevas engine.
 
 #### Roles
 
-Les rôles VTL sont ajoutés par Trevas au schéma Parquet, via l'adjonction d'une métadonnée `vtlRole` sur chaque descriptif de champ.
+The VTL roles are added by Trevas to the Parquet schema, by adding a `vtlRole` metadata to each field descriptor.
 
-Par défaut, les colonnes sans rôle dans le schéma Parquet auront pour rôle `MEASURE` dans Trevas.
+By default, the columns without role in the Parquet schema will have a `MEASURE` role in Trevas.
 
-VTL permet de faire évoluer les rôles au sein des scripts (voir <a href={useBaseUrl('/user-guide/vtl')}>ici</a>)
+VTL allows to modify roles within scripts (see <a href={useBaseUrl('/user-guide/vtl')}>here</a>)
 
-### Lecture
+### Read
 
 ```java
 Dataset<Row> sparkDataset = spark.read().parquet("folder_path");
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-### Écriture
+### Write
 
 ```java
 // Trevas Spark Dataset

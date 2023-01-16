@@ -6,26 +6,26 @@ slug: /administrator-guide/grammar
 custom_edit_url: null
 ---
 
-## Utilisation de la grammaire VTL
+## Usage of the VTL grammar
 
-Trevas s'appuie sur la grammaire formelle de VTL exprimée sous forme [EBNF](https://fr.wikipedia.org/wiki/Extended_Backus-Naur_Form). La référence est l'upgrade de la version 2.0 publiée en juillet 2020 [sur le site web SDMX](https://sdmx.org/wp-content/uploads/VTL-2.0-EBNF-Grammar-2020-07.zip).
+Trevas on the VTL formal grammar expressed with [EBNF](https://fr.wikipedia.org/wiki/Extended_Backus-Naur_Form). The reference is the version 2.0 upgrade published in July 2020 [on the SDMX web site](https://sdmx.org/wp-content/uploads/VTL-2.0-EBNF-Grammar-2020-07.zip).
 
-La grammaire consiste en deux fichiers prêts à être traités par le générateur de parseurs [Antlr](https://www.antlr.org/) :
+The grammar consists of two files ready to be processed by the [Antlr](https://www.antlr.org/) parser generator:
 
-- [VtlTokens.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/VtlTokens.g4) contient la liste des termes VTL valides.
+- [VtlTokens.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/VtlTokens.g4) contains the list of valid VTL terms.
 
-- [Vtl.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/Vtl.g4) contient les règles qui créent les expressions VTL valides.
+- [Vtl.g4](https://github.com/InseeFr/Trevas/blob/master/vtl-parser/src/main/antlr4/fr/insee/vtl/parser/Vtl.g4) contains the rules that produce valid VTL expressions.
 
-Antlr utilise ces fichiers pour produire un lexeur, qui crée une liste de symboles du vocabulaire à partir d'un flot de caractères en entrée, et un parseur, qui crée la structure grammaticale correspondant à cette liste de symboles. Antlr peut générer des parseurs utilisables dans différents langages cibles. Trevas utilise le parseur pour Java, qui est exposé dans le module [`vtl-parser`](https://github.com/InseeFr/Trevas/tree/master/vtl-parser).
+Antlr uses these files to produce a lexer that creates a list of vocabulary symbols from an input character stream, and a parser that creates the grammatical structure corresponding to this list of symbols. Antlr can generate parsers usable in different target languages. Trevas uses the Java parser, which is exposed in the [`vtl-parser`](https://github.com/InseeFr/Trevas/tree/master/vtl-parser) module.
 
-### Adaptations de la grammaire
+### Adaptations of the grammar
 
-Afin d'améliorer les performances et les fonctionnalités, des modifications mineures ont été faites à la grammaire VTL grammar utilisée dans Trevas.
+In order to improve performance and functionalities, minor modifications were made to the VTL grammar used in Trevas.
 
-#### Simplification de l'arbre grammatical
+#### Simplification of the grammatical tree
 
-Comme documenté [ici](https://github.com/VTL-Community/VTL-Community/issues/5) et [ici](https://github.com/InseeFr/Trevas-JS/issues/40), les branches `expr` et `exprComp` de l'arbre grammatical sont presques identiques. Afin d'éviter d'avoir à implémenter deux fois la même logique, la branche `exprComp` a été mise en commentaires par le commit [498c1f8](https://github.com/InseeFr/Trevas/commit/498c1f8be39702fbcfc89a3144ac1842d7771d93). Il fut remarqué par la suite que cette modification invalidait à tort l'expression `COUNT()` expression, et la règle correspondante fut donc réintroduite dans la grammaire par le commit [54f86f2] (https://github.com/InseeFr/Trevas/commit/54f86f27d2e8fdd57df1439d74ed56d225064a7d).
+As documented [here](https://github.com/VTL-Community/VTL-Community/issues/5) and [here](https://github.com/InseeFr/Trevas-JS/issues/40), the `expr` and `exprComp` branches of the grammatical tree are nearly identical. In order to avoid implementing the same logic twice, the `exprComp` branch was commented out in the [498c1f8](https://github.com/InseeFr/Trevas/commit/498c1f8be39702fbcfc89a3144ac1842d7771d93) commit. It was then noticed that this modification wrongly invalidated the `COUNT()` expression, and the corresponding rule was therefore reactivated in the grammar with the [54f86f2] (https://github.com/InseeFr/Trevas/commit/54f86f27d2e8fdd57df1439d74ed56d225064a7d) commit.
 
-#### Addition d'opérateurs de distance
+#### Addition of distance operators
 
-Les opérateurs de distances tels que Levenshtein ou Jaro-Winkler sont communément utilisés dans les tests sur les chaînes de caractères. Afin de les autoriser dans les expressions VTL, le commit [036dc60](https://github.com/InseeFr/Trevas/commit/036dc6055240a38c19be7afd1d3067e370353f9f) a ajouté dans la grammaire une section `distanceOperators` contenant une règle `LEVENSHTEIN`, ainsi que le symbole `LEVENSHTEIN` dans le fichier du lexeur.
+Distance operators like Levenshtein of Jaro-Winkler are commonly used in tests of character strings. In order to allow them in VTL expressions, the [036dc60](https://github.com/InseeFr/Trevas/commit/036dc6055240a38c19be7afd1d3067e370353f9f) commit added to the grammar a `distanceOperators` section containing a `LEVENSHTEIN` rule, as well as the `LEVENSHTEIN` symbol in the lexer file.

@@ -6,8 +6,8 @@
  */
 import React from 'react';
 import clsx from 'clsx';
-import Link from '@docusaurus/Link';
-import { useThemeConfig, type FooterLinkItem } from '@docusaurus/theme-common';
+import { useThemeConfig } from '@docusaurus/theme-common';
+import Translate from '@docusaurus/Translate';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 export interface FooterLinkProps {
@@ -18,39 +18,8 @@ export interface FooterLinkProps {
 	prependBaseUrlToHref: boolean;
 }
 
-function FooterLink({
-	to,
-	href,
-	label,
-	prependBaseUrlToHref,
-	...props
-}: FooterLinkProps) {
-	const toUrl = useBaseUrl(to);
-	const normalizedHref = useBaseUrl(href, {
-		forcePrependBaseUrl: true,
-	});
-	return (
-		<Link
-			className="footer__link-item"
-			{...(href
-				? {
-						target: '_blank',
-						rel: 'noopener noreferrer',
-						href: prependBaseUrlToHref ? normalizedHref : href,
-				  }
-				: {
-						to: toUrl,
-				  })}
-			{...props}
-		>
-			{label}
-		</Link>
-	);
-}
-
 function Footer() {
 	const { footer } = useThemeConfig();
-	const { links = [] } = footer ?? {};
 
 	if (!footer) {
 		return null;
@@ -65,7 +34,9 @@ function Footer() {
 			<div className="container">
 				<div className="row">
 					<div className="col col--12 centered-content">
-						<h3 className="sponsors-title">Sponsors</h3>
+						<h3 className="sponsors-title">
+							<Translate description="Sponsors title">Sponsors</Translate>
+						</h3>
 						<div className="sponsors">
 							<a
 								href="https://ec.europa.eu/eurostat/web/main/home"
@@ -92,6 +63,19 @@ function Footer() {
 								/>
 							</a>
 							<a
+								href="https://www.casd.eu/"
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								<img
+									src={useBaseUrl('/img/logo_casd.svg')}
+									alt="Logo CASD"
+									width="100px"
+									height="auto"
+									className="sponsor"
+								/>
+							</a>
+							<a
 								href="http://making-sense.info/"
 								target="_blank"
 								rel="noreferrer noopener"
@@ -100,19 +84,6 @@ function Footer() {
 									src={useBaseUrl('/img/logo_ms.jpg')}
 									alt="Logo Making Sense"
 									width="36px"
-									className="sponsor"
-								/>
-							</a>
-							<a
-								href="https://www.casd.eu/"
-								target="_blank"
-								rel="noreferrer noopener"
-							>
-								<img
-									src={useBaseUrl('/img/logo_casd.png')}
-									alt="Logo CASD"
-									width="52px"
-									height="auto"
 									className="sponsor"
 								/>
 							</a>

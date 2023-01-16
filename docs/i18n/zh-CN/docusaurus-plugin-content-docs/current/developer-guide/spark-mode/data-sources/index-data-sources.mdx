@@ -10,30 +10,44 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import Card from '@theme/Card';
 
 ### Trevas 良好做法
+
 <p>
-	当 Trevas 引擎在 Spark 模式下运行时，<a href={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')}>Apache Parquet</a> 格式是唯一允许存储和管理 VTL 元数据的格式。
+	当 Trevas 引擎在 Spark 模式下运行时，
+	<a href={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')}>
+		Apache Parquet
+	</a> 格式是唯一允许存储和管理 VTL 元数据的格式。
 </p>
-<p>
-	因此强烈建议使用`Apache Parquet`这种格式。
-</p>
+<p>因此强烈建议使用`Apache Parquet`这种格式。</p>
 
 ### 例子
 
 <div>
 	<div className="row">
 		<div className="col">
-			<Card title="Apache Parquet" page={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')} />
+			<Card
+				title="Apache Parquet"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')}
+			/>
 		</div>
 		<div className="col">
-			<Card title="CSV" page={useBaseUrl('/developer-guide/spark-mode/data-sources/csv')} />
+			<Card
+				title="CSV"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/csv')}
+			/>
 		</div>
 		<div className="col">
-			<Card title="JDBC" page={useBaseUrl('/developer-guide/spark-mode/data-sources/jdbc')} />
+			<Card
+				title="JDBC"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/jdbc')}
+			/>
 		</div>
 	</div>
 	<div className="row">
 		<div className="col">
-			<Card title="Others" page={useBaseUrl('/developer-guide/spark-mode/data-sources/others')} />
+			<Card
+				title="Others"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/others')}
+			/>
 		</div>
 	</div>
 </div>

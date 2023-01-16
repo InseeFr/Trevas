@@ -8,7 +8,7 @@ custom_edit_url: null
 
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-### Lecture
+### Lesning
 
 ```java
 Dataset<Row> sparkDataset = spark.read()
@@ -18,8 +18,8 @@ Dataset<Row> sparkDataset = spark.read()
 SparkDataset dataset = new SparkDataset(sparkDataset);
 ```
 
-Voir l'ensemble des options supportées dans la [documentation officielle](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
+Se alle støttede alternativer i den [offisielle dokumentasjonen](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
 
-### Écriture
+### Skriving
 
-Le format CSV n'est pas conseillé pour écrire des `Dataset` Trevas (voir <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>ici</a>)
+CSV-format anbefales ikke for å skrive Trevas `Dataset` (se <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>her</a>)

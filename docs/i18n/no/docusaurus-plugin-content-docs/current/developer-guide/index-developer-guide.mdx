@@ -9,7 +9,7 @@ custom_edit_url: null
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Card from '@theme/Card';
 
-### Importer le moteur Trevas
+### Importer Trevas motoren
 
 ```xml
 <dependency>
@@ -19,7 +19,7 @@ import Card from '@theme/Card';
 </dependency>
 ```
 
-### Instancier le moteur Trevas
+### Instantier Trevas motoren
 
 ```java
 // Start engine
@@ -41,13 +41,19 @@ try {
 Long result = (Long) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("b");
 ```
 
-### Mode d'exécution
+### Utførelsesmodus
 
 <div className="row">
 	<div className="col">
-		<Card title="Basic mode" page={useBaseUrl('/developer-guide/basic-mode')} />
+		<Card
+			title="Grunnleggende mote"
+			page={useBaseUrl('/developer-guide/basic-mode')}
+		/>
 	</div>
 	<div className="col">
-		<Card title="Spark mode" page={useBaseUrl('/developer-guide/spark-mode')} />
+		<Card
+			title="Spark modus"
+			page={useBaseUrl('/developer-guide/spark-mode')}
+		/>
 	</div>
 </div>
