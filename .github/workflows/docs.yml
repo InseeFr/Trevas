@@ -31,3 +31,4 @@ jobs:
           # The GH actions bot is used by default if you didn't specify the two fields.
           # You can swap them out with your own user credentials.
           user_name: github-actions[bot]
+          user_email: "github-actions[bot]@users.noreply.github.com"

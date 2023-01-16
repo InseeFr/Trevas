@@ -150,4 +150,8 @@ module.exports = {
 			},
 		],
 	],
+	// GHA
+	projectName: 'inseefr.github.io',
+	organizationName: 'InseeFr',
+	trailingSlash: false,
 };
