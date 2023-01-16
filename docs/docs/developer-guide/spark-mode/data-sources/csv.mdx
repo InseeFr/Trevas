@@ -1,0 +1,25 @@
+---
+id: csv
+title: Spark mode - CSV source
+sidebar_label: CSV
+slug: /developer-guide/spark-mode/data-sources/csv
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+### Read
+
+```java
+Dataset<Row> sparkDataset = spark.read()
+                                .option("delimiter", ";")
+                                .option("header", "true")
+                                .csv("folder_path");
+SparkDataset dataset = new SparkDataset(sparkDataset);
+```
+
+See all supported options in the [official documentation](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
+
+### Write
+
+The CSV format is not recommended for writing Trevas `Dataset`s (see <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>here</a>)

@@ -1,0 +1,29 @@
+---
+id: others
+title: Spark 模式 - 其它数据源
+sidebar_label: 其它数据源
+slug: /developer-guide/spark-mode/data-sources/others
+custom_edit_url: null
+---
+
+### Constructeur `SparkDataset`
+
+```java
+StructType schema = DataTypes.createStructType(List.of(
+                DataTypes.createStructField("string", DataTypes.StringType, false),
+                DataTypes.createStructField("integer", DataTypes.LongType, false),
+                DataTypes.createStructField("boolean", DataTypes.BooleanType, false),
+                DataTypes.createStructField("float", DataTypes.DoubleType, false)
+));
+
+Dataset<Row> dataFrame = spark.createDataFrame(List.of(
+        RowFactory.create("string", 1L, true, 1.5D)
+), schema);
+
+
+fr.insee.vtl.model.Dataset sparkDataset = new SparkDataset(dataFrame);
+```
+
+### Spark 支持的其他数据格式
+
+请看 [官方文档](https://spark.apache.org/docs/latest/sql-data-sources.html)

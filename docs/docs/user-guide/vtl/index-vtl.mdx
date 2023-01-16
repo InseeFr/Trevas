@@ -1,0 +1,76 @@
+---
+id: index-vtl
+title: VTL
+sidebar_label: Overview
+slug: /user-guide/vtl
+custom_edit_url: null
+---
+
+## Documentation
+
+The VTL documentation is available on the official [SDMX](https://sdmx.org/) web site:
+
+- [User manual](https://sdmx.org/wp-content/uploads/VTL-2.0-User-Manual-20180416-final.pdf)
+- [Reference manual](https://sdmx.org/wp-content/uploads/VTL-2.0-Reference-Manual-20180712-final.pdf)
+
+## Datasets
+
+VTL datasets must be described by metadata. The different columns have a `type` and a `role`.
+
+By default, in Trevas, a column without type or role will be assigned a `string` `type` and a `measure` `role`.
+
+The user will then be able to mutate these attributes in the script, in particular via the `calc` and `cast` operators.
+
+## Simple example
+
+Considering `ds_1` defined as follows:
+
+|      | id_1       | id_2       | me_1    |
+| ---- | ---------- | ---------- | ------- |
+| type | string     | string     | string  |
+| role | identifier | identifier | measure |
+
+| id_1    | id_2 | me_1  |
+| ------- | ---- | ----- |
+| "75001" | "75" | "10"  |
+| "75002" | "75" | "100" |
+| "70001" | "70" | "5"   |
+| "70002" | "70" | "70"  |
+
+To obbtain the sum of `me_1` by `id_2`, only `id_2` has to have the `identifier` role and `me_1` has to have the `integer` type. The following scipt is thus applied:
+
+```
+ds_2 := ds_1[calc measure id_2 := id_2, me_1 := cast(me_1, integer)];
+```
+
+`ds_2` is then:
+
+|      | id_1    | id_2       | me_1    |
+| ---- | ------- | ---------- | ------- |
+| type | string  | string     | integer |
+| role | measure | identifier | measure |
+
+| id_1    | id_2 | me_1 |
+| ------- | ---- | ---- |
+| "75001" | "75" | 10   |
+| "75002" | "75" | 100  |
+| "70001" | "70" | 5    |
+| "70002" | "70" | 70   |
+
+It is now possible to apply the `aggr` operator:
+
+```
+ds_3 := ds_2[aggr sum_me_1 := sum(me_1) group by id_2];
+```
+
+To obtain `ds_3`:
+
+|      | id_2       | sum_me_1 |
+| ---- | ---------- | -------- |
+| type | string     | integer  |
+| role | identifier | measure  |
+
+| id_2 | me_1 |
+| ---- | ---- |
+| "75" | 110  |
+| "70" | 75   |

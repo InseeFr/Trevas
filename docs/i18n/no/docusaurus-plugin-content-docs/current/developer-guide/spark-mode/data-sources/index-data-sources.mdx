@@ -1,0 +1,54 @@
+---
+id: index-data-sources
+title: SPark modus - Datakilder
+sidebar_label: Oversikt
+slug: /developer-guide/spark-mode/data-sources
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Card from '@theme/Card';
+
+### Beste praksis Trevas
+
+<p>
+	<a href={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')}>
+		Apache Parquet
+	</a>
+	format er den eneste måten å lagre og administrere VTL-metadata når Trevas-motoren
+	instansieres i Spark-modus.
+</p>
+<p>Det anbefales derfor sterkt å bruke dette formatet.</p>
+
+### Eksempler
+
+<div>
+	<div className="row">
+		<div className="col">
+			<Card
+				title="Apache Parquet"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/parquet')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="CSV"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/csv')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="JDBC"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/jdbc')}
+			/>
+		</div>
+	</div>
+	<div className="row">
+		<div className="col">
+			<Card
+				title="Andre"
+				page={useBaseUrl('/developer-guide/spark-mode/data-sources/others')}
+			/>
+		</div>
+	</div>
+</div>
