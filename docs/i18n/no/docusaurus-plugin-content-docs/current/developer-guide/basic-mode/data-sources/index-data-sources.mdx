@@ -1,0 +1,40 @@
+---
+id: index-data-sources
+title: Grunnleggende modus - Datakilder
+sidebar_label: Oversikt
+slug: /developer-guide/basic-mode/data-sources
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Card from '@theme/Card';
+
+### Beste praksis Trevas
+
+<p>
+	<a href={useBaseUrl('/developer-guide/basic-mode/data-sources/json')}>JSON</a>{' '}
+	format er den eneste måten å lagre og administrere VTL-metadata når
+	Trevas-motoren instansieres i basismodus.
+</p>
+<p>Det anbefales derfor sterkt å bruke dette formatet.</p>
+
+<div className="row">
+	<div className="col">
+		<Card
+			title="JDBC"
+			page={useBaseUrl('/developer-guide/basic-mode/data-sources/jdbc')}
+		/>
+	</div>
+	<div className="col">
+		<Card
+			title="JSON"
+			page={useBaseUrl('/developer-guide/basic-mode/data-sources/json')}
+		/>
+	</div>
+	<div className="col">
+		<Card
+			title="Andre"
+			page={useBaseUrl('/developer-guide/basic-mode/data-sources/others')}
+		/>
+	</div>
+</div>

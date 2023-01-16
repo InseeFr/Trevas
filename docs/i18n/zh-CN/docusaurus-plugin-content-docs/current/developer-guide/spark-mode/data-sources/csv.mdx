@@ -1,0 +1,25 @@
+---
+id: csv
+title: Spark模式 - CSV 数据源
+sidebar_label: CSV数据源
+slug: /developer-guide/spark-mode/data-sources/csv
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+### 读取 csv 数据源
+
+```java
+Dataset<Row> sparkDataset = spark.read()
+                                .option("delimiter", ";")
+                                .option("header", "true")
+                                .csv("folder_path");
+SparkDataset dataset = new SparkDataset(sparkDataset);
+```
+
+查看所有支持的选项 [官方文档](https://spark.apache.org/docs/latest/sql-data-sources-csv.html#data-source-option).
+
+### 写入
+
+不建议使用 CSV 格式来编写 Trevas `Dataset` (请看 <a href={useBaseUrl('/developer-guide/spark-mode/data-sources#bonnes-pratiques-trevas')}>这里</a>)

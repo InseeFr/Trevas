@@ -1,0 +1,59 @@
+---
+id: index-modules
+title: Trevas moduler
+sidebar_label: Oversikt
+slug: /modules
+custom_edit_url: null
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Card from '@theme/Card';
+
+<div>
+	<div className="row">
+		<div className="col">
+			<Card
+				title="VTL Engine"
+				description="Runtime-motor og dens grunnleggende Java-implementering"
+				page={useBaseUrl('/modules/engine')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="VTL Parser"
+				description="Parser generert av Antlr fra VTL 2.0 formell grammatikk"
+				page={useBaseUrl('/modules/parser')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="VTL Spark"
+				description="Utføre VTL-transformasjoner av Spark"
+				page={useBaseUrl('/modules/spark')}
+			/>
+		</div>
+	</div>
+	<div className="row">
+		<div className="col">
+			<Card
+				title="VTL Model"
+				description="Modell som definerer objektene som brukes i motoren"
+				page={useBaseUrl('/modules/model')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="VTL JDBC"
+				description="Bruke SQL-datakilder"
+				page={useBaseUrl('/modules/jdbc')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="VTL Jackson"
+				description="JSON-serialisering / deserialisering av datasett"
+				page={useBaseUrl('/modules/jackson')}
+			/>
+		</div>
+	</div>
+</div>
