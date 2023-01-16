@@ -6,15 +6,16 @@ on:
     paths:
       - "docs/**"
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 16.19.0
-      - name: Gitbook Action
-        uses: ZanderZhao/gitbook-action@master
+      - uses: redkubes/docusaurus-deploy-action@v1
         with:
-          source_dir: docs
-          token: ${{ secrets.GITHUB_TOKEN }}
+          source-folder: docs
+          git-user: github-action
+          git-password: ${{ secrets.GITHUB_TOKEN }}
+          deployment-branch: gh-pages
