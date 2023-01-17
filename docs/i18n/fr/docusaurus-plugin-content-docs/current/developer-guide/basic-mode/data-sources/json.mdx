@@ -1,0 +1,57 @@
+---
+id: json
+title: Mode de base - Source JSON
+sidebar_label: JSON
+slug: /developer-guide/basic-mode/data-sources/json
+custom_edit_url: null
+---
+
+### Importer le module jackson de Trevas
+
+```xml
+<dependency>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>vtl-jackson</artifactId>
+    <version>0.4.8</version>
+</dependency>
+```
+
+### Schéma
+
+La représentation JSON d'un `Dataset` est définie ainsi :
+
+```json
+{
+	"dataStructure": [
+		{ "name": "id", "type": "STRING", "role": "IDENTIFIER" },
+		{ "name": "x", "type": "INTEGER", "role": "MEASURE" },
+		{ "name": "y", "type": "FLOAT", "role": "MEASURE" }
+	],
+	"dataPoints": [
+		["0001", 10, 50.5],
+		["0002", 20, -8],
+		["0003", 1000, 0],
+		["0004", 1, 4.5]
+	]
+}
+```
+
+### Utilisation du module `vtl-jackson`
+
+#### Déclaration globale
+
+Le module peut être déclaré globalement à l'échelle du projet client.
+
+```java
+public ObjectMapper objectMapper() {
+    return new ObjectMapper()
+            .registerModule(new TrevasModule());
+}
+```
+
+#### Exemple de désérialisation
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+objectMapper.readValue(json, Dataset.class);
+```
