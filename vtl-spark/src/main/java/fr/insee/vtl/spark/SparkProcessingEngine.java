@@ -1,6 +1,14 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.Analytics;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.IndexedHashMap;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -12,20 +20,49 @@ import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.model.AggregationExpression.*;
+import static fr.insee.vtl.model.AggregationExpression.AverageAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.CountAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MaxAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MedianAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MinAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.StdDevSampAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.SumAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.VarPopAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.VarSampAggregationExpression;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static org.apache.spark.sql.functions.avg;
+import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.expr;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lag;
+import static org.apache.spark.sql.functions.last;
+import static org.apache.spark.sql.functions.lead;
+import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.min;
+import static org.apache.spark.sql.functions.percentile_approx;
+import static org.apache.spark.sql.functions.rank;
+import static org.apache.spark.sql.functions.stddev_pop;
+import static org.apache.spark.sql.functions.stddev_samp;
+import static org.apache.spark.sql.functions.struct;
 import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.functions.udf;
+import static org.apache.spark.sql.functions.var_pop;
+import static org.apache.spark.sql.functions.var_samp;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 /**
@@ -517,6 +554,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+
         return null;
     }
 

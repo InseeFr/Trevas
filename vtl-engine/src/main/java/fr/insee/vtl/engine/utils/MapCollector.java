@@ -26,7 +26,7 @@ public class MapCollector implements Collector<Structured.DataPoint, Structured.
     /**
      * Constructor taking a dataset structure and a map between component names and associated collectors.
      *
-     * @param structure The dataset structure on which to operate.
+     * @param structure    The dataset structure on which to operate.
      * @param collectorMap A map between column names and collectors.
      */
     public MapCollector(Structured.DataStructure structure, Map<String, ? extends Collector<Structured.DataPoint, Object, Object>> collectorMap) {

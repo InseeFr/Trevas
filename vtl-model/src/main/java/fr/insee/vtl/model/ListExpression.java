@@ -12,7 +12,7 @@ public abstract class ListExpression implements ResolvableExpression, TypedConta
     /**
      * Constructor taking a collection of elements and a type for these elements.
      *
-     * @param elements The collection of elements to include in the list expression.
+     * @param elements      The collection of elements to include in the list expression.
      * @param containedType The type for the list elements.
      * @return A new list expression resolving to a list with the elements and type provided.
      */

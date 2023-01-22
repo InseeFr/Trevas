@@ -12,7 +12,7 @@
 
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
-	<description>Trevas engine for Apache Spark</description>
+    <description>Trevas engine for Apache Spark</description>
     <version>0.5.0-SNAPSHOT</version>
 
     <dependencies>
