@@ -11,7 +11,7 @@ public class UnsupportedTypeException extends VtlScriptException {
      * Constructor taking the parsing context and the type which is not supported.
      *
      * @param unsupportedType The type which is not supported.
-     * @param tree The parsing context where the exception is thrown.
+     * @param tree            The parsing context where the exception is thrown.
      */
     public UnsupportedTypeException(Class<?> unsupportedType, ParseTree tree) {
         super(String.format("the type %s is not supported", unsupportedType), tree);

@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,7 @@ public class ComparisonFunctionsTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
         // Between
         engine.eval("a := between(null, 1, 100);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();

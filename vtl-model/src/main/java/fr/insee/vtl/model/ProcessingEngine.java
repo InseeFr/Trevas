@@ -3,7 +3,7 @@ package fr.insee.vtl.model;
 import java.util.List;
 import java.util.Map;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
 
 /**
  * Interface used for dataset transformations.
@@ -68,7 +68,7 @@ public interface ProcessingEngine {
     /**
      * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a given
      * window specification (e.g. partitionBy, orderBy, datapoints)
-     * */
+     */
     DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
             String targetColumnName,
@@ -82,9 +82,9 @@ public interface ProcessingEngine {
     /**
      * Execute lead/lag analytic function on the dataset expression based on a given
      * window specification (e.g. partitionBy, orderBy).
-     *
+     * <p>
      * Note lead and lag can't take a window frame (e.g. data points, range)
-     * */
+     */
     DatasetExpression executeLeadOrLagAn(
             DatasetExpression dataset,
             String targetColumnName,
@@ -99,22 +99,23 @@ public interface ProcessingEngine {
     /**
      * Execute ratio_to_report analytic function on the dataset expression based on a given
      * window specification.
-     *
+     * <p>
      * Note ratio_to_report can only take a partitionBy window specification
-     * */
+     */
     DatasetExpression executeRatioToReportAn(
             DatasetExpression dataset,
             String targetColumnName,
             Analytics.Function function,
             String sourceColumnName,
             List<String> partitionBy
-        );
+    );
+
     /**
      * Execute rank analytic function on the dataset expression based on a given
      * window specification.
-     *
+     * <p>
      * Note rank can only take a window specification with partitionBy, orderBy. orderBy is mandatory
-     * */
+     */
     DatasetExpression executeRankAn(
             DatasetExpression dataset,
             String targetColumnName,
@@ -143,7 +144,7 @@ public interface ProcessingEngine {
     /**
      * Execute a cross join transformations on the dataset expressions.
      *
-     * @param datasets   a map of aliased datasets
+     * @param datasets    a map of aliased datasets
      * @param identifiers the components to join on
      * @return the result of the left join transformation
      */
@@ -152,7 +153,7 @@ public interface ProcessingEngine {
     /**
      * Execute a full join transformations on the dataset expressions.
      *
-     * @param datasets   a map of aliased datasets
+     * @param datasets    a map of aliased datasets
      * @param identifiers the components to join on
      * @return the result of the left join transformation
      */

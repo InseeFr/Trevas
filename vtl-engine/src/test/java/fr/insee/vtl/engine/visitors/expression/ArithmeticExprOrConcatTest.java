@@ -8,8 +8,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ArithmeticExprOrConcatTest {
@@ -22,7 +20,7 @@ public class ArithmeticExprOrConcatTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
         ScriptContext context = engine.getContext();
         // Plus
         engine.eval("res := 1 + null;");

@@ -3,7 +3,11 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.ListExpression;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.VtlBiFunction;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
@@ -16,7 +20,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
-import static fr.insee.vtl.engine.utils.TypeChecking.*;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
+import static fr.insee.vtl.engine.utils.TypeChecking.hasNullArgs;
+import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
+import static fr.insee.vtl.engine.utils.TypeChecking.isNumber;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.

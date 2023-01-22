@@ -7,7 +7,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;

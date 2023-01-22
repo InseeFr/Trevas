@@ -1,6 +1,10 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DoubleExpression;
+import fr.insee.vtl.model.LongExpression;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 

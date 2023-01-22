@@ -29,14 +29,14 @@ public class JDBCDatasetTest {
         connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
         var statement = connection.createStatement();
         statement.executeUpdate("" +
-                                "create table if not exists ds1 (" +
-                                "  id integer," +
-                                "  col1 varchar, " +
-                                "  col2 float," +
-                                "  col3 boolean," +
-                                "  primary key (id)" +
-                                ")" +
-                                "");
+                "create table if not exists ds1 (" +
+                "  id integer," +
+                "  col1 varchar, " +
+                "  col2 float," +
+                "  col3 boolean," +
+                "  primary key (id)" +
+                ")" +
+                "");
 
         statement.executeUpdate("delete from ds1");
         statement.executeUpdate("insert into ds1 values (1, 'string1', 1.2, 'true')");

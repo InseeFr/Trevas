@@ -26,11 +26,11 @@ public class BooleanExprTest {
     @Test
     public void testBooleans() throws ScriptException {
         ScriptContext context = engine.getContext();
-        List<Boolean> a = Arrays.asList(  false, false, false, true,  true,  true, null,  null, null);
-        List<Boolean> b = Arrays.asList(  false, true,  null,  false, true,  null, false, true, null);
-        List<Boolean> and = Arrays.asList(false, false, false, false, true,  null, false, null, null);
-        List<Boolean> or = Arrays.asList( false, true,  null,  true,  true,  true, null,  true, null);
-        List<Boolean> xor = Arrays.asList(false, true,  null,  true,  false, null, null,  null, null);
+        List<Boolean> a = Arrays.asList(false, false, false, true, true, true, null, null, null);
+        List<Boolean> b = Arrays.asList(false, true, null, false, true, null, false, true, null);
+        List<Boolean> and = Arrays.asList(false, false, false, false, true, null, false, null, null);
+        List<Boolean> or = Arrays.asList(false, true, null, true, true, true, null, true, null);
+        List<Boolean> xor = Arrays.asList(false, true, null, true, false, null, null, null, null);
 
         for (int i = 0; i < a.size(); i++) {
             context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);

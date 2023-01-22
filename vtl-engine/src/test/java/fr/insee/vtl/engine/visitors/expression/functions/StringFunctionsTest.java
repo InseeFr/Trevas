@@ -22,7 +22,7 @@ public class StringFunctionsTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
         // Trim
         engine.eval("a := trim(null);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();

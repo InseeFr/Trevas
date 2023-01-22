@@ -1,6 +1,10 @@
 package fr.insee.vtl.model;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The <code>DoubleExpression</code> class is a delegated LinkedHashMap that has indexOf methods.
@@ -75,6 +79,7 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
 
     /**
      * The index of the first occurrence of a given value in the map, or -1 if the value is not present.
+     *
      * @param value The value to look for.
      * @return The index of the first occurrence of the value in the map, or -1 if the value is not present.
      */

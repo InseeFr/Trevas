@@ -3,14 +3,11 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 

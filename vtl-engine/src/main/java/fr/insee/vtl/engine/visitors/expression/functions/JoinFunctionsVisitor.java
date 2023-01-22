@@ -10,7 +10,15 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
@@ -29,7 +37,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
      * Constructor taking an expression visitor and a processing engine.
      *
      * @param expressionVisitor A visitor for the expression corresponding to the join function.
-     * @param processingEngine The processing engine.
+     * @param processingEngine  The processing engine.
      */
     public JoinFunctionsVisitor(ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
