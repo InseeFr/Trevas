@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.DataPointRule;
+import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -9,7 +11,9 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
@@ -43,12 +47,41 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         return assignedObject;
     }
 
+    private String getName(VtlParser.ConstantContext ctx) {
+        String text = ctx.getText();
+        if (text.startsWith("\"") && text.endsWith("\"")) {
+            text = text.substring(1, text.length() - 1);
+        }
+        return text;
+    }
+
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
-        // TODO
-        // Treat here or need a method defined in processignEngine?
+        String name = ctx.rulesetID().getText();
+        // TODO: handle alias better
+        List<String> variables = ctx.rulesetSignature().signature()
+                .stream()
+                .map(s -> s.alias() != null ? s.alias().getText() : s.getText())
+                .collect(Collectors.toList());
+        List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
+                .stream()
+                .map(c -> {
+                    VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
+                    VtlParser.ExprContext consequentCondition = c.consequentCondition;
+                    String errorCode = c.erCode() != null ? getName(c.erCode().constant()) : null;
+                    String errorLevel = c.erLevel() != null ? getName(c.erLevel().constant()) : null;
+                    DataPointRule dataPointRule = new DataPointRule(
+                            antecedentCondition,
+                            consequentCondition,
+                            errorCode,
+                            errorLevel
+                    );
+                    return dataPointRule;
+                })
+                .collect(Collectors.toList());
+        DataPointRuleset dataPointRuleset = new DataPointRuleset(name, rules, variables);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindings.put(ctx.rulesetID().getText(), null);
-        return null;
+        bindings.put(name, dataPointRuleset);
+        return dataPointRuleset;
     }
 }

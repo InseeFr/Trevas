@@ -8,6 +8,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AssignmentTest {
 
     private ScriptEngine engine;
@@ -36,6 +38,20 @@ public class AssignmentTest {
 //        ));
 //
 //        assertThat(bindings.get("f")).isNull();
+    }
+
+    @Test
+    public void testDataPointRuleset() throws ScriptException {
+//        engine.eval("define datapoint ruleset dpr1 (variable Id_3 as A, Me_1) is " +
+//                "when A = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
+//                "when A = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
+//                "end datapoint ruleset; ");
+        engine.eval("define datapoint ruleset dpr1 (variable Id_3, Me_1) is " +
+                "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
+                "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
+                "end datapoint ruleset; ");
+        engine.getContext().getAttribute("dpr1");
+        assertThat(engine.getContext().getAttribute("dpr1")).isNotNull();
     }
 
 }
