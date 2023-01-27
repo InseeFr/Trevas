@@ -26,7 +26,7 @@
 		"serve": "docusaurus serve",
 		"build-serve": "yarn build && yarn serve",
 		"write-translations": "yarn write-translations-en & yarn write-translations-fr & yarn write-translations-zh-CN & yarn write-translations-no & yarn format:docs & yarn format:i18n",
-		"write-translations-en": "docusaurus write-translations --locale fr",
+		"write-translations-en": "docusaurus write-translations --locale en",
 		"write-translations-fr": "docusaurus write-translations --locale fr",
 		"write-translations-zh-CN": "docusaurus write-translations --locale zh-CN",
 		"write-translations-no": "docusaurus write-translations --locale no"
