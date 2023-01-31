@@ -52,7 +52,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         // get DataPointRuleset
         String dprName = ctx.dpName.getText();
         Object dprObject = engine.getContext().getAttribute((dprName));
-        if (dprObject == null || !(dprObject instanceof DataPointRuleset))
+        if (!(dprObject instanceof DataPointRuleset))
             throw new VtlRuntimeException(new UndefinedVariableException(ctx.IDENTIFIER()));
         DataPointRuleset dpr = (DataPointRuleset) dprObject;
 

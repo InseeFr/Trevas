@@ -570,13 +570,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         if (rule.getErrorCode() == null) return null;
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
-                        return antecedentValue && !consequentValue ? rule.getErrorCode() : null;
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? rule.getErrorCode() : null;
                     });
                     ResolvableExpression errorLevelExpression = ResolvableExpression.withType(String.class, context -> {
                         if (rule.getErrorLevel() == null) return null;
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
-                        return antecedentValue && !consequentValue ? rule.getErrorLevel() : null;
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? rule.getErrorLevel() : null;
                     });
                     ResolvableExpression boolVarExpression = ResolvableExpression.withType(Boolean.class, context -> {
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
@@ -589,8 +589,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("bool_var", boolVarExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
-                    Dataset<Row> evaluated = executeCalcEvaluated(ds, resolvableExpressions);
-                    return evaluated;
+                    // does we need to use execute executeCalcInterpreted too?
+                    return executeCalcEvaluated(ds, resolvableExpressions);
                 }
         ).collect(Collectors.toList());
 

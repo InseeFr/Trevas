@@ -43,16 +43,12 @@ public class AssignmentTest {
 
     @Test
     public void testDataPointRuleset() throws ScriptException {
-//        engine.eval("define datapoint ruleset dpr1 (variable Id_3 as A, Me_1) is " +
-//                "when A = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
-//                "when A = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
-//                "end datapoint ruleset; ");
         engine.eval("define datapoint ruleset dpr1 (variable Id_3, Me_1) is " +
                 "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
                 "end datapoint ruleset; ");
         DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
-        assertThat(dpr1.getRules().size()).isEqualTo(2);
+        assertThat(dpr1.getRules()).hasSize(2);
     }
 
 }

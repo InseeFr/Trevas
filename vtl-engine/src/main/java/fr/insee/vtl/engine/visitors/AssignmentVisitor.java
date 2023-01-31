@@ -11,7 +11,6 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
