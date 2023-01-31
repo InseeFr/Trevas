@@ -555,6 +555,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
     }
 
+    // TODO: handle output: none, invalid, all, all_measures
+    // TODO: handle alias
     @Override
     public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset) {
         SparkDataset sparkDataset = asSparkDataset(dataset);
