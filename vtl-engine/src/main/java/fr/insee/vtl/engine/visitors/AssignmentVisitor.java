@@ -11,8 +11,11 @@ import fr.insee.vtl.parser.VtlParser;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     private final VtlScriptEngine engine;
+    private final ProcessingEngine processingEngine;
     private final ExpressionVisitor expressionVisitor;
 
     /**
@@ -31,6 +35,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
      */
     public AssignmentVisitor(VtlScriptEngine engine, ProcessingEngine processingEngine) {
         this.engine = Objects.requireNonNull(engine);
+        this.processingEngine = Objects.requireNonNull(processingEngine);
         expressionVisitor = new ExpressionVisitor(
                 engine.getBindings(ScriptContext.ENGINE_SCOPE),
                 processingEngine,
@@ -68,11 +73,15 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 .map(c -> {
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
+                    Function<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
+                    Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
+                    Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
+
                     String errorCode = c.erCode() != null ? getName(c.erCode().constant()) : null;
                     String errorLevel = c.erLevel() != null ? getName(c.erLevel().constant()) : null;
                     DataPointRule dataPointRule = new DataPointRule(
-                            antecedentCondition,
-                            consequentCondition,
+                            buildAntecedentExpression,
+                            buildConsequentExpression,
                             errorCode,
                             errorLevel
                     );

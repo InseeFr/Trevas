@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.model.DataPointRuleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -50,8 +51,8 @@ public class AssignmentTest {
                 "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
                 "end datapoint ruleset; ");
-        engine.getContext().getAttribute("dpr1");
-        assertThat(engine.getContext().getAttribute("dpr1")).isNotNull();
+        DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
+        assertThat(dpr1.getRules().size()).isEqualTo(2);
     }
 
 }

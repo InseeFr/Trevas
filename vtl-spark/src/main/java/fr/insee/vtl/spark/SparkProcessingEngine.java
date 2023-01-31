@@ -3,6 +3,7 @@ package fr.insee.vtl.spark;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.IndexedHashMap;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.model.AggregationExpression.AverageAggregationExpression;
@@ -42,6 +44,7 @@ import static fr.insee.vtl.model.AggregationExpression.VarSampAggregationExpress
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
+import static fr.insee.vtl.model.Dataset.Role.MEASURE;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.col;
@@ -553,9 +556,51 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset) {
+        SparkDataset sparkDataset = asSparkDataset(dataset);
+        Dataset<Row> ds = sparkDataset.getSparkDataset();
 
-        return null;
+        AtomicInteger index = new AtomicInteger();
+        List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
+                    int i = index.getAndIncrement() + 1;
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> dpr.getName() + "_" + i);
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(String.class, context -> {
+                        if (rule.getErrorCode() == null) return null;
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return antecedentValue && !consequentValue ? rule.getErrorCode() : null;
+                    });
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(String.class, context -> {
+                        if (rule.getErrorLevel() == null) return null;
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return antecedentValue && !consequentValue ? rule.getErrorLevel() : null;
+                    });
+                    ResolvableExpression boolVarExpression = ResolvableExpression.withType(Boolean.class, context -> {
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return !antecedentValue || consequentValue;
+                    });
+
+                    Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
+                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put("bool_var", boolVarExpression);
+                    resolvableExpressions.put("errorlevel", errorLevelExpression);
+                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    Dataset<Row> evaluated = executeCalcEvaluated(ds, resolvableExpressions);
+                    return evaluated;
+                }
+        ).collect(Collectors.toList());
+
+        var roleMap = getRoleMap(sparkDataset);
+        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put("bool_var", MEASURE);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
+        List<DatasetExpression> datasetsExpression = datasets.stream()
+                .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap)))
+                .collect(Collectors.toList());
+        return executeUnion(datasetsExpression);
     }
 
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {

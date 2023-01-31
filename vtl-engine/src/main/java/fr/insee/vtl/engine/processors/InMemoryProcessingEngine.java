@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -301,7 +302,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset) {
         throw new UnsupportedOperationException();
     }
 

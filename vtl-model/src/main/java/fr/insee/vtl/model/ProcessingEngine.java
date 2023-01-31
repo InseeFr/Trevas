@@ -165,6 +165,6 @@ public interface ProcessingEngine {
      * @param datasetExpression datasets
      * @return the result of the validation DP ruleset transformation
      */
-    DatasetExpression executeValidateDPruleset(DatasetExpression datasetExpression);
+    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression);
 
 }
