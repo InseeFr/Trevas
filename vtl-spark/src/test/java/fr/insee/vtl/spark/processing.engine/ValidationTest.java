@@ -78,7 +78,7 @@ public class ValidationTest {
     }
 
     @Test
-    public void testValidateDPrulesetAll() throws ScriptException {
+    public void testValidateDPruleset() throws ScriptException {
 
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
@@ -87,19 +87,51 @@ public class ValidationTest {
                 "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
                 "end datapoint ruleset; " +
-                "DS_r := check_datapoint(DS_1, dpr1 all);");
+                "DS_r := check_datapoint(DS_1, dpr1); " +
+                "DS_r_invalid := check_datapoint(DS_1, dpr1 invalid); " +
+                "DS_r_all := check_datapoint(DS_1, dpr1 all); " +
+                "DS_r_all_measures := check_datapoint(DS_1, dpr1 all_measures);");
 
         Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
         assertThat(DS_r).isInstanceOf(Dataset.class);
+        Dataset DS_r_invalid = (Dataset) engine.getContext().getAttribute("DS_r_invalid");
+        assertThat(DS_r_invalid).isInstanceOf(Dataset.class);
+        Dataset DS_r_all = (Dataset) engine.getContext().getAttribute("DS_r_all");
+        assertThat(DS_r).isInstanceOf(Dataset.class);
+        Dataset DS_r_all_measures = (Dataset) engine.getContext().getAttribute("DS_r_all_measures");
+        assertThat(DS_r_all_measures).isInstanceOf(Dataset.class);
 
-        List<Map<String, Object>> actualWithNull = DS_r.getDataAsMap();
+        List<Map<String, Object>> DS_rWithNull = DS_r.getDataAsMap();
+        List<Map<String, Object>> DS_r_invalidWithNull = DS_r_invalid.getDataAsMap();
+        List<Map<String, Object>> DS_r_allWithNull = DS_r_all.getDataAsMap();
+        List<Map<String, Object>> DS_r_all_measuresWithNull = DS_r_all_measures.getDataAsMap();
 
-        List<Map<String, Object>> actual = new ArrayList<>();
-        for (Map<String, Object> map : actualWithNull) {
-            actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        List<Map<String, Object>> DS_rWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : DS_rWithNull) {
+            DS_rWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        List<Map<String, Object>> DS_r_invalidWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : DS_r_invalidWithNull) {
+            DS_r_invalidWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        List<Map<String, Object>> DS_r_allWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : DS_r_allWithNull) {
+            DS_r_allWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        List<Map<String, Object>> DS_r_all_measuresWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : DS_r_all_measuresWithNull) {
+            DS_r_all_measuresWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(actual).containsExactlyInAnyOrder(
+        assertThat(DS_rWithoutNull).containsExactlyInAnyOrder(
+                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                        "Me_1", -2L, "ruleid", "dpr1_2",
+                        "errorcode", "Bad debit", "errorlevel", "null")
+        );
+
+        assertThat(DS_rWithoutNull).containsExactlyInAnyOrderElementsOf(DS_r_invalidWithoutNull);
+
+        assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrder(
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "dpr1_1", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
@@ -125,5 +157,7 @@ public class ValidationTest {
                         "Me_1", 2L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null")
         );
+
+        assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
     }
 }

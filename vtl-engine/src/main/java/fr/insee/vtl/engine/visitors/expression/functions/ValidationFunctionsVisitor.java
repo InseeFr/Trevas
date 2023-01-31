@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
@@ -52,6 +53,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         // get DataPointRuleset
         String dprName = ctx.dpName.getText();
         Object dprObject = engine.getContext().getAttribute((dprName));
+        String output = getValidationOutput(ctx.validationOutput());
         if (!(dprObject instanceof DataPointRuleset))
             throw new VtlRuntimeException(new UndefinedVariableException(ctx.IDENTIFIER()));
         DataPointRuleset dpr = (DataPointRuleset) dprObject;
@@ -69,6 +71,11 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 );
         });
 
-        return processingEngine.executeValidateDPruleset(dpr, ds);
+        return processingEngine.executeValidateDPruleset(dpr, ds, output);
+    }
+
+    private String getValidationOutput(VtlParser.ValidationOutputContext voc) {
+        if (null == voc) return null;
+        return voc.getText();
     }
 }

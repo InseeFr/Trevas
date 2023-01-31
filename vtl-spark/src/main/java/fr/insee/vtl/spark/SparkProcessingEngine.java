@@ -10,6 +10,7 @@ import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.ValidationOutput;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -555,10 +556,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
     }
 
-    // TODO: handle output: none, invalid, all, all_measures
     // TODO: handle alias
     @Override
-    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
         SparkDataset sparkDataset = asSparkDataset(dataset);
         Dataset<Row> ds = sparkDataset.getSparkDataset();
 
@@ -602,7 +602,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
         List<DatasetExpression> datasetsExpression = datasets.stream()
                 .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap)))
                 .collect(Collectors.toList());
-        return executeUnion(datasetsExpression);
+        DatasetExpression datasetExpression = executeUnion(datasetsExpression);
+        if (output == null || output.equals(ValidationOutput.INVALID.value)) {
+            DatasetExpression filteredDataset = executeFilter(datasetExpression, BooleanExpression.of(c -> null), "bool_var = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop("bool_var");
+            return new SparkDatasetExpression(new SparkDataset(result));
+        }
+        return datasetExpression;
     }
 
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
