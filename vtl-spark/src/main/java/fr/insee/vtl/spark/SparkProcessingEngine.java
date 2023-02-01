@@ -76,7 +76,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
     public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
-    private static final String boolVar = "bool_var";
+    private static final String BOOLVAR = "bool_var";
     private final SparkSession spark;
 
     /**
@@ -578,7 +578,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? rule.getErrorLevel() : null;
                     });
-                    ResolvableExpression boolVarExpression = ResolvableExpression.withType(Boolean.class, context -> {
+                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
                         return !antecedentValue || consequentValue;
@@ -586,7 +586,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                     resolvableExpressions.put("ruleid", ruleIdExpression);
-                    resolvableExpressions.put(boolVar, boolVarExpression);
+                    resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // does we need to use execute executeCalcInterpreted too?
@@ -596,7 +596,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         var roleMap = getRoleMap(sparkDataset);
         roleMap.put("ruleid", IDENTIFIER);
-        roleMap.put(boolVar, MEASURE);
+        roleMap.put(BOOLVAR, MEASURE);
         roleMap.put("errorlevel", MEASURE);
         roleMap.put("errorcode", MEASURE);
         List<DatasetExpression> datasetsExpression = datasets.stream()
@@ -605,8 +605,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs));
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
-            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), boolVar + " = false");
-            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(boolVar);
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOLVAR + " = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
             return new SparkDatasetExpression(new SparkDataset(result));
         }
         return sparkDatasetExpression;
