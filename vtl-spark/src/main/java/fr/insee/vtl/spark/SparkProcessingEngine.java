@@ -556,11 +556,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)));
     }
 
-    // TODO: handle alias
     @Override
     public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
         SparkDataset sparkDataset = asSparkDataset(dataset);
         Dataset<Row> ds = sparkDataset.getSparkDataset();
+        Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
 
         AtomicInteger index = new AtomicInteger();
         List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
@@ -590,7 +590,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // does we need to use execute executeCalcInterpreted too?
-                    return executeCalcEvaluated(ds, resolvableExpressions);
+                    return executeCalcEvaluated(renamedDs, resolvableExpressions);
                 }
         ).collect(Collectors.toList());
 
@@ -602,13 +602,20 @@ public class SparkProcessingEngine implements ProcessingEngine {
         List<DatasetExpression> datasetsExpression = datasets.stream()
                 .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap)))
                 .collect(Collectors.toList());
-        DatasetExpression datasetExpression = executeUnion(datasetsExpression);
+        Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
+        SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs));
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
-            DatasetExpression filteredDataset = executeFilter(datasetExpression, BooleanExpression.of(c -> null), "bool_var = false");
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), "bool_var = false");
             Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop("bool_var");
             return new SparkDatasetExpression(new SparkDataset(result));
         }
-        return datasetExpression;
+        return sparkDatasetExpression;
+    }
+
+    private <V, K> Map<V, K> invertMap(Map<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     }
 
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {

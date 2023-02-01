@@ -160,4 +160,33 @@ public class ValidationTest {
 
         assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
     }
+
+    @Test
+    public void testValidateDPrulesetWithAlias() throws ScriptException {
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("define datapoint ruleset dpr1 (variable Id_3 as AA, Me_1) is " +
+                "when AA = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
+                "when AA = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
+                "end datapoint ruleset; " +
+                "DS_r := check_datapoint(DS_1, dpr1);");
+
+        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
+        assertThat(DS_r).isInstanceOf(Dataset.class);
+
+        List<Map<String, Object>> DS_rWithNull = DS_r.getDataAsMap();
+        List<Map<String, Object>> DS_rWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : DS_rWithNull) {
+            DS_rWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(DS_rWithoutNull).containsExactlyInAnyOrder(
+                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                        "Me_1", -2L, "ruleid", "dpr1_2",
+                        "errorcode", "Bad debit", "errorlevel", "null")
+        );
+
+    }
 }
