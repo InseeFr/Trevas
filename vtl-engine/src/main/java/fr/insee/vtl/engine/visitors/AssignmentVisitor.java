@@ -80,13 +80,12 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
                     String errorCode = c.erCode() != null ? getName(c.erCode().constant()) : null;
                     String errorLevel = c.erLevel() != null ? getName(c.erLevel().constant()) : null;
-                    DataPointRule dataPointRule = new DataPointRule(
+                    return new DataPointRule(
                             buildAntecedentExpression,
                             buildConsequentExpression,
                             errorCode,
                             errorLevel
                     );
-                    return dataPointRule;
                 })
                 .collect(Collectors.toList());
         DataPointRuleset dataPointRuleset = new DataPointRuleset(name, rules, variables, alias);

@@ -127,9 +127,7 @@ public class ValidationTest {
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "dpr1_2",
                         "errorcode", "Bad debit", "errorlevel", "null")
-        );
-
-        assertThat(DS_rWithoutNull).containsExactlyInAnyOrderElementsOf(DS_r_invalidWithoutNull);
+        ).containsExactlyInAnyOrderElementsOf(DS_r_invalidWithoutNull);
 
         assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrder(
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
@@ -156,9 +154,7 @@ public class ValidationTest {
                 Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", 2L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null")
-        );
-
-        assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
+        ).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
     }
 
     @Test
