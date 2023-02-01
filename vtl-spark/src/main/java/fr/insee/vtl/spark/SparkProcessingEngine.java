@@ -76,8 +76,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
     public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
+    private static final String boolVar = "bool_var";
     private final SparkSession spark;
-    private final String BOOL_VAR = "bool_var";
 
     /**
      * Constructor taking an existing Spark session.
@@ -586,7 +586,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                     resolvableExpressions.put("ruleid", ruleIdExpression);
-                    resolvableExpressions.put(BOOL_VAR, boolVarExpression);
+                    resolvableExpressions.put(boolVar, boolVarExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // does we need to use execute executeCalcInterpreted too?
@@ -596,7 +596,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         var roleMap = getRoleMap(sparkDataset);
         roleMap.put("ruleid", IDENTIFIER);
-        roleMap.put(BOOL_VAR, MEASURE);
+        roleMap.put(boolVar, MEASURE);
         roleMap.put("errorlevel", MEASURE);
         roleMap.put("errorcode", MEASURE);
         List<DatasetExpression> datasetsExpression = datasets.stream()
@@ -605,8 +605,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs));
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
-            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOL_VAR + " = false");
-            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOL_VAR);
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), boolVar + " = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(boolVar);
             return new SparkDatasetExpression(new SparkDataset(result));
         }
         return sparkDatasetExpression;
