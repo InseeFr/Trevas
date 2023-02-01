@@ -51,4 +51,14 @@ public class AssignmentTest {
         assertThat(dpr1.getRules()).hasSize(2);
     }
 
+    @Test
+    public void testDataPointRulesetWithAlias() throws ScriptException {
+        engine.eval("define datapoint ruleset dpr1 (variable Id_3 as Id, Me_1) is " +
+                "when Id = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
+                "when Id = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
+                "end datapoint ruleset; ");
+        DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
+        assertThat(dpr1.getAlias()).hasSize(1);
+    }
+
 }

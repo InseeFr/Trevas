@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data point rule set
@@ -13,6 +14,7 @@ public class DataPointRuleset {
     private final String name;
     private final List<DataPointRule> rules;
     private final List<String> variables;
+    private final Map<String, String> alias;
 
     /**
      * Constructor.
@@ -20,11 +22,14 @@ public class DataPointRuleset {
      * @param name      Ruleset name.
      * @param rules     List of rules.
      * @param variables List of rules.
+     * @param alias Map of variable alias.
+     *
      */
-    public DataPointRuleset(String name, List<DataPointRule> rules, List<String> variables) {
+    public DataPointRuleset(String name, List<DataPointRule> rules, List<String> variables, Map<String, String> alias) {
         this.name = name;
         this.rules = rules;
         this.variables = variables;
+        this.alias = alias;
     }
 
     public String getName() {
@@ -38,4 +43,6 @@ public class DataPointRuleset {
     public List<String> getVariables() {
         return variables;
     }
+
+    public Map<String, String> getAlias() {return alias;}
 }

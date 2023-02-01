@@ -62,11 +62,13 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
         String name = ctx.rulesetID().getText();
-        // TODO: handle alias better
-        List<String> variables = ctx.rulesetSignature().signature()
-                .stream()
+        List<VtlParser.SignatureContext> signature = ctx.rulesetSignature().signature();
+        List<String> variables = signature.stream()
                 .map(s -> s.alias() != null ? s.alias().getText() : s.getText())
                 .collect(Collectors.toList());
+        Map<String, String> alias = signature.stream()
+                .filter(s -> null != s.alias())
+                .collect(Collectors.toMap(k -> k.varID().getText(), v -> v.alias().getText()));
         List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
                 .stream()
                 .map(c -> {
@@ -87,7 +89,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     return dataPointRule;
                 })
                 .collect(Collectors.toList());
-        DataPointRuleset dataPointRuleset = new DataPointRuleset(name, rules, variables);
+        DataPointRuleset dataPointRuleset = new DataPointRuleset(name, rules, variables, alias);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         bindings.put(name, dataPointRuleset);
         return dataPointRuleset;
