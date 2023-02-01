@@ -50,5 +50,11 @@ public class ValidationFunctionsTest {
                 .hasMessageContaining("Variable unvalid_var not contained in DS_1");
         assertThatThrownBy(() -> engine.eval("DS_r := check_datapoint(DS_1, dpr1111);"))
                 .hasMessageContaining("undefined variable dpr1111");
+        assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (variable Id_3 as Id_1, Me_1) is " +
+                "when Id_1 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
+                "when Id_1 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
+                "end datapoint ruleset; " +
+                "DS_r := check_datapoint(DS_1, dpr1);"))
+                .hasMessageContaining("Alias Id_1 from dpr1 ruleset already defined in DS_1");
     }
 }

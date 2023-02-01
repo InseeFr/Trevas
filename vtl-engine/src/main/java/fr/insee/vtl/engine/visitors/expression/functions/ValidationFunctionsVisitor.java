@@ -4,7 +4,6 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
@@ -64,12 +63,26 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         // check if dpr variables are in ds structure
         Structured.DataStructure dataStructure = ds.getDataStructure();
         dpr.getVariables().forEach(v -> {
-            if (!dataStructure.containsKey(v))
+            if (!dataStructure.containsKey(v)) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Variable " + v +
                                 " not contained in " + ctx.op.getText(), ctx.op)
                 );
+            }
         });
+
+        // check if dpr alias are not in ds
+        dpr.getAlias().values().forEach(
+                v -> {
+                    if (dataStructure.containsKey(v)) {
+                        throw new VtlRuntimeException(
+                                new InvalidArgumentException("Alias " + v +
+                                        " from " + dprName + " ruleset already defined in " +
+                                        ctx.op.getText(), ctx.op)
+                        );
+                    }
+                }
+        );
 
         return processingEngine.executeValidateDPruleset(dpr, ds, output);
     }
