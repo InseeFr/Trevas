@@ -64,7 +64,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         String name = ctx.rulesetID().getText();
         List<VtlParser.SignatureContext> signature = ctx.rulesetSignature().signature();
         List<String> variables = signature.stream()
-                .map(s -> s.alias() != null ? s.alias().getText() : s.getText())
+                .map(s -> s.varID().getText())
                 .collect(Collectors.toList());
         Map<String, String> alias = signature.stream()
                 .filter(s -> null != s.alias())

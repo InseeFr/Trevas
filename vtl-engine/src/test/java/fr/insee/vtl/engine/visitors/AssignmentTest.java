@@ -59,6 +59,7 @@ public class AssignmentTest {
                 "end datapoint ruleset; ");
         DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
         assertThat(dpr1.getAlias()).hasSize(1);
+        assertThat(dpr1.getVariables()).contains("Id_3");
     }
 
 }
