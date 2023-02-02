@@ -8,12 +8,14 @@ import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,7 +63,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
-        String name = ctx.rulesetID().getText();
+        String rulesetName = ctx.rulesetID().getText();
         List<VtlParser.SignatureContext> signature = ctx.rulesetSignature().signature();
         List<String> variables = signature.stream()
                 .map(s -> s.varID().getText())
@@ -69,9 +71,14 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         Map<String, String> alias = signature.stream()
                 .filter(s -> null != s.alias())
                 .collect(Collectors.toMap(k -> k.varID().getText(), v -> v.alias().getText()));
+
+        AtomicInteger index = new AtomicInteger();
         List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
                 .stream()
                 .map(c -> {
+                    TerminalNode identifier = c.IDENTIFIER();
+                    int i = index.getAndIncrement() + 1;
+                    String name = null != identifier ? identifier.getText() : rulesetName + "_" + index;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
                     Function<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
@@ -81,6 +88,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     String errorCode = c.erCode() != null ? getName(c.erCode().constant()) : null;
                     String errorLevel = c.erLevel() != null ? getName(c.erLevel().constant()) : null;
                     return new DataPointRule(
+                            name,
                             buildAntecedentExpression,
                             buildConsequentExpression,
                             errorCode,
@@ -88,9 +96,9 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     );
                 })
                 .collect(Collectors.toList());
-        DataPointRuleset dataPointRuleset = new DataPointRuleset(name, rules, variables, alias);
+        DataPointRuleset dataPointRuleset = new DataPointRuleset(rulesetName, rules, variables, alias);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindings.put(name, dataPointRuleset);
+        bindings.put(rulesetName, dataPointRuleset);
         return dataPointRuleset;
     }
 }

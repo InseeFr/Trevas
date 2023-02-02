@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 public class DataPointRule {
 
+    private final String name;
     private final Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
     private final Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
     private final String errorCode;
@@ -19,6 +20,7 @@ public class DataPointRule {
     /**
      * Constructor.
      *
+     * @param name                      name of the rule
      * @param buildAntecedentExpression boolean expression to be evaluated for each single Data Point of the input Data Set. It
      *                                  can contain Values of the Value Domains or Variables specified in the Ruleset signature
      *                                  and constants; all the VTL-ML component level operators are allowed. If omitted then
@@ -32,14 +34,20 @@ public class DataPointRule {
      * @param errorLevel                literal denoting the error level (severity)
      */
 
-    public <T> DataPointRule(Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
+    public <T> DataPointRule(String name,
+                             Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
                              Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
                              String errorCode,
                              String errorLevel) {
+        this.name = name;
         this.buildAntecedentExpression = buildAntecedentExpression;
         this.buildConsequentExpression = buildConsequentExpression;
         this.errorCode = errorCode;
         this.errorLevel = errorLevel;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Function<Map<String, Object>, ResolvableExpression> getBuildAntecedentExpression() {
