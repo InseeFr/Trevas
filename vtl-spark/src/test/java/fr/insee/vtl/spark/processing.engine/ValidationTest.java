@@ -84,7 +84,7 @@ public class ValidationTest {
         context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("define datapoint ruleset dpr1 (variable Id_3, Me_1) is " +
-                "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
+                "ruleA : when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
                 "end datapoint ruleset; " +
                 "DS_r := check_datapoint(DS_1, dpr1); " +
@@ -131,25 +131,25 @@ public class ValidationTest {
 
         assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrder(
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
-                        "Me_1", 10L, "ruleid", "dpr1_1", "bool_var", true,
+                        "Me_1", 10L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
-                        "Me_1", -2L, "ruleid", "dpr1_1", "bool_var", true,
+                        "Me_1", -2L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "dpr1_2", "bool_var", false,
                         "errorcode", "Bad debit", "errorlevel", "null"),
                 Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
-                        "Me_1", 10L, "ruleid", "dpr1_1", "bool_var", true,
+                        "Me_1", 10L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
-                        "Me_1", 2L, "ruleid", "dpr1_1", "bool_var", true,
+                        "Me_1", 2L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", 2L, "ruleid", "dpr1_2", "bool_var", true,

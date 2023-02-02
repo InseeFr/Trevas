@@ -562,10 +562,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> ds = sparkDataset.getSparkDataset();
         Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
 
-        AtomicInteger index = new AtomicInteger();
         List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
-                    int i = index.getAndIncrement() + 1;
-                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> dpr.getName() + "_" + i);
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
                     ResolvableExpression errorCodeExpression = ResolvableExpression.withType(String.class, context -> {
                         if (rule.getErrorCode() == null) return null;
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
