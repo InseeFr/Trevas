@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -99,7 +100,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
             );
         }
         Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
-        
+
+        AtomicInteger index = new AtomicInteger();
         List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
                 .stream()
                 .map(c -> {
