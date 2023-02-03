@@ -106,7 +106,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 .stream()
                 .map(c -> {
                     TerminalNode identifier = c.IDENTIFIER();
-                    String name = null != identifier ? identifier.getText() : rulesetName + "_" + index;
+                    int i = index.getAndIncrement() + 1;
+                    String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
                     Function<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
