@@ -1,6 +1,10 @@
 package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
@@ -15,9 +19,11 @@ import javax.script.ScriptContext;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
@@ -72,6 +78,33 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 .filter(s -> null != s.alias())
                 .collect(Collectors.toMap(k -> k.varID().getText(), v -> v.alias().getText()));
 
+        Set<Class> erCodeTypes = ctx.ruleClauseDatapoint().ruleItemDatapoint().stream().map(c -> {
+            VtlParser.ErCodeContext erCodeContext = c.erCode();
+            if (null == erCodeContext) return Object.class;
+            return expressionVisitor.visit(c.erCode()).getType();
+        }).collect(Collectors.toSet());
+        List<Class> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErCodeTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error codes of rules have different types", ctx)
+            );
+        }
+        Class erCodeType = filteredErCodeTypes.size() == 0 ? String.class : filteredErCodeTypes.iterator().next();
+
+        Set<Class> erLevelTypes = ctx.ruleClauseDatapoint().ruleItemDatapoint().stream().map(c -> {
+            VtlParser.ErLevelContext erLevelContext = c.erLevel();
+            if (null == erLevelContext) return Object.class;
+            return expressionVisitor.visit(c.erLevel()).getType();
+        }).collect(Collectors.toSet());
+        List<Class> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErLevelTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error levels of rules have different types", ctx)
+            );
+        }
+        Class erLevelType = filteredErLevelTypes.size() == 0 ? Long.class : filteredErLevelTypes.iterator().next();
+
+
         AtomicInteger index = new AtomicInteger();
         List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
                 .stream()
@@ -84,19 +117,24 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     Function<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
                     Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
                     Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
-
-                    String errorCode = c.erCode() != null ? getName(c.erCode().constant()) : null;
-                    String errorLevel = c.erLevel() != null ? getName(c.erLevel().constant()) : null;
+                    ResolvableExpression errorCodeExpression = null != c.erCode() ? expressionVisitor.visit(c.erCode()) : null;
+                    ResolvableExpression errorLevelExpression = null != c.erLevel() ? expressionVisitor.visit(c.erLevel()) : null;
                     return new DataPointRule(
                             name,
                             buildAntecedentExpression,
                             buildConsequentExpression,
-                            errorCode,
-                            errorLevel
+                            errorCodeExpression,
+                            errorLevelExpression
                     );
                 })
                 .collect(Collectors.toList());
-        DataPointRuleset dataPointRuleset = new DataPointRuleset(rulesetName, rules, variables, alias);
+        DataPointRuleset dataPointRuleset = new DataPointRuleset(
+                rulesetName,
+                rules,
+                variables,
+                alias,
+                erCodeType,
+                erLevelType);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         bindings.put(rulesetName, dataPointRuleset);
         return dataPointRuleset;

@@ -14,8 +14,8 @@ public class DataPointRule {
     private final String name;
     private final Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
     private final Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
-    private final String errorCode;
-    private final String errorLevel;
+    private final ResolvableExpression errorCodeExpression;
+    private final ResolvableExpression errorLevelExpression;
 
     /**
      * Constructor.
@@ -30,20 +30,20 @@ public class DataPointRule {
      *                                  conditions are assumed to be TRUE). It contains Values of the Value Domains or Variables
      *                                  specified in the Ruleset signature and constants; all the VTL-ML component level
      *                                  operators are allowed. A consequent condition equal to FALSE is considered as a non valid result.
-     * @param errorCode                 literal denoting the error code
-     * @param errorLevel                literal denoting the error level (severity)
+     * @param errorCodeExpression       resolvable expression for the error code
+     * @param errorLevelExpression      resolvable expression for the error level (severity)
      */
 
     public <T> DataPointRule(String name,
                              Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
                              Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
-                             String errorCode,
-                             String errorLevel) {
+                             ResolvableExpression errorCodeExpression,
+                             ResolvableExpression errorLevelExpression) {
         this.name = name;
         this.buildAntecedentExpression = buildAntecedentExpression;
         this.buildConsequentExpression = buildConsequentExpression;
-        this.errorCode = errorCode;
-        this.errorLevel = errorLevel;
+        this.errorCodeExpression = errorCodeExpression;
+        this.errorLevelExpression = errorLevelExpression;
     }
 
     public String getName() {
@@ -58,11 +58,11 @@ public class DataPointRule {
         return buildConsequentExpression;
     }
 
-    public String getErrorCode() {
-        return errorCode;
+    public ResolvableExpression getErrorCodeExpression() {
+        return errorCodeExpression;
     }
 
-    public String getErrorLevel() {
-        return errorLevel;
+    public ResolvableExpression getErrorLevelExpression() {
+        return errorLevelExpression;
     }
 }

@@ -564,17 +564,23 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
-                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(String.class, context -> {
-                        if (rule.getErrorCode() == null) return null;
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(dpr.getErrorCodeType(), (clazz, context) -> {
+                        ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                        if (errorCodeExpr == null) return null;
+                        Object erCode = errorCodeExpr.resolve(context);
+                        if (erCode == null) return null;
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
-                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? rule.getErrorCode() : null;
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erCode) : null;
                     });
-                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(String.class, context -> {
-                        if (rule.getErrorLevel() == null) return null;
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(dpr.getErrorLevelType(), (clazz, context) -> {
+                        ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                        if (errorLevelExpr == null) return null;
+                        Object erLevel = errorLevelExpr.resolve(context);
+                        if (erLevel == null) return null;
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
                         Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
-                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? rule.getErrorLevel() : null;
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erLevel) : null;
                     });
                     ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
                         Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
