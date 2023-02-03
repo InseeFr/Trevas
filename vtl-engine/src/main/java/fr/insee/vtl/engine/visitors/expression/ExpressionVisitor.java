@@ -66,10 +66,10 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         conditionalVisitor = new ConditionalVisitor(this);
         stringFunctionsVisitor = new StringFunctionsVisitor(this);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
-        numericFunctionsVisitor = new NumericFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
+        numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         timeFunctionsVisitor = new TimeFunctionsVisitor();
         validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine, engine);

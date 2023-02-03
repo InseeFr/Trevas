@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
@@ -17,11 +18,15 @@ import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,57 +74,178 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
+    // TODO: Extract to model.
+    public static class FunctionExpression implements ResolvableExpression {
+
+        private final Method method;
+        private final List<ResolvableExpression> parameters;
+
+        public FunctionExpression(Method method, List<ResolvableExpression> parameters) {
+            this.method = Objects.requireNonNull(method);
+
+            // Type check.
+            // TODO: Add context.
+            Class<?>[] methodParameterTypes = this.method.getParameterTypes();
+            if (parameters.size() < methodParameterTypes.length) {
+                throw new RuntimeException("too many parameters");
+            } else if (parameters.size() > methodParameterTypes.length) {
+                throw new RuntimeException("missing parameters");
+            }
+            for (int i = 0; i < parameters.size(); i++) {
+                if (!methodParameterTypes[i].isAssignableFrom(parameters.get(i).getType())) {
+                    throw new RuntimeException(String.format("invalid parameter type %s, need %s",
+                            parameters.get(i).getType(),
+                            methodParameterTypes[i])
+                    );
+                }
+            }
+
+            this.parameters = Objects.requireNonNull(parameters);
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
+            try {
+                return method.invoke(null, evaluatedParameters);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public Class<?> getType() {
+            return method.getReturnType();
+        }
+    }
+
+    public static class DatasetFunctionExpression extends DatasetExpression {
+
+        private final DatasetExpression operand;
+        private final Map<Component, ResolvableExpression> expressions;
+        private final DataStructure structure;
+
+        public DatasetFunctionExpression(Method method, DatasetExpression operand) {
+            Objects.requireNonNull(method);
+            this.operand = Objects.requireNonNull(operand);
+
+            if (method.getParameterTypes().length != 1) {
+                throw new RuntimeException("only supports unary operators");
+            }
+            Class<?> parameterType = method.getParameterTypes()[0];
+
+            this.expressions = createExpressionMap(method, operand, parameterType);
+
+            List<Component> components = new ArrayList<>();
+            for (Component component : operand.getDataStructure().values()) {
+                if (expressions.containsKey(component)) {
+                    components.add(new Component(
+                            component.getName(),
+                            expressions.get(component).getType(),
+                            component.getRole()
+                    ));
+                } else {
+                    components.add(component);
+                }
+            }
+            this.structure = new DataStructure(components);
+
+        }
+
+        @NotNull
+        private Map<Component, ResolvableExpression> createExpressionMap(Method method, DatasetExpression operand, Class<?> parameterType) {
+            // TODO: test with function that changes the type.
+            Map<Component, ResolvableExpression> parameters = new LinkedHashMap<>();
+            for (Component component : operand.getDataStructure().values()) {
+                if (!component.isMeasure()) {
+                    continue;
+                }
+                if (!parameterType.isAssignableFrom(component.getType())) {
+                    throw new RuntimeException("invalid type");
+                }
+                parameters.put(component, new GenericFunctionsVisitor.FunctionExpression(method, List.of(new ComponentExpression(component))));
+            }
+            return Map.copyOf(parameters);
+        }
+
+        @Override
+        public Dataset resolve(Map<String, Object> context) {
+            var dataset = operand.resolve(context);
+            List<List<Object>> result = dataset.getDataPoints().stream().map(dataPoint -> {
+                var newDataPoint = new DataPoint(getDataStructure(), dataPoint);
+                for (Component component : expressions.keySet()) {
+                    newDataPoint.set(component.getName(), expressions.get(component).resolve(dataPoint));
+                }
+                return newDataPoint;
+            }).collect(Collectors.toList());
+            return new InMemoryDataset(result, getDataStructure());
+        }
+
+        @Override
+        public DataStructure getDataStructure() {
+            return this.structure;
+        }
+    }
+
+    // TODO: Extract to model
+    // TODO: Check that we don't already have something like that.
+    public static class ComponentExpression implements ResolvableExpression {
+
+        private final Structured.Component component;
+
+        public ComponentExpression(Structured.Component component) {
+            this.component = Objects.requireNonNull(component);
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            return context.get(component.getName());
+        }
+
+        @Override
+        public Class<?> getType() {
+            return component.getType();
+        }
+    }
+
+    public ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
+        var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+        var methodParameterTypes = Arrays.asList(method.getParameterTypes());
+        if (methodParameterTypes.equals(parameterTypes)) {
+            // Same signature, invoke directly.
+            return new FunctionExpression(method, parameters);
+        } else if (methodParameterTypes.size() == parameterTypes.size()) {
+            // Type mismatch.
+            if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)) {
+                return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
+            }
+        }
+        if (methodParameterTypes.size() == parameterTypes.size()) {
+            // TODO: TypeMismatch.
+            throw new RuntimeException("TODO: Type Mistmatch");
+        } else if (methodParameterTypes.size() < parameterTypes.size()) {
+            // TODO: Unexpected.
+            throw new RuntimeException("TODO: Unexpected parameter");
+        } else {
+            // TODO: Missing.
+            throw new RuntimeException("TODO: Missing parameter");
+        }
+    }
+
+    private ResolvableExpression invokeFunctionWithDataset(Method method, DatasetExpression datasetExpression) {
+        return null;
+    }
+
     @Override
     public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
         // Strange name, this is the generic function syntax; fnName ( param, * ).
 
+        // TODO: Use parameters to find functions so we can override them.
         Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
             throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
         });
         List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-        if (method.getReturnType().equals(Dataset.class)) {
-            return new DatasetExpression() {
-
-                private Dataset dataset;
-
-                @Override
-                public Dataset resolve(Map<String, Object> context) {
-                    if (dataset == null) {
-                        Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
-                        try {
-                            dataset = (Dataset) method.invoke(null, evaluatedParameters);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new VtlRuntimeException(new VtlScriptException(e, ctx));
-                        }
-                    }
-                    return dataset;
-                }
-
-                @Override
-                public DataStructure getDataStructure() {
-                    return null;
-                }
-            };
-        } else {
-            return new ResolvableExpression() {
-
-                @Override
-                public Class<?> getType() {
-                    return method.getReturnType();
-                }
-
-                @Override
-                public Object resolve(Map<String, Object> context) {
-                    Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
-                    try {
-                        return method.invoke(null, evaluatedParameters);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new VtlRuntimeException(new VtlScriptException(e, ctx));
-                    }
-                }
-            };
-        }
-
+        return invokeFunction(method, parameters);
     }
 
     /**

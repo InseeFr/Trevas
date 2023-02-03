@@ -7,6 +7,7 @@ import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.BaseErrorListener;

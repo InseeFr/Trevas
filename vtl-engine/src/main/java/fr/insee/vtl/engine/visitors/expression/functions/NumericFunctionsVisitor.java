@@ -9,8 +9,10 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
@@ -30,16 +32,19 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     //
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     private final String UNKNOWN_OPERATOR = "unknown operator ";
 
     /**
      * Constructor taking a scripting context.
      *
-     * @param expressionVisitor The expression visitor.
+     * @param expressionVisitor       The expression visitor.
+     * @param genericFunctionsVisitor
      */
-    public NumericFunctionsVisitor(ExpressionVisitor expressionVisitor) {
+    public NumericFunctionsVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
     /**
@@ -69,14 +74,22 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
+    public static Double ceil(Number value)  {
+        if (value == null) {
+            return null;
+        }
+        return Math.ceil(value.doubleValue());
+    }
+
     private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return LongExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            return ((Double) (Math.ceil(exprDouble))).longValue();
-        });
+        // TODO: Populate this as static map somewhere.
+        try {
+            Method ceilMethod = NumericFunctionsVisitor.class.getMethod("ceil", Number.class);
+            List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
+            return genericFunctionsVisitor.invokeFunction(ceilMethod, parameter);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private ResolvableExpression handleFloor(VtlParser.ExprContext expr) {

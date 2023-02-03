@@ -8,6 +8,7 @@ import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -79,45 +81,6 @@ public class VtlScriptEngineTest {
         assertThat(processingEngines).isNotNull();
     }
 
-    public ResolvableExpression transposeExpression(ResolvableExpression expression) {
-
-        return new DatasetExpression() {
-            @Override
-            public Dataset resolve(Map<String, Object> context) {
-                return null;
-            }
-
-            @Override
-            public DataStructure getDataStructure() {
-                return null;
-            }
-        };
-    }
-
-    public ResolvableExpression ceilExpr(ResolvableExpression operand) {
-        if (operand instanceof DatasetExpression) {
-            return new DatasetExpression() {
-                @Override
-                public Dataset resolve(Map<String, Object> context) {
-                    Dataset dsOperand = (Dataset) operand.resolve(context);
-                    return null;
-                }
-
-                @Override
-                public DataStructure getDataStructure() {
-                    return null;
-                }
-            };
-        } else {
-            return LongExpression.of(context -> {
-                Number exprNumber = (Number) operand.resolve(context);
-                if (exprNumber == null) return null;
-                return ((Double) (Math.ceil(exprNumber.doubleValue()))).longValue();
-            });
-        }
-
-    }
-
     public static class MathFunctions {
         public static Double ceil(Double op) {
             if (op == null) {
@@ -127,158 +90,10 @@ public class VtlScriptEngineTest {
         }
     }
 
-    public static class DatasetFunctionExpression extends DatasetExpression {
-
-        private final Method method;
-        private final DatasetExpression operand;
-        private final Map<Component, ResolvableExpression> expressions;
-        private final DataStructure structure;
-
-        public DatasetFunctionExpression(Method method, DatasetExpression operand) {
-            this.method = Objects.requireNonNull(method);
-            this.operand = Objects.requireNonNull(operand);
-
-            if (this.method.getParameterTypes().length != 1) {
-                throw new RuntimeException("only supports unary operators");
-            }
-            Class<?> parameterType = this.method.getParameterTypes()[0];
-
-            this.expressions = createExpressionMap(method, operand, parameterType);
-
-            List<Component> components = new ArrayList<>();
-            for (Component component : operand.getDataStructure().values()) {
-                if (expressions.containsKey(component)) {
-                    components.add(new Component(
-                            component.getName(),
-                            expressions.get(component).getType(),
-                            component.getRole()
-                    ));
-                } else {
-                    components.add(component);
-                }
-            }
-            this.structure = new DataStructure(components);
-
-        }
-
-        @NotNull
-        private Map<Component, ResolvableExpression> createExpressionMap(Method method, DatasetExpression operand, Class<?> parameterType) {
-            Map<Component, ResolvableExpression> parameters = new LinkedHashMap<>();
-            for (Component component : operand.getDataStructure().values()) {
-                if (!component.isMeasure()) {
-                    continue;
-                }
-                if (component.getType() != parameterType) {
-                    throw new RuntimeException("invalid type");
-                }
-                parameters.put(component, new FunctionExpression(method, List.of(new ComponentExpression(component))));
-            }
-            return Map.copyOf(parameters);
-        }
-
-        @Override
-        public Dataset resolve(Map<String, Object> context) {
-            // TODO: How to pass this to the engines? Maybe visitor pattern?
-            var dataset = operand.resolve(context);
-            List<List<Object>> result = dataset.getDataPoints().stream().map(dataPoint -> {
-                var newDataPoint = new DataPoint(getDataStructure(), dataPoint);
-                for (Component component : expressions.keySet()) {
-                    newDataPoint.set(component.getName(), expressions.get(component).resolve(dataPoint));
-                }
-                return newDataPoint;
-            }).collect(Collectors.toList());
-            return new InMemoryDataset(result, getDataStructure());
-        }
-
-        @Override
-        public DataStructure getDataStructure() {
-            return this.structure;
-        }
-    }
-
-    public static class FunctionExpression implements ResolvableExpression {
-
-        private final Method method;
-        private final List<ResolvableExpression> parameters;
-
-        public FunctionExpression(Method method, List<ResolvableExpression> parameters) {
-            this.method = Objects.requireNonNull(method);
-
-            // Type check.
-            // TODO: Add context.
-            Class<?>[] methodParameterTypes = this.method.getParameterTypes();
-            if (parameters.size() < methodParameterTypes.length) {
-                throw new RuntimeException("too many parameters");
-            } else if (parameters.size() > methodParameterTypes.length) {
-                throw new RuntimeException("missing parameters");
-            }
-            for (int i = 0; i < parameters.size(); i++) {
-                if (parameters.get(i).getType() != methodParameterTypes[i]) {
-                    throw new RuntimeException(String.format("invalid parameter type %s, need %s",
-                            parameters.get(i).getType(),
-                            methodParameterTypes[i])
-                    );
-                }
-            }
-
-            this.parameters = Objects.requireNonNull(parameters);
-        }
-
-        @Override
-        public Object resolve(Map<String, Object> context) {
-            Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
-            try {
-                return method.invoke(null, evaluatedParameters);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public Class<?> getType() {
-            return method.getReturnType();
-        }
-    }
-
-    public static class ComponentExpression implements ResolvableExpression {
-
-        private final Structured.Component component;
-
-        public ComponentExpression(Structured.Component component) {
-            this.component = Objects.requireNonNull(component);
-        }
-
-        @Override
-        public Object resolve(Map<String, Object> context) {
-            return context.get(component.getName());
-        }
-
-        @Override
-        public Class<?> getType() {
-            return component.getType();
-        }
-    }
-
     @Test
-    public void testFunctions2() throws NoSuchMethodException {
+    public void testFunctions2() throws NoSuchMethodException, ScriptException {
 
-        // ds1 { i1 ident string, a measure int, b measure  int,   c measure int }
-        // ds2 { i1 ident string, a measure int, b measure  int,   c attribute int }
-        // ds3 { i1 ident string, a measure int, b measure string, c attribute int }
-
-        // filter out attributes.
-        // ds3 { i1 ident string, a measure int, b measure string, c attribute int }
-        // ds3 { i1 ident string, a measure int, b measure string }
-
-        // fail if all type != input type
-        // ds3 { i1 ident string, a measure int }
-
-        // ds1 := ceil(ds)
-
-        // public DatasetExpression executeCalc(DatasetExpression expression, Map<String, ResolvableExpression> expressions,
-        //                                         Map<String, Dataset.Role> roles, Map<String, String> expressionStrings) {
-
-        var dsOperand = DatasetExpression.of(new InMemoryDataset(
+        InMemoryDataset ds = new InMemoryDataset(
                 List.of(
                         new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
@@ -287,13 +102,28 @@ public class VtlScriptEngineTest {
                 Arrays.asList("Toto", null, 12.34),
                 Arrays.asList("Hadrien", 12.34, 12.34),
                 Arrays.asList("Nico", 12.34, 12.34)
-        ));
+        );
+        var dsOperand = DatasetExpression.of(ds);
 
         var ceilMethod = MathFunctions.class.getMethod("ceil", Double.class);
-        var ceilDsExpression = new DatasetFunctionExpression(ceilMethod, dsOperand);
+        var ceilDsExpression = new GenericFunctionsVisitor.DatasetFunctionExpression(ceilMethod, dsOperand);
         Dataset resolve = ceilDsExpression.resolve(Map.of());
         System.out.println(resolve.getDataAsMap());
 
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        engine.registerMethod("ceil2", ceilMethod);
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+        Object res1 = engine.eval("res1 := ceil(ds);");
+        assertThat(res1).isNotNull();
+        System.out.println("Builtin");
+        System.out.println(((Dataset) res1).getDataAsMap());
+
+        Object res2 = engine.eval("res2 := ceil2(ds);");
+        assertThat(res2).isNotNull();
+        System.out.println("Custom");
+        System.out.println(((Dataset) res2).getDataAsMap());
     }
 
     @Test
