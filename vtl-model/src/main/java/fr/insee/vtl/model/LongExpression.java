@@ -56,7 +56,6 @@ public abstract class LongExpression extends NumberExpression {
         if (outputClass.equals(Long.class))
             return LongExpression.of(context -> {
                 Long exprValue = (Long) expr.resolve(context);
-                if (exprValue == null) return null;
                 return exprValue;
             });
         if (outputClass.equals(Double.class))

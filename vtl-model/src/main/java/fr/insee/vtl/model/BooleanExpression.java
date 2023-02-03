@@ -74,7 +74,6 @@ public abstract class BooleanExpression implements ResolvableExpression {
         if (outputClass.equals(Boolean.class))
             return BooleanExpression.of(context -> {
                 Boolean exprValue = (Boolean) expr.resolve(context);
-                if (exprValue == null) return null;
                 return exprValue;
             });
         throw new ClassCastException("Cast Boolean to " + outputClass + " is not supported");

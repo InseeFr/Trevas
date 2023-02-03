@@ -2,9 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
@@ -23,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
