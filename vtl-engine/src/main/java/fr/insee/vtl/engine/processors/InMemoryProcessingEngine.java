@@ -2,14 +2,31 @@ package fr.insee.vtl.engine.processors;
 
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.Analytics;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 
 import javax.script.ScriptEngine;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.model.Structured.DataPoint;
+import static fr.insee.vtl.model.Structured.DataStructure;
 
 /**
  * The <code>InMemoryProcessingEngine</code> class is an implementation of a VTL engine that performs all operations in memory.
@@ -285,7 +302,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
         throw new UnsupportedOperationException();
     }
 

@@ -8,7 +8,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,7 @@ public class ArithmeticExprTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
 
         ScriptContext context = engine.getContext();
 
@@ -93,7 +92,7 @@ public class ArithmeticExprTest {
     }
 
     @Test
-    public void testUnaryExpr() throws  ScriptException {
+    public void testUnaryExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
 
         engine.eval("plus := +1;");

@@ -144,7 +144,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             Long startValue = (Long) startExpression.resolve(context);
             if (startValue == null) return null;
             if (startValue > value.length()) return "";
-            var start = startValue.equals(0L) ? 0 : startValue.intValue()  - 1;
+            var start = startValue.equals(0L) ? 0 : startValue.intValue() - 1;
             if (lengthExpression == null) return value.substring(start);
             Long lengthValue = (Long) lengthExpression.resolve(context);
             if (lengthValue == null) return null;

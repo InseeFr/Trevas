@@ -36,9 +36,9 @@ public class InMemoryDataset implements Dataset {
     /**
      * Constructor taking initial data and structure components types, roles and nullables.
      *
-     * @param data  The initial data as a list of mappings between column names and column contents.
-     * @param types A mapping between the names and types of the columns as structure components.
-     * @param roles A mapping between the names and roles of the columns as structure components.
+     * @param data      The initial data as a list of mappings between column names and column contents.
+     * @param types     A mapping between the names and types of the columns as structure components.
+     * @param roles     A mapping between the names and roles of the columns as structure components.
      * @param nullables A mapping between the names and nullables of the columns as structure components.
      */
     public InMemoryDataset(List<Map<String, Object>> data, Map<String, Class<?>> types,

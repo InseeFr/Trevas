@@ -34,7 +34,7 @@ class SparkRowMap implements Map<String, Object> {
 
     @Override
     public boolean containsKey(Object key) {
-        throw new UnsupportedOperationException();
+        return row.fieldIndex((String) key) > -1;
     }
 
     @Override

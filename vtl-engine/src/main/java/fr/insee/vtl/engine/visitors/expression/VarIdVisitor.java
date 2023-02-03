@@ -3,7 +3,15 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.DoubleExpression;
+import fr.insee.vtl.model.InstantExpression;
+import fr.insee.vtl.model.LongExpression;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.StringExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -69,7 +77,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         }
 
         if (value == null) {
-            return ResolvableExpression.ofType(Object.class, null);
+            return ResolvableExpression.withType(Object.class, c -> c.get(variableName));
         }
 
         throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), ctx));

@@ -1,6 +1,16 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.Analytics;
+import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.IndexedHashMap;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.ValidationOutput;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -12,20 +22,50 @@ import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.model.AggregationExpression.*;
+import static fr.insee.vtl.model.AggregationExpression.AverageAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.CountAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MaxAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MedianAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.MinAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.StdDevSampAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.SumAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.VarPopAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.VarSampAggregationExpression;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
+import static fr.insee.vtl.model.Dataset.Role.MEASURE;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static org.apache.spark.sql.functions.avg;
+import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.expr;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lag;
+import static org.apache.spark.sql.functions.last;
+import static org.apache.spark.sql.functions.lead;
+import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.min;
+import static org.apache.spark.sql.functions.percentile_approx;
+import static org.apache.spark.sql.functions.rank;
+import static org.apache.spark.sql.functions.stddev_pop;
+import static org.apache.spark.sql.functions.stddev_samp;
+import static org.apache.spark.sql.functions.struct;
 import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.functions.udf;
+import static org.apache.spark.sql.functions.var_pop;
+import static org.apache.spark.sql.functions.var_samp;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 /**
@@ -35,8 +75,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
     public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
+    private static final String BOOLVAR = "bool_var";
     private final SparkSession spark;
-
 
     /**
      * Constructor taking an existing Spark session.
@@ -516,8 +556,69 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
-        return null;
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
+        SparkDataset sparkDataset = asSparkDataset(dataset);
+        Dataset<Row> ds = sparkDataset.getSparkDataset();
+        Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
+
+        List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(dpr.getErrorCodeType(), (clazz, context) -> {
+                        ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                        if (errorCodeExpr == null) return null;
+                        Object erCode = errorCodeExpr.resolve(context);
+                        if (erCode == null) return null;
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erCode) : null;
+                    });
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(dpr.getErrorLevelType(), (clazz, context) -> {
+                        ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                        if (errorLevelExpr == null) return null;
+                        Object erLevel = errorLevelExpr.resolve(context);
+                        if (erLevel == null) return null;
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erLevel) : null;
+                    });
+                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                        return !antecedentValue || consequentValue;
+                    });
+
+                    Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
+                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
+                    resolvableExpressions.put("errorlevel", errorLevelExpression);
+                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    // does we need to use execute executeCalcInterpreted too?
+                    return executeCalcEvaluated(renamedDs, resolvableExpressions);
+                }
+        ).collect(Collectors.toList());
+
+        var roleMap = getRoleMap(sparkDataset);
+        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
+        List<DatasetExpression> datasetsExpression = datasets.stream()
+                .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap)))
+                .collect(Collectors.toList());
+        Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
+        SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs));
+        if (output == null || output.equals(ValidationOutput.INVALID.value)) {
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOLVAR + " = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
+            return new SparkDatasetExpression(new SparkDataset(result));
+        }
+        return sparkDatasetExpression;
+    }
+
+    private <V, K> Map<V, K> invertMap(Map<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     }
 
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {

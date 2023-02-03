@@ -90,7 +90,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (isNull(expression)) {
             return ResolvableExpression.withTypeCasting(defaultExpression.getType(), (clazz, context) ->
-                clazz.cast(defaultExpression.resolve(context))
+                    clazz.cast(defaultExpression.resolve(context))
             );
         }
 

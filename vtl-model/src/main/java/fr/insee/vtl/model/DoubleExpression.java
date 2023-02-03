@@ -70,7 +70,6 @@ public abstract class DoubleExpression extends NumberExpression {
         if (outputClass.equals(Double.class))
             return DoubleExpression.of(context -> {
                 Double exprValue = (Double) expr.resolve(context);
-                if (exprValue == null) return null;
                 return exprValue;
             });
         if (outputClass.equals(Boolean.class))

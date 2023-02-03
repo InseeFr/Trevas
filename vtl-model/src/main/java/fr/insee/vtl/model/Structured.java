@@ -1,7 +1,15 @@
 package fr.insee.vtl.model;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -38,8 +46,8 @@ public interface Structured {
         /**
          * Refines the nullable attribute of a <code>Component</code> regarding its role.
          *
-         * @param initialNullable   The dataset nullable attribute.
-         * @param role              The role of the component as a value of the <code>Role</code> enumeration
+         * @param initialNullable The dataset nullable attribute.
+         * @param role            The role of the component as a value of the <code>Role</code> enumeration
          * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
          */
         private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
@@ -51,9 +59,9 @@ public interface Structured {
         /**
          * Constructor taking the name, type and role of the component.
          *
-         * @param name     A string giving the name of the structure component to create
-         * @param type     A <code>Class</code> giving the type of the structure component to create
-         * @param role     A <code>Role</code> giving the role of the structure component to create
+         * @param name A string giving the name of the structure component to create
+         * @param type A <code>Class</code> giving the type of the structure component to create
+         * @param role A <code>Role</code> giving the role of the structure component to create
          */
         public Component(String name, Class<?> type, Dataset.Role role) {
             this.name = Objects.requireNonNull(name);
@@ -205,8 +213,8 @@ public interface Structured {
         /**
          * Creates a DataStructure with type, role and nullable maps.
          *
-         * @param types The types of each component, by name
-         * @param roles The roles of each component, by name
+         * @param types     The types of each component, by name
+         * @param roles     The roles of each component, by name
          * @param nullables The nullables of each component, by name
          * @throws IllegalArgumentException if the key set of types and roles are not equal.
          */

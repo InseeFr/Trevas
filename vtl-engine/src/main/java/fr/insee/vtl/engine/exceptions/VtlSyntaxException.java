@@ -12,7 +12,7 @@ public class VtlSyntaxException extends VtlScriptException {
     /**
      * Constructor taking the error message and the faulty token.
      *
-     * @param msg The error message for the exception.
+     * @param msg   The error message for the exception.
      * @param token The faulty token.
      */
     public VtlSyntaxException(String msg, Token token) {

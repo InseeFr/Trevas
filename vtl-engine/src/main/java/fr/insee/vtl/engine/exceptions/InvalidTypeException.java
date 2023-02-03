@@ -19,7 +19,7 @@ public class InvalidTypeException extends VtlScriptException {
      *
      * @param expectedType The type supported in the context.
      * @param receivedType The type actually encountered.
-     * @param tree The parsing context where the exception is thrown.
+     * @param tree         The parsing context where the exception is thrown.
      */
     public InvalidTypeException(Class<?> expectedType, Class<?> receivedType, ParseTree tree) {
         super(String.format("invalid type %s, expected %s to be %s",
@@ -32,9 +32,10 @@ public class InvalidTypeException extends VtlScriptException {
 
     /**
      * Constructor taking a list of possible expected types, the actual type encountered, and the parsing context.
+     *
      * @param expectedTypes The list of types supported in the context.
-     * @param receivedType The type actually encountered.
-     * @param tree The parsing context where the exception is thrown.
+     * @param receivedType  The type actually encountered.
+     * @param tree          The parsing context where the exception is thrown.
      */
     public InvalidTypeException(Set<Class<?>> expectedTypes, Class<?> receivedType, ParseTree tree) {
         super(String.format("invalid type %s, expected %s to be %s",
@@ -43,7 +44,7 @@ public class InvalidTypeException extends VtlScriptException {
                         .stream()
                         .map(Class::getSimpleName)
                         .sorted()
-                .collect(Collectors.joining(" or "))
+                        .collect(Collectors.joining(" or "))
         ), tree);
         this.expectedType = null;
         this.expectedTypes = expectedTypes;

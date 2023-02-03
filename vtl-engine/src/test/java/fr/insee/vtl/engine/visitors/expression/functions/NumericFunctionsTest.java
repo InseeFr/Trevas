@@ -24,7 +24,7 @@ public class NumericFunctionsTest {
     }
 
     @Test
-    public void testNull() throws  ScriptException {
+    public void testNull() throws ScriptException {
         // Ceil
         engine.eval("a := ceil(null);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();

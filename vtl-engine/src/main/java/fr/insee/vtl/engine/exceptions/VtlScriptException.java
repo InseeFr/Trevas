@@ -86,7 +86,7 @@ public class VtlScriptException extends ScriptException {
          * Constructor taking the tokens that start and end the faulty expression.
          *
          * @param from The token that begins the faulty expression.
-         * @param to The token that ends the faulty expression.
+         * @param to   The token that ends the faulty expression.
          */
         public Position(Token from, Token to) {
             this.startLine = from.getLine() - 1;

@@ -25,7 +25,7 @@ public class BindingsDeserializer extends StdDeserializer<Bindings> {
     /**
      * Deserializes JSON data bindings into a <code>Bindings</code> object.
      *
-     * @param p The base JSON parser.
+     * @param p    The base JSON parser.
      * @param ctxt A deserialization context.
      * @return The deserialized data bindings.
      * @throws IOException In case of problem while processing the JSON bindings.

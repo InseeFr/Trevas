@@ -10,7 +10,9 @@ import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.*;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
+import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
 
 /**
  * <code>ArithmeticExprOrConcatVisitor</code> is the base visitor for plus, minus or concatenation expressions.

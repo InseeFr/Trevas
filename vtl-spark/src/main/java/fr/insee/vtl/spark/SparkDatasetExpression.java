@@ -28,7 +28,7 @@ public class SparkDatasetExpression extends DatasetExpression {
     }
 
     @Override
-    public Structured.DataStructure  getDataStructure() {
+    public Structured.DataStructure getDataStructure() {
         return dataset.getDataStructure();
     }
 }
