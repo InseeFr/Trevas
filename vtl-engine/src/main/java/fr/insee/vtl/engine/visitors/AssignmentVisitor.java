@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -86,7 +85,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     new InvalidArgumentException("Error codes of rules have different types", ctx)
             );
         }
-        Class erCodeType = filteredErCodeTypes.size() == 0 ? String.class : filteredErCodeTypes.iterator().next();
+        Class erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
 
         Set<Class> erLevelTypes = ctx.ruleClauseDatapoint().ruleItemDatapoint().stream().map(c -> {
             VtlParser.ErLevelContext erLevelContext = c.erLevel();
@@ -99,15 +98,12 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     new InvalidArgumentException("Error levels of rules have different types", ctx)
             );
         }
-        Class erLevelType = filteredErLevelTypes.size() == 0 ? Long.class : filteredErLevelTypes.iterator().next();
-
-
-        AtomicInteger index = new AtomicInteger();
+        Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
+        
         List<DataPointRule> rules = ctx.ruleClauseDatapoint().ruleItemDatapoint()
                 .stream()
                 .map(c -> {
                     TerminalNode identifier = c.IDENTIFIER();
-                    int i = index.getAndIncrement() + 1;
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + index;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
