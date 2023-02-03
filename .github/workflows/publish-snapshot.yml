@@ -3,6 +3,18 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Log level"
+        required: true
+        default: "warning"
+        type: choice
+        options:
+          - info
+          - warning
+          - debug
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -21,3 +33,4 @@ jobs:
         run: mvn --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=${{ inputs.logLevel || 'warn'}}
