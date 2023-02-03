@@ -1,5 +1,6 @@
 package fr.insee.vtl.model;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -9,7 +10,7 @@ import java.util.function.Function;
  * The <code>DataPointRule</code> represent rule to be applied to each individual Data Point of a Data Set for validation
  */
 
-public class DataPointRule {
+public class DataPointRule implements Serializable {
 
     private final String name;
     private final Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;

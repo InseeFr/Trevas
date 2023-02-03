@@ -1,5 +1,6 @@
 package fr.insee.vtl.model;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +10,7 @@ import java.util.Map;
  * The <code>DataPointRuleset</code> contains Rules to be applied to each individual Data Point of a Data Set for validation
  */
 
-public class DataPointRuleset {
+public class DataPointRuleset implements Serializable {
 
     private final String name;
     private final List<DataPointRule> rules;
