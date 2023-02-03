@@ -8,6 +8,7 @@ import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.VtlFunction;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -19,7 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -110,9 +110,9 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
-                    Function<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
-                    Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
-                    Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
+                    VtlFunction<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
+                    VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
+                    VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
                     ResolvableExpression errorCodeExpression = null != c.erCode() ? expressionVisitor.visit(c.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != c.erLevel() ? expressionVisitor.visit(c.erLevel()) : null;
                     return new DataPointRule(

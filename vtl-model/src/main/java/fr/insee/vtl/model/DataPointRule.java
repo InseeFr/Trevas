@@ -2,7 +2,6 @@ package fr.insee.vtl.model;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Data point rule
@@ -13,8 +12,8 @@ import java.util.function.Function;
 public class DataPointRule implements Serializable {
 
     private final String name;
-    private final Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
-    private final Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
+    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
+    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
     private final ResolvableExpression errorCodeExpression;
     private final ResolvableExpression errorLevelExpression;
 
@@ -36,8 +35,8 @@ public class DataPointRule implements Serializable {
      */
 
     public <T> DataPointRule(String name,
-                             Function<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
-                             Function<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
+                             VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
+                             VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
                              ResolvableExpression errorCodeExpression,
                              ResolvableExpression errorLevelExpression) {
         this.name = name;
@@ -51,11 +50,11 @@ public class DataPointRule implements Serializable {
         return name;
     }
 
-    public Function<Map<String, Object>, ResolvableExpression> getBuildAntecedentExpression() {
+    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildAntecedentExpression() {
         return buildAntecedentExpression;
     }
 
-    public Function<Map<String, Object>, ResolvableExpression> getBuildConsequentExpression() {
+    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildConsequentExpression() {
         return buildConsequentExpression;
     }
 
