@@ -169,4 +169,18 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output);
 
+    /**
+     * Execute a simple validation on dataset expressions.
+     *
+     * @param dsExpr        dataset expression
+     * @param erCodeExpr    error code expression
+     * @param erLevelExpr   error level expression
+     * @param imbalanceExpr dataset expression
+     * @param output        validation output
+     * @return the result of the validation
+     */
+    DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr,
+                                              ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr,
+                                              String output);
+
 }
