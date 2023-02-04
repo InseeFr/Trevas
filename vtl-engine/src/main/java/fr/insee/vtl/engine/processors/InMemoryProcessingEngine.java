@@ -306,6 +306,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public DatasetExpression executeValidationSimple(DatasetExpression dsE, ResolvableExpression erCodeE,
+                                                     ResolvableExpression erLevelE, DatasetExpression imbalanceE,
+                                                     String output) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Returns a structure with the common identifiers only once.
      */
