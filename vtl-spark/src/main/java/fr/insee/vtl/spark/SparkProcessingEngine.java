@@ -615,6 +615,21 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return sparkDatasetExpression;
     }
 
+    @Override
+    public DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr, ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr, String output) {
+        // resolve dsExpr & imbalanceExpr
+
+        // rename bool_var as imbalance in imbalanceDS
+
+        // union ds & imbalanceDS
+
+        // executeCalcEvaluated for errorcode & errorlevel
+
+        // handle output: if none or all, return, if invalid filter on bool_var and return
+
+        return null;
+    }
+
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
         return map.entrySet()
                 .stream()
