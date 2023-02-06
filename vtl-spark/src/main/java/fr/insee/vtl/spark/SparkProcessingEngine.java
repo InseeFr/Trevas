@@ -561,7 +561,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> ds = sparkDataset.getSparkDataset();
         Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
 
-        SparkDataset renamedSparkDs = new SparkDataset(renamedDs);
+        SparkDatasetExpression renamedSparkDsExpr = new SparkDatasetExpression(new SparkDataset(renamedDs));
 
         List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
@@ -570,8 +570,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         if (errorCodeExpr == null) return null;
                         Object erCode = errorCodeExpr.resolve(context);
                         if (erCode == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDs).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDs).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erCode) : null;
                     });
                     ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(dpr.getErrorLevelType(), (clazz, context) -> {
@@ -579,13 +579,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         if (errorLevelExpr == null) return null;
                         Object erLevel = errorLevelExpr.resolve(context);
                         if (erLevel == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDs).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDs).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erLevel) : null;
                     });
                     ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDs).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDs).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
                         return !antecedentValue || consequentValue;
                     });
 
