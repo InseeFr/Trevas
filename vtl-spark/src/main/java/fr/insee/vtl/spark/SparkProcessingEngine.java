@@ -563,7 +563,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         SparkDatasetExpression renamedSparkDsExpr = new SparkDatasetExpression(new SparkDataset(renamedDs));
 
-        List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
+        var roleMap = getRoleMap(sparkDataset);
+        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
+
+        List<DatasetExpression> datasetsExpression = dpr.getRules().stream().map(rule -> {
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
                     ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(dpr.getErrorCodeType(), (clazz, context) -> {
                         ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
@@ -595,18 +601,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // does we need to use execute executeCalcInterpreted too?
-                    return executeCalcEvaluated(renamedDs, resolvableExpressions);
+                    return executeCalc(renamedSparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());
 
-        var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("ruleid", IDENTIFIER);
-        roleMap.put(BOOLVAR, MEASURE);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
-        List<DatasetExpression> datasetsExpression = datasets.stream()
-                .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap)))
-                .collect(Collectors.toList());
         Dataset<Row> invertRenamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(invertRenamedSparkDs));
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
