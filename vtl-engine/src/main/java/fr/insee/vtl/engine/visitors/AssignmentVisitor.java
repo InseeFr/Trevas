@@ -17,7 +17,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
  */
-public class AssignmentVisitor extends VtlBaseVisitor<Object> implements Serializable {
+public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     private final VtlScriptEngine engine;
     private final ProcessingEngine processingEngine;
