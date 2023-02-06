@@ -7,6 +7,7 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.VtlFunction;
@@ -110,13 +111,13 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     int i = index.getAndIncrement() + 1;
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
-                    VtlFunction<Dataset, ResolvableExpression> buildAntecedentExpression = dsExpr -> {
+                    VtlFunction<DatasetExpression, ResolvableExpression> buildAntecedentExpression = dsExpr -> {
                         Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
                                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
                         return new ExpressionVisitor(componentMap, processingEngine, engine).visit(antecedentCondition);
                     };
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
-                    VtlFunction<Dataset, ResolvableExpression> buildConsequentExpression = dsExpr -> {
+                    VtlFunction<DatasetExpression, ResolvableExpression> buildConsequentExpression = dsExpr -> {
                         Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
                                 .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
                         return new ExpressionVisitor(componentMap, processingEngine, engine).visit(consequentCondition);
