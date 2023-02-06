@@ -1,7 +1,6 @@
 package fr.insee.vtl.model;
 
 import java.io.Serializable;
-import java.util.Map;
 
 /**
  * Data point rule
@@ -12,8 +11,8 @@ import java.util.Map;
 public class DataPointRule implements Serializable {
 
     private final String name;
-    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
-    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
+    private final VtlFunction<Dataset, ResolvableExpression> buildAntecedentExpression;
+    private final VtlFunction<Dataset, ResolvableExpression> buildConsequentExpression;
     private final ResolvableExpression errorCodeExpression;
     private final ResolvableExpression errorLevelExpression;
 
@@ -35,8 +34,8 @@ public class DataPointRule implements Serializable {
      */
 
     public <T> DataPointRule(String name,
-                             VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
-                             VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
+                             VtlFunction<Dataset, ResolvableExpression> buildAntecedentExpression,
+                             VtlFunction<Dataset, ResolvableExpression> buildConsequentExpression,
                              ResolvableExpression errorCodeExpression,
                              ResolvableExpression errorLevelExpression) {
         this.name = name;
@@ -50,11 +49,11 @@ public class DataPointRule implements Serializable {
         return name;
     }
 
-    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildAntecedentExpression() {
+    public VtlFunction<Dataset, ResolvableExpression> getBuildAntecedentExpression() {
         return buildAntecedentExpression;
     }
 
-    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildConsequentExpression() {
+    public VtlFunction<Dataset, ResolvableExpression> getBuildConsequentExpression() {
         return buildConsequentExpression;
     }
 
