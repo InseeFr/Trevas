@@ -6,6 +6,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.VtlFunction;
@@ -109,10 +110,17 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     int i = index.getAndIncrement() + 1;
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
                     VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
+                    VtlFunction<Dataset, ResolvableExpression> buildAntecedentExpression = dsExpr -> {
+                        Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
+                                .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
+                        return new ExpressionVisitor(componentMap, processingEngine, engine).visit(antecedentCondition);
+                    };
                     VtlParser.ExprContext consequentCondition = c.consequentCondition;
-                    VtlFunction<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
-                    VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
-                    VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
+                    VtlFunction<Dataset, ResolvableExpression> buildConsequentExpression = dsExpr -> {
+                        Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
+                                .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
+                        return new ExpressionVisitor(componentMap, processingEngine, engine).visit(consequentCondition);
+                    };
                     ResolvableExpression errorCodeExpression = null != c.erCode() ? expressionVisitor.visit(c.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != c.erLevel() ? expressionVisitor.visit(c.erLevel()) : null;
                     return new DataPointRule(
