@@ -2,7 +2,7 @@
 id: index-coverage
 title: Couverture VTL de Trevas
 sidebar_label: Overview
-slug: /coverage
+slug: /user-guide/coverage
 custom_edit_url: null
 ---
 
@@ -13,55 +13,79 @@ import Card from '@theme/Card';
 		<div className="col">
 			<Card
 				title="Opérateurs à usage général"
-				page="coverage/general-operators"
+				page={useBaseUrl('/user-guide/coverage/general-operators')}
 			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs de jointure" page="coverage/join-operators" />
+			<Card
+				title="Opérateurs de jointure"
+				page={useBaseUrl('/user-guide/coverage/join-operators')}
+			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs de chaînes" page="coverage/string-operators" />
+			<Card
+				title="Opérateurs de chaînes"
+				page={useBaseUrl('/user-guide/coverage/string-operators')}
+			/>
 		</div>
 	</div>
 	<div className="row">
 		<div className="col">
-			<Card title="Opérateurs numériques" page="coverage/numeric-operators" />
+			<Card
+				title="Opérateurs numériques"
+				page={useBaseUrl('/user-guide/coverage/numeric-operators')}
+			/>
 		</div>
 		<div className="col">
 			<Card
 				title="Opérateurs de comparaison"
-				page="coverage/comparison-operators"
+				page={useBaseUrl('/user-guide/coverage/comparison-operators')}
 			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs booléens" page="coverage/boolean-operators" />
+			<Card
+				title="Opérateurs booléens"
+				page={useBaseUrl('/user-guide/coverage/boolean-operators')}
+			/>
 		</div>
 	</div>
 	<div className="row">
 		<div className="col">
-			<Card title="Opérateurs temporels" page="coverage/time-operators" />
+			<Card
+				title="Opérateurs temporels"
+				page={useBaseUrl('/user-guide/coverage/time-operators')}
+			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs ensemblistes" page="coverage/set-operators" />
+			<Card
+				title="Opérateurs ensemblistes"
+				page={useBaseUrl('/user-guide/coverage/set-operators')}
+			/>
 		</div>
 		<div className="col">
 			<Card
 				title="Aggrégation hierarchique"
-				page="coverage/hierarchical-aggregation"
+				page={useBaseUrl('/user-guide/coverage/hierarchical-aggregation')}
 			/>
 		</div>
 	</div>
 	<div className="row">
 		<div className="col">
-			<Card title="Opérateurs d'agrégat" page="coverage/aggregate-operators" />
+			<Card
+				title="Opérateurs d'agrégat"
+				page={useBaseUrl('/user-guide/coverage/aggregate-operators')}
+			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs analytiques" page="coverage/analytic-operators" />
+			<Card
+				title="Opérateurs analytiques"
+				page={useBaseUrl('/user-guide/coverage/analytic-operators')}
+			/>
 		</div>
 		<div className="col">
 			<Card
 				title="Opérateurs de validation"
-				page="coverage/data-validation-operators"
+				page={useBaseUrl('/user-guide/coverage/data-validation-operators')}
 			/>
 		</div>
 	</div>
@@ -69,11 +93,14 @@ import Card from '@theme/Card';
 		<div className="col">
 			<Card
 				title="Opérateurs conditionnels"
-				page="coverage/conditional-operators"
+				page={useBaseUrl('/user-guide/coverage/conditional-operators')}
 			/>
 		</div>
 		<div className="col">
-			<Card title="Opérateurs de clause" page="coverage/clause-operators" />
+			<Card
+				title="Opérateurs de clause"
+				page={useBaseUrl('/user-guide/coverage/clause-operators')}
+			/>
 		</div>
 	</div>
 </div>
