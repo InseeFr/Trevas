@@ -4,6 +4,7 @@
 	overflow: hidden;
 	background-color: $trevas-dark;
 	font-family: $trevas-font-book;
+	border-top: 2px solid $trevas-purple;
 
 	.container {
 		position: relative;
@@ -11,7 +12,6 @@
 			z-index: 2;
 			position: relative;
 		}
-
 		.sponsors {
 			display: flex;
 			margin-top: 20px;
