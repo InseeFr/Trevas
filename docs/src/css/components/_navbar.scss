@@ -3,7 +3,20 @@
 }
 
 .navbar-sidebar {
-	background-color: $primary-black;
+	@include light {
+		background-color: $trevas-light;
+	}
+	@include dark {
+		background-color: $trevas-dark;
+	}
+	.navbar-sidebar__back {
+		@include light {
+			color: black;
+		}
+		@include dark {
+			color: white;
+		}
+	}
 	box-shadow: none;
 
 	&__backdrop {
@@ -12,6 +25,7 @@
 
 	&__brand {
 		box-shadow: none;
+		background-color: $trevas-dark;
 	}
 
 	&__items {
@@ -33,7 +47,6 @@
 			border-radius: 0;
 			background-color: transparent;
 			font-size: 17px;
-			color: $white;
 		}
 	}
 }

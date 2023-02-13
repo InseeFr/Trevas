@@ -71,11 +71,17 @@ body {
 		background-color: $trevas-light;
 	}
 	@include dark {
-		background-color: #000000;
+		background-color: black;
+	}
+	.menu__link--active {
+		color: $trevas-purple;
 	}
 	.menu__link:not(.menu__link--active) {
 		@include light {
 			color: black;
+		}
+		@include dark {
+			color: white;
 		}
 	}
 }
