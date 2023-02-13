@@ -44,7 +44,7 @@ function Footer() {
 								rel="noreferrer noopener"
 							>
 								<img
-									src={useBaseUrl('/img/logo_eurostat.png')}
+									src={useBaseUrl('/img/logo_eurostat.svg')}
 									alt="Logo Eurostat"
 									width="48px"
 									className="sponsor"
@@ -81,7 +81,7 @@ function Footer() {
 								rel="noreferrer noopener"
 							>
 								<img
-									src={useBaseUrl('/img/logo_ms.jpg')}
+									src={useBaseUrl('/img/logo_ms.svg')}
 									alt="Logo Making Sense"
 									width="36px"
 									className="sponsor"
