@@ -1,5 +1,5 @@
 .rds-hero {
-	padding: 25px 0 25px;
+	padding: 0;
 	font-family: $trevas-font-book;
 	color: black;
 	@include dark {
@@ -30,7 +30,10 @@
 
 	.row {
 		align-items: center;
+
 		.col {
+			margin-top: 20px;
+			margin-bottom: 20px;
 			@include tablet-mobile {
 				&:first-child {
 					order: 2;
@@ -39,6 +42,10 @@
 				&:last-child {
 					order: 1;
 				}
+			}
+			@include mobile {
+				margin-top: -20px;
+				margin-bottom: -20px;
 			}
 		}
 	}
@@ -85,8 +92,6 @@
 
 	.boxes {
 		display: flex;
-		margin-top: 42px;
-
 		@include mobile {
 			flex-direction: column;
 			margin-top: 36px;
@@ -101,7 +106,7 @@
 
 			@include mobile {
 				margin: 0 auto;
-				max-width: 282px;
+				width: 80%;
 			}
 
 			&:hover {
