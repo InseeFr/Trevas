@@ -34,9 +34,6 @@ function Footer() {
 			<div className="container">
 				<div className="row">
 					<div className="col col--12 centered-content">
-						<h3 className="sponsors-title">
-							<Translate description="Sponsors title">Sponsors</Translate>
-						</h3>
 						<div className="sponsors">
 							<a
 								href="https://ec.europa.eu/eurostat/web/main/home"
@@ -46,7 +43,7 @@ function Footer() {
 								<img
 									src={useBaseUrl('/img/logo_eurostat.svg')}
 									alt="Logo Eurostat"
-									width="48px"
+									width="120px"
 									className="sponsor"
 								/>
 							</a>
@@ -58,7 +55,7 @@ function Footer() {
 								<img
 									src={useBaseUrl('/img/logo_insee.png')}
 									alt="Logo Insee"
-									width="32px"
+									width="38px"
 									className="sponsor"
 								/>
 							</a>
@@ -70,7 +67,7 @@ function Footer() {
 								<img
 									src={useBaseUrl('/img/logo_casd.svg')}
 									alt="Logo CASD"
-									width="100px"
+									width="120px"
 									height="auto"
 									className="sponsor"
 								/>
@@ -83,7 +80,7 @@ function Footer() {
 								<img
 									src={useBaseUrl('/img/logo_ms.svg')}
 									alt="Logo Making Sense"
-									width="36px"
+									width="64px"
 									className="sponsor"
 								/>
 							</a>
