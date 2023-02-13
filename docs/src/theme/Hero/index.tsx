@@ -13,8 +13,8 @@ function Hero() {
 	const { colorMode } = useColorMode();
 	const isDarkTheme = colorMode === 'dark';
 	const logoSrc = isDarkTheme
-		? 'img/logo_trevas_dark.png'
-		: 'img/logo_trevas_light.png';
+		? 'img/logo_trevas_light.svg'
+		: 'img/logo_trevas_dark.svg';
 	const svgColor = isDarkTheme ? 'white' : 'black';
 	return (
 		<header className="rds-hero">
