@@ -565,7 +565,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> ds = sparkDataset.getSparkDataset();
         Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
 
-        SparkDatasetExpression renamedSparkDsExpr = new SparkDatasetExpression(new SparkDataset(renamedDs));
+        SparkDataset sparkDs = new SparkDataset(renamedDs);
+        DatasetExpression sparkDsExpr = new SparkDatasetExpression(sparkDs);
+        Structured.DataStructure dataStructure = sparkDs.getDataStructure();
 
         var roleMap = getRoleMap(sparkDataset);
         roleMap.put("ruleid", IDENTIFIER);
@@ -580,8 +582,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         if (errorCodeExpr == null) return null;
                         Object erCode = errorCodeExpr.resolve(context);
                         if (erCode == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erCode) : null;
                     });
                     ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(dpr.getErrorLevelType(), (clazz, context) -> {
@@ -589,13 +591,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         if (errorLevelExpr == null) return null;
                         Object erLevel = errorLevelExpr.resolve(context);
                         if (erLevel == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erLevel) : null;
                     });
                     ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(renamedSparkDsExpr).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(renamedSparkDsExpr).resolve(context);
+                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
+                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
                         return !antecedentValue || consequentValue;
                     });
 
@@ -605,7 +607,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // does we need to use execute executeCalcInterpreted too?
-                    return executeCalc(renamedSparkDsExpr, resolvableExpressions, roleMap, Map.of());
+                    return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());
 

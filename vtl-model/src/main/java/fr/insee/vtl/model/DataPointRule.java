@@ -11,8 +11,8 @@ import java.io.Serializable;
 public class DataPointRule implements Serializable {
 
     private final String name;
-    private final VtlFunction<DatasetExpression, ResolvableExpression> buildAntecedentExpression;
-    private final VtlFunction<DatasetExpression, ResolvableExpression> buildConsequentExpression;
+    private final VtlFunction<Structured.DataStructure, ResolvableExpression> buildAntecedentExpression;
+    private final VtlFunction<Structured.DataStructure, ResolvableExpression> buildConsequentExpression;
     private final ResolvableExpression errorCodeExpression;
     private final ResolvableExpression errorLevelExpression;
 
@@ -34,8 +34,8 @@ public class DataPointRule implements Serializable {
      */
 
     public <T> DataPointRule(String name,
-                             VtlFunction<DatasetExpression, ResolvableExpression> buildAntecedentExpression,
-                             VtlFunction<DatasetExpression, ResolvableExpression> buildConsequentExpression,
+                             VtlFunction<Structured.DataStructure, ResolvableExpression> buildAntecedentExpression,
+                             VtlFunction<Structured.DataStructure, ResolvableExpression> buildConsequentExpression,
                              ResolvableExpression errorCodeExpression,
                              ResolvableExpression errorLevelExpression) {
         this.name = name;
@@ -49,11 +49,11 @@ public class DataPointRule implements Serializable {
         return name;
     }
 
-    public VtlFunction<DatasetExpression, ResolvableExpression> getBuildAntecedentExpression() {
+    public VtlFunction<Structured.DataStructure, ResolvableExpression> getBuildAntecedentExpression() {
         return buildAntecedentExpression;
     }
 
-    public VtlFunction<DatasetExpression, ResolvableExpression> getBuildConsequentExpression() {
+    public VtlFunction<Structured.DataStructure, ResolvableExpression> getBuildConsequentExpression() {
         return buildConsequentExpression;
     }
 
