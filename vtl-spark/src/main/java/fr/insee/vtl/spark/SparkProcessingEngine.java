@@ -576,28 +576,34 @@ public class SparkProcessingEngine implements ProcessingEngine {
         roleMap.put("errorcode", MEASURE);
 
         List<DatasetExpression> datasetsExpression = dpr.getRules().stream().map(rule -> {
-                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> rule.getName());
+                    String ruleName = rule.getName();
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class, context -> ruleName);
+                    ResolvableExpression antecedentExpression = rule.getBuildAntecedentExpression(dataStructure);
+                    ResolvableExpression consequentExpression = rule.getBuildConsequentExpression(dataStructure);
+
+                    ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
                     ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(dpr.getErrorCodeType(), (clazz, context) -> {
-                        ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
                         if (errorCodeExpr == null) return null;
                         Object erCode = errorCodeExpr.resolve(context);
                         if (erCode == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
+                        Boolean antecedentValue = (Boolean) antecedentExpression.resolve(context);
+                        Boolean consequentValue = (Boolean) consequentExpression.resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erCode) : null;
                     });
+
+                    ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
                     ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(dpr.getErrorLevelType(), (clazz, context) -> {
-                        ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
                         if (errorLevelExpr == null) return null;
                         Object erLevel = errorLevelExpr.resolve(context);
                         if (erLevel == null) return null;
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
+                        Boolean antecedentValue = (Boolean) antecedentExpression.resolve(context);
+                        Boolean consequentValue = (Boolean) consequentExpression.resolve(context);
                         return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? clazz.cast(erLevel) : null;
                     });
+
                     ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class, context -> {
-                        Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(dataStructure).resolve(context);
-                        Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(dataStructure).resolve(context);
+                        Boolean antecedentValue = (Boolean) antecedentExpression.resolve(context);
+                        Boolean consequentValue = (Boolean) consequentExpression.resolve(context);
                         return !antecedentValue || consequentValue;
                     });
 
@@ -606,7 +612,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
-                    // does we need to use execute executeCalcInterpreted too?
+                    // do we need to use execute executeCalcInterpreted too?
                     return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());

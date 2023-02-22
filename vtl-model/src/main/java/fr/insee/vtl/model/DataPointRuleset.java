@@ -10,7 +10,7 @@ import java.util.Map;
  * The <code>DataPointRuleset</code> contains Rules to be applied to each individual Data Point of a Data Set for validation
  */
 
-public class DataPointRuleset implements Serializable {
+public class DataPointRuleset {
 
     private final String name;
     private final List<DataPointRule> rules;
