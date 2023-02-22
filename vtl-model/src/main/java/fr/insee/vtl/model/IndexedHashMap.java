@@ -1,6 +1,5 @@
 package fr.insee.vtl.model;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -10,7 +9,7 @@ import java.util.Set;
 /**
  * The <code>DoubleExpression</code> class is a delegated LinkedHashMap that has indexOf methods.
  */
-public class IndexedHashMap<K, V> implements Map<K, V>, Serializable {
+public class IndexedHashMap<K, V> implements Map<K, V> {
 
     private final Map<K, Integer> indices;
     private final Map<K, V> delegate;
