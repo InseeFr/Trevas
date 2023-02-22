@@ -197,11 +197,17 @@ public class ValidationTest {
         context.setAttribute("DS_1", sparkDataset, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("define datapoint ruleset dpr1 (variable student_number) is " +
-                "my_rule : student_number < 100 errorcode \"Not enough\" " +
+                "my_rule : student_number > 5 errorcode \"Not enough\" " +
                 "end datapoint ruleset; " +
-                "DS_r := check_datapoint(DS_1, dpr1);");
+                "DS_r := check_datapoint(DS_1, dpr1 all);" +
+                "DS_r_invalid := check_datapoint(DS_1, dpr1 invalid);");
 
         Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
-        List<Structured.DataPoint> dataPoints = DS_r.getDataPoints();
+        List<Map<String, Object>> dataAsMap = DS_r.getDataAsMap();
+        assertThat(dataAsMap.size()).isEqualTo(146678L);
+
+        Dataset DS_r_invalid = (Dataset) engine.getContext().getAttribute("DS_r_invalid");
+        List<Map<String, Object>> dataAsMapInvalid = DS_r_invalid.getDataAsMap();
+        assertThat(dataAsMapInvalid.size()).isEqualTo(26L);
     }
 }
