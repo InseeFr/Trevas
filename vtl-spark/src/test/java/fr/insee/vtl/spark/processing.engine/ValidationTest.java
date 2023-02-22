@@ -4,6 +4,8 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.spark.SparkDataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -184,5 +186,28 @@ public class ValidationTest {
                         "errorcode", "Bad debit", "errorlevel", "null")
         );
 
+    }
+
+    @Test
+    public void testValidateDPrulesetSerialization() throws ScriptException {
+        org.apache.spark.sql.Dataset<Row> parquet = spark.read().parquet("src/main/resources/input_sample");
+        SparkDataset sparkDataset = new SparkDataset(parquet);
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS_1", sparkDataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("define datapoint ruleset dpr1 (variable student_number) is " +
+                "my_rule : student_number > 5 errorcode \"Not enough\" " +
+                "end datapoint ruleset; " +
+                "DS_r := check_datapoint(DS_1, dpr1 all);" +
+                "DS_r_invalid := check_datapoint(DS_1, dpr1 invalid);");
+
+        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
+        List<Map<String, Object>> dataAsMap = DS_r.getDataAsMap();
+        assertThat(dataAsMap.size()).isEqualTo(146678L);
+
+        Dataset DS_r_invalid = (Dataset) engine.getContext().getAttribute("DS_r_invalid");
+        List<Map<String, Object>> dataAsMapInvalid = DS_r_invalid.getDataAsMap();
+        assertThat(dataAsMapInvalid.size()).isEqualTo(26L);
     }
 }

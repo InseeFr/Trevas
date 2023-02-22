@@ -4,13 +4,12 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.VtlFunction;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -110,24 +109,28 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     TerminalNode identifier = c.IDENTIFIER();
                     int i = index.getAndIncrement() + 1;
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
-                    VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
-                    VtlFunction<DatasetExpression, ResolvableExpression> buildAntecedentExpression = dsExpr -> {
-                        Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
-                                .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-                        return new ExpressionVisitor(componentMap, processingEngine, engine).visit(antecedentCondition);
-                    };
-                    VtlParser.ExprContext consequentCondition = c.consequentCondition;
-                    VtlFunction<DatasetExpression, ResolvableExpression> buildConsequentExpression = dsExpr -> {
-                        Map<String, Object> componentMap = dsExpr.getDataStructure().values().stream()
-                                .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-                        return new ExpressionVisitor(componentMap, processingEngine, engine).visit(consequentCondition);
-                    };
+
+                    VtlParser.ExprContext antecedentContiditonContext = c.antecedentContiditon;
+                    VtlParser.ExprContext consequentConditionContext = c.consequentCondition;
+
                     ResolvableExpression errorCodeExpression = null != c.erCode() ? expressionVisitor.visit(c.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != c.erLevel() ? expressionVisitor.visit(c.erLevel()) : null;
                     return new DataPointRule(
                             name,
-                            buildAntecedentExpression,
-                            buildConsequentExpression,
+                            dataStructure -> {
+                                if (antecedentContiditonContext != null) {
+                                    Map<String, Object> componentMap = dataStructure.values().stream()
+                                            .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
+                                    return new ExpressionVisitor(componentMap, processingEngine, engine).visit(antecedentContiditonContext);
+                                } else {
+                                    return BooleanExpression.of(Boolean.TRUE);
+                                }
+                            },
+                            dataStructure -> {
+                                Map<String, Object> componentMap = dataStructure.values().stream()
+                                        .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
+                                return new ExpressionVisitor(componentMap, processingEngine, engine).visit(consequentConditionContext);
+                            },
                             errorCodeExpression,
                             errorLevelExpression
                     );
