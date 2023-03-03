@@ -120,7 +120,7 @@ public class VtlScriptEngineTest {
         System.out.println("Builtin");
         System.out.println(((Dataset) res1).getDataAsMap());
 
-        Object res2 = engine.eval("res2 := ceil2(ds);");
+        Object res2 = engine.eval("res2 := abs( ceil( ceil2( ds ) ) );");
         assertThat(res2).isNotNull();
         System.out.println("Custom");
         System.out.println(((Dataset) res2).getDataAsMap());

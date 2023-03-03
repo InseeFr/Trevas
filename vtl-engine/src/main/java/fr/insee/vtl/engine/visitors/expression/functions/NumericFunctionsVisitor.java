@@ -1,15 +1,11 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.DoubleExpression;
 import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -43,7 +39,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      * @param genericFunctionsVisitor
      */
     public NumericFunctionsVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
-        exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.exprVisitor = Objects.requireNonNull(expressionVisitor);
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
@@ -56,92 +52,68 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      */
     @Override
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
+        VtlParser.ExprContext expr = ctx.expr();
+        List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
         switch (ctx.op.getType()) {
             case VtlParser.CEIL:
-                return handleCeil(ctx.expr());
+                return genericFunctionsVisitor.invoke("ceil", parameter);
             case VtlParser.FLOOR:
-                return handleFloor(ctx.expr());
+                return genericFunctionsVisitor.invoke("floor", parameter);
             case VtlParser.ABS:
-                return handleAbs(ctx.expr());
+                return genericFunctionsVisitor.invoke("abs", parameter);
             case VtlParser.EXP:
-                return handleExp(ctx.expr());
+                return genericFunctionsVisitor.invoke("exp", parameter);
             case VtlParser.LN:
-                return handleLn(ctx.expr());
+                return genericFunctionsVisitor.invoke("ln", parameter);
             case VtlParser.SQRT:
-                return handleSqrt(ctx.expr());
+                return genericFunctionsVisitor.invoke("sqrt", parameter);
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
     }
-
-    public static Double ceil(Number value)  {
+    public static Double ceil(Number value) {
         if (value == null) {
             return null;
         }
         return Math.ceil(value.doubleValue());
     }
 
-    private ResolvableExpression handleCeil(VtlParser.ExprContext expr) {
-        // TODO: Populate this as static map somewhere.
-        try {
-            Method ceilMethod = NumericFunctionsVisitor.class.getMethod("ceil", Number.class);
-            List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
-            return genericFunctionsVisitor.invokeFunction(ceilMethod, parameter);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+    public static Long floor(Number value) {
+        if (value == null) {
+            return null;
         }
+        return (long) Math.floor(value.doubleValue());
     }
 
-    private ResolvableExpression handleFloor(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return LongExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            return ((Double) (Math.floor(exprDouble))).longValue();
-        });
+    public static Double abs(Number value) {
+        if (value == null) {
+            return null;
+        }
+        return Math.abs(value.doubleValue());
     }
 
-    private ResolvableExpression handleAbs(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            return Math.abs(exprDouble);
-        });
+    public static Double exp(Number value) {
+        if (value == null) {
+            return null;
+        }
+        return Math.exp(value.doubleValue());
     }
 
-    private ResolvableExpression handleExp(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            return Math.exp(exprDouble);
-        });
+    public static Double ln(Number value) {
+        if (value == null) {
+            return null;
+        }
+        return Math.log(value.doubleValue());
     }
 
-    private ResolvableExpression handleLn(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            return Math.log(exprDouble);
-        });
-    }
-
-    private ResolvableExpression handleSqrt(VtlParser.ExprContext expr) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            if (exprDouble < 0)
-                throw new VtlRuntimeException(new InvalidArgumentException("Sqrt operand has to be 0 or positive", expr));
-            return Math.sqrt(exprDouble);
-        });
+    public static Double sqrt(Number value) {
+        if (value == null) {
+            return null;
+        }
+        if (value.doubleValue() < 0) {
+            throw new IllegalArgumentException("operand has to be 0 or positive");
+        }
+        return Math.sqrt(value.doubleValue());
     }
 
     /**
@@ -153,44 +125,42 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     @Override
     public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
 
+        List<ResolvableExpression> parameters = List.of(
+                assertNumber(exprVisitor.visit(ctx.expr()), ctx.expr()),
+                ctx.optionalExpr() == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(ctx.optionalExpr()), ctx.optionalExpr())
+        );
         switch (ctx.op.getType()) {
             case VtlParser.ROUND:
-                return handleRound(ctx.expr(), ctx.optionalExpr());
+                return genericFunctionsVisitor.invoke("round", parameters);
             case VtlParser.TRUNC:
-                return handleTrunc(ctx.expr(), ctx.optionalExpr());
+                return genericFunctionsVisitor.invoke("trunc", parameters);
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
     }
 
-    private ResolvableExpression handleRound(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            Long decimalLong = (Long) decimalValue.resolve(context);
-            if (decimalLong == null) return null;
-            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
-            bd = bd.setScale(decimalLong.intValue(), RoundingMode.HALF_UP);
-            return bd.doubleValue();
-        });
+    public static Double round(Number value, Long decimal) {
+        if (decimal == null) {
+            decimal = 0L;
+        }
+        if (value == null) {
+            return null;
+        }
+        BigDecimal bd = new BigDecimal(Double.toString(value.doubleValue()));
+        bd = bd.setScale(decimal.intValue(), RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 
-    private ResolvableExpression handleTrunc(VtlParser.ExprContext expr, VtlParser.OptionalExprContext decimal) {
-        var expression = assertNumber(exprVisitor.visit(expr), expr);
-        var decimalValue = decimal == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(decimal), decimal);
-        return DoubleExpression.of(context -> {
-            Number exprNumber = (Number) expression.resolve(context);
-            if (exprNumber == null) return null;
-            Double exprDouble = exprNumber.doubleValue();
-            Long decimalLong = (Long) decimalValue.resolve(context);
-            if (decimalLong == null) return null;
-            BigDecimal bd = new BigDecimal(Double.toString(exprDouble));
-            bd = bd.setScale(decimalLong.intValue(), RoundingMode.DOWN);
-            return bd.doubleValue();
-        });
+    public static Double trunc(Number value, Long decimal) {
+        if (decimal == null) {
+            decimal = 0L;
+        }
+        if (value == null) {
+            return null;
+        }
+        BigDecimal bd = new BigDecimal(Double.toString(value.doubleValue()));
+        bd = bd.setScale(decimal.intValue(), RoundingMode.DOWN);
+        return bd.doubleValue();
     }
 
     /**
@@ -201,60 +171,47 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      */
     @Override
     public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
-
+        List<ResolvableExpression> parameters = List.of(
+                exprVisitor.visit(ctx.left),
+                exprVisitor.visit(ctx.right)
+        );
         switch (ctx.op.getType()) {
             case VtlParser.MOD:
-                return handleModulo(ctx.left, ctx.right);
+                return genericFunctionsVisitor.invoke("mod", parameters);
             case VtlParser.POWER:
-                return handlePower(ctx.left, ctx.right);
+                return genericFunctionsVisitor.invoke("power", parameters);
             case VtlParser.LOG:
-                return handleLog(ctx.left, ctx.right);
+                return genericFunctionsVisitor.invoke("log", parameters);
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
     }
 
-    private ResolvableExpression handleModulo(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
-        return DoubleExpression.of(context -> {
-            Number leftNumber = (Number) leftExpression.resolve(context);
-            Number rightNumber = (Number) rightExpression.resolve(context);
-            if (leftNumber == null || rightNumber == null) return null;
-            Double leftDouble = leftNumber.doubleValue();
-            Double rightDouble = rightNumber.doubleValue();
-            if (rightDouble.equals(0D)) return leftDouble;
-            return (leftDouble % rightDouble) * (rightDouble < 0 ? -1 : 1);
-        });
+    public static Double mod(Number left, Number right) {
+        if (left == null || right == null) {
+            return null;
+        }
+        if (right.doubleValue() == 0) {
+            return left.doubleValue();
+        }
+        return (left.doubleValue() % right.doubleValue()) * (right.doubleValue() < 0 ? -1 : 1);
     }
 
-    private ResolvableExpression handlePower(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
-        return DoubleExpression.of(context -> {
-            Number leftNumber = (Number) leftExpression.resolve(context);
-            Number rightNumber = (Number) rightExpression.resolve(context);
-            if (leftNumber == null || rightNumber == null) return null;
-            Double leftDouble = leftNumber.doubleValue();
-            Double rightDouble = rightNumber.doubleValue();
-            return Math.pow(leftDouble, rightDouble);
-        });
+    public static Double power(Number left, Number right) {
+        if (left == null || right == null) {
+            return null;
+        }
+        return Math.pow(left.doubleValue(), right.doubleValue());
     }
 
-    private ResolvableExpression handleLog(VtlParser.ExprContext left, VtlParser.ExprContext base) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var baseExpression = assertNumber(exprVisitor.visit(base), base);
-        return DoubleExpression.of(context -> {
-            Number leftNumber = (Number) leftExpression.resolve(context);
-            Number baseNumber = (Number) baseExpression.resolve(context);
-            if (leftNumber == null || baseNumber == null) return null;
-            Double leftDouble = leftNumber.doubleValue();
-            Double baseDouble = baseNumber.doubleValue();
-            if (leftDouble <= 0)
-                throw new VtlRuntimeException(new InvalidArgumentException("Log operand has to be positive", left));
-            if (baseDouble < 1)
-                throw new VtlRuntimeException(new InvalidArgumentException("Log base has to be greater or equal than 1", base));
-            return Math.log(leftDouble) / Math.log(baseDouble);
-        });
+    public static Double log(Number operand, Number base) {
+        if (operand == null || base == null) {
+            return null;
+        }
+        if (operand.doubleValue() <= 0)
+            throw new IllegalArgumentException("operand must be positive");
+        if (base.doubleValue() < 1)
+            throw new IllegalArgumentException("base must be greater or equal than 1");
+        return Math.log(operand.doubleValue()) / Math.log(base.doubleValue());
     }
 }

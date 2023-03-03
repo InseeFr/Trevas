@@ -128,6 +128,10 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public ScriptEngine getScriptEngine() {
-        return new VtlScriptEngine(this);
+        try {
+            return new VtlScriptEngine(this);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

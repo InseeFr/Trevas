@@ -11,10 +11,12 @@ import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.DoubleExpression;
+import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.InstantExpression;
 import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.StringExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
@@ -23,6 +25,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.cert.Extension;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,6 +95,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 throw new RuntimeException("missing parameters");
             }
             for (int i = 0; i < parameters.size(); i++) {
+                if (parameters.get(i).getType().equals(Object.class)) {
+                    continue;
+                }
                 if (!methodParameterTypes[i].isAssignableFrom(parameters.get(i).getType())) {
                     throw new RuntimeException(String.format("invalid parameter type %s, need %s",
                             parameters.get(i).getType(),
@@ -108,7 +114,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
             try {
                 return method.invoke(null, evaluatedParameters);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof RuntimeException) {
+                    throw  (RuntimeException) e.getCause();
+                } else {
+                    throw new RuntimeException(e.getCause());
+                }
+            } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -126,6 +138,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         private final DataStructure structure;
 
         public DatasetFunctionExpression(Method method, DatasetExpression operand) {
+            // TODO: Check that method is serializable.
             Objects.requireNonNull(method);
             this.operand = Objects.requireNonNull(operand);
 
@@ -208,38 +221,26 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
-    public ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
+    public ResolvableExpression invoke(String methodName, List<ResolvableExpression> parameter) {
+        Method method = engine.findMethod(methodName).orElseThrow();
+        return invokeFunction(method, parameter);
+    }
+    
+    private ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
         var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-        var methodParameterTypes = Arrays.asList(method.getParameterTypes());
-        if (methodParameterTypes.equals(parameterTypes)) {
-            // Same signature, invoke directly.
-            return new FunctionExpression(method, parameters);
-        } else if (methodParameterTypes.size() == parameterTypes.size()) {
-            // Type mismatch.
-            if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)) {
-                return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
-            }
-        }
-        if (methodParameterTypes.size() == parameterTypes.size()) {
-            // TODO: TypeMismatch.
-            throw new RuntimeException("TODO: Type Mistmatch");
-        } else if (methodParameterTypes.size() < parameterTypes.size()) {
-            // TODO: Unexpected.
-            throw new RuntimeException("TODO: Unexpected parameter");
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+        if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)) {
+            return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
         } else {
-            // TODO: Missing.
-            throw new RuntimeException("TODO: Missing parameter");
+            return new FunctionExpression(method, parameters);
         }
     }
 
-    private ResolvableExpression invokeFunctionWithDataset(Method method, DatasetExpression datasetExpression) {
-        return null;
-    }
 
     @Override
     public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
         // Strange name, this is the generic function syntax; fnName ( param, * ).
-
         // TODO: Use parameters to find functions so we can override them.
         Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
             throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));

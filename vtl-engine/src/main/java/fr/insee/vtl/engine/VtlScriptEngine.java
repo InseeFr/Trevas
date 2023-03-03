@@ -1,13 +1,14 @@
 package fr.insee.vtl.engine;
 
+import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -34,7 +35,9 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -59,12 +62,26 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private final ScriptEngineFactory factory;
     private Map<String, Method> methodCache;
 
+    public Set<Method> NATIVE_METHODS = Set.of(
+            Fun.toMethod(NumericFunctionsVisitor::ceil),
+            Fun.toMethod(NumericFunctionsVisitor::floor),
+            Fun.toMethod(NumericFunctionsVisitor::abs),
+            Fun.toMethod(NumericFunctionsVisitor::exp),
+            Fun.toMethod(NumericFunctionsVisitor::ln),
+            Fun.toMethod(NumericFunctionsVisitor::sqrt),
+            Fun.toMethod(NumericFunctionsVisitor::round),
+            Fun.toMethod(NumericFunctionsVisitor::trunc),
+            Fun.toMethod(NumericFunctionsVisitor::mod),
+            Fun.toMethod(NumericFunctionsVisitor::power),
+            Fun.toMethod(NumericFunctionsVisitor::log)
+    );
+
     /**
      * Constructor taking a script engine factory.
      *
      * @param factory The script engine factory associated to the script engine to create.
      */
-    public VtlScriptEngine(ScriptEngineFactory factory) {
+    public VtlScriptEngine(ScriptEngineFactory factory) throws NoSuchMethodException {
         this.factory = factory;
     }
 
@@ -210,6 +227,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public Optional<Method> findMethod(String name) {
+        for (Method method : NATIVE_METHODS) {
+            if (method.getName().equals(name)) {
+                return Optional.of(method);
+            }
+        }
         if (methodCache == null) {
             loadMethods();
         }

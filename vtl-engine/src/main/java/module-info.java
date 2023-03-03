@@ -34,6 +34,7 @@ module fr.insee.vtl.engine {
     // TODO: Consider removing these.
     requires org.apache.commons.lang3;
     requires org.apache.commons.text;
+    requires safety.mirror;
 
     provides ScriptEngineFactory with VtlScriptEngineFactory;
 
