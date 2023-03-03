@@ -71,11 +71,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
     }
-    public static Double ceil(Number value) {
+    public static Long ceil(Number value) {
         if (value == null) {
             return null;
         }
-        return Math.ceil(value.doubleValue());
+        return (long) Math.ceil(value.doubleValue());
     }
 
     public static Long floor(Number value) {
