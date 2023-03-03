@@ -12,13 +12,11 @@ import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.model.Structured;
 import org.assertj.core.api.Condition;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,19 +28,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.registerCustomDateFormat;
 
 public class VtlScriptEngineTest {
 
@@ -81,15 +72,6 @@ public class VtlScriptEngineTest {
         assertThat(processingEngines).isNotNull();
     }
 
-    public static class MathFunctions {
-        public static Double ceil(Double op) {
-            if (op == null) {
-                return null;
-            }
-            return Math.ceil(op);
-        }
-    }
-
     @Test
     public void testFunctions2() throws NoSuchMethodException, ScriptException {
 
@@ -106,24 +88,14 @@ public class VtlScriptEngineTest {
         var dsOperand = DatasetExpression.of(ds);
 
         var ceilMethod = MathFunctions.class.getMethod("ceil", Double.class);
-        var ceilDsExpression = new GenericFunctionsVisitor.DatasetFunctionExpression(ceilMethod, dsOperand);
-        Dataset resolve = ceilDsExpression.resolve(Map.of());
-        System.out.println(resolve.getDataAsMap());
 
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
-        engine.registerMethod("ceil2", ceilMethod);
+        engine.registerMethod("myCustomCeil", ceilMethod);
         ScriptContext context = engine.getContext();
         context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
 
-        Object res1 = engine.eval("res1 := ceil(ds);");
+        Object res1 = engine.eval("res := myCustomCeil(ds);");
         assertThat(res1).isNotNull();
-        System.out.println("Builtin");
-        System.out.println(((Dataset) res1).getDataAsMap());
-
-        Object res2 = engine.eval("res2 := abs( ceil( ceil2( ds ) ) );");
-        assertThat(res2).isNotNull();
-        System.out.println("Custom");
-        System.out.println(((Dataset) res2).getDataAsMap());
     }
 
     @Test
@@ -185,6 +157,15 @@ public class VtlScriptEngineTest {
 
         var res = in.readObject();
         System.out.println(res);
+    }
+
+    public static class MathFunctions {
+        public static Double ceil(Double op) {
+            if (op == null) {
+                return null;
+            }
+            return Math.ceil(op);
+        }
     }
 
 }
