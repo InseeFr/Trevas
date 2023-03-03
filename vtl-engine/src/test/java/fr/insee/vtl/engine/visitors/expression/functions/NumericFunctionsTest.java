@@ -2,6 +2,9 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,12 +13,25 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class NumericFunctionsTest {
 
+    InMemoryDataset ds = new InMemoryDataset(
+            List.of(
+                    new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
+                    new Structured.Component("weight", Double.class, Dataset.Role.MEASURE),
+                    new Structured.Component("other", String.class, Dataset.Role.MEASURE)
+            ),
+            Arrays.asList("Toto", 30, 12.2, "a"),
+            Arrays.asList("Hadrien", 40, 1.4, "b"),
+            Arrays.asList("Nico", 50, 12.34, "c")
+    );
     private ScriptEngine engine;
 
     @BeforeEach
@@ -79,10 +95,18 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-3L);
         engine.eval("d := ceil(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(0L);
+        // TODO deal only on compatible columns, return identity for others
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := ceil(ds);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "age", 30L, "weight", 13L, "other", "a"),
+//                Map.of("name", "Hadrien", "age", 40L, "weight", 2L, "other", "b"),
+//                Map.of("name", "Nico", "age", 50L, "weight", 13L, "other", "c")
+//        );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Number");
+        }).isInstanceOf(RuntimeException.class)
+                .hasMessage("invalid parameter type class java.lang.String, need class java.lang.Number");
     }
 
     @Test
@@ -111,8 +135,8 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Number");
+        }).isInstanceOf(RuntimeException.class)
+                .hasMessage("invalid parameter type class java.lang.String, need class java.lang.Number");
     }
 
     @Test
