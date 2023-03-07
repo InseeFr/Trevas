@@ -170,11 +170,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             // TODO: test with function that changes the type.
             Map<Component, ResolvableExpression> parameters = new LinkedHashMap<>();
             for (Component component : operand.getDataStructure().values()) {
-                if (!component.isMeasure()) {
+                if (!component.isMeasure() || !parameterType.isAssignableFrom(component.getType())) {
                     continue;
-                }
-                if (!parameterType.isAssignableFrom(component.getType())) {
-                    throw new RuntimeException("invalid type");
                 }
                 parameters.put(component, new GenericFunctionsVisitor.FunctionExpression(method, List.of(new ComponentExpression(component))));
             }
