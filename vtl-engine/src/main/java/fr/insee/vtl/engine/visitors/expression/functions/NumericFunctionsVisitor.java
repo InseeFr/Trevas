@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 /**
  * <code>NumericFunctionsVisitor</code> is the visitor for expressions involving numeric functions.
@@ -43,34 +42,6 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    /**
-     * Visits a 'unaryNumeric' expressi
-     * on.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a double.
-     */
-    @Override
-    public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
-        VtlParser.ExprContext expr = ctx.expr();
-        List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
-        switch (ctx.op.getType()) {
-            case VtlParser.CEIL:
-                return genericFunctionsVisitor.invoke("ceil", parameter);
-            case VtlParser.FLOOR:
-                return genericFunctionsVisitor.invoke("floor", parameter);
-            case VtlParser.ABS:
-                return genericFunctionsVisitor.invoke("abs", parameter);
-            case VtlParser.EXP:
-                return genericFunctionsVisitor.invoke("exp", parameter);
-            case VtlParser.LN:
-                return genericFunctionsVisitor.invoke("ln", parameter);
-            case VtlParser.SQRT:
-                return genericFunctionsVisitor.invoke("sqrt", parameter);
-            default:
-                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-        }
-    }
     public static Long ceil(Number value) {
         if (value == null) {
             return null;
@@ -116,29 +87,6 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         return Math.sqrt(value.doubleValue());
     }
 
-    /**
-     * Visits a 'unaryWithOptionalNumeric' expression.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a double).
-     */
-    @Override
-    public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
-
-        List<ResolvableExpression> parameters = List.of(
-                assertNumber(exprVisitor.visit(ctx.expr()), ctx.expr()),
-                ctx.optionalExpr() == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(ctx.optionalExpr()), ctx.optionalExpr())
-        );
-        switch (ctx.op.getType()) {
-            case VtlParser.ROUND:
-                return genericFunctionsVisitor.invoke("round", parameters);
-            case VtlParser.TRUNC:
-                return genericFunctionsVisitor.invoke("trunc", parameters);
-            default:
-                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-        }
-    }
-
     public static Double round(Number value, Long decimal) {
         if (decimal == null) {
             decimal = 0L;
@@ -161,30 +109,6 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         BigDecimal bd = new BigDecimal(Double.toString(value.doubleValue()));
         bd = bd.setScale(decimal.intValue(), RoundingMode.DOWN);
         return bd.doubleValue();
-    }
-
-    /**
-     * Visits a 'binaryNumeric' expression.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to a double.
-     */
-    @Override
-    public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
-        List<ResolvableExpression> parameters = List.of(
-                exprVisitor.visit(ctx.left),
-                exprVisitor.visit(ctx.right)
-        );
-        switch (ctx.op.getType()) {
-            case VtlParser.MOD:
-                return genericFunctionsVisitor.invoke("mod", parameters);
-            case VtlParser.POWER:
-                return genericFunctionsVisitor.invoke("power", parameters);
-            case VtlParser.LOG:
-                return genericFunctionsVisitor.invoke("log", parameters);
-            default:
-                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-        }
     }
 
     public static Double mod(Number left, Number right) {
@@ -213,5 +137,81 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         if (base.doubleValue() < 1)
             throw new IllegalArgumentException("base must be greater or equal than 1");
         return Math.log(operand.doubleValue()) / Math.log(base.doubleValue());
+    }
+
+    /**
+     * Visits a 'unaryNumeric' expressi
+     * on.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a double.
+     */
+    @Override
+    public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
+        VtlParser.ExprContext expr = ctx.expr();
+        List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
+        switch (ctx.op.getType()) {
+            case VtlParser.CEIL:
+                return genericFunctionsVisitor.invoke("ceil", parameter);
+            case VtlParser.FLOOR:
+                return genericFunctionsVisitor.invoke("floor", parameter);
+            case VtlParser.ABS:
+                return genericFunctionsVisitor.invoke("abs", parameter);
+            case VtlParser.EXP:
+                return genericFunctionsVisitor.invoke("exp", parameter);
+            case VtlParser.LN:
+                return genericFunctionsVisitor.invoke("ln", parameter);
+            case VtlParser.SQRT:
+                return genericFunctionsVisitor.invoke("sqrt", parameter);
+            default:
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+        }
+    }
+
+    /**
+     * Visits a 'unaryWithOptionalNumeric' expression.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a double).
+     */
+    @Override
+    public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
+
+        List<ResolvableExpression> parameters = List.of(
+                exprVisitor.visit(ctx.expr()),
+                ctx.optionalExpr() == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(ctx.optionalExpr()), ctx.optionalExpr())
+        );
+        switch (ctx.op.getType()) {
+            case VtlParser.ROUND:
+                return genericFunctionsVisitor.invoke("round", parameters);
+            case VtlParser.TRUNC:
+                return genericFunctionsVisitor.invoke("trunc", parameters);
+            default:
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+        }
+    }
+
+    /**
+     * Visits a 'binaryNumeric' expression.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to a double.
+     */
+    @Override
+    public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
+        List<ResolvableExpression> parameters = List.of(
+                exprVisitor.visit(ctx.left),
+                exprVisitor.visit(ctx.right)
+        );
+        switch (ctx.op.getType()) {
+            case VtlParser.MOD:
+                return genericFunctionsVisitor.invoke("mod", parameters);
+            case VtlParser.POWER:
+                return genericFunctionsVisitor.invoke("power", parameters);
+            case VtlParser.LOG:
+                return genericFunctionsVisitor.invoke("log", parameters);
+            default:
+                throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+        }
     }
 }
