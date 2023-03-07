@@ -1,7 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -26,12 +24,12 @@ public class NumericFunctionsTest {
             List.of(
                     new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
-                    new Structured.Component("weight", Double.class, Dataset.Role.MEASURE),
-                    new Structured.Component("other", String.class, Dataset.Role.MEASURE)
+                    new Structured.Component("meas_double", Double.class, Dataset.Role.MEASURE),
+                    new Structured.Component("meas_string", String.class, Dataset.Role.MEASURE)
             ),
             Arrays.asList("Toto", 30, 12.2, "a"),
             Arrays.asList("Hadrien", 40, 1.4, "b"),
-            Arrays.asList("Nico", 50, 12.34, "c")
+            Arrays.asList("Nico", 50, -12.34, "c")
     );
     private ScriptEngine engine;
 
@@ -99,9 +97,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ceil(ds);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "age", 30L, "weight", 13L, "other", "a"),
-                Map.of("name", "Hadrien", "age", 40L, "weight", 2L, "other", "b"),
-                Map.of("name", "Nico", "age", 50L, "weight", 13L, "other", "c")
+                Map.of("name", "Toto", "age", 30L, "meas_double", 13L, "meas_string", "a"),
+                Map.of("name", "Hadrien", "age", 40L, "meas_double", 2L, "meas_string", "b"),
+                Map.of("name", "Nico", "age", 50L, "meas_double", -12L, "meas_string", "c")
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
@@ -120,6 +118,13 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-4L);
         engine.eval("d := floor(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(-1L);
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(ds);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("name", "Toto", "age", 30L, "meas_double", 12L, "meas_string", "a"),
+                Map.of("name", "Hadrien", "age", 40L, "meas_double", 1L, "meas_string", "b"),
+                Map.of("name", "Nico", "age", 50L, "meas_double", -13L, "meas_string", "c")
+        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("e := floor(\"ko\");");
@@ -134,6 +139,13 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(5.5D);
         engine.eval("b := abs(-5.5);");
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := abs(ds);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
+                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
+                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
+        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("c := abs(\"ko\");");
@@ -152,6 +164,13 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(1D);
         engine.eval("d := exp(-1);");
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(0.367D, Percentage.withPercentage(1));
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(exp(ds[drop age]));");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("name", "Toto", "meas_double", 198789L, "meas_string", "a"),
+                Map.of("name", "Hadrien", "meas_double", 4L, "meas_string", "b"),
+                Map.of("name", "Nico", "meas_double", 0L, "meas_string", "c")
+        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("e := exp(\"ko\");");
@@ -170,6 +189,13 @@ public class NumericFunctionsTest {
         assertThat(((Double) context.getAttribute("c"))).isCloseTo(0D, Percentage.withPercentage(1));
         engine.eval("d := ln(0.5);");
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(-0.69D, Percentage.withPercentage(1));
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(ln(abs(ds[drop age])));");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("name", "Toto", "meas_double", 2L, "meas_string", "a"),
+                Map.of("name", "Hadrien", "meas_double", 0L, "meas_string", "b"),
+                Map.of("name", "Nico", "meas_double", 2L, "meas_string", "c")
+        );
         // TODO: Rework exception handling
 //                assertThatThrownBy(() -> {
 //            engine.eval("e := ln(\"ko\");");
@@ -190,6 +216,15 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12346D);
         engine.eval("e := round(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12350D);
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := round(ds);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
+//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
+//                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
+//        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("f := round(\"ko\", 2);");
@@ -214,6 +249,15 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12345D);
         engine.eval("e := trunc(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12340D);
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := trunc(ds);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "age", 30D, "meas_double", 12D, "meas_string", "a"),
+//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1D, "meas_string", "b"),
+//                Map.of("name", "Nico", "age", 50D, "meas_double", 12D, "meas_string", "c")
+//        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("f := trunc(\"ko\", 2);");
@@ -232,6 +276,13 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(5D);
         engine.eval("c := sqrt(0);");
         assertThat(context.getAttribute("c")).isEqualTo(0D);
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := ceil(sqrt(abs(ds[drop age])));");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("name", "Toto", "meas_double", 4L, "meas_string", "a"),
+                Map.of("name", "Hadrien", "meas_double", 2L, "meas_string", "b"),
+                Map.of("name", "Nico", "meas_double", 4L, "meas_string", "c")
+        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("e := sqrt(-25);");
@@ -254,6 +305,15 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(0D);
         engine.eval("d := mod(9, 0);");
         assertThat(context.getAttribute("d")).isEqualTo(9D);
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := mod(ds, 0);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
+//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
+//                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
+//        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("e := mod(10, \"ko\");");
@@ -278,6 +338,15 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(0.2D);
         engine.eval("e := power(-5, 3);");
         assertThat(context.getAttribute("e")).isEqualTo(-125D);
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := power(ds[drop age], 2);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "meas_double", 12.2D, "meas_string", "a"),
+//                Map.of("name", "Hadrien", "meas_double", 1.4D, "meas_string", "b"),
+//                Map.of("name", "Nico", "meas_double", 12.34D, "meas_string", "c")
+//        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("f := power(10, \"ko\");");
@@ -296,6 +365,15 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(10D);
         engine.eval("b := log(1024, 10);");
         assertThat(((Double) context.getAttribute("b"))).isCloseTo(3.01D, Percentage.withPercentage(0.01));
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := log(abs(ds[drop age]), 2);");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("name", "Toto", "meas_double", 12.2D, "meas_string", "a"),
+//                Map.of("name", "Hadrien", "meas_double", 1.4D, "meas_string", "b"),
+//                Map.of("name", "Nico", "meas_double", 12.34D, "meas_string", "c")
+//        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
 //            engine.eval("c := log(1024, 0);");
