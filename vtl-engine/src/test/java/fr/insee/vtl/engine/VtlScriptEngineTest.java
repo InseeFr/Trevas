@@ -85,7 +85,6 @@ public class VtlScriptEngineTest {
                 Arrays.asList("Hadrien", 12.34, 12.34),
                 Arrays.asList("Nico", 12.34, 12.34)
         );
-        var dsOperand = DatasetExpression.of(ds);
 
         var ceilMethod = MathFunctions.class.getMethod("ceil", Double.class);
 

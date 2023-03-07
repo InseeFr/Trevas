@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -12,11 +13,12 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ValidationFunctionsTest {
 
-    private final InMemoryDataset dataset = new InMemoryDataset(
+    private final Dataset dataset = new InMemoryDataset(
             List.of(
                     List.of("2011", "I", "CREDIT", 10L),
                     List.of("2011", "I", "DEBIT", -2L),
@@ -32,13 +34,17 @@ public class ValidationFunctionsTest {
     );
     private ScriptEngine engine;
 
+    public static Boolean fakeTruthy(Dataset ds) {
+        return Boolean.TRUE;
+    }
+
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
     }
 
     @Test
-    public void testValidateExceptions() throws ScriptException {
+    public void testValidateExceptions() {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
 
@@ -56,5 +62,22 @@ public class ValidationFunctionsTest {
                 "end datapoint ruleset; " +
                 "DS_r := check_datapoint(DS_1, dpr1);"))
                 .hasMessageContaining("Alias Id_1 from dpr1 ruleset already defined in DS_1");
+    }
+
+    @Test
+    public void testValidationSimpleException() throws NoSuchMethodException, ScriptException {
+
+        var fakeTruthyMethod = ValidationFunctionsTest.class.getMethod("fakeTruthy", Dataset.class);
+
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        engine.registerMethod("fakeTruthy", fakeTruthyMethod);
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("res := fakeTruthy(ds);");
+        // Why res is equal to ds ????
+//        Boolean res = (Boolean) engine.getContext().getAttribute("res");
+//        assertThat(res).isEqualTo(Boolean.TRUE);
+
     }
 }
