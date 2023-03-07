@@ -7,6 +7,7 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -34,6 +35,48 @@ public class ValidationTest {
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final InMemoryDataset ds_1_check = new InMemoryDataset(
+            List.of(
+                    List.of("2010", "I", 1L),
+                    List.of("2011", "I", 2L),
+                    List.of("2012", "I", 10L),
+                    List.of("2013", "I", 4L),
+                    List.of("2014", "I", 5L),
+                    List.of("2015", "I", 6L),
+                    List.of("2010", "D", 25L),
+                    List.of("2011", "D", 35L),
+                    List.of("2012", "D", 45L),
+                    List.of("2013", "D", 55L),
+                    List.of("2014", "D", 50L),
+                    List.of("2015", "D", 75L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final InMemoryDataset ds_2_check = new InMemoryDataset(
+            List.of(
+                    List.of("2010", "I", 9L),
+                    List.of("2011", "I", 2L),
+                    List.of("2012", "I", 10L),
+                    List.of("2013", "I", 7L),
+                    List.of("2014", "I", 5L),
+                    List.of("2015", "I", 6L),
+                    List.of("2010", "D", 50L),
+                    List.of("2011", "D", 35L),
+                    List.of("2012", "D", 40L),
+                    List.of("2013", "D", 55L),
+                    List.of("2014", "D", 65L),
+                    List.of("2015", "D", 75L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
@@ -183,6 +226,79 @@ public class ValidationTest {
                         "Me_1", -2L, "ruleid", "dpr1_2",
                         "errorcode", "Bad debit", "errorlevel", "null")
         );
+    }
+
+    @Disabled
+    @Test
+    public void testCheck() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", ds_1_check, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds_2_check, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2);" +
+                "ds1 := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2 invalid);");
+
+        var ds = (Dataset) engine.getContext().getAttribute("ds");
+        assertThat(ds).isInstanceOf(Dataset.class);
+
+        List<Map<String, Object>> dsWithNull = ds.getDataAsMap();
+        List<Map<String, Object>> dsWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsWithNull) {
+            dsWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2011", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2012", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2013", "Id_2", "I", "bool_var", false,
+                        "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2014", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2015", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "bool_var", false,
+                        "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2011", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2012", "Id_2", "D", "bool_var", true,
+                        "imbalance", 5L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2013", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
+                        "imbalance", -15L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2015", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null")));
+        assertThat(ds.getDataStructure()).containsValues(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
+        );
+
+        var ds1 = (Dataset) engine.getContext().getAttribute("ds1");
+        assertThat(ds1).isInstanceOf(Dataset.class);
+
+        List<Map<String, Object>> ds1WithNull = ds.getDataAsMap();
+        List<Map<String, Object>> ds1WithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : ds1WithNull) {
+            ds1WithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(ds1WithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2013", "Id_2", "I", "bool_var", false,
+                        "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2010", "Id_2", "D", "bool_var", false,
+                        "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
+                        "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
 
     }
 }

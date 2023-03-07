@@ -87,6 +87,24 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         return processingEngine.executeValidateDPruleset(dpr, ds, output);
     }
 
+    /**
+     * Visits a datasets to validate.
+     *
+     * @param ctx The scripting context for the expression...
+     * @return A <code>ResolvableExpression</code> resolving to...
+     */
+    @Override
+    public ResolvableExpression visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
+        DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
+                Dataset.class, ctx.expr());
+        ResolvableExpression erCodeExpression = expressionVisitor.visit(ctx.erCode());
+        ResolvableExpression erLevelExpression = expressionVisitor.visit(ctx.erLevel());
+        DatasetExpression imbalanceExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.imbalanceExpr()),
+                Dataset.class, ctx.imbalanceExpr());
+        String output = ctx.output != null ? ctx.output.getText() : null;
+        return processingEngine.executeValidationSimple(dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output);
+    }
+
     private String getValidationOutput(VtlParser.ValidationOutputContext voc) {
         if (null == voc) return null;
         return voc.getText();
