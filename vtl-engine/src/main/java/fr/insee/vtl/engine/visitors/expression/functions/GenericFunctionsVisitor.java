@@ -2,10 +2,8 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.Dataset;
@@ -25,7 +23,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.cert.Extension;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,6 +74,85 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
+    public ResolvableExpression invoke(String methodName, List<ResolvableExpression> parameter) {
+        Method method = engine.findMethod(methodName).orElseThrow();
+        return invokeFunction(method, parameter);
+    }
+
+    private ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
+        var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+        // TODO: Method with more that one dataset parameters.
+        //          ie: parameterTypes.contains(Dataset.class)
+        List<Class<?>> methodClasses = Arrays.asList(method.getParameterTypes());
+        if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)
+                && methodClasses.get(0) != Dataset.class) {
+            return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
+        } else {
+            return new FunctionExpression(method, parameters);
+        }
+    }
+
+    @Override
+    public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
+        // Strange name, this is the generic function syntax; fnName ( param, * ).
+        // TODO: Use parameters to find functions so we can override them.
+        Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
+            throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
+        });
+        List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
+        return invokeFunction(method, parameters);
+    }
+
+    /**
+     * Visits expressions with cast operators.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the result of the cast operation.
+     */
+    @Override
+    public ResolvableExpression visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
+        ResolvableExpression expression = exprVisitor.visit(ctx.expr());
+        TerminalNode maskNode = ctx.STRING_CONSTANT();
+        // STRING_CONSTANT().getText return null or a string wrapped by quotes
+        String mask = maskNode == null ? null :
+                maskNode.getText()
+                        .replaceAll("\"", "")
+                        .replace("YYYY", "yyyy")
+                        .replace("DD", "dd");
+        Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
+        Integer basicScalarType = symbol.getType();
+        String basicScalarText = symbol.getText();
+
+        Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
+
+        if (Object.class.equals(expression.getType())) {
+            return ResolvableExpression.ofType(outputClass, null);
+        }
+        if (String.class.equals(expression.getType())) {
+            return StringExpression.castTo(expression, outputClass, mask);
+            // Antlr context is not serializable
+            // TODO: Find a way to make ctx serializable
+            //        .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
+            //                new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
+        }
+        if (Boolean.class.equals(expression.getType())) {
+            return BooleanExpression.castTo(expression, outputClass);
+        }
+        if (Long.class.equals(expression.getType())) {
+            return LongExpression.castTo(expression, outputClass);
+        }
+        if (Double.class.equals(expression.getType())) {
+            return DoubleExpression.castTo(expression, outputClass);
+        }
+        if (Instant.class.equals(expression.getType())) {
+            if (mask == null || mask.isEmpty()) {
+                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", ctx));
+            }
+            return InstantExpression.castTo(expression, outputClass, mask);
+        }
+        throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
+    }
+
     // TODO: Extract to model.
     public static class FunctionExpression implements ResolvableExpression {
 
@@ -116,7 +192,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 return method.invoke(null, evaluatedParameters);
             } catch (InvocationTargetException e) {
                 if (e.getCause() instanceof RuntimeException) {
-                    throw  (RuntimeException) e.getCause();
+                    throw (RuntimeException) e.getCause();
                 } else {
                     throw new RuntimeException(e.getCause());
                 }
@@ -217,84 +293,6 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         public Class<?> getType() {
             return component.getType();
         }
-    }
-
-    public ResolvableExpression invoke(String methodName, List<ResolvableExpression> parameter) {
-        Method method = engine.findMethod(methodName).orElseThrow();
-        return invokeFunction(method, parameter);
-    }
-    
-    private ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
-        var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-        if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)) {
-            return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
-        } else {
-            return new FunctionExpression(method, parameters);
-        }
-    }
-
-
-    @Override
-    public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
-        // Strange name, this is the generic function syntax; fnName ( param, * ).
-        // TODO: Use parameters to find functions so we can override them.
-        Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
-            throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
-        });
-        List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-        return invokeFunction(method, parameters);
-    }
-
-    /**
-     * Visits expressions with cast operators.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to the result of the cast operation.
-     */
-    @Override
-    public ResolvableExpression visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
-        ResolvableExpression expression = exprVisitor.visit(ctx.expr());
-        TerminalNode maskNode = ctx.STRING_CONSTANT();
-        // STRING_CONSTANT().getText return null or a string wrapped by quotes
-        String mask = maskNode == null ? null :
-                maskNode.getText()
-                        .replaceAll("\"", "")
-                        .replace("YYYY", "yyyy")
-                        .replace("DD", "dd");
-        Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
-        Integer basicScalarType = symbol.getType();
-        String basicScalarText = symbol.getText();
-
-        Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
-
-        if (Object.class.equals(expression.getType())) {
-            return ResolvableExpression.ofType(outputClass, null);
-        }
-        if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass, mask);
-            // Antlr context is not serializable
-            // TODO: Find a way to make ctx serializable
-            //        .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
-            //                new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
-        }
-        if (Boolean.class.equals(expression.getType())) {
-            return BooleanExpression.castTo(expression, outputClass);
-        }
-        if (Long.class.equals(expression.getType())) {
-            return LongExpression.castTo(expression, outputClass);
-        }
-        if (Double.class.equals(expression.getType())) {
-            return DoubleExpression.castTo(expression, outputClass);
-        }
-        if (Instant.class.equals(expression.getType())) {
-            if (mask == null || mask.isEmpty()) {
-                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", ctx));
-            }
-            return InstantExpression.castTo(expression, outputClass, mask);
-        }
-        throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }
 
 }
