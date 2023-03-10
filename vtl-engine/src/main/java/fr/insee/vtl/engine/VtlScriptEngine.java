@@ -35,9 +35,11 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.ServiceLoader;
 import java.util.Set;
+
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromToken;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -132,10 +134,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                 @Override
                 public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int startLine, int startColumn, String msg, RecognitionException e) {
                     if (e != null && e.getCtx() != null) {
-                        errors.add(new VtlScriptException(msg, e.getCtx()));
+                        errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
                     } else {
                         if (offendingSymbol instanceof Token) {
-                            errors.add(new VtlSyntaxException(msg, (Token) offendingSymbol));
+                            errors.add(new VtlSyntaxException(msg, fromToken((Token) offendingSymbol)));
                         } else {
                             throw new Error("offendingSymbol was not a Token");
                         }

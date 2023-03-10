@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+
 public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private final ProcessingEngine processingEngine;
@@ -71,7 +73,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return Analytics.Function.RANK;
             default:
                 throw new VtlRuntimeException(
-                        new InvalidArgumentException("not an analytic function", ctx)
+                        new InvalidArgumentException("not an analytic function", fromContext(ctx))
                 );
         }
     }
@@ -151,7 +153,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         } else if (ctx.INTEGER_CONSTANT() != null) {
             return Long.parseLong(ctx.getChild(0).getText());
         }
-        throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
+        throw new VtlRuntimeException(new VtlScriptException("invalid range", fromContext(ctx)));
     }
 
     private String toTargetColName(VtlParser.ExprContext expr) {

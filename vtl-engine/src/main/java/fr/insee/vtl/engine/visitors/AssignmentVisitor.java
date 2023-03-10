@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
  */
@@ -83,7 +85,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         List<Class> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErCodeTypes.size() > 1) {
             throw new VtlRuntimeException(
-                    new InvalidArgumentException("Error codes of rules have different types", ctx)
+                    new InvalidArgumentException("Error codes of rules have different types", fromContext(ctx))
             );
         }
         Class erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
@@ -96,7 +98,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         List<Class> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErLevelTypes.size() > 1) {
             throw new VtlRuntimeException(
-                    new InvalidArgumentException("Error levels of rules have different types", ctx)
+                    new InvalidArgumentException("Error levels of rules have different types", fromContext(ctx))
             );
         }
         Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();

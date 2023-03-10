@@ -41,6 +41,6 @@ public class DistanceFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("z := levenshtein(1, \"test\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 1 to be String");
+                .hasMessage("invalid type Long, expected String");
     }
 }

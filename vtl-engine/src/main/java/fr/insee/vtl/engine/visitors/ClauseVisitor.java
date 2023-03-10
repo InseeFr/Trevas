@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 /**
@@ -105,7 +106,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.varSamp(numberExpression);
         } else {
-            throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+            throw new VtlRuntimeException(new VtlScriptException("not implemented", fromContext(groupFunctionCtx)));
         }
     }
 
@@ -176,7 +177,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var fromNameString = getName(renameCtx.fromName);
             if (!renamed.add(toNameString)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("duplicate column: %s", toNameString), renameCtx
+                        String.format("duplicate column: %s", toNameString), fromContext(renameCtx)
                 ));
             }
             fromTo.put(fromNameString, toNameString);

@@ -9,6 +9,7 @@ import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 
@@ -63,7 +64,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (!thenExpression.getType().equals(elseExpression.getType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(thenExpression.getType(), elseExpression.getType(), ctx.elseExpr)
+                    new InvalidTypeException(thenExpression.getType(), elseExpression.getType(), fromContext(ctx.elseExpr))
             );
         }
 
@@ -99,7 +100,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (!expressionType.equals(defaultExpressionType)) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(expressionType, defaultExpressionType, ctx.right)
+                    new InvalidTypeException(expressionType, defaultExpressionType, fromContext(ctx.right))
             );
         }
 

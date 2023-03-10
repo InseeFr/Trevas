@@ -99,7 +99,7 @@ public class ComparisonExprTest {
         assertThatThrownBy(() -> {
             engine.eval("s := \"ok\" <> true;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected true to be String");
+                .hasMessage("invalid type Boolean, expected String");
     }
 
     @Test

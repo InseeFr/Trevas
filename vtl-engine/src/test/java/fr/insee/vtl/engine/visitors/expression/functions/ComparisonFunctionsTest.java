@@ -49,7 +49,7 @@ public class ComparisonFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("b := between(10.5, \"ko\", true);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected 10.5 to be String");
+                .hasMessage("invalid type Double, expected String");
     }
 
     @Test
@@ -66,11 +66,11 @@ public class ComparisonFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("t := match_characters(\"test\", true);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected true to be String");
+                .hasMessage("invalid type Boolean, expected String");
         assertThatThrownBy(() -> {
             engine.eval("t := match_characters(10.5, \"pattern\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected 10.5 to be String");
+                .hasMessage("invalid type Double, expected String");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.exceptions;
 
+import fr.insee.vtl.model.Positioned;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
@@ -11,10 +12,10 @@ public class InvalidArgumentException extends VtlScriptException {
      * Constructor taking the parsing context and the message.
      *
      * @param message The exception message.
-     * @param tree    The parsing context where the exception is thrown.
+     * @param position    The parsing context where the exception is thrown.
      */
-    public InvalidArgumentException(String message, ParseTree tree) {
-        super(message, tree);
+    public InvalidArgumentException(String message, Positioned position) {
+        super(message, position);
     }
 
 }

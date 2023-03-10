@@ -8,9 +8,7 @@ import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -48,10 +46,10 @@ public class VtlScriptEngineTest {
         return new Condition<>(throwable -> {
             var scriptException = (VtlScriptException) throwable;
             var position = scriptException.getPosition();
-            return position.getStartLine().equals(startLine) &&
-                    position.getEndLine().equals(endLine) &&
-                    position.getStartColumn().equals(startColumn) &&
-                    position.getEndColumn().equals(endColumn);
+            return position.startLine.equals(startLine) &&
+                    position.endLine.equals(endLine) &&
+                    position.startColumn.equals(startColumn) &&
+                    position.endColumn.equals(endColumn);
         }, "at position <%d:%d-%d:%d>",
                 startLine, endLine, startColumn, endColumn);
     }
@@ -110,7 +108,7 @@ public class VtlScriptEngineTest {
                     "10);");
         }).isInstanceOf(InvalidTypeException.class)
                 .is(atPosition(0, 1, 16, 3))
-                .hasMessage("invalid type Long, expected (10+10) to be Boolean");
+                .hasMessage("invalid type Long, expected Boolean");
     }
 
     @Test

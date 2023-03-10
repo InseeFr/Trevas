@@ -111,11 +111,11 @@ public class StringFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",1,\"ok\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 1 to be String");
+                .hasMessage("invalid type Long, expected String");
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",\"ok\",true);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected true to be String");
+                .hasMessage("invalid type Boolean, expected String");
     }
 
     @Test
@@ -133,14 +133,14 @@ public class StringFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("re1 := instr(\"abc\",1);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 1 to be String");
+                .hasMessage("invalid type Long, expected String");
         assertThatThrownBy(() -> {
             engine.eval("re2 := instr(\"abc\", \"c\", \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Long");
+                .hasMessage("invalid type String, expected Long");
         assertThatThrownBy(() -> {
             engine.eval("re2 := instr(\"abc\", \"c\", 1, \"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Long");
+                .hasMessage("invalid type String, expected Long");
     }
 }

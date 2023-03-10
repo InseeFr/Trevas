@@ -16,6 +16,7 @@ import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 /**
@@ -54,7 +55,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         Object dprObject = engine.getContext().getAttribute((dprName));
         String output = getValidationOutput(ctx.validationOutput());
         if (!(dprObject instanceof DataPointRuleset))
-            throw new VtlRuntimeException(new UndefinedVariableException(ctx.IDENTIFIER()));
+            throw new VtlRuntimeException(new UndefinedVariableException(dprName, fromContext(ctx)));
         DataPointRuleset dpr = (DataPointRuleset) dprObject;
 
         DatasetExpression ds = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.op),
@@ -66,7 +67,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
             if (!dataStructure.containsKey(v)) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Variable " + v +
-                                " not contained in " + ctx.op.getText(), ctx.op)
+                                " not contained in " + ctx.op.getText(), fromContext(ctx))
                 );
             }
         });
@@ -78,8 +79,8 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                         throw new VtlRuntimeException(
                                 new InvalidArgumentException("Alias " + v +
                                         " from " + dprName + " ruleset already defined in " +
-                                        ctx.op.getText(), ctx.op)
-                        );
+                                        ctx.op.getText(), fromContext(ctx))
+                                );
                     }
                 }
         );

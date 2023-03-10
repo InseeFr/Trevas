@@ -20,6 +20,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+
 /**
  * <code>VarIdVisitor</code> is the base visitor for variable identifiers.
  */
@@ -41,7 +43,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         final String variableName = ctx.getText();
 
         if (!context.containsKey(variableName)) {
-            throw new VtlRuntimeException(new UndefinedVariableException(ctx));
+            throw new VtlRuntimeException(new UndefinedVariableException(variableName, fromContext(ctx)));
         }
 
         Object value = context.get(variableName);
@@ -80,6 +82,6 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
             return ResolvableExpression.withType(Object.class, c -> c.get(variableName));
         }
 
-        throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), ctx));
+        throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), fromContext(ctx)));
     }
 }

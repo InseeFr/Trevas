@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
 import static fr.insee.vtl.engine.utils.TypeChecking.hasNullArgs;
@@ -153,7 +154,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (!operand.getType().equals(listExpression.containedType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(operand.getType(), listExpression.containedType(), ctx.lists())
+                    new InvalidTypeException(operand.getType(), listExpression.containedType(), fromContext(ctx))
             );
         }
 
@@ -195,7 +196,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         if (types.size() > 1) {
             throw new VtlRuntimeException(
-                    new ConflictingTypesException(types, ctx)
+                    new ConflictingTypesException(types, fromContext(ctx))
             );
         }
 

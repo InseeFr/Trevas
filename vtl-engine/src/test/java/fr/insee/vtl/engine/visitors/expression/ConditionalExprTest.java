@@ -50,7 +50,7 @@ public class ConditionalExprTest {
         assertThatThrownBy(() -> {
             engine.eval("s := nvl(3, \"toto\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"toto\" to be Long");
+                .hasMessage("invalid type String, expected Long");
     }
 
     @Test
@@ -58,11 +58,11 @@ public class ConditionalExprTest {
         assertThatThrownBy(() -> {
             engine.eval("s := if \"\" then 1 else 2;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"\" to be Boolean");
+                .hasMessage("invalid type String, expected Boolean");
 
         assertThatThrownBy(() -> {
             engine.eval("s := if true then \"\" else 2;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 2 to be String");
+                .hasMessage("invalid type Long, expected String");
     }
 }

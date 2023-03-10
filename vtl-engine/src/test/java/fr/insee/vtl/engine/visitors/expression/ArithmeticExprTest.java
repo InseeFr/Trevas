@@ -108,10 +108,10 @@ public class ArithmeticExprTest {
         assertThatThrownBy(() -> {
             engine.eval("plus := + \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Number");
+                .hasMessage("invalid type String, expected Number");
         assertThatThrownBy(() -> {
             engine.eval("minus := - \"ko\";");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Number");
+                .hasMessage("invalid type String, expected Number");
     }
 }

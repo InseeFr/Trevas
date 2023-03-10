@@ -2,10 +2,8 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.Dataset;
@@ -25,15 +23,15 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.cert.Extension;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 
 /**
  * <code>GenericFunctionsVisitor</code> is the base visitor for cast expressions.
@@ -241,7 +239,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         // Strange name, this is the generic function syntax; fnName ( param, * ).
         // TODO: Use parameters to find functions so we can override them.
         Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
-            throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
+            throw new VtlRuntimeException(new UnimplementedException("could not find function", fromContext(ctx.operatorID())));
         });
         List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
         return invokeFunction(method, parameters);
@@ -290,7 +288,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
         if (Instant.class.equals(expression.getType())) {
             if (mask == null || mask.isEmpty()) {
-                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", ctx));
+                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", fromContext(ctx)));
             }
             return InstantExpression.castTo(expression, outputClass, mask);
         }

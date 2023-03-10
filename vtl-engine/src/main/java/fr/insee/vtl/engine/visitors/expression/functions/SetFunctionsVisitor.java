@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 /**
@@ -60,7 +61,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                                 ctx.expr().stream().map(RuleContext::getText)
                                         .collect(Collectors.joining(", "))
                         ),
-                        ctx
+                        fromContext(ctx)
                 ));
             }
 

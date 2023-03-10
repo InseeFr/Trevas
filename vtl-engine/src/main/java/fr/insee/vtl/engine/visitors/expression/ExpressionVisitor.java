@@ -22,6 +22,8 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.Map;
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+
 /**
  * <code>ExpressionVisitor</code> is the base visitor for expressions.
  * It essentially passes the expressions to the more specialized visitors defined in the package.
@@ -326,7 +328,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (Objects.isNull(expr)) {
             VtlParser.FunctionsContext functionsContext = ctx.functions();
             String functionName = functionsContext.getStart().getText();
-            throw new VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", ctx));
+            throw new VtlRuntimeException(new UnimplementedException("the function " + functionName + " is not yet implemented", fromContext(ctx)));
         }
         return expr;
     }

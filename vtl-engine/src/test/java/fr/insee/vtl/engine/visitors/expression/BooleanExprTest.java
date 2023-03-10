@@ -60,12 +60,12 @@ public class BooleanExprTest {
         assertThatThrownBy(() -> {
             engine.eval("s := 1 and 2;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 1 to be Boolean");
+                .hasMessage("invalid type Long, expected Boolean");
 
         assertThatThrownBy(() -> {
             engine.eval("s := true or 2;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 2 to be Boolean");
+                .hasMessage("invalid type Long, expected Boolean");
     }
 
     @Test
@@ -82,7 +82,7 @@ public class BooleanExprTest {
         assertThatThrownBy(() -> {
             engine.eval("s := not 888;");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected 888 to be Boolean");
+                .hasMessage("invalid type Long, expected Boolean");
     }
 
 }

@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
@@ -85,7 +86,8 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
             var datasetExpressionContext = joinClauseItem.expr();
             if (!(datasetExpressionContext instanceof VtlParser.VarIdExprContext)) {
                 throw new VtlRuntimeException(
-                        new InvalidArgumentException("cannot use expression in join clause", datasetExpressionContext));
+                        new InvalidArgumentException("cannot use expression in join clause", fromContext(datasetExpressionContext))
+                );
             }
 
             var alias = Optional.<RuleContext>ofNullable(joinClauseItem.alias())
@@ -143,7 +145,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Left join require that all the datasets have one or more common identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
+                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
                 ));
 
         // Remove the identifiers that are not part of the "using" list
@@ -156,7 +158,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 var name = usingContext.getText();
                 if (!identifierNames.contains(name)) {
                     throw new VtlRuntimeException(
-                            new InvalidArgumentException("not in the set of common identifiers", usingContext)
+                            new InvalidArgumentException("not in the set of common identifiers", fromContext(usingContext))
                     );
                 }
                 usingNames.add(name);
@@ -188,7 +190,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Full join require that all the datasets have one or more common identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
+                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
                 ));
 
         return processingEngine.executeFullJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
@@ -201,7 +203,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Left join require that all the datasets have the same identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", joinClauseContext)
+                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
                 ));
 
         // Remove the identifiers
@@ -214,7 +216,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 var name = usingContext.getText();
                 if (!identifierNames.contains(name)) {
                     throw new VtlRuntimeException(
-                            new InvalidArgumentException("not in the set of common identifiers", usingContext)
+                            new InvalidArgumentException("not in the set of common identifiers", fromContext(usingContext))
                     );
                 }
                 usingNames.add(name);

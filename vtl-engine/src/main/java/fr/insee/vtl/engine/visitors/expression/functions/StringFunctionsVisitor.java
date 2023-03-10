@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 
@@ -129,7 +130,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             // Compute the amount of parameters (excluding the tokens etc.)
             String args = String.valueOf((ctx.children.size() - 4) / 2);
             throw new VtlRuntimeException(new InvalidArgumentException(
-                    "too many args (" + args + ")", ctx));
+                    "too many args (" + args + ")", fromContext(ctx)));
         }
         // TODO: grammar issue: endParameter should be named lengthParameter
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
