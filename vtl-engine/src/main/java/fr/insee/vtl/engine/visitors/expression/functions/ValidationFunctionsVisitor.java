@@ -14,7 +14,9 @@ import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
@@ -97,10 +99,36 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     public ResolvableExpression visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
-        ResolvableExpression erCodeExpression = expressionVisitor.visit(ctx.erCode());
-        ResolvableExpression erLevelExpression = expressionVisitor.visit(ctx.erLevel());
+        List<Structured.Component> exprMeasures = dsExpression.getDataStructure().values().stream()
+                .filter(c -> c.isMeasure()).collect(Collectors.toList());
+        if (exprMeasures.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Check operand dataset contains several measures", ctx)
+            );
+        }
+        if (exprMeasures.get(0).getType() != Boolean.class) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Check operand dataset measure has to be boolean", ctx)
+            );
+        }
+        ResolvableExpression erCodeExpression = null != ctx.erCode() ? expressionVisitor.visit(ctx.erCode()) : null;
+        ResolvableExpression erLevelExpression = null != ctx.erLevel() ? expressionVisitor.visit(ctx.erLevel()) : null;
         DatasetExpression imbalanceExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.imbalanceExpr()),
                 Dataset.class, ctx.imbalanceExpr());
+        if (null != imbalanceExpression) {
+            List<Structured.Component> imbalanceMeasures = imbalanceExpression.getDataStructure().values().stream()
+                    .filter(c -> c.isMeasure()).collect(Collectors.toList());
+            if (imbalanceMeasures.size() != 1) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Check imbalance dataset contains several measures", ctx)
+                );
+            }
+            if (imbalanceMeasures.get(0).getType() != Number.class) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Check imbalance dataset measure has to be numeric", ctx)
+                );
+            }
+        }
         String output = ctx.output != null ? ctx.output.getText() : null;
         return processingEngine.executeValidationSimple(dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output);
     }

@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -13,7 +12,6 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ValidationFunctionsTest {
@@ -32,11 +30,66 @@ public class ValidationFunctionsTest {
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
-    private ScriptEngine engine;
 
-    public static Boolean fakeTruthy(Dataset ds) {
-        return Boolean.TRUE;
-    }
+    private final Dataset dsExprOk = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true),
+                    List.of("2011", "I", "DEBIT", false),
+                    List.of("2012", "I", "CREDIT", false),
+                    List.of("2012", "I", "DEBIT", true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsExprKo1 = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true, true),
+                    List.of("2011", "I", "DEBIT", false, true),
+                    List.of("2012", "I", "CREDIT", false, true),
+                    List.of("2012", "I", "DEBIT", true, true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Boolean.class, Dataset.Role.MEASURE),
+                    new Structured.Component("toto2", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsExprKo2 = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 1L),
+                    List.of("2012", "I", "CREDIT", 1L),
+                    List.of("2012", "I", "DEBIT", 1L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalanceKo = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L, 1L),
+                    List.of("2011", "I", "DEBIT", 2L, 1L),
+                    List.of("2012", "I", "CREDIT", 2L, 1L),
+                    List.of("2012", "I", "DEBIT", 3L, 1L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Long.class, Dataset.Role.MEASURE),
+                    new Structured.Component("toto2", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private ScriptEngine engine;
 
     @BeforeEach
     public void setUp() {
@@ -65,19 +118,21 @@ public class ValidationFunctionsTest {
     }
 
     @Test
-    public void testValidationSimpleException() throws NoSuchMethodException, ScriptException {
+    public void testValidationSimpleException() throws ScriptException {
 
-        var fakeTruthyMethod = ValidationFunctionsTest.class.getMethod("fakeTruthy", Dataset.class);
-
-        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
-        engine.registerMethod("fakeTruthy", fakeTruthyMethod);
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExprOk", dsExprOk, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExprKo1", dsExprKo1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExprKo2", dsExprKo2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalanceKo", dsImbalanceKo, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("res := fakeTruthy(ds);");
-        // Why res is equal to ds ????
-//        Boolean res = (Boolean) engine.getContext().getAttribute("res");
-//        assertThat(res).isEqualTo(Boolean.TRUE);
-
+        assertThatThrownBy(() -> engine.eval("DS_1 := check(dsExprKo1);"))
+                .hasMessageContaining("Check operand dataset contains several measures");
+        assertThatThrownBy(() -> engine.eval("DS_2 := check(dsExprKo2);"))
+                .hasMessageContaining("Check operand dataset measure has to be boolean");
+        assertThatThrownBy(() -> engine.eval("DS_3 := check(dsExprOk imbalance dsImbalanceKo);"))
+                .hasMessageContaining("Check imbalance dataset contains several measures");
+        assertThatThrownBy(() -> engine.eval("DS_4 := check(dsExprOk imbalance dsExprOk);"))
+                .hasMessageContaining("Check imbalance dataset measure has to be numeric");
     }
 }
