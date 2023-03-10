@@ -1,8 +1,11 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.model.ConstantExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>ConstantVisitor</code> is the base visitor for constant expressions.
@@ -17,21 +20,22 @@ public class ConstantVisitor extends VtlBaseVisitor<ConstantExpression> {
      */
     @Override
     public ConstantExpression visitConstant(VtlParser.ConstantContext ctx) {
+        Positioned pos = fromContext(ctx);
         if (ctx.INTEGER_CONSTANT() != null) {
-            return new ConstantExpression(Long.parseLong(ctx.getText()));
+            return new ConstantExpression(Long.parseLong(ctx.getText()), pos.getPosition());
         }
         if (ctx.NUMBER_CONSTANT() != null) {
-            return new ConstantExpression(Double.parseDouble(ctx.getText()));
+            return new ConstantExpression(Double.parseDouble(ctx.getText()), pos.getPosition());
         }
         if (ctx.BOOLEAN_CONSTANT() != null) {
-            return new ConstantExpression(Boolean.parseBoolean(ctx.getText()));
+            return new ConstantExpression(Boolean.parseBoolean(ctx.getText()), pos.getPosition());
         }
         if (ctx.STRING_CONSTANT() != null) {
             var text = ctx.getText();
-            return new ConstantExpression(text.substring(1, text.length() - 1));
+            return new ConstantExpression(text.substring(1, text.length() - 1), pos.getPosition());
         }
         if (ctx.NULL_CONSTANT() != null) {
-            return new ConstantExpression(null);
+            return new ConstantExpression(null, pos.getPosition());
         }
         throw new UnsupportedOperationException("unknown constant type " + ctx);
     }

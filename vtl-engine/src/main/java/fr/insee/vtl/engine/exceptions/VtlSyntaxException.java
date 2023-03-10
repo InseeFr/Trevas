@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 /**
  * The <code>VtlSyntaxException</code> is the base class for syntax exceptions.

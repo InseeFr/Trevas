@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * Produce a normalized group by. Group exept are inverted.

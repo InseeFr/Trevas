@@ -7,7 +7,11 @@ import java.util.Map;
 /**
  * The <code>ListExpression</code> class is an abstract representation of an expression of type <code>List</code>.
  */
-public abstract class ListExpression implements ResolvableExpression, TypedContainerExpression {
+public abstract class ListExpression extends ResolvableExpression implements TypedContainerExpression {
+
+    public ListExpression() {
+        super(() -> {throw new UnsupportedOperationException("TODO");});
+    }
 
     /**
      * Constructor taking a collection of elements and a type for these elements.

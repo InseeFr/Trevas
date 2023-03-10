@@ -1,16 +1,16 @@
 package fr.insee.vtl.engine.utils;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.*;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+
 
 /**
  * The <code>TypeChecking</code> class contains useful methods for checking the type of VTL expressions.

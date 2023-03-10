@@ -5,7 +5,13 @@ import java.util.Map;
 /**
  * The <code>BooleanExpression</code> class is an abstract representation of a boolean expression.
  */
-public abstract class BooleanExpression implements ResolvableExpression {
+public abstract class BooleanExpression extends ResolvableExpression {
+
+    public BooleanExpression() {
+        super(() -> {
+            throw new UnsupportedOperationException("TODO");
+        });
+    }
 
     /**
      * Builds a boolean expression that resolves to a given boolean value.

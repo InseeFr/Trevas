@@ -12,6 +12,7 @@ import fr.insee.vtl.model.DoubleExpression;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.InstantExpression;
 import fr.insee.vtl.model.LongExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.model.Structured;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>GenericFunctionsVisitor</code> is the base visitor for cast expressions.
@@ -76,12 +77,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
 
     // TODO: Extract to model.
-    public static class FunctionExpression implements ResolvableExpression {
+    public static class FunctionExpression extends ResolvableExpression {
 
         private final Method method;
         private final List<ResolvableExpression> parameters;
 
-        public FunctionExpression(Method method, List<ResolvableExpression> parameters) {
+        public FunctionExpression(Method method, List<ResolvableExpression> parameters, Position position) {
+            super(position);
             this.method = Objects.requireNonNull(method);
 
             // Type check.
@@ -135,7 +137,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         private final Map<Component, ResolvableExpression> expressions;
         private final DataStructure structure;
 
-        public DatasetFunctionExpression(Method method, DatasetExpression operand) {
+        public DatasetFunctionExpression(Method method, DatasetExpression operand, Positioned position) {
+            super(position);
             // TODO: Check that method is serializable.
             Objects.requireNonNull(method);
             this.operand = Objects.requireNonNull(operand);
@@ -167,14 +170,15 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         @NotNull
         private Map<Component, ResolvableExpression> createExpressionMap(Method method, DatasetExpression operand, Class<?> parameterType) {
             // TODO: test with function that changes the type.
-            Map<Component, ResolvableExpression> parameters = new LinkedHashMap<>();
+            Map<Component, ResolvableExpression> parametersMap = new LinkedHashMap<>();
             for (Component component : operand.getDataStructure().values()) {
                 if (!component.isMeasure() || !parameterType.isAssignableFrom(component.getType())) {
                     continue;
                 }
-                parameters.put(component, new GenericFunctionsVisitor.FunctionExpression(method, List.of(new ComponentExpression(component))));
+                List<ResolvableExpression> parameters = List.of(new ComponentExpression(component, operand.getPosition()));
+                parametersMap.put(component, new FunctionExpression(method, parameters, operand.getPosition()));
             }
-            return Map.copyOf(parameters);
+            return Map.copyOf(parametersMap);
         }
 
         @Override
@@ -198,11 +202,12 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
     // TODO: Extract to model
     // TODO: Check that we don't already have something like that.
-    public static class ComponentExpression implements ResolvableExpression {
+    public static class ComponentExpression extends ResolvableExpression {
 
         private final Structured.Component component;
 
-        public ComponentExpression(Structured.Component component) {
+        public ComponentExpression(Structured.Component component, Position position) {
+            super(position);
             this.component = Objects.requireNonNull(component);
         }
 
@@ -217,19 +222,19 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
-    public ResolvableExpression invoke(String methodName, List<ResolvableExpression> parameter) {
+    public ResolvableExpression invoke(String methodName, List<ResolvableExpression> parameter, Positioned positioned) {
         Method method = engine.findMethod(methodName).orElseThrow();
-        return invokeFunction(method, parameter);
+        return invokeFunction(method, parameter, positioned);
     }
-    
-    private ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters) {
+
+    private ResolvableExpression invokeFunction(Method method, List<ResolvableExpression> parameters, Positioned positioned) {
         var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
         // TODO: Method with more that one dataset parameters.
         //          ie: parameterTypes.contains(Dataset.class)
         if (parameterTypes.size() == 1 && parameterTypes.get(0).equals(Dataset.class)) {
-            return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0));
+            return new DatasetFunctionExpression(method, (DatasetExpression) parameters.get(0), positioned);
         } else {
-            return new FunctionExpression(method, parameters);
+            return new FunctionExpression(method, parameters, positioned.getPosition());
         }
     }
 
@@ -242,7 +247,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             throw new VtlRuntimeException(new UnimplementedException("could not find function", fromContext(ctx.operatorID())));
         });
         List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-        return invokeFunction(method, parameters);
+        return invokeFunction(method, parameters, fromContext(ctx));
     }
 
     /**

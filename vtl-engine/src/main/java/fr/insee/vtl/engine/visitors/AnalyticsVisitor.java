@@ -2,10 +2,10 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 

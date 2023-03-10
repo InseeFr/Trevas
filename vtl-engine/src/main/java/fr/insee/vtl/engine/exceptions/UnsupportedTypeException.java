@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 /**
  * The <code>UnsupportedTypeException</code> indicates that an element used in an expression has a type which is not supported.

@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 

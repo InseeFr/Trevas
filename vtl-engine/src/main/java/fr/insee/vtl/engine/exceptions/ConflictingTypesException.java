@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.util.Collection;
 import java.util.stream.Collectors;

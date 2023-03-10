@@ -11,7 +11,11 @@ import java.util.Map;
 /**
  * The <code>StringExpression</code> class is an abstract representation of a string expression.
  */
-public abstract class StringExpression implements ResolvableExpression {
+public abstract class StringExpression extends ResolvableExpression {
+
+    public StringExpression() {
+        super(() -> {throw new UnsupportedOperationException("TODO");});
+    }
 
     /**
      * Constructs a string expression evaluating to a given sequence of characters.

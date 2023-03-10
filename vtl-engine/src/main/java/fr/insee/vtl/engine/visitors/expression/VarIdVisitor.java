@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>VarIdVisitor</code> is the base visitor for variable identifiers.

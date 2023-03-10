@@ -19,6 +19,7 @@ public class SparkDatasetExpression extends DatasetExpression {
      * @param dataset The Spark dataset used in the expression.
      */
     public SparkDatasetExpression(SparkDataset dataset) {
+        super(() -> {throw new UnsupportedOperationException("TODO");});
         this.dataset = Objects.requireNonNull(dataset);
     }
 

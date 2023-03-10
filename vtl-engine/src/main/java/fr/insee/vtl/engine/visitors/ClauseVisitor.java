@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.BooleanExpression;
@@ -12,6 +11,7 @@ import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 /**
@@ -225,7 +225,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 var aggregationFunction = convertToAggregation(
                         // Note that here we replace the expression by the name of the columns.
                         (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                        new ResolvableExpression() {
+                        new ResolvableExpression(fromContext(ctx)) {
                             @Override
                             public Object resolve(Map<String, Object> context) {
                                 return context.get(alias);

@@ -1,9 +1,7 @@
 package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
@@ -14,6 +12,8 @@ import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

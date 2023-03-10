@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 /**
  * The <code>UndefinedVariableException</code> indicates that a variable used in an expression has not been defined in the scope of this expression.

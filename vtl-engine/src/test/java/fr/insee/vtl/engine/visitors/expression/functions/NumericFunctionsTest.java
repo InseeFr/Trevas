@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -125,11 +126,10 @@ public class NumericFunctionsTest {
                 Map.of("name", "Hadrien", "age", 40L, "meas_double", 1L, "meas_string", "b"),
                 Map.of("name", "Nico", "age", 50L, "meas_double", -13L, "meas_string", "c")
         );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := floor(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+        assertThatThrownBy(() -> {
+            engine.eval("e := floor(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
     @Test

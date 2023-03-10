@@ -9,7 +9,13 @@ import java.util.Map;
 /**
  * The <code>StringExpression</code> class is an abstract representation of a date expression.
  */
-public abstract class InstantExpression implements ResolvableExpression {
+public abstract class InstantExpression extends ResolvableExpression {
+
+    public InstantExpression() {
+        super(() -> {
+            throw new UnsupportedOperationException("TODO");
+        });
+    }
 
     /**
      * Constructs a date expression evaluating to a given date.

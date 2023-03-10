@@ -1,7 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
 import fr.insee.vtl.model.Positioned;
-import org.antlr.v4.runtime.tree.ParseTree;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 /**
  * The <code>InvalidArgumentException</code> indicates that an argument used in an expression is invalid.

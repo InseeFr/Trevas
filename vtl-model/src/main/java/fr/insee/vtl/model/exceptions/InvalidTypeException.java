@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.exceptions;
+package fr.insee.vtl.model.exceptions;
 
 import fr.insee.vtl.model.Positioned;
 

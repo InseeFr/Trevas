@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 
 /**
@@ -152,17 +153,17 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
         switch (ctx.op.getType()) {
             case VtlParser.CEIL:
-                return genericFunctionsVisitor.invoke("ceil", parameter);
+                return genericFunctionsVisitor.invoke("ceil", parameter, fromContext(ctx));
             case VtlParser.FLOOR:
-                return genericFunctionsVisitor.invoke("floor", parameter);
+                return genericFunctionsVisitor.invoke("floor", parameter, fromContext(ctx));
             case VtlParser.ABS:
-                return genericFunctionsVisitor.invoke("abs", parameter);
+                return genericFunctionsVisitor.invoke("abs", parameter, fromContext(ctx));
             case VtlParser.EXP:
-                return genericFunctionsVisitor.invoke("exp", parameter);
+                return genericFunctionsVisitor.invoke("exp", parameter, fromContext(ctx));
             case VtlParser.LN:
-                return genericFunctionsVisitor.invoke("ln", parameter);
+                return genericFunctionsVisitor.invoke("ln", parameter, fromContext(ctx));
             case VtlParser.SQRT:
-                return genericFunctionsVisitor.invoke("sqrt", parameter);
+                return genericFunctionsVisitor.invoke("sqrt", parameter, fromContext(ctx));
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
@@ -183,9 +184,9 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         );
         switch (ctx.op.getType()) {
             case VtlParser.ROUND:
-                return genericFunctionsVisitor.invoke("round", parameters);
+                return genericFunctionsVisitor.invoke("round", parameters, fromContext(ctx));
             case VtlParser.TRUNC:
-                return genericFunctionsVisitor.invoke("trunc", parameters);
+                return genericFunctionsVisitor.invoke("trunc", parameters, fromContext(ctx));
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }
@@ -205,11 +206,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         );
         switch (ctx.op.getType()) {
             case VtlParser.MOD:
-                return genericFunctionsVisitor.invoke("mod", parameters);
+                return genericFunctionsVisitor.invoke("mod", parameters, fromContext(ctx));
             case VtlParser.POWER:
-                return genericFunctionsVisitor.invoke("power", parameters);
+                return genericFunctionsVisitor.invoke("power", parameters, fromContext(ctx));
             case VtlParser.LOG:
-                return genericFunctionsVisitor.invoke("log", parameters);
+                return genericFunctionsVisitor.invoke("log", parameters, fromContext(ctx));
             default:
                 throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
         }

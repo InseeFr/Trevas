@@ -2,11 +2,12 @@ package fr.insee.vtl.model;
 
 import java.util.Map;
 
-public class ConstantExpression implements ResolvableExpression {
+public class ConstantExpression extends ResolvableExpression {
 
     private final Object value;
 
-    public ConstantExpression(Object value) {
+    public ConstantExpression(Object value, Position position) {
+        super(position);
         this.value = value;
     }
 

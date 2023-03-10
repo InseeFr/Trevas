@@ -2,22 +2,26 @@ package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.model.FunctionProvider;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -37,9 +41,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
-
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromContext;
-import static fr.insee.vtl.engine.exceptions.VtlScriptException.fromToken;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -77,6 +78,37 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             Fun.toMethod(NumericFunctionsVisitor::power),
             Fun.toMethod(NumericFunctionsVisitor::log)
     );
+
+    public static Positioned fromToken(Token token) {
+        Positioned.Position position = new Positioned.Position(
+                token.getLine() - 1,
+                token.getLine() - 1,
+                token.getCharPositionInLine(),
+                token.getCharPositionInLine() + (token.getStopIndex() - token.getStartIndex() + 1)
+        );
+        return () -> position;
+    }
+
+    public static Positioned fromContext(ParseTree tree) {
+        if (tree instanceof ParserRuleContext) {
+            ParserRuleContext parserRuleContext = (ParserRuleContext) tree;
+            return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
+        }
+        if (tree instanceof TerminalNode) {
+            return fromToken(((TerminalNode) tree).getSymbol());
+        }
+        throw new IllegalStateException();
+    }
+
+    public static Positioned fromTokens(Token from, Token to) {
+        var position = new Positioned.Position(
+                from.getLine() - 1,
+                to.getLine() - 1,
+                from.getCharPositionInLine(),
+                to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1)
+        );
+        return () -> position;
+    }
 
     /**
      * Constructor taking a script engine factory.
