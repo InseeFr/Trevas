@@ -147,6 +147,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             }
             Class<?> parameterType = method.getParameterTypes()[0];
 
+            // TODO: Empty expression should be an error
             this.expressions = createExpressionMap(method, operand, parameterType);
 
             List<Component> components = new ArrayList<>();
