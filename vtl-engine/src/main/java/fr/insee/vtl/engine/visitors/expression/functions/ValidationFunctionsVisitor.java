@@ -14,6 +14,8 @@ import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -123,7 +125,8 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                         new InvalidArgumentException("Check imbalance dataset contains several measures", ctx)
                 );
             }
-            if (imbalanceMeasures.get(0).getType() != Number.class) {
+            List<Class> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
+            if (!supportedClasses.contains(imbalanceMeasures.get(0).getType())) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Check imbalance dataset measure has to be numeric", ctx)
                 );

@@ -620,9 +620,19 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                                      ResolvableExpression errorCodeExpr,
                                                      ResolvableExpression errorLevelExpr,
                                                      DatasetExpression imbalanceExpr, String output) {
+        // Rename imbalance single measure to imbalance
+        SparkDataset sparkImbalanceDataset = asSparkDataset(imbalanceExpr);
+        Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
+        String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
+                .stream().filter(c -> c.isMeasure()).map(c -> c.getName()).collect(Collectors.toList()).get(0);
+        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, "imbalance"));
+        Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
+        var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
+        SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap));
+        // Join expr ds & imbalance ds
         Map<String, DatasetExpression> datasetExpressions = Map.ofEntries(
                 Map.entry("dsExpr", dsExpr),
-                Map.entry("imbalanceExpr", imbalanceExpr)
+                Map.entry("imbalanceExpr", imbalanceRenamedExpr)
         );
         List<Component> components = dsExpr.getDataStructure().values().stream()
                 .filter(c -> c.isIdentifier())
