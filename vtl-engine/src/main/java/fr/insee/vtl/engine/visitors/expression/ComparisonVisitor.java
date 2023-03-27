@@ -198,9 +198,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
 
+        var pos = fromContext(ctx);
+
         if (types.size() > 1) {
             throw new VtlRuntimeException(
-                    new ConflictingTypesException(types, fromContext(ctx))
+                    new ConflictingTypesException(types, pos)
             );
         }
 
@@ -214,6 +216,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 .map(expression -> expression.resolve(Map.of()))
                 .collect(Collectors.toList());
 
-        return ListExpression.withContainedType(values, type);
+        return ListExpression.withContainedType(values, type, pos);
     }
 }

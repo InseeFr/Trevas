@@ -44,7 +44,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
 
         Object value = context.get(variableName);
         if (value instanceof Dataset) {
-            return DatasetExpression.of((Dataset) value);
+            return DatasetExpression.of((Dataset) value, pos);
         }
 
         if (value instanceof Structured.Component) {

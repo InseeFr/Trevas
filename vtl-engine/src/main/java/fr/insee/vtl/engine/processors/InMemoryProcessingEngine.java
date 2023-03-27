@@ -166,9 +166,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-        return new DatasetExpression(() -> {
-            throw new UnsupportedOperationException("TODO");
-        }) {
+        return new DatasetExpression(datasets.get(0)) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 Stream<DataPoint> stream = Stream.empty();

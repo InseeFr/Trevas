@@ -17,11 +17,8 @@ public abstract class DatasetExpression extends ResolvableExpression implements 
      * @param value The dataset on which the expression should be based.
      * @return The dataset expression.
      */
-    @Deprecated
-    public static DatasetExpression of(Dataset value) {
-        return new DatasetExpression(() -> {
-            throw new UnsupportedOperationException();
-        }) {
+    public static DatasetExpression of(Dataset value, Positioned position) {
+        return new DatasetExpression(position) {
 
             @Override
             public Structured.DataStructure getDataStructure() {
