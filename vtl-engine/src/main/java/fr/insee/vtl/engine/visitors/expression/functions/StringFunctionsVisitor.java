@@ -15,8 +15,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 
 /**
  * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving string functions.
@@ -101,43 +99,41 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
      */
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
-        if (ctx.children.size() > 8) {
-            // Compute the amount of parameters (excluding the tokens etc.)
-            String args = String.valueOf((ctx.children.size() - 4) / 2);
-            throw new VtlRuntimeException(new InvalidArgumentException(
-                    "too many args (" + args + ")", fromContext(ctx)));
-        }
-        // TODO: grammar issue: endParameter should be named lengthParameter
-        ResolvableExpression expression = exprVisitor.visit(ctx.expr());
         var pos = fromContext(ctx);
-        ResolvableExpression startExpression;
-        ResolvableExpression lengthExpression;
         try {
-            startExpression = ctx.startParameter == null ?
+            if (ctx.children.size() > 8) {
+                // Compute the amount of parameters (excluding the tokens etc.)
+                String args = String.valueOf((ctx.children.size() - 4) / 2);
+                throw new VtlRuntimeException(new InvalidArgumentException(
+                        "too many args (" + args + ")", fromContext(ctx)));
+            }
+            // TODO: grammar issue: endParameter should be named lengthParameter
+            ResolvableExpression expression = exprVisitor.visit(ctx.expr());
+            ResolvableExpression startExpression = ctx.startParameter == null ?
                     ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L)
                     : exprVisitor.visit(ctx.startParameter).checkInstanceOf(Long.class);
-            lengthExpression = ctx.endParameter == null ? null
+            ResolvableExpression lengthExpression = ctx.endParameter == null ? null
                     : exprVisitor.visit(ctx.endParameter).checkInstanceOf(Long.class);
+
+            return ResolvableExpression.withType(String.class).withPosition(pos).using(
+                    context -> {
+                        String value = (String) expression.resolve(context);
+                        if (value == null) return null;
+                        Long startValue = (Long) startExpression.resolve(context);
+                        if (startValue == null) return null;
+                        if (startValue > value.length()) return "";
+                        var start = startValue.equals(0L) ? 0 : startValue.intValue() - 1;
+                        if (lengthExpression == null) return value.substring(start);
+                        Long lengthValue = (Long) lengthExpression.resolve(context);
+                        if (lengthValue == null) return null;
+                        var end = start + lengthValue.intValue();
+                        if (end > value.length()) return value.substring(start);
+                        return value.substring(start, end);
+                    }
+            );
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
         }
-
-        return ResolvableExpression.withType(String.class).withPosition(pos).using(
-                context -> {
-                    String value = (String) expression.resolve(context);
-                    if (value == null) return null;
-                    Long startValue = (Long) startExpression.resolve(context);
-                    if (startValue == null) return null;
-                    if (startValue > value.length()) return "";
-                    var start = startValue.equals(0L) ? 0 : startValue.intValue() - 1;
-                    if (lengthExpression == null) return value.substring(start);
-                    Long lengthValue = (Long) lengthExpression.resolve(context);
-                    if (lengthValue == null) return null;
-                    var end = start + lengthValue.intValue();
-                    if (end > value.length()) return value.substring(start);
-                    return value.substring(start, end);
-                }
-        );
     }
 
     /**
@@ -178,26 +174,31 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
      */
     @Override
     public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
-        ResolvableExpression expression = assertString(exprVisitor.visit(ctx.expr(0)), ctx.expr(0));
-        ResolvableExpression pattern = assertString(exprVisitor.visit(ctx.pattern), ctx.pattern);
-
-        var start = ctx.startParameter == null ? LongExpression.of(0L)
-                : assertLong(exprVisitor.visit(ctx.startParameter), ctx.startParameter);
-
-        var occurrence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
-                : assertLong(exprVisitor.visit(ctx.occurrenceParameter), ctx.occurrenceParameter);
-
         var pos = fromContext(ctx);
+        try {
+            ResolvableExpression expression = exprVisitor.visit(ctx.expr(0)).checkInstanceOf(String.class);
+            ResolvableExpression pattern = exprVisitor.visit(ctx.pattern).checkInstanceOf(String.class);
 
-        return ResolvableExpression.withType(Long.class).withPosition(pos).using(
-                context -> {
-                    String value = (String) expression.resolve(context);
-                    String patternValue = (String) pattern.resolve(context);
-                    Long startValue = (Long) start.resolve(context);
-                    Long occurrenceValue = (Long) occurrence.resolve(context);
-                    if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
-                    return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
-                }
-        );
+            var start = ctx.startParameter == null ?
+                    ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L)
+                    : exprVisitor.visit(ctx.startParameter).checkInstanceOf(Long.class);
+
+            var occurrence = ctx.occurrenceParameter == null ?
+                    ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 1L)
+                    : exprVisitor.visit(ctx.occurrenceParameter).checkInstanceOf(Long.class);
+
+            return ResolvableExpression.withType(Long.class).withPosition(pos).using(
+                    context -> {
+                        String value = (String) expression.resolve(context);
+                        String patternValue = (String) pattern.resolve(context);
+                        Long startValue = (Long) start.resolve(context);
+                        Long occurrenceValue = (Long) occurrence.resolve(context);
+                        if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
+                        return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
+                    }
+            );
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
     }
 }
