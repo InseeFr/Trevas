@@ -22,9 +22,71 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         this.position = Objects.requireNonNull(position);
     }
 
+    public static <T> Builder<T> withType(Class<T> type) {
+        return new Builder<>(type);
+    }
+
     @Override
     public Position getPosition() {
         return position;
+    }
+
+    /**
+     * Checks that the type of the expression is either the same as, or is a superclass or superinterface of, the class
+     * or interface represented by the specified Class parameter.
+     */
+    public ResolvableExpression checkAssignableFrom(Class<?> clazz) throws InvalidTypeException {
+        if (!getType().isAssignableFrom(clazz)) {
+            throw new InvalidTypeException(clazz, getType(), this);
+        }
+        return this;
+    }
+
+    /**
+     * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
+     * or interface of the expression.
+     */
+    public ResolvableExpression checkInstanceOf(Class<?> clazz) throws InvalidTypeException {
+        if (Object.class.equals(this.getType())) {
+            return ResolvableExpression.withType(Object.class).withPosition(this).using(ctx -> null);
+        }
+        if (!clazz.isAssignableFrom(this.getType())) {
+            throw new InvalidTypeException(clazz, getType(), this);
+        }
+        return this;
+    }
+
+    public <T> ResolvableExpression tryCast(Class<T> clazz) {
+        if (Object.class.equals(this.getType())) {
+            return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> null);
+        }
+        return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> {
+            var value = this.resolve(ctx);
+            try {
+                return clazz.cast(value);
+            } catch (ClassCastException cce) {
+                throw new RuntimeException(new VtlScriptException(cce, this));
+            }
+
+        });
+    }
+
+    /**
+     * Resolves the expression in a given context.
+     *
+     * @param context The context for the resolution.
+     * @return The result of the resolution of the expression in the given context.
+     */
+    public abstract Object resolve(Map<String, Object> context);
+
+    /**
+     * Resolves the expression for a given datapoint.
+     *
+     * @param context the data point to resolve the expression against
+     * @return the result of the resolution of the expression
+     */
+    public Object resolve(Structured.DataPoint context) {
+        return resolve(new Structured.DataPointMap(context));
     }
 
     public static class Builder<T> {
@@ -54,64 +116,5 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
                 }
             };
         }
-    }
-
-    public static <T> Builder<T> withType(Class<T> type) {
-        return new Builder<>(type);
-    }
-
-    /**
-     * Checks that the type of the expression is either the same as, or is a superclass or superinterface of, the class
-     * or interface represented by the specified Class parameter.
-     */
-    public ResolvableExpression checkAssignableFrom(Class<?> clazz) throws InvalidTypeException {
-        if (!getType().isAssignableFrom(clazz)) {
-            throw new InvalidTypeException(clazz, getType(), this);
-        }
-        return this;
-    }
-
-    /**
-     * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
-     * or interface of the expression.
-     */
-    public ResolvableExpression checkInstanceOf(Class<?> clazz) throws InvalidTypeException {
-        if (!clazz.isAssignableFrom(this.getType())) {
-            throw new InvalidTypeException(clazz, getType(), this);
-        }
-        return this;
-    }
-
-    public <T> ResolvableExpression tryCast(Class<T> clazz) {
-        if (Object.class.equals(this.getType())) {
-            return ResolvableExpression.withType(Object.class).withPosition(this).using(ctx -> null);
-        }
-        return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> {
-            var value = this.resolve(ctx);
-            try {
-                return clazz.cast(value);
-            } catch (ClassCastException cce) {
-                throw new RuntimeException(new VtlScriptException(cce, this));
-            }
-
-        });
-    }
-
-    /**
-     * Resolves the expression in a given context.
-     *
-     * @param context The context for the resolution.
-     * @return The result of the resolution of the expression in the given context.
-     */
-    public abstract Object resolve(Map<String, Object> context);
-
-    /**
-     * Resolves the expression for a given datapoint.
-     *
-     * @param context the data point to resolve the expression against
-     * @return the result of the resolution of the expression
-     */
-    public Object resolve(Structured.DataPoint context) {
-        return resolve(new Structured.DataPointMap(context));
     }
 }

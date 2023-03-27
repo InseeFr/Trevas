@@ -29,6 +29,8 @@ public class ConditionalExprTest {
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
         engine.eval("c := if false then \"true\" else null;");
         assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        engine.eval("d := if false then null else null;");
+        assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
     }
 
     @Test

@@ -29,47 +29,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
-    static class ItThenExpression extends ResolvableExpression {
-
-        final ResolvableExpression conditionExpr;
-        final ResolvableExpression thenExpr;
-        final ResolvableExpression elseExpr;
-
-        final Class<?> type;
-
-        ItThenExpression(Positioned position,
-                         ResolvableExpression conditionExpr,
-                         ResolvableExpression thenExpr,
-                         ResolvableExpression elseExpr) throws InvalidTypeException {
-            super(position);
-            this.conditionExpr = conditionExpr.checkInstanceOf(Boolean.class);
-
-            // Normalize the types of the branches.
-            if (!isNull(thenExpr)) {
-                elseExpr = elseExpr.tryCast(thenExpr.getType());
-            } else if (!isNull(elseExpr)) {
-                thenExpr = thenExpr.tryCast(elseExpr.getType());
-            }
-
-            this.thenExpr = thenExpr;
-            this.elseExpr = elseExpr;
-            this.type = thenExpr.getType();
-        }
-
-        @Override
-        public Object resolve(Map<String, Object> context) {
-            var cond = (Boolean) conditionExpr.resolve(context);
-            return Boolean.TRUE.equals(cond)
-                    ? thenExpr.resolve(context)
-                    : elseExpr.resolve(context);
-        }
-
-        @Override
-        public Class<?> getType() {
-            return type;
-        }
-    }
-
     /**
      * Visits if-then-else expressions.
      *
@@ -88,6 +47,68 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
+    /**
+     * Visits nvl expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the null value clause.
+     */
+    @Override
+    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+        ResolvableExpression expression = exprVisitor.visit(ctx.left);
+        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
+
+        if (isNull(expression)) {
+            return defaultExpression;
+        }
+
+        return new NvlExpression(fromContext(ctx), expression, defaultExpression);
+    }
+
+    static class ItThenExpression extends ResolvableExpression {
+
+        final ResolvableExpression conditionExpr;
+        final ResolvableExpression thenExpr;
+        final ResolvableExpression elseExpr;
+
+        final Class<?> type;
+
+        ItThenExpression(Positioned position,
+                         ResolvableExpression conditionExpr,
+                         ResolvableExpression thenExpr,
+                         ResolvableExpression elseExpr) throws InvalidTypeException {
+            super(position);
+            this.conditionExpr = conditionExpr.checkInstanceOf(Boolean.class);
+
+            // Normalize the types of the branches.
+            if (!isNull(thenExpr)) {
+                elseExpr = elseExpr.checkInstanceOf(thenExpr.getType()).tryCast(thenExpr.getType());
+            }
+            if (!isNull(elseExpr)) {
+                thenExpr = thenExpr.checkInstanceOf(elseExpr.getType()).tryCast(elseExpr.getType());
+            }
+
+            this.thenExpr = thenExpr;
+            this.elseExpr = elseExpr;
+            this.type = thenExpr.getType();
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            if (isNull(conditionExpr)) {
+                return null;
+            }
+            var cond = (Boolean) conditionExpr.resolve(context);
+            return Boolean.TRUE.equals(cond)
+                    ? thenExpr.resolve(context)
+                    : elseExpr.resolve(context);
+        }
+
+        @Override
+        public Class<?> getType() {
+            return type;
+        }
+    }
 
     static class NvlExpression extends ResolvableExpression {
 
@@ -97,7 +118,8 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         protected NvlExpression(Positioned positioned, ResolvableExpression expr, ResolvableExpression defaultExpr) {
             super(positioned);
             try {
-                defaultExpr.checkInstanceOf(expr.getType());
+                defaultExpr.checkInstanceOf(expr.getType()).tryCast(expr.getType());
+                expr.checkInstanceOf(defaultExpr.getType());
             } catch (InvalidTypeException e) {
                 throw new VtlRuntimeException(e);
             }
@@ -118,24 +140,5 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         public Class<?> getType() {
             return expr.getType();
         }
-    }
-
-    /**
-     * Visits nvl expressions.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to the null value clause.
-     */
-    @Override
-    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
-
-        ResolvableExpression expression = exprVisitor.visit(ctx.left);
-        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right).tryCast(expression.getType());
-
-        if (isNull(expression)) {
-            return expression;
-        }
-
-        return new NvlExpression(fromContext(ctx), expression, defaultExpression);
     }
 }
