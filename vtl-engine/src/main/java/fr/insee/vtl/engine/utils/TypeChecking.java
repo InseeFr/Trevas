@@ -37,7 +37,8 @@ public class TypeChecking {
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
         if (isNull(expression)) {
-            return (T) ResolvableExpression.withType(type, ctx -> null);
+            var pos = fromContext(tree);
+            return (T) ResolvableExpression.withType(type).withPosition(pos).using(c -> null);
         }
         if (!isType(expression, type)) {
             throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), fromContext(tree)));
