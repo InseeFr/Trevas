@@ -5,7 +5,6 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -164,7 +163,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
+        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
         return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
