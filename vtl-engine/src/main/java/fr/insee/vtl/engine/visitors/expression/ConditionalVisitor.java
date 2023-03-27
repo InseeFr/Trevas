@@ -1,16 +1,16 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.Map;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 
 /**
@@ -29,6 +29,46 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
+    static class ItThenExpression extends ResolvableExpression {
+
+        final ResolvableExpression conditionExpr;
+        final ResolvableExpression thenExpr;
+        final ResolvableExpression elseExpr;
+
+        final Class<?> type;
+
+        ItThenExpression(Positioned position,
+                         ResolvableExpression conditionExpr,
+                         ResolvableExpression thenExpr,
+                         ResolvableExpression elseExpr) throws InvalidTypeException {
+            super(position);
+            this.conditionExpr = conditionExpr.checkInstanceOf(Boolean.class);
+
+            // Normalize the types of the branches.
+            if (!isNull(thenExpr)) {
+                this.elseExpr = elseExpr.tryCast(thenExpr.getType());
+                this.thenExpr = thenExpr;
+            } else if (!isNull(elseExpr)) {
+                this.thenExpr = thenExpr.tryCast(elseExpr.getType());
+                this.elseExpr = elseExpr;
+            }
+            this.type = thenExpr.getType();
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            var cond = (Boolean) conditionExpr.resolve(context);
+            return Boolean.TRUE.equals(cond)
+                    ? thenExpr.resolve(context)
+                    : elseExpr.resolve(context);
+        }
+
+        @Override
+        public Class<?> getType() {
+            return type;
+        }
+    }
+
     /**
      * Visits if-then-else expressions.
      *
@@ -38,44 +78,25 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
 
-        ResolvableExpression conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
-        if (isNull(conditionalExpr)) {
-            return BooleanExpression.of(fromContext(ctx), (Boolean) null);
-        }
-
         try {
-            conditionalExpr.checkAssignableFrom(Boolean.class);
+            var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr).checkInstanceOf(Boolean.class);
+            var thenExpression = exprVisitor.visit(ctx.thenExpr);
+            var elseExpression = exprVisitor.visit(ctx.elseExpr);
+
+
+            ResolvableExpression finalThenExpression = thenExpression;
+            ResolvableExpression finalElseExpression = elseExpression;
+            Class<?> type = thenExpression.getType();
+            return ResolvableExpression.withType(type).withPosition(fromContext(ctx)).using((Map<String, Object> context) -> {
+                Boolean conditionalValue = (Boolean) conditionalExpr.resolve(context);
+                return Boolean.TRUE.equals(conditionalValue) ?
+                        type.cast(finalThenExpression.resolve(context)) :
+                        type.cast(finalElseExpression.resolve(context));
+            });
+
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
         }
-
-        // Find the common non-null type.
-        ResolvableExpression thenExpression = exprVisitor.visit(ctx.thenExpr);
-        ResolvableExpression elseExpression = exprVisitor.visit(ctx.elseExpr);
-
-        // Normalize the type if we have nulls.
-        if (isNull(elseExpression) && !isNull(thenExpression)) {
-            elseExpression = assertTypeExpression(elseExpression, thenExpression.getType(),
-                    ctx.elseExpr);
-        } else if (isNull(thenExpression)) {
-            thenExpression = assertTypeExpression(thenExpression, elseExpression.getType(),
-                    ctx.thenExpr);
-        }
-
-        try {
-            elseExpression.checkAssignableFrom(thenExpression.getType());
-        } catch (InvalidTypeException e) {
-            throw new VtlRuntimeException(e);
-        }
-
-        ResolvableExpression finalThenExpression = thenExpression;
-        ResolvableExpression finalElseExpression = elseExpression;
-        return ResolvableExpression.withTypeCasting(thenExpression.getType(), (clazz, context) -> {
-            Boolean conditionalValue = (Boolean) conditionalExpr.resolve(context);
-            return Boolean.TRUE.equals(conditionalValue) ?
-                    clazz.cast(finalThenExpression.resolve(context)) :
-                    clazz.cast(finalElseExpression.resolve(context));
-        });
     }
 
     /**
@@ -86,6 +107,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+        // TODO: Rewrite using if.
         ResolvableExpression expression = exprVisitor.visit(ctx.left);
         ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
 

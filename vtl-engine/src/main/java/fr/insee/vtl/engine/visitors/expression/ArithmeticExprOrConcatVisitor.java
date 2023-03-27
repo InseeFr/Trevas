@@ -53,8 +53,8 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     }
 
     private ResolvableExpression handlePlus(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
+        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(Number.class);
         if (isLong(leftExpression) && isLong(rightExpression)) {
             return ResolvableExpression.withType(Long.class).withPosition(fromContext(ctx)).using(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
@@ -75,8 +75,8 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     }
 
     private ResolvableExpression handleMinus(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
+        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(Number.class);
         if (isLong(leftExpression) && isLong(rightExpression)) {
             return ResolvableExpression.withType(Long.class).withPosition(fromContext(ctx)).using(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
@@ -97,8 +97,8 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     }
 
     private ResolvableExpression handleConcat(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(String.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(String.class);
+        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(String.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(String.class);
         return ResolvableExpression.withType(String.class).withPosition(fromContext(ctx)).using(context -> {
             String leftValue = (String) leftExpression.resolve(context);
             String rightValue = (String) rightExpression.resolve(context);

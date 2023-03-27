@@ -52,7 +52,7 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression handleUnaryPlus(VtlParser.ExprContext exprContext) throws InvalidTypeException {
-        ResolvableExpression expression = exprVisitor.visit(exprContext).checkAssignableTo(Number.class);
+        ResolvableExpression expression = exprVisitor.visit(exprContext).checkInstanceOf(Number.class);
         if (TypeChecking.isLong(expression)) {
             return ResolvableExpression.withType(Long.class).withPosition(fromContext(exprContext)).using(context -> {
                         Object resolved = expression.resolve(context);
@@ -72,7 +72,7 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression handleUnaryMinus(VtlParser.ExprContext exprContext) throws InvalidTypeException {
-        ResolvableExpression expression = exprVisitor.visit(exprContext).checkAssignableTo(Number.class);
+        ResolvableExpression expression = exprVisitor.visit(exprContext).checkInstanceOf(Number.class);
         if (TypeChecking.isLong(expression)) {
 
             return ResolvableExpression.withType(Long.class).withPosition(fromContext(exprContext)).using(context -> {
@@ -92,7 +92,7 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression handleUnaryNot(VtlParser.ExprContext exprContext) throws InvalidTypeException {
-        ResolvableExpression expression = exprVisitor.visit(exprContext).checkAssignableTo(Boolean.class);
+        ResolvableExpression expression = exprVisitor.visit(exprContext).checkInstanceOf(Boolean.class);
         return ResolvableExpression.withType(Boolean.class).withPosition(fromContext(exprContext)).using(context -> {
                     Object resolved = expression.resolve(context);
                     if (resolved == null) return null;

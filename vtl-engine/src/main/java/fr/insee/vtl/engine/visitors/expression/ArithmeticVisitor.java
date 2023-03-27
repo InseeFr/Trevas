@@ -60,8 +60,8 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression handleMultiplication(VtlParser.ArithmeticExprContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
+        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(Number.class);
 
         if (isLong(leftExpression) && isLong(rightExpression)) {
             return ResolvableExpression.withType(Long.class).withPosition(fromContext(ctx)).using(context -> {
@@ -83,8 +83,8 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression handleDivision(VtlParser.ArithmeticExprContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
+        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(Number.class);
         return ResolvableExpression.withType(Double.class).withPosition(fromContext(ctx)).using(context -> {
             var leftValue = leftExpression.resolve(context);
             var rightValue = rightExpression.resolve(context);

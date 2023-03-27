@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -56,7 +57,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     }
 
     public static <T> Builder<T> withType(Class<T> type) {
-        return new Builder<T>(type);
+        return new Builder<>(type);
     }
 
     /**
@@ -74,9 +75,9 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
      * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
      * or interface of the expression.
      */
-    public ResolvableExpression checkAssignableTo(Class<?> clazz) throws InvalidTypeException {
+    public ResolvableExpression checkInstanceOf(Class<?> clazz) throws InvalidTypeException {
         if (Object.class.equals(this.getType())) {
-            return ResolvableExpression.withType(Class.class).withPosition(this).using(ctx -> null);
+            return ResolvableExpression.withType(Object.class).withPosition(this).using(ctx -> null);
         }
         if (!clazz.isAssignableFrom(this.getType())) {
             throw new InvalidTypeException(clazz, getType(), this);
@@ -84,96 +85,16 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         return this;
     }
 
-    /**
-     * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
-     *
-     * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
-     * @param func  The resolution function for the expression to create.
-     * @param <T>   The type of the expression to create.
-     * @return An instance of <code>ResolvableExpression</code> with the given type and resolution function.
-     */
-    @Deprecated
-    public static <T> ResolvableExpression withType(Class<T> clazz, VtlFunction<Map<String, Object>, T> func) {
-        return withType(() -> {
-            throw new UnsupportedOperationException("TODO");
-        }, clazz, func);
-    }
-
-    @Deprecated
-    public static <T> ResolvableExpression withType(Positioned pos, Class<T> clazz, VtlFunction<Map<String, Object>, T> func) {
-        return new ResolvableExpression(pos) {
-
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                return func.apply(context);
+    public <T> ResolvableExpression tryCast(Class<T> clazz) {
+        return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> {
+            var value = this.resolve(ctx);
+            try {
+                return clazz.cast(value);
+            } catch (ClassCastException cce) {
+                throw new RuntimeException(new VtlScriptException(cce, this));
             }
 
-            @Override
-            public Class<T> getType() {
-                return clazz;
-            }
-
-        };
-    }
-
-    /**
-     * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
-     *
-     * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
-     * @param func  The resolution function for the expression to create.
-     * @param <T>   The type of the expression to create.
-     * @return An instance of <code>ResolvableExpression</code> with the given type and resolution function.
-     */
-    @Deprecated
-    public static <T> ResolvableExpression withTypeCasting(Class<T> clazz,
-                                                           VtlBiFunction<Class<T>, Map<String, Object>, T> func) {
-        return withTypeCasting(() -> {
-            throw new UnsupportedOperationException("TODO");
-        }, clazz, func);
-    }
-
-    @Deprecated
-    public static <T> ResolvableExpression withTypeCasting(Positioned position, Class<T> clazz,
-                                                           VtlBiFunction<Class<T>, Map<String, Object>, T> func) {
-        return new ResolvableExpression(position) {
-
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                return func.apply(clazz, context);
-            }
-
-            @Override
-            public Class<T> getType() {
-                return clazz;
-            }
-
-        };
-    }
-
-    /**
-     * Returns a <code>ResolvableExpression</code> with a given type and value.
-     *
-     * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
-     * @param value The expression value.
-     * @return An instance of <code>ResolvableExpression</code> with the given type and value.
-     */
-    @Deprecated
-    public static ResolvableExpression ofType(Class<?> clazz, Object value) {
-        return new ResolvableExpression(() -> {
-            throw new UnsupportedOperationException("TODO");
-        }) {
-
-            @Override
-            public Object resolve(Map<String, Object> context) {
-                return value;
-            }
-
-            @Override
-            public Class getType() {
-                return clazz;
-            }
-
-        };
+        });
     }
 
     /**
