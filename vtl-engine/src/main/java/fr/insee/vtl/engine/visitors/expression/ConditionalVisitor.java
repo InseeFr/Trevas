@@ -38,18 +38,14 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
 
-        ResolvableExpression nullableExpression = exprVisitor.visit(ctx.conditionalExpr);
-        if (isNull(nullableExpression)) {
-            return BooleanExpression.of((Boolean) null);
+        ResolvableExpression conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
+        if (isNull(conditionalExpr)) {
+            return BooleanExpression.of(fromContext(ctx), (Boolean) null);
         }
 
-        ResolvableExpression conditionalExpression = assertTypeExpression(
-                exprVisitor.visit(ctx.conditionalExpr),
-                Boolean.class,
-                ctx.conditionalExpr
-        );
+        conditionalExpr.checkAssignableFrom(Boolean.class);
 
-        // Find the common non null type.
+        // Find the common non-null type.
         ResolvableExpression thenExpression = exprVisitor.visit(ctx.thenExpr);
         ResolvableExpression elseExpression = exprVisitor.visit(ctx.elseExpr);
 
@@ -62,16 +58,12 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     ctx.thenExpr);
         }
 
-        if (!thenExpression.getType().equals(elseExpression.getType())) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(thenExpression.getType(), elseExpression.getType(), fromContext(ctx.elseExpr))
-            );
-        }
+        elseExpression.checkAssignableFrom(thenExpression.getType());
 
         ResolvableExpression finalThenExpression = thenExpression;
         ResolvableExpression finalElseExpression = elseExpression;
         return ResolvableExpression.withTypeCasting(thenExpression.getType(), (clazz, context) -> {
-            Boolean conditionalValue = (Boolean) conditionalExpression.resolve(context);
+            Boolean conditionalValue = (Boolean) conditionalExpr.resolve(context);
             return Boolean.TRUE.equals(conditionalValue) ?
                     clazz.cast(finalThenExpression.resolve(context)) :
                     clazz.cast(finalElseExpression.resolve(context));

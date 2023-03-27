@@ -70,7 +70,7 @@ public abstract class StringExpression extends ResolvableExpression {
                 return Double.valueOf(exprValue);
             });
         if (outputClass.equals(Boolean.class))
-            return BooleanExpression.of(context -> {
+            return BooleanExpression.of(expr, context -> {
                 String exprValue = (String) expr.resolve(context);
                 if (exprValue == null) return null;
                 return Boolean.valueOf(exprValue);

@@ -6,11 +6,8 @@ import java.util.Map;
  * The <code>BooleanExpression</code> class is an abstract representation of a boolean expression.
  */
 public abstract class BooleanExpression extends ResolvableExpression {
-
-    public BooleanExpression() {
-        super(() -> {
-            throw new UnsupportedOperationException("TODO");
-        });
+    public BooleanExpression(Positioned pos) {
+        super(pos);
     }
 
     /**
@@ -19,8 +16,8 @@ public abstract class BooleanExpression extends ResolvableExpression {
      * @param value The boolean value the expression should resolve to.
      * @return A new boolean expression resolving to the given value.
      */
-    public static BooleanExpression of(Boolean value) {
-        return new BooleanExpression() {
+    public static BooleanExpression of(Positioned pos, Boolean value) {
+        return new BooleanExpression(pos) {
             @Override
             public Boolean resolve(Map<String, Object> context) {
                 return value;
@@ -42,8 +39,8 @@ public abstract class BooleanExpression extends ResolvableExpression {
      * @param func A boolean function acting on input bindings.
      * @return A boolean expression corresponding to the given function.
      */
-    public static BooleanExpression of(VtlFunction<Map<String, Object>, Boolean> func) {
-        return new BooleanExpression() {
+    public static BooleanExpression of(Positioned pos, VtlFunction<Map<String, Object>, Boolean> func) {
+        return new BooleanExpression(pos) {
             @Override
             public Boolean resolve(Map<String, Object> context) {
                 return func.apply(context);
@@ -78,9 +75,8 @@ public abstract class BooleanExpression extends ResolvableExpression {
                 return exprValue ? 1D : 0D;
             });
         if (outputClass.equals(Boolean.class))
-            return BooleanExpression.of(context -> {
-                Boolean exprValue = (Boolean) expr.resolve(context);
-                return exprValue;
+            return BooleanExpression.of(expr, context -> {
+                return (Boolean) expr.resolve(context);
             });
         throw new ClassCastException("Cast Boolean to " + outputClass + " is not supported");
     }

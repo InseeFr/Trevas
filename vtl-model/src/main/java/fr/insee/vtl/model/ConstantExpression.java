@@ -6,7 +6,7 @@ public class ConstantExpression extends ResolvableExpression {
 
     private final Object value;
 
-    public ConstantExpression(Object value, Position position) {
+    public ConstantExpression(Object value, Positioned position) {
         super(position);
         this.value = value;
     }

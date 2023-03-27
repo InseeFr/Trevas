@@ -22,20 +22,20 @@ public class ConstantVisitor extends VtlBaseVisitor<ConstantExpression> {
     public ConstantExpression visitConstant(VtlParser.ConstantContext ctx) {
         Positioned pos = fromContext(ctx);
         if (ctx.INTEGER_CONSTANT() != null) {
-            return new ConstantExpression(Long.parseLong(ctx.getText()), pos.getPosition());
+            return new ConstantExpression(Long.parseLong(ctx.getText()), pos);
         }
         if (ctx.NUMBER_CONSTANT() != null) {
-            return new ConstantExpression(Double.parseDouble(ctx.getText()), pos.getPosition());
+            return new ConstantExpression(Double.parseDouble(ctx.getText()), pos);
         }
         if (ctx.BOOLEAN_CONSTANT() != null) {
-            return new ConstantExpression(Boolean.parseBoolean(ctx.getText()), pos.getPosition());
+            return new ConstantExpression(Boolean.parseBoolean(ctx.getText()), pos);
         }
         if (ctx.STRING_CONSTANT() != null) {
             var text = ctx.getText();
-            return new ConstantExpression(text.substring(1, text.length() - 1), pos.getPosition());
+            return new ConstantExpression(text.substring(1, text.length() - 1), pos);
         }
         if (ctx.NULL_CONSTANT() != null) {
-            return new ConstantExpression(null, pos.getPosition());
+            return new ConstantExpression(null, pos);
         }
         throw new UnsupportedOperationException("unknown constant type " + ctx);
     }

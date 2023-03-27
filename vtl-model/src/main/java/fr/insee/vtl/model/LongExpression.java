@@ -65,7 +65,7 @@ public abstract class LongExpression extends NumberExpression {
                 return Double.valueOf(exprValue);
             });
         if (outputClass.equals(Boolean.class))
-            return BooleanExpression.of(context -> {
+            return BooleanExpression.of(expr, context -> {
                 Long exprValue = (Long) expr.resolve(context);
                 if (exprValue == null) return null;
                 return !exprValue.equals(0L);

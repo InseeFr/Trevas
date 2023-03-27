@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -41,9 +42,10 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
     @Override
     public ResolvableExpression visitVarID(VtlParser.VarIDContext ctx) {
         final String variableName = ctx.getText();
+        var pos = fromContext(ctx);
 
         if (!context.containsKey(variableName)) {
-            throw new VtlRuntimeException(new UndefinedVariableException(variableName, fromContext(ctx)));
+            throw new VtlRuntimeException(new UndefinedVariableException(variableName, pos));
         }
 
         Object value = context.get(variableName);
@@ -53,9 +55,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
 
         if (value instanceof Structured.Component) {
             var component = (Structured.Component) value;
-            String name = component.getName();
-            Class type = component.getType();
-            return ResolvableExpression.withType(type, c -> c.get(name));
+            return new ComponentExpression(component, pos);
         }
 
         if (value instanceof Integer || value instanceof Long) {
@@ -67,7 +67,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         }
 
         if (value instanceof Boolean) {
-            return BooleanExpression.of((Boolean) value);
+            return BooleanExpression.of(pos, (Boolean) value);
         }
 
         if (value instanceof CharSequence) {
@@ -79,7 +79,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         }
 
         if (value == null) {
-            return ResolvableExpression.withType(Object.class, c -> c.get(variableName));
+            return ResolvableExpression.withType(pos, Object.class, c -> c.get(variableName));
         }
 
         throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), fromContext(ctx)));

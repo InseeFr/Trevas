@@ -60,7 +60,7 @@ public class DatasetFunctionExpression extends DatasetExpression {
             if (!component.isMeasure() || !parameterType.isAssignableFrom(component.getType())) {
                 continue;
             }
-            List<ResolvableExpression> parameters = List.of(new ComponentExpression(component, operand.getPosition()));
+            List<ResolvableExpression> parameters = List.of(new ComponentExpression(component, operand));
             parametersMap.put(component, new FunctionExpression(method, parameters, this));
         }
         return Map.copyOf(parametersMap);

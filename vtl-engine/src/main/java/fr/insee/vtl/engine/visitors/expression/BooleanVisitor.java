@@ -1,14 +1,16 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>BooleanVisitor</code> is the base visitor for expressions involving boolean operations.
@@ -38,67 +40,55 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        switch (ctx.op.getType()) {
-            case VtlParser.AND:
-                return handleAnd(ctx.left, ctx.right);
-            case VtlParser.OR:
-                return handleOr(ctx.left, ctx.right);
-            case VtlParser.XOR:
-                return handleXor(ctx.left, ctx.right);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+        try {
+            var leftExpr = exprVisitor.visit(ctx.left).checkAssignableFrom(Boolean.class);
+            var rightExpr = exprVisitor.visit(ctx.right).checkAssignableFrom(Boolean.class);
+
+            return BooleanExpression.of(fromContext(ctx), context -> {
+                var leftValue = (Boolean) leftExpr.resolve(context);
+                var rightValue = (Boolean) rightExpr.resolve(context);
+                switch (ctx.op.getType()) {
+                    case VtlParser.AND:
+                        return handleAnd(leftValue, rightValue);
+                    case VtlParser.OR:
+                        return handleOr(leftValue, rightValue);
+                    case VtlParser.XOR:
+                        return handleXor(leftValue, rightValue);
+                    default:
+                        throw new UnsupportedOperationException("unknown operator " + ctx);
+                }
+            });
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 
-    private ResolvableExpression handleAnd(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
+    private Boolean handleAnd(Boolean left, Boolean right) {
+        if (left != null && !left) return false;
+        if (right != null && !right) return false;
+        if (TypeChecking.hasNullArgs(left, right)) {
+            return null;
+        }
+        return true;
+    }
 
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue != null && !leftValue) return false;
-
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue != null && !rightValue) return false;
-
-            if (TypeChecking.hasNullArgs(rightValue, leftValue)) return null;
-
+    private Boolean handleOr(Boolean left, Boolean right) {
+        if (left != null && left) {
             return true;
-        });
+        }
+        if (right != null && right) {
+            return true;
+        }
+        if (TypeChecking.hasNullArgs(left, right)) {
+            return null;
+        }
+        return false;
     }
 
-    private ResolvableExpression handleOr(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue != null && leftValue) {
-                return true;
-            }
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue != null && rightValue) {
-                return true;
-            }
-            if (TypeChecking.hasNullArgs(rightValue, leftValue)) {
-                return null;
-            }
-            return false;
-        });
-    }
-
-    private ResolvableExpression handleXor(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue == null) {
-                return null;
-            }
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue == null) {
-                return null;
-            }
-            return nullFalse(leftValue) ^ nullFalse(rightValue);
-        });
+    private Boolean handleXor(Boolean left, Boolean right) {
+        if (TypeChecking.hasNullArgs(left, right)) {
+            return null;
+        }
+        return left ^ right;
     }
 }

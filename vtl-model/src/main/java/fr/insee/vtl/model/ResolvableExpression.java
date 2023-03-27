@@ -26,6 +26,40 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         return position;
     }
 
+    public static class Builder<T> {
+        private final Class<T> type;
+        private VtlFunction<Map<String, Object>, T> func;
+
+        private Positioned position;
+
+        Builder(Class<T> type) {
+            this.type = type;
+        }
+
+        public Builder<T> withPosition(Positioned position) {
+            this.position = position;
+            return this;
+        }
+
+        public ResolvableExpression using(VtlFunction<Map<String, Object>, T> function) {
+            return new ResolvableExpression(position) {
+                @Override
+                public Object resolve(Map<String, Object> context) {
+                    return function.apply(context);
+                }
+
+                @Override
+                public Class<?> getType() {
+                    return type;
+                }
+            };
+        }
+    }
+
+    public static <T> Builder<T> withType(Class<T> type) {
+        return new Builder<T>(type);
+    }
+
     /**
      * Checks that the type of the expression is either the same as, or is a superclass or superinterface of, the class
      * or interface represented by the specified Class parameter.
@@ -47,9 +81,13 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
      */
     @Deprecated
     public static <T> ResolvableExpression withType(Class<T> clazz, VtlFunction<Map<String, Object>, T> func) {
-        return new ResolvableExpression(() -> {
+        return withType(() -> {
             throw new UnsupportedOperationException("TODO");
-        }) {
+        }, clazz, func);
+    }
+
+    public static <T> ResolvableExpression withType(Positioned pos, Class<T> clazz, VtlFunction<Map<String, Object>, T> func) {
+        return new ResolvableExpression(pos) {
 
             @Override
             public Object resolve(Map<String, Object> context) {
@@ -75,9 +113,14 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     @Deprecated
     public static <T> ResolvableExpression withTypeCasting(Class<T> clazz,
                                                            VtlBiFunction<Class<T>, Map<String, Object>, T> func) {
-        return new ResolvableExpression(() -> {
+        return withTypeCasting(() -> {
             throw new UnsupportedOperationException("TODO");
-        }) {
+        }, clazz, func);
+    }
+
+    public static <T> ResolvableExpression withTypeCasting(Positioned position, Class<T> clazz,
+                                                           VtlBiFunction<Class<T>, Map<String, Object>, T> func) {
+        return new ResolvableExpression(position) {
 
             @Override
             public Object resolve(Map<String, Object> context) {

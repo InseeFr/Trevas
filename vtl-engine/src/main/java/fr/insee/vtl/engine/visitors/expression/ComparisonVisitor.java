@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ListExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.VtlBiFunction;
@@ -78,7 +79,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             ResolvableExpression leftExpression,
             ResolvableExpression rightExpression,
             VtlBiFunction<Comparable, Comparable, Boolean> comparisonFn) {
-        return BooleanExpression.of(context -> {
+        return BooleanExpression.of(() -> {throw new UnsupportedOperationException();}, context -> {
             Comparable leftValue;
             Comparable rightValue;
 
@@ -113,7 +114,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         // Special case with nulls.
         if (isNull(leftExpression) || isNull(rightExpression)) {
-            return BooleanExpression.of((Boolean) null);
+            return BooleanExpression.of(fromContext(ctx), (Boolean) null);
         }
 
         assertNumberOrTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
@@ -152,21 +153,22 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         ResolvableExpression operand = exprVisitor.visit(ctx.left);
         ListExpression listExpression = (ListExpression) visit(ctx.lists());
 
+        Positioned pos = fromContext(ctx);
         if (!operand.getType().equals(listExpression.containedType())) {
             throw new VtlRuntimeException(
-                    new InvalidTypeException(operand.getType(), listExpression.containedType(), fromContext(ctx))
+                    new InvalidTypeException(operand.getType(), listExpression.containedType(), pos)
             );
         }
 
         switch (ctx.op.getType()) {
             case VtlParser.IN:
-                return BooleanExpression.of(context -> {
+                return BooleanExpression.of(pos, context -> {
                     List<?> list = listExpression.resolve(context);
                     Object value = operand.resolve(context);
                     return list.contains(value);
                 });
             case VtlParser.NOT_IN:
-                return BooleanExpression.of(context -> {
+                return BooleanExpression.of(pos, context -> {
                     List<?> list = listExpression.resolve(context);
                     Object value = operand.resolve(context);
                     return !list.contains(value);

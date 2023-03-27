@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
@@ -49,7 +50,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         // Special case with nulls.
         if (isNull(operandExpression) || isNull(fromExpression) || isNull(toExpression)) {
-            return BooleanExpression.of((Boolean) null);
+            return BooleanExpression.of(fromContext(ctx),(Boolean) null);
         }
 
         assertNumberOrTypeExpression(operandExpression, fromExpression.getType(), ctx.op);

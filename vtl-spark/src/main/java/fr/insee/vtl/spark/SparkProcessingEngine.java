@@ -608,7 +608,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs));
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
-            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOLVAR + " = false");
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(null, c -> null), BOOLVAR + " = false");
             Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
             return new SparkDatasetExpression(new SparkDataset(result));
         }
