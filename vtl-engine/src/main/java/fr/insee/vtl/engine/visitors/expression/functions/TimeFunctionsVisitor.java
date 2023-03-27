@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -21,7 +22,6 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
-        var pos = fromContext(ctx);
-        return ResolvableExpression.withType(Instant.class).withPosition(pos).using(c -> Instant.now());
+        return new ConstantExpression(Instant.now(), fromContext(ctx));
     }
 }
