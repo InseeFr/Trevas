@@ -1,17 +1,15 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
-import fr.insee.vtl.model.DoubleExpression;
-import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.StringExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
 
 /**
@@ -38,64 +36,70 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
      */
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
-        switch (ctx.op.getType()) {
-            case VtlParser.PLUS:
-                return handlePlus(ctx.left, ctx.right);
-            case VtlParser.MINUS:
-                return handleMinus(ctx.left, ctx.right);
-            case VtlParser.CONCAT:
-                return handleConcat(ctx.left, ctx.right);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+        try {
+            switch (ctx.op.getType()) {
+                case VtlParser.PLUS:
+                    return handlePlus(ctx);
+                case VtlParser.MINUS:
+                    return handleMinus(ctx);
+                case VtlParser.CONCAT:
+                    return handleConcat(ctx);
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 
-    private ResolvableExpression handlePlus(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
+    private ResolvableExpression handlePlus(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
+        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
         if (isLong(leftExpression) && isLong(rightExpression)) {
-            return LongExpression.of(context -> {
+            return ResolvableExpression.withType(Long.class).withPosition(fromContext(ctx)).using(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
                 Long rightValue = (Long) rightExpression.resolve(context);
                 if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
                 return leftValue + rightValue;
             });
+        } else {
+            return ResolvableExpression.withType(Double.class).withPosition(fromContext(ctx)).using(context -> {
+                var leftValue = leftExpression.resolve(context);
+                var rightValue = rightExpression.resolve(context);
+                if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
+                var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
+                var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
+                return leftDouble + rightDouble;
+            });
         }
-        return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return leftDouble + rightDouble;
-        });
     }
 
-    private ResolvableExpression handleMinus(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
+    private ResolvableExpression handleMinus(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
+        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(Number.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(Number.class);
         if (isLong(leftExpression) && isLong(rightExpression)) {
-            return LongExpression.of(context -> {
+            return ResolvableExpression.withType(Long.class).withPosition(fromContext(ctx)).using(context -> {
                 Long leftValue = (Long) leftExpression.resolve(context);
                 Long rightValue = (Long) rightExpression.resolve(context);
                 if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
                 return leftValue - rightValue;
             });
+        } else {
+            return ResolvableExpression.withType(Double.class).withPosition(fromContext(ctx)).using(context -> {
+                var leftValue = leftExpression.resolve(context);
+                var rightValue = rightExpression.resolve(context);
+                if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
+                var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
+                var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
+                return leftDouble - rightDouble;
+            });
         }
-        return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return leftDouble - rightDouble;
-        });
     }
 
-    private ResolvableExpression handleConcat(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertString(exprVisitor.visit(left), left);
-        var rightExpression = assertString(exprVisitor.visit(right), right);
-        return StringExpression.of(context -> {
+    private ResolvableExpression handleConcat(VtlParser.ArithmeticExprOrConcatContext ctx) throws InvalidTypeException {
+        var leftExpression = exprVisitor.visit(ctx.left).checkAssignableTo(String.class);
+        var rightExpression = exprVisitor.visit(ctx.right).checkAssignableTo(String.class);
+        return ResolvableExpression.withType(String.class).withPosition(fromContext(ctx)).using(context -> {
             String leftValue = (String) leftExpression.resolve(context);
             String rightValue = (String) rightExpression.resolve(context);
             if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;

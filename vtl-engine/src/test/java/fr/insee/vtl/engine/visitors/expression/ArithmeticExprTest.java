@@ -73,19 +73,19 @@ public class ArithmeticExprTest {
     @Test
     public void testArithmeticWithVariables() throws ScriptException {
         ScriptContext context = engine.getContext();
-        context.setAttribute("two", Integer.valueOf(2), ScriptContext.ENGINE_SCOPE);
-        context.setAttribute("three", Integer.valueOf(3), ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("two", 2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("three", 3, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("mul := two * three;");
         assertThat(context.getAttribute("mul")).isEqualTo(6L);
 
-        context.setAttribute("onePFive", Float.valueOf(1.5F), ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("onePFive", 1.5F, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("mul := onePFive * two;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);
 
-        context.setAttribute("twoLong", Long.valueOf(2L), ScriptContext.ENGINE_SCOPE);
-        context.setAttribute("onePFiveDouble", Double.valueOf(1.5D), ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("twoLong", 2L, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("onePFiveDouble", 1.5D, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("mul := twoLong * onePFiveDouble;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);

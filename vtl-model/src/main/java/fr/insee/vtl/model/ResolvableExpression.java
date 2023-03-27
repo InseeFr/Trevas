@@ -29,7 +29,6 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     public static class Builder<T> {
         private final Class<T> type;
         private VtlFunction<Map<String, Object>, T> func;
-
         private Positioned position;
 
         Builder(Class<T> type) {
@@ -72,6 +71,20 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     }
 
     /**
+     * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
+     * or interface of the expression.
+     */
+    public ResolvableExpression checkAssignableTo(Class<?> clazz) throws InvalidTypeException {
+        if (Object.class.equals(this.getType())) {
+            return ResolvableExpression.withType(Class.class).withPosition(this).using(ctx -> null);
+        }
+        if (!clazz.isAssignableFrom(this.getType())) {
+            throw new InvalidTypeException(clazz, getType(), this);
+        }
+        return this;
+    }
+
+    /**
      * Returns a <code>ResolvableExpression</code> with a given type and resolution function.
      *
      * @param clazz The <code>Class</code> corresponding to the type of the expression to create.
@@ -86,6 +99,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         }, clazz, func);
     }
 
+    @Deprecated
     public static <T> ResolvableExpression withType(Positioned pos, Class<T> clazz, VtlFunction<Map<String, Object>, T> func) {
         return new ResolvableExpression(pos) {
 
@@ -118,6 +132,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         }, clazz, func);
     }
 
+    @Deprecated
     public static <T> ResolvableExpression withTypeCasting(Positioned position, Class<T> clazz,
                                                            VtlBiFunction<Class<T>, Map<String, Object>, T> func) {
         return new ResolvableExpression(position) {
@@ -142,6 +157,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
      * @param value The expression value.
      * @return An instance of <code>ResolvableExpression</code> with the given type and value.
      */
+    @Deprecated
     public static ResolvableExpression ofType(Class<?> clazz, Object value) {
         return new ResolvableExpression(() -> {
             throw new UnsupportedOperationException("TODO");

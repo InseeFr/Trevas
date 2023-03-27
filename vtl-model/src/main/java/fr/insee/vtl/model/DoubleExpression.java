@@ -7,6 +7,14 @@ import java.util.Map;
  */
 public abstract class DoubleExpression extends NumberExpression {
 
+    public DoubleExpression(Positioned position) {
+        super(position);
+    }
+
+    public DoubleExpression() {
+        super();
+    }
+
     /**
      * Returns the result of applying a function of type <code>Double</code> to a given dataset context.
      *
@@ -33,6 +41,15 @@ public abstract class DoubleExpression extends NumberExpression {
             @Override
             public Double resolve(Map<String, Object> context) {
                 return value;
+            }
+        };
+    }
+
+    public static ResolvableExpression of(Positioned position, VtlFunction<Map<String, Object>, Double> func) {
+        return new DoubleExpression(position) {
+            @Override
+            public Double resolve(Map<String, Object> context) {
+                return func.apply(context);
             }
         };
     }

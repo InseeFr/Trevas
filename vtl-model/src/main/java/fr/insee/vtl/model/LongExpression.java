@@ -5,13 +5,31 @@ import java.util.Map;
 /**
  * The <code>LongExpression</code> class is an abstract representation of an expression of type <code>Long</code>.
  */
+@Deprecated
 public abstract class LongExpression extends NumberExpression {
+
+    public LongExpression(Positioned position) {
+        super(position);
+    }
+
+    public LongExpression() {
+        super();
+    }
 
     public static LongExpression of(Long value) {
         return new LongExpression() {
             @Override
             public Long resolve(Map<String, Object> context) {
                 return value;
+            }
+        };
+    }
+
+    public static ResolvableExpression of(Positioned position, VtlFunction<Map<String, Object>, Long> func) {
+        return new LongExpression(position) {
+            @Override
+            public Long resolve(Map<String, Object> context) {
+                return func.apply(context);
             }
         };
     }

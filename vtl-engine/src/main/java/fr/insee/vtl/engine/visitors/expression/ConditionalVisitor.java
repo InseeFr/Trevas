@@ -43,7 +43,11 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return BooleanExpression.of(fromContext(ctx), (Boolean) null);
         }
 
-        conditionalExpr.checkAssignableFrom(Boolean.class);
+        try {
+            conditionalExpr.checkAssignableFrom(Boolean.class);
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
 
         // Find the common non-null type.
         ResolvableExpression thenExpression = exprVisitor.visit(ctx.thenExpr);
@@ -58,7 +62,11 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     ctx.thenExpr);
         }
 
-        elseExpression.checkAssignableFrom(thenExpression.getType());
+        try {
+            elseExpression.checkAssignableFrom(thenExpression.getType());
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
 
         ResolvableExpression finalThenExpression = thenExpression;
         ResolvableExpression finalElseExpression = elseExpression;
