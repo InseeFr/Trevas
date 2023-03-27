@@ -2,8 +2,8 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.expressions.DatasetFunctionExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -107,11 +107,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
         TerminalNode maskNode = ctx.STRING_CONSTANT();
         // STRING_CONSTANT().getText return null or a string wrapped by quotes
-        String mask = maskNode == null ? null :
-                maskNode.getText()
-                        .replaceAll("\"", "")
-                        .replace("YYYY", "yyyy")
-                        .replace("DD", "dd");
+        String mask = maskNode == null
+                ? null
+                : maskNode.getText().replaceAll("\"", "").replace("YYYY", "yyyy").replace("DD", "dd");
         Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
         Integer basicScalarType = symbol.getType();
         String basicScalarText = symbol.getText();
@@ -119,31 +117,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
 
         if (Object.class.equals(expression.getType())) {
-            return ResolvableExpression.ofType(outputClass, null);
+            return ResolvableExpression.withType(Object.class).withPosition(fromContext(ctx)).using(c -> null);
         }
-        if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass, mask);
-            // Antlr context is not serializable
-            // TODO: Find a way to make ctx serializable
-            //        .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
-            //                new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
+        try {
+            return new CastExpression(fromContext(ctx), expression, mask, outputClass);
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-        if (Boolean.class.equals(expression.getType())) {
-            return BooleanExpression.castTo(expression, outputClass);
-        }
-        if (Long.class.equals(expression.getType())) {
-            return LongExpression.castTo(expression, outputClass);
-        }
-        if (Double.class.equals(expression.getType())) {
-            return DoubleExpression.castTo(expression, outputClass);
-        }
-        if (Instant.class.equals(expression.getType())) {
-            if (mask == null || mask.isEmpty()) {
-                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", fromContext(ctx)));
-            }
-            return InstantExpression.castTo(expression, outputClass, mask);
-        }
-        throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }
 
 }
