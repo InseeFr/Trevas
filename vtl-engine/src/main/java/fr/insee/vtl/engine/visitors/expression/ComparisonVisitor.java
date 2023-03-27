@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -75,11 +74,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
      * @param comparisonFn    a lambda or a method reference
      * @return a VTL boolean expression
      */
-    public BooleanExpression compareExpressions(
+    public ResolvableExpression compareExpressions(
+            Positioned position,
             ResolvableExpression leftExpression,
             ResolvableExpression rightExpression,
             VtlBiFunction<Comparable, Comparable, Boolean> comparisonFn) {
-        return BooleanExpression.of(() -> {throw new UnsupportedOperationException();}, context -> {
+        return ResolvableExpression.withType(Boolean.class).withPosition(position).using(context -> {
             Comparable leftValue;
             Comparable rightValue;
 
@@ -114,26 +114,28 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         // Special case with nulls.
         if (isNull(leftExpression) || isNull(rightExpression)) {
-            return BooleanExpression.of(fromContext(ctx), (Boolean) null);
+            return ResolvableExpression.withType(Boolean.class).withPosition(fromContext(ctx)).using(c -> null);
         }
 
         assertNumberOrTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
+
+        var pos = fromContext(ctx);
 
         // As long as both types return Comparable<TYPE>.
         if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
             switch (type.getType()) {
                 case VtlParser.EQ:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isEqual);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isEqual);
                 case VtlParser.NEQ:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isNotEqual);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isNotEqual);
                 case VtlParser.LT:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isLessThan);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isLessThan);
                 case VtlParser.MT:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isGreaterThan);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isGreaterThan);
                 case VtlParser.LE:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isLessThanOrEqual);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isLessThanOrEqual);
                 case VtlParser.ME:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isGreaterThanOrEqual);
+                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isGreaterThanOrEqual);
                 default:
                     throw new UnsupportedOperationException("unknown operator " + ctx);
             }
@@ -162,13 +164,13 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         switch (ctx.op.getType()) {
             case VtlParser.IN:
-                return BooleanExpression.of(pos, context -> {
+                return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(context -> {
                     List<?> list = listExpression.resolve(context);
                     Object value = operand.resolve(context);
                     return list.contains(value);
                 });
             case VtlParser.NOT_IN:
-                return BooleanExpression.of(pos, context -> {
+                return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(context -> {
                     List<?> list = listExpression.resolve(context);
                     Object value = operand.resolve(context);
                     return !list.contains(value);
