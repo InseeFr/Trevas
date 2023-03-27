@@ -11,6 +11,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
@@ -53,88 +54,43 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
 
         var pos = fromContext(ctx);
+
+        Function<String, String> handle = null;
+
         switch (ctx.op.getType()) {
             case VtlParser.TRIM:
-                return handleTrim(expressionCtx);
+                handle = String::trim;
+                break;
             case VtlParser.LTRIM:
-                return handleLTrim(expressionCtx);
+                handle = input -> LTRIM.matcher(input).replaceAll("");
+                break;
             case VtlParser.RTRIM:
-                return handleRTrim(expressionCtx);
+                handle = input -> RTRIM.matcher(input).replaceAll("");
+                break;
             case VtlParser.UCASE:
-                return handleUCase(expressionCtx);
+                handle = String::toUpperCase;
+                break;
             case VtlParser.LCASE:
-                return handleLCase(expressionCtx);
+                handle = String::toLowerCase;
+                break;
             case VtlParser.LEN:
-                return handleLen(expressionCtx);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+                return ResolvableExpression.withType(Long.class).withPosition(pos)
+                        .using(context -> {
+                            String value = (String) expression.resolve(context);
+                            if (value == null) return null;
+                            return (long) value.length();
+                        });
         }
-    }
 
-    private ResolvableExpression handleRTrim(VtlParser.ExprContext ctx) throws InvalidTypeException {
-        ResolvableExpression expression = exprVisitor.visit(ctx).checkInstanceOf(String.class);
+        if (handle == null) throw new UnsupportedOperationException("unknown operator " + ctx);
 
-        var pos = fromContext(ctx);
-
+        Function<String, String> finalHandle = handle;
         return ResolvableExpression.withType(String.class).withPosition(pos)
                 .using(context -> {
                     String value = (String) expression.resolve(context);
                     if (value == null) return null;
-                    return RTRIM.matcher(value).replaceAll("");
+                    return finalHandle.apply(value);
                 });
-    }
-
-    private ResolvableExpression handleUCase(VtlParser.ExprContext ctx) throws InvalidTypeException  {
-        ResolvableExpression expression = exprVisitor.visit(ctx).checkInstanceOf(String.class);
-
-        var pos = fromContext(ctx);
-
-        return ResolvableExpression.withType(String.class).withPosition(pos)
-                .using(context -> {
-                    String value = (String) expression.resolve(context);
-                    if (value == null) return null;
-                    return value.toUpperCase();
-                });
-    }
-
-    private ResolvableExpression handleLCase(VtlParser.ExprContext ctx) throws InvalidTypeException  {
-        ResolvableExpression expression = exprVisitor.visit(ctx).checkInstanceOf(String.class);
-
-        var pos = fromContext(ctx);
-
-        return ResolvableExpression.withType(String.class).withPosition(pos)
-                .using(context -> {
-                    String value = (String) expression.resolve(context);
-                    if (value == null) return null;
-                    return value.toLowerCase();
-                });
-    }
-
-    private ResolvableExpression handleLen(VtlParser.ExprContext expressionCtx) throws InvalidTypeException  {
-        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
-        return LongExpression.of(context -> {
-            String value = (String) expression.resolve(context);
-            if (value == null) return null;
-            return (long) value.length();
-        });
-    }
-
-    private ResolvableExpression handleLTrim(VtlParser.ExprContext expressionCtx) throws InvalidTypeException  {
-        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
-        return StringExpression.of(context -> {
-            String value = (String) expression.resolve(context);
-            if (value == null) return null;
-            return LTRIM.matcher(value).replaceAll("");
-        });
-    }
-
-    private ResolvableExpression handleTrim(VtlParser.ExprContext expressionCtx) throws InvalidTypeException  {
-        ResolvableExpression expression = assertString(exprVisitor.visit(expressionCtx), expressionCtx);
-        return StringExpression.of(context -> {
-            String value = (String) expression.resolve(context);
-            if (value == null) return null;
-            return value.trim();
-        });
     }
 
     /**
@@ -153,25 +109,35 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         }
         // TODO: grammar issue: endParameter should be named lengthParameter
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
-        var startExpression = ctx.startParameter == null ? LongExpression.of(0L)
-                : assertLong(exprVisitor.visit(ctx.startParameter), ctx.startParameter);
-        var lengthExpression = ctx.endParameter == null ? null
-                : assertLong(exprVisitor.visit(ctx.endParameter), ctx.endParameter);
+        var pos = fromContext(ctx);
+        ResolvableExpression startExpression;
+        ResolvableExpression lengthExpression;
+        try {
+            startExpression = ctx.startParameter == null ?
+                    ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L)
+                    : exprVisitor.visit(ctx.startParameter).checkInstanceOf(Long.class);
+            lengthExpression = ctx.endParameter == null ? null
+                    : exprVisitor.visit(ctx.endParameter).checkInstanceOf(Long.class);
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
 
-        return ResolvableExpression.withType(String.class, context -> {
-            String value = (String) expression.resolve(context);
-            if (value == null) return null;
-            Long startValue = (Long) startExpression.resolve(context);
-            if (startValue == null) return null;
-            if (startValue > value.length()) return "";
-            var start = startValue.equals(0L) ? 0 : startValue.intValue() - 1;
-            if (lengthExpression == null) return value.substring(start);
-            Long lengthValue = (Long) lengthExpression.resolve(context);
-            if (lengthValue == null) return null;
-            var end = start + lengthValue.intValue();
-            if (end > value.length()) return value.substring(start);
-            return value.substring(start, end);
-        });
+        return ResolvableExpression.withType(String.class).withPosition(pos).using(
+                context -> {
+                    String value = (String) expression.resolve(context);
+                    if (value == null) return null;
+                    Long startValue = (Long) startExpression.resolve(context);
+                    if (startValue == null) return null;
+                    if (startValue > value.length()) return "";
+                    var start = startValue.equals(0L) ? 0 : startValue.intValue() - 1;
+                    if (lengthExpression == null) return value.substring(start);
+                    Long lengthValue = (Long) lengthExpression.resolve(context);
+                    if (lengthValue == null) return null;
+                    var end = start + lengthValue.intValue();
+                    if (end > value.length()) return value.substring(start);
+                    return value.substring(start, end);
+                }
+        );
     }
 
     /**
@@ -182,19 +148,26 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
      */
     @Override
     public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
-        ResolvableExpression expression = assertString(exprVisitor.visit(ctx.expr(0)), ctx.expr(0));
-        ResolvableExpression inputPattern = assertString(exprVisitor.visit(ctx.param), ctx.param);
+        var pos = fromContext(ctx);
+        try {
+            ResolvableExpression expression = exprVisitor.visit(ctx.expr(0)).checkInstanceOf(String.class);
+            ResolvableExpression inputPattern = exprVisitor.visit(ctx.param).checkInstanceOf(String.class);
+            ResolvableExpression outputPattern = ctx.optionalExpr() == null ?
+                    ResolvableExpression.withType(String.class).withPosition(pos).using(c -> "")
+                    : exprVisitor.visit(ctx.optionalExpr()).checkInstanceOf(String.class);
 
-        var outputPattern = ctx.optionalExpr() == null ? StringExpression.of("")
-                : assertString(exprVisitor.visit(ctx.optionalExpr()), ctx.optionalExpr());
-
-        return ResolvableExpression.withType(String.class, context -> {
-            String value = (String) expression.resolve(context);
-            String inputPatternValue = (String) inputPattern.resolve(context);
-            String outputPatternValue = (String) outputPattern.resolve(context);
-            if (TypeChecking.hasNullArgs(value, inputPatternValue, outputPatternValue)) return null;
-            return value.replaceAll(inputPatternValue, outputPatternValue);
-        });
+            return ResolvableExpression.withType(String.class).withPosition(pos).using(
+                    context -> {
+                        String value = (String) expression.resolve(context);
+                        String inputPatternValue = (String) inputPattern.resolve(context);
+                        String outputPatternValue = (String) outputPattern.resolve(context);
+                        if (TypeChecking.hasNullArgs(value, inputPatternValue, outputPatternValue)) return null;
+                        return value.replaceAll(inputPatternValue, outputPatternValue);
+                    }
+            );
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
     }
 
     /**
@@ -214,13 +187,17 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         var occurrence = ctx.occurrenceParameter == null ? LongExpression.of(1L)
                 : assertLong(exprVisitor.visit(ctx.occurrenceParameter), ctx.occurrenceParameter);
 
-        return ResolvableExpression.withType(Long.class, context -> {
-            String value = (String) expression.resolve(context);
-            String patternValue = (String) pattern.resolve(context);
-            Long startValue = (Long) start.resolve(context);
-            Long occurrenceValue = (Long) occurrence.resolve(context);
-            if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
-            return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
-        });
+        var pos = fromContext(ctx);
+
+        return ResolvableExpression.withType(Long.class).withPosition(pos).using(
+                context -> {
+                    String value = (String) expression.resolve(context);
+                    String patternValue = (String) pattern.resolve(context);
+                    Long startValue = (Long) start.resolve(context);
+                    Long occurrenceValue = (Long) occurrence.resolve(context);
+                    if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
+                    return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
+                }
+        );
     }
 }
