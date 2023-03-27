@@ -3,13 +3,9 @@ package fr.insee.vtl.engine;
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
-import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
-import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
-import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -21,13 +17,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -106,7 +97,7 @@ public class VtlScriptEngineTest {
             engine.eval("var := true and (10 +\n" +
                     "10);");
         }).isInstanceOf(InvalidTypeException.class)
-                .is(atPosition(0, 1, 16, 3))
+                .is(atPosition(0, 1, 17, 2))
                 .hasMessage("invalid type Long, expected Boolean");
     }
 
