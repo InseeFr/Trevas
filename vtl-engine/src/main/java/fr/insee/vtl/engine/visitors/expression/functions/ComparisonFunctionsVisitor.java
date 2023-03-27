@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -46,23 +45,26 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         ResolvableExpression fromExpression = exprVisitor.visit(ctx.from_);
         ResolvableExpression toExpression = exprVisitor.visit(ctx.to_);
 
+        var pos = fromContext(ctx);
+
         // TODO: handle other types (dates?)
 
         // Special case with nulls.
         if (isNull(operandExpression) || isNull(fromExpression) || isNull(toExpression)) {
-            return BooleanExpression.of(fromContext(ctx),(Boolean) null);
+            return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null);
         }
 
         assertNumberOrTypeExpression(operandExpression, fromExpression.getType(), ctx.op);
         assertNumberOrTypeExpression(operandExpression, toExpression.getType(), ctx.op);
 
-        return ResolvableExpression.withType(Boolean.class, context -> {
-            BigDecimal operandValue = asBigDecimal(operandExpression, operandExpression.resolve(context));
-            BigDecimal fromValue = asBigDecimal(fromExpression, fromExpression.resolve(context));
-            BigDecimal toValue = asBigDecimal(toExpression, toExpression.resolve(context));
-            if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
-            return operandValue.compareTo(fromValue) >= 0 && operandValue.compareTo(toValue) <= 0;
-        });
+        return ResolvableExpression.withType(Boolean.class).withPosition(pos)
+                .using(context -> {
+                    BigDecimal operandValue = asBigDecimal(operandExpression, operandExpression.resolve(context));
+                    BigDecimal fromValue = asBigDecimal(fromExpression, fromExpression.resolve(context));
+                    BigDecimal toValue = asBigDecimal(toExpression, toExpression.resolve(context));
+                    if (TypeChecking.hasNullArgs(operandValue, fromValue, toValue)) return null;
+                    return operandValue.compareTo(fromValue) >= 0 && operandValue.compareTo(toValue) <= 0;
+                });
     }
 
     /**
@@ -76,14 +78,17 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         ResolvableExpression operandExpression = assertString(exprVisitor.visit(ctx.op), ctx.op);
         ResolvableExpression patternExpression = assertString(exprVisitor.visit(ctx.pattern), ctx.pattern);
 
-        return ResolvableExpression.withType(Boolean.class, context -> {
-            String operandValue = (String) operandExpression.resolve(context);
-            String patternValue = (String) patternExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(operandValue, patternValue)) return null;
-            Pattern pattern = Pattern.compile(patternValue);
-            Matcher matcher = pattern.matcher(operandValue);
-            return matcher.matches();
-        });
+        var pos = fromContext(ctx);
+
+        return ResolvableExpression.withType(Boolean.class).withPosition(pos)
+                .using(context -> {
+                    String operandValue = (String) operandExpression.resolve(context);
+                    String patternValue = (String) patternExpression.resolve(context);
+                    if (TypeChecking.hasNullArgs(operandValue, patternValue)) return null;
+                    Pattern pattern = Pattern.compile(patternValue);
+                    Matcher matcher = pattern.matcher(operandValue);
+                    return matcher.matches();
+                });
     }
 
     /**
@@ -95,8 +100,10 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     @Override
     public ResolvableExpression visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
         ResolvableExpression operandExpression = exprVisitor.visit(ctx.expr());
-        return ResolvableExpression.withType(Boolean.class, context ->
-                operandExpression.resolve(context) == null
-        );
+
+        var pos = fromContext(ctx);
+
+        return ResolvableExpression.withType(Boolean.class).withPosition(pos)
+                .using(context -> operandExpression.resolve(context) == null);
     }
 }

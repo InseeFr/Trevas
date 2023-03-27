@@ -9,6 +9,7 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.util.Objects;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 
 /**
@@ -19,9 +20,9 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
     private final ExpressionVisitor exprVisitor;
 
     /**
-     * Constructor taking a scripting context.
+     * Constructor taking an expression visitor.
      *
-     * @param context The scripting context for the visitor.
+     * @param expressionVisitor The visitor for the enclosing expression.
      */
     public DistanceFunctionsVisitor(ExpressionVisitor expressionVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
@@ -38,11 +39,14 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
         ResolvableExpression leftExpression = assertString(exprVisitor.visit(ctx.left), ctx.left);
         ResolvableExpression rightExpression = assertString(exprVisitor.visit(ctx.right), ctx.right);
 
-        return ResolvableExpression.withType(Long.class, context -> {
-            String leftValue = (String) leftExpression.resolve(context);
-            String rightValue = (String) rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(leftValue, rightValue));
-        });
+        var pos = fromContext(ctx);
+
+        return ResolvableExpression.withType(Long.class).withPosition(pos)
+                .using(context -> {
+                    String leftValue = (String) leftExpression.resolve(context);
+                    String rightValue = (String) rightExpression.resolve(context);
+                    if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
+                    return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(leftValue, rightValue));
+                });
     }
 }

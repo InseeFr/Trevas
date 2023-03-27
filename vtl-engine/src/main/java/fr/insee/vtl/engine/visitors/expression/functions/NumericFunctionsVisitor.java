@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -14,20 +13,11 @@ import java.util.List;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertLong;
 
 /**
  * <code>NumericFunctionsVisitor</code> is the visitor for expressions involving numeric functions.
  */
 public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
-
-    // TODO: Support dataset as argument of unary numeric.
-    //          ceil_ds := ceil(ds) -> ds[calc m1 := ceil(m1), m2 := ...]
-    //          ceil_ds := ceil(ds#measure)
-    //       Evaluate when we have a proper function abstraction:
-    //          var function = findFunction(name);
-    //          function.run(ctx.expr());
-    //
 
     private final ExpressionVisitor exprVisitor;
     private final GenericFunctionsVisitor genericFunctionsVisitor;
@@ -184,10 +174,12 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     @Override
     public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
         try {
+            var pos = fromContext(ctx);
             List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.expr()),
-                    ctx.optionalExpr() == null ? LongExpression.of(0L) : assertLong(exprVisitor.visit(ctx.optionalExpr()), ctx.optionalExpr())
-            );
+                    ctx.optionalExpr() == null ?
+                            ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L) :
+                            exprVisitor.visit(ctx.optionalExpr()).checkInstanceOf(Long.class));
             switch (ctx.op.getType()) {
                 case VtlParser.ROUND:
                     return genericFunctionsVisitor.invokeFunction("round", parameters, fromContext(ctx));
