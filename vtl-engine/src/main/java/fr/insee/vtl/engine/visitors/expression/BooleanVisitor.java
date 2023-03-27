@@ -35,27 +35,24 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        var pos = fromContext(ctx);
         try {
             var leftExpr = exprVisitor.visit(ctx.left).checkAssignableFrom(Boolean.class);
             var rightExpr = exprVisitor.visit(ctx.right).checkAssignableFrom(Boolean.class);
 
-            return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(
-                    context -> {
-                        var leftValue = (Boolean) leftExpr.resolve(context);
-                        var rightValue = (Boolean) rightExpr.resolve(context);
-                        switch (ctx.op.getType()) {
-                            case VtlParser.AND:
-                                return handleAnd(leftValue, rightValue);
-                            case VtlParser.OR:
-                                return handleOr(leftValue, rightValue);
-                            case VtlParser.XOR:
-                                return handleXor(leftValue, rightValue);
-                            default:
-                                throw new UnsupportedOperationException("unknown operator " + ctx);
-                        }
-                    }
-            );
+            return ResolvableExpression.withType(Boolean.class).withPosition(fromContext(ctx)).using(context -> {
+                var leftValue = (Boolean) leftExpr.resolve(context);
+                var rightValue = (Boolean) rightExpr.resolve(context);
+                switch (ctx.op.getType()) {
+                    case VtlParser.AND:
+                        return handleAnd(leftValue, rightValue);
+                    case VtlParser.OR:
+                        return handleOr(leftValue, rightValue);
+                    case VtlParser.XOR:
+                        return handleXor(leftValue, rightValue);
+                    default:
+                        throw new UnsupportedOperationException("unknown operator " + ctx);
+                }
+            });
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
         }
