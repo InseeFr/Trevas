@@ -104,8 +104,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
-        }).isInstanceOf(RuntimeException.class)
-                .hasMessage("invalid parameter type class java.lang.String, need class java.lang.Number");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -129,7 +129,7 @@ public class NumericFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected \"ko\" to be Number");
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test

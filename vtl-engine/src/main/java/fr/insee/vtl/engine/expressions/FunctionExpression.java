@@ -39,7 +39,7 @@ public class FunctionExpression extends ResolvableExpression {
             if (type.equals(Object.class)) {
                 continue;
             }
-            expression.checkAssignableFrom(type);
+            expression.checkInstanceOf(type);
         }
     }
 

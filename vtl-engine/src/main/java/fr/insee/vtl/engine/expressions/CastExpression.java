@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.expressions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -34,12 +35,12 @@ public class CastExpression extends ResolvableExpression {
                 this.expr = castDouble(expr);
             } else if (Instant.class.equals(source)) {
                 if (mask == null || mask.isEmpty()) {
-                    throw new VtlScriptException("cannot cast date: no mask specified", position);
+                    throw new InvalidArgumentException("cannot cast date: no mask specified", position);
                 }
                 this.expr = castInstant(expr, mask);
-            }
+            } else
+                throw new VtlScriptException("cast unsupported on expression of type: " + expr.getType(), position);
         }
-        throw new VtlScriptException("cast unsupported on expression of type: " + expr.getType(), position);
     }
 
     public ResolvableExpression castBoolean(ResolvableExpression expr) {

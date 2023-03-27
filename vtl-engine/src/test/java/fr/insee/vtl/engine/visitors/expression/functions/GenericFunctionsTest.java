@@ -116,7 +116,7 @@ public class GenericFunctionsTest {
         engine.eval("strDate := cast(d, string, \"YYYY/MM\");");
         assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
         assertThatThrownBy(() -> {
-            engine.eval("a := cast(current_date(),string);");
+            engine.eval("a := cast(current_date(), string);");
         }).isInstanceOf(InvalidArgumentException.class).hasMessage("cannot cast date: no mask specified");
 
         // Test unsupported basic scalar type
