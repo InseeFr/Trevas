@@ -36,8 +36,8 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         try {
-            var leftExpr = exprVisitor.visit(ctx.left).checkAssignableFrom(Boolean.class);
-            var rightExpr = exprVisitor.visit(ctx.right).checkAssignableFrom(Boolean.class);
+            var leftExpr = exprVisitor.visit(ctx.left).checkInstanceOf(Boolean.class);
+            var rightExpr = exprVisitor.visit(ctx.right).checkInstanceOf(Boolean.class);
 
             return ResolvableExpression.withType(Boolean.class).withPosition(fromContext(ctx)).using(context -> {
                 var leftValue = (Boolean) leftExpr.resolve(context);
