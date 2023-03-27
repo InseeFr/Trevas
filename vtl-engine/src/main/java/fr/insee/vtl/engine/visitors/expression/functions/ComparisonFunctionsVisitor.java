@@ -1,8 +1,10 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -14,7 +16,6 @@ import java.util.regex.Pattern;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertString;
 import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 
 /**
@@ -75,20 +76,23 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
      */
     @Override
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
-        ResolvableExpression operandExpression = assertString(exprVisitor.visit(ctx.op), ctx.op);
-        ResolvableExpression patternExpression = assertString(exprVisitor.visit(ctx.pattern), ctx.pattern);
-
         var pos = fromContext(ctx);
+        try {
+            ResolvableExpression operandExpression = exprVisitor.visit(ctx.op).checkInstanceOf(String.class);
+            ResolvableExpression patternExpression = exprVisitor.visit(ctx.pattern).checkInstanceOf(String.class);
 
-        return ResolvableExpression.withType(Boolean.class).withPosition(pos)
-                .using(context -> {
-                    String operandValue = (String) operandExpression.resolve(context);
-                    String patternValue = (String) patternExpression.resolve(context);
-                    if (TypeChecking.hasNullArgs(operandValue, patternValue)) return null;
-                    Pattern pattern = Pattern.compile(patternValue);
-                    Matcher matcher = pattern.matcher(operandValue);
-                    return matcher.matches();
-                });
+            return ResolvableExpression.withType(Boolean.class).withPosition(pos)
+                    .using(context -> {
+                        String operandValue = (String) operandExpression.resolve(context);
+                        String patternValue = (String) patternExpression.resolve(context);
+                        if (TypeChecking.hasNullArgs(operandValue, patternValue)) return null;
+                        Pattern pattern = Pattern.compile(patternValue);
+                        Matcher matcher = pattern.matcher(operandValue);
+                        return matcher.matches();
+                    });
+        } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        }
     }
 
     /**
