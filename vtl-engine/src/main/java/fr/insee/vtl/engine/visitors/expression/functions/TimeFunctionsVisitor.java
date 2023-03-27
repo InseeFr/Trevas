@@ -6,6 +6,8 @@ import fr.insee.vtl.parser.VtlParser;
 
 import java.time.Instant;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+
 /**
  * <code>TimeFunctionsVisitor</code> is the base visitor for expressions involving time functions.
  */
@@ -19,6 +21,7 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
-        return ResolvableExpression.withType(Instant.class, context -> Instant.now());
+        var pos = fromContext(ctx);
+        return ResolvableExpression.withType(Instant.class).withPosition(pos).using(c -> Instant.now());
     }
 }
