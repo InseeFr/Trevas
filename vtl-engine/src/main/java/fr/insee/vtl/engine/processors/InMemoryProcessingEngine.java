@@ -4,7 +4,6 @@ import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Analytics;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -72,7 +71,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
         return new DatasetExpression(expression) {
 
             @Override

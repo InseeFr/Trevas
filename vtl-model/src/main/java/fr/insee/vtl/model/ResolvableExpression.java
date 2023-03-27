@@ -76,9 +76,6 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
      * or interface of the expression.
      */
     public ResolvableExpression checkInstanceOf(Class<?> clazz) throws InvalidTypeException {
-        if (Object.class.equals(this.getType())) {
-            return ResolvableExpression.withType(Object.class).withPosition(this).using(ctx -> null);
-        }
         if (!clazz.isAssignableFrom(this.getType())) {
             throw new InvalidTypeException(clazz, getType(), this);
         }
@@ -86,6 +83,9 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     }
 
     public <T> ResolvableExpression tryCast(Class<T> clazz) {
+        if (Object.class.equals(this.getType())) {
+            return ResolvableExpression.withType(Object.class).withPosition(this).using(ctx -> null);
+        }
         return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> {
             var value = this.resolve(ctx);
             try {

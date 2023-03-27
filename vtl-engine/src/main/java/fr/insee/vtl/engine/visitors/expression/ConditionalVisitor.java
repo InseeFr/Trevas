@@ -46,12 +46,13 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             // Normalize the types of the branches.
             if (!isNull(thenExpr)) {
-                this.elseExpr = elseExpr.tryCast(thenExpr.getType());
-                this.thenExpr = thenExpr;
+                elseExpr = elseExpr.tryCast(thenExpr.getType());
             } else if (!isNull(elseExpr)) {
-                this.thenExpr = thenExpr.tryCast(elseExpr.getType());
-                this.elseExpr = elseExpr;
+                thenExpr = thenExpr.tryCast(elseExpr.getType());
             }
+
+            this.thenExpr = thenExpr;
+            this.elseExpr = elseExpr;
             this.type = thenExpr.getType();
         }
 
@@ -77,25 +78,45 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
-
         try {
             var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr).checkInstanceOf(Boolean.class);
             var thenExpression = exprVisitor.visit(ctx.thenExpr);
             var elseExpression = exprVisitor.visit(ctx.elseExpr);
-
-
-            ResolvableExpression finalThenExpression = thenExpression;
-            ResolvableExpression finalElseExpression = elseExpression;
-            Class<?> type = thenExpression.getType();
-            return ResolvableExpression.withType(type).withPosition(fromContext(ctx)).using((Map<String, Object> context) -> {
-                Boolean conditionalValue = (Boolean) conditionalExpr.resolve(context);
-                return Boolean.TRUE.equals(conditionalValue) ?
-                        type.cast(finalThenExpression.resolve(context)) :
-                        type.cast(finalElseExpression.resolve(context));
-            });
-
+            return new ItThenExpression(fromContext(ctx), conditionalExpr, thenExpression, elseExpression);
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
+        }
+    }
+
+
+    static class NvlExpression extends ResolvableExpression {
+
+        private final ResolvableExpression defaultExpr;
+        private final ResolvableExpression expr;
+
+        protected NvlExpression(Positioned positioned, ResolvableExpression expr, ResolvableExpression defaultExpr) {
+            super(positioned);
+            try {
+                defaultExpr.checkInstanceOf(expr.getType());
+            } catch (InvalidTypeException e) {
+                throw new VtlRuntimeException(e);
+            }
+            this.expr = expr;
+            this.defaultExpr = defaultExpr;
+
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            var resolvedExpression = expr.resolve(context);
+            return resolvedExpression == null ?
+                    defaultExpr.resolve(context) :
+                    resolvedExpression;
+        }
+
+        @Override
+        public Class<?> getType() {
+            return expr.getType();
         }
     }
 
@@ -107,30 +128,14 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
-        // TODO: Rewrite using if.
+
         ResolvableExpression expression = exprVisitor.visit(ctx.left);
-        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
+        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right).tryCast(expression.getType());
 
         if (isNull(expression)) {
-            return ResolvableExpression.withTypeCasting(defaultExpression.getType(), (clazz, context) ->
-                    clazz.cast(defaultExpression.resolve(context))
-            );
+            return expression;
         }
 
-        Class<?> expressionType = expression.getType();
-        Class<?> defaultExpressionType = defaultExpression.getType();
-
-        if (!expressionType.equals(defaultExpressionType)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(expressionType, defaultExpressionType, fromContext(ctx.right))
-            );
-        }
-
-        return ResolvableExpression.withTypeCasting(defaultExpressionType, (clazz, context) -> {
-            var resolvedExpression = expression.resolve(context);
-            return resolvedExpression == null ?
-                    clazz.cast(defaultExpression.resolve(context)) :
-                    clazz.cast(resolvedExpression);
-        });
+        return new NvlExpression(fromContext(ctx), expression, defaultExpression);
     }
 }
