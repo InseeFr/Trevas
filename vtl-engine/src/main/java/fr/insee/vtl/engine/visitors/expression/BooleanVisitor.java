@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -28,10 +27,6 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
     }
 
-    private static boolean nullFalse(Boolean b) {
-        return b != null ? b : false;
-    }
-
     /**
      * Visits expressions with boolean operators.
      *
@@ -40,24 +35,27 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
+        var pos = fromContext(ctx);
         try {
             var leftExpr = exprVisitor.visit(ctx.left).checkAssignableFrom(Boolean.class);
             var rightExpr = exprVisitor.visit(ctx.right).checkAssignableFrom(Boolean.class);
 
-            return BooleanExpression.of(fromContext(ctx), context -> {
-                var leftValue = (Boolean) leftExpr.resolve(context);
-                var rightValue = (Boolean) rightExpr.resolve(context);
-                switch (ctx.op.getType()) {
-                    case VtlParser.AND:
-                        return handleAnd(leftValue, rightValue);
-                    case VtlParser.OR:
-                        return handleOr(leftValue, rightValue);
-                    case VtlParser.XOR:
-                        return handleXor(leftValue, rightValue);
-                    default:
-                        throw new UnsupportedOperationException("unknown operator " + ctx);
-                }
-            });
+            return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(
+                    context -> {
+                        var leftValue = (Boolean) leftExpr.resolve(context);
+                        var rightValue = (Boolean) rightExpr.resolve(context);
+                        switch (ctx.op.getType()) {
+                            case VtlParser.AND:
+                                return handleAnd(leftValue, rightValue);
+                            case VtlParser.OR:
+                                return handleOr(leftValue, rightValue);
+                            case VtlParser.XOR:
+                                return handleXor(leftValue, rightValue);
+                            default:
+                                throw new UnsupportedOperationException("unknown operator " + ctx);
+                        }
+                    }
+            );
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
         }
