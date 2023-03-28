@@ -309,7 +309,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeValidationSimple(DatasetExpression dsE, ResolvableExpression erCodeE,
                                                      ResolvableExpression erLevelE, DatasetExpression imbalanceE,
-                                                     String output) {
+                                                     String output, Positioned pos) {
         throw new UnsupportedOperationException();
     }
 

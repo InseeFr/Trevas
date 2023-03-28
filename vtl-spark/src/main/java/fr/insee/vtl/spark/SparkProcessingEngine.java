@@ -639,7 +639,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeValidationSimple(DatasetExpression dsExpr,
                                                      ResolvableExpression errorCodeExpr,
                                                      ResolvableExpression errorLevelExpr,
-                                                     DatasetExpression imbalanceExpr, String output) {
+                                                     DatasetExpression imbalanceExpr,
+                                                     String output,
+                                                     Positioned pos) {
         // Rename imbalance single measure to imbalance
         SparkDataset sparkImbalanceDataset = asSparkDataset(imbalanceExpr);
         Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
@@ -648,7 +650,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, "imbalance"));
         Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
         var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
-        SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap));
+        SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap), pos);
         // Join expr ds & imbalance ds
         Map<String, DatasetExpression> datasetExpressions = Map.ofEntries(
                 Map.entry("dsExpr", dsExpr),
@@ -660,20 +662,24 @@ public class SparkProcessingEngine implements ProcessingEngine {
         DatasetExpression datasetExpression = executeLeftJoin(datasetExpressions, components);
         SparkDataset sparkDataset = asSparkDataset(datasetExpression);
         Dataset<Row> ds = sparkDataset.getSparkDataset();
-        ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(errorCodeExpr.getType(), (clazz, context) -> {
-            if (errorCodeExpr == null) return null;
-            Object erCode = errorCodeExpr.resolve(context);
-            if (erCode == null) return null;
-            Boolean boolVar = (Boolean) context.get(BOOLVAR);
-            return boolVar ? null : clazz.cast(erCode);
-        });
-        ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(errorLevelExpr.getType(), (clazz, context) -> {
-            if (errorLevelExpr == null) return null;
-            Object erLevel = errorLevelExpr.resolve(context);
-            if (erLevel == null) return null;
-            Boolean boolVar = (Boolean) context.get(BOOLVAR);
-            return boolVar ? null : clazz.cast(erLevel);
-        });
+        Class errorCodeType = errorCodeExpr == null ? String.class : errorCodeExpr.getType();
+        ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType).withPosition(pos).using(
+                context -> {
+                    Map<String, Object> contextMap = (Map<String, Object>) context;
+                    if (errorCodeExpr == null) return null;
+                    Object erCode = errorCodeExpr.resolve(contextMap);
+                    Boolean boolVar = (Boolean) contextMap.get(BOOLVAR);
+                    return boolVar ? null : errorCodeType.cast(erCode);
+                });
+        Class errorLevelType = errorLevelExpr == null ? String.class : errorLevelExpr.getType();
+        ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType).withPosition(pos).using(
+                context -> {
+                    Map<String, Object> contextMap = (Map<String, Object>) context;
+                    if (errorLevelExpr == null) return null;
+                    Object erLevel = errorLevelExpr.resolve(contextMap);
+                    Boolean boolVar = (Boolean) contextMap.get(BOOLVAR);
+                    return boolVar ? null : errorLevelType.cast(erLevel);
+                });
 
         var roleMap = getRoleMap(sparkDataset);
         roleMap.put("errorlevel", MEASURE);
@@ -685,16 +691,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
         );
 
         Dataset<Row> calculatedDataset = executeCalcEvaluated(ds, resolvableExpressions);
-        DatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(calculatedDataset, roleMap));
+        DatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(calculatedDataset, roleMap), pos);
 
         // handle output: if none or all, return, if invalid filter on bool_var and return
         if (output == null || output.equals(ValidationOutput.ALL.value)) {
             return sparkDatasetExpression;
         }
-        DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOLVAR + " = false");
+        DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression,
+                ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
+                BOOLVAR + " = false");
         // VTL issue: drop BOOLVAR in check_datapoint only specified but we apply also here for harmonization
         Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
-        return new SparkDatasetExpression(new SparkDataset(result));
+        return new SparkDatasetExpression(new SparkDataset(result), pos);
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {

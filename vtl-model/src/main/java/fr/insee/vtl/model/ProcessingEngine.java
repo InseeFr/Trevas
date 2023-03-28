@@ -178,10 +178,11 @@ public interface ProcessingEngine {
      * @param erLevelExpr   error level expression
      * @param imbalanceExpr dataset expression
      * @param output        validation output
+     * @param pos           script error position
      * @return the result of the validation
      */
     DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr,
                                               ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr,
-                                              String output);
+                                              String output, Positioned pos);
 
 }

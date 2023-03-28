@@ -80,7 +80,6 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
 
     public static class Builder<T> implements Serializable {
         private final Class<T> type;
-        private VtlFunction<Map<String, Object>, T> func;
         private Positioned position;
 
         Builder(Class<T> type) {
