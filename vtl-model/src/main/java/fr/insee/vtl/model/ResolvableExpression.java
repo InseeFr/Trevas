@@ -30,18 +30,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     public Position getPosition() {
         return position;
     }
-
-    /**
-     * Checks that the type of the expression is either the same as, or is a superclass or superinterface of, the class
-     * or interface represented by the specified Class parameter.
-     */
-    public ResolvableExpression checkAssignableFrom(Class<?> clazz) throws InvalidTypeException {
-        if (!getType().isAssignableFrom(clazz)) {
-            throw new InvalidTypeException(clazz, getType(), this);
-        }
-        return this;
-    }
-
+    
     /**
      * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
      * or interface of the expression.
