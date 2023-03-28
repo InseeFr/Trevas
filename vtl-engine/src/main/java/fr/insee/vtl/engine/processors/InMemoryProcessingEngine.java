@@ -8,6 +8,7 @@ import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -301,7 +302,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos) {
         throw new UnsupportedOperationException();
     }
 

@@ -1,8 +1,12 @@
 package fr.insee.vtl.model;
 
+import java.io.Serializable;
+
 public interface Positioned {
 
-    class Position {
+    Position getPosition();
+
+    class Position implements Serializable {
         public final Integer startLine;
         public final Integer endLine;
         public final Integer startColumn;
@@ -16,6 +20,4 @@ public interface Positioned {
         }
 
     }
-
-    Position getPosition();
 }

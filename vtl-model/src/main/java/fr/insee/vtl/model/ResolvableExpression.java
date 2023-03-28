@@ -89,7 +89,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
         return resolve(new Structured.DataPointMap(context));
     }
 
-    public static class Builder<T> {
+    public static class Builder<T> implements Serializable {
         private final Class<T> type;
         private VtlFunction<Map<String, Object>, T> func;
         private Positioned position;
@@ -108,6 +108,21 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
                 @Override
                 public Object resolve(Map<String, Object> context) {
                     return function.apply(context);
+                }
+
+                @Override
+                public Class<?> getType() {
+                    return type;
+                }
+            };
+        }
+
+        // TODO: find a way to switch to using only, see Validation needs
+        public ResolvableExpression usingCasting(Class<T> clazz, VtlBiFunction<Class<T>, Map<String, Object>, T> function) {
+            return new ResolvableExpression(position) {
+                @Override
+                public Object resolve(Map<String, Object> context) {
+                    return function.apply(clazz, context);
                 }
 
                 @Override

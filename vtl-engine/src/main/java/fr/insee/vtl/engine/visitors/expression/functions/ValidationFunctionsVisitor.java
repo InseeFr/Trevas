@@ -85,7 +85,9 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 }
         );
 
-        return processingEngine.executeValidateDPruleset(dpr, ds, output);
+        var pos = fromContext(ctx);
+
+        return processingEngine.executeValidateDPruleset(dpr, ds, output, pos);
     }
 
     /**

@@ -41,7 +41,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr).checkInstanceOf(Boolean.class);
             var thenExpression = exprVisitor.visit(ctx.thenExpr);
             var elseExpression = exprVisitor.visit(ctx.elseExpr);
-            return new ItThenExpression(fromContext(ctx), conditionalExpr, thenExpression, elseExpression);
+            return new IfThenExpression(fromContext(ctx), conditionalExpr, thenExpression, elseExpression);
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
         }
@@ -65,7 +65,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return new NvlExpression(fromContext(ctx), expression, defaultExpression);
     }
 
-    static class ItThenExpression extends ResolvableExpression {
+    static class IfThenExpression extends ResolvableExpression {
 
         final ResolvableExpression conditionExpr;
         final ResolvableExpression thenExpr;
@@ -73,7 +73,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         final Class<?> type;
 
-        ItThenExpression(Positioned position,
+        IfThenExpression(Positioned position,
                          ResolvableExpression conditionExpr,
                          ResolvableExpression thenExpr,
                          ResolvableExpression elseExpr) throws InvalidTypeException {
