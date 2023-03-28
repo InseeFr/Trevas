@@ -30,7 +30,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
     public Position getPosition() {
         return position;
     }
-    
+
     /**
      * Checks that the type of the class is either the same as, or is a superclass or superinterface of, the class
      * or interface of the expression.
@@ -97,21 +97,6 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
                 @Override
                 public Object resolve(Map<String, Object> context) {
                     return function.apply(context);
-                }
-
-                @Override
-                public Class<?> getType() {
-                    return type;
-                }
-            };
-        }
-
-        // TODO: find a way to switch to using only, see Validation needs
-        public ResolvableExpression usingCasting(Class<T> clazz, VtlBiFunction<Class<T>, Map<String, Object>, T> function) {
-            return new ResolvableExpression(position) {
-                @Override
-                public Object resolve(Map<String, Object> context) {
-                    return function.apply(clazz, context);
                 }
 
                 @Override
