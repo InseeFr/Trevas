@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
  */

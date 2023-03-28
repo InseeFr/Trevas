@@ -11,8 +11,8 @@ public class InvalidArgumentException extends VtlScriptException {
     /**
      * Constructor taking the parsing context and the message.
      *
-     * @param message The exception message.
-     * @param position    The parsing context where the exception is thrown.
+     * @param message  The exception message.
+     * @param position The parsing context where the exception is thrown.
      */
     public InvalidArgumentException(String message, Positioned position) {
         super(message, position);

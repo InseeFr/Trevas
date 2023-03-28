@@ -80,7 +80,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                                 new InvalidArgumentException("Alias " + v +
                                         " from " + dprName + " ruleset already defined in " +
                                         ctx.op.getText(), fromContext(ctx))
-                                );
+                        );
                     }
                 }
         );

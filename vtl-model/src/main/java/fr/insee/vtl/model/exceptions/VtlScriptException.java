@@ -31,7 +31,7 @@ public class VtlScriptException extends ScriptException {
      */
     public VtlScriptException(Exception mother, Positioned element) {
         super(mother);
-        this.position= element.getPosition();
+        this.position = element.getPosition();
     }
 
     /**
