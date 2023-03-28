@@ -633,18 +633,65 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr, ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr, String output) {
-        // resolve dsExpr & imbalanceExpr
+    public DatasetExpression executeValidationSimple(DatasetExpression dsExpr,
+                                                     ResolvableExpression errorCodeExpr,
+                                                     ResolvableExpression errorLevelExpr,
+                                                     DatasetExpression imbalanceExpr, String output) {
+        // Rename imbalance single measure to imbalance
+        SparkDataset sparkImbalanceDataset = asSparkDataset(imbalanceExpr);
+        Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
+        String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
+                .stream().filter(c -> c.isMeasure()).map(c -> c.getName()).collect(Collectors.toList()).get(0);
+        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, "imbalance"));
+        Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
+        var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
+        SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap));
+        // Join expr ds & imbalance ds
+        Map<String, DatasetExpression> datasetExpressions = Map.ofEntries(
+                Map.entry("dsExpr", dsExpr),
+                Map.entry("imbalanceExpr", imbalanceRenamedExpr)
+        );
+        List<Component> components = dsExpr.getDataStructure().values().stream()
+                .filter(c -> c.isIdentifier())
+                .collect(Collectors.toList());
+        DatasetExpression datasetExpression = executeLeftJoin(datasetExpressions, components);
+        SparkDataset sparkDataset = asSparkDataset(datasetExpression);
+        Dataset<Row> ds = sparkDataset.getSparkDataset();
+        ResolvableExpression errorCodeExpression = ResolvableExpression.withTypeCasting(errorCodeExpr.getType(), (clazz, context) -> {
+            if (errorCodeExpr == null) return null;
+            Object erCode = errorCodeExpr.resolve(context);
+            if (erCode == null) return null;
+            Boolean boolVar = (Boolean) context.get(BOOLVAR);
+            return boolVar ? null : clazz.cast(erCode);
+        });
+        ResolvableExpression errorLevelExpression = ResolvableExpression.withTypeCasting(errorLevelExpr.getType(), (clazz, context) -> {
+            if (errorLevelExpr == null) return null;
+            Object erLevel = errorLevelExpr.resolve(context);
+            if (erLevel == null) return null;
+            Boolean boolVar = (Boolean) context.get(BOOLVAR);
+            return boolVar ? null : clazz.cast(erLevel);
+        });
 
-        // rename bool_var as imbalance in imbalanceDS
+        var roleMap = getRoleMap(sparkDataset);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
 
-        // union ds & imbalanceDS
+        Map<String, ResolvableExpression> resolvableExpressions = Map.ofEntries(
+                Map.entry("errorlevel", errorLevelExpression),
+                Map.entry("errorcode", errorCodeExpression)
+        );
 
-        // executeCalcEvaluated for errorcode & errorlevel
+        Dataset<Row> calculatedDataset = executeCalcEvaluated(ds, resolvableExpressions);
+        DatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(calculatedDataset, roleMap));
 
         // handle output: if none or all, return, if invalid filter on bool_var and return
-
-        return null;
+        if (output == null || output.equals(ValidationOutput.ALL.value)) {
+            return sparkDatasetExpression;
+        }
+        DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, BooleanExpression.of(c -> null), BOOLVAR + " = false");
+        // VTL issue: drop BOOLVAR in check_datapoint only specified but we apply also here for harmonization
+        Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
+        return new SparkDatasetExpression(new SparkDataset(result));
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {

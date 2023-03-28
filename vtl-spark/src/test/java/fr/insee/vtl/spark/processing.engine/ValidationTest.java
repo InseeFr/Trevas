@@ -80,6 +80,48 @@ public class ValidationTest {
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
+    private final Dataset dsExpr = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true),
+                    List.of("2011", "I", "DEBIT", false),
+                    List.of("2012", "I", "CREDIT", false),
+                    List.of("2012", "I", "DEBIT", true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalance = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 2L),
+                    List.of("2012", "I", "CREDIT", 2L),
+                    List.of("2012", "I", "DEBIT", 3L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalanceToRename = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 2L),
+                    List.of("2012", "I", "CREDIT", 2L),
+                    List.of("2012", "I", "DEBIT", 3L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("imbalance_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
     private SparkSession spark;
     private ScriptEngine engine;
 
@@ -300,5 +342,28 @@ public class ValidationTest {
                 Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
                         "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
 
+    }
+
+    @Test
+    public void testValidationSimpleException() throws ScriptException {
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("dsExpr", dsExpr, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalance", dsImbalance, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalanceToRename", dsImbalanceToRename, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("DS_r := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalance);");
+        engine.eval("DS_r_invalid := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalance invalid);");
+        engine.eval("DS_r_to_rename := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalanceToRename);");
+        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
+        assertThat(DS_r.getDataAsMap().size()).isEqualTo(4);
+        Dataset DS_r_invalid = (Dataset) engine.getContext().getAttribute("DS_r_invalid");
+        assertThat(DS_r_invalid.getDataAsMap().size()).isEqualTo(2);
+        Dataset DS_r_to_rename = (Dataset) engine.getContext().getAttribute("DS_r_to_rename");
+        List<String> DS_r_to_renameMeasure = DS_r_to_rename.getDataStructure().values()
+                .stream().filter(c -> c.isMeasure())
+                .map(c -> c.getName()).collect(Collectors.toList());
+        assertThat(DS_r_to_renameMeasure.size()).isEqualTo(4);
+        assertThat(DS_r_to_renameMeasure.contains("imbalance")).isTrue();
     }
 }
