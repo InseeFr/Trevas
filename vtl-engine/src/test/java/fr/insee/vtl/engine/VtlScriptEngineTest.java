@@ -91,23 +91,65 @@ public class VtlScriptEngineTest {
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Double.class, Dataset.Role.MEASURE)
         ),
-                Arrays.asList("Toto", 12.2),
-                Arrays.asList("Hadrien", 1.4),
-                Arrays.asList("Nico", 12.34)
+                Arrays.asList("Toto", 1.234567890),
+                Arrays.asList("Hadrien", 2.345678901),
+                Arrays.asList("Nico", 4.567890123),
+                Arrays.asList("NotHere", 9.87654321)
         );
         var ds2 = new InMemoryDataset(List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
         ),
-                Arrays.asList("Toto", 1L),
+                Arrays.asList("Toto", 4L),
                 Arrays.asList("Hadrien", 2L),
-                Arrays.asList("Nico", 3L)
+                Arrays.asList("Nico", 1L),
+                Arrays.asList("NotThere", 9.87654321)
         );
         engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
         engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := round(ds1#m1, ds2#m1);");
 
+        assertThat(((Dataset) engine.get("res")).getDataAsList()).containsExactly(
+                List.of("Toto", 1.2346),
+                List.of("Hadrien", 2.35),
+                List.of("Nico", 4.6)
+        );
+    }
 
+    @Test
+    void testMultipleParameterFunctionExpressionsAndConstants() throws ScriptException {
+        var ds1 = new InMemoryDataset(List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
+        ),
+                Arrays.asList("Toto", 2L),
+                Arrays.asList("Hadrien", 4L),
+                Arrays.asList("Nico", 8L)
+        );
+        engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+        engine.eval("res := round(0.123456789, ds1#m1);");
+
+        assertThat(((Dataset) engine.get("res")).getDataAsList()).containsExactly(
+                List.of("Toto", 0.12),
+                List.of("Hadrien", 0.1235),
+                List.of("Nico", 0.12345679)
+        );
+    }
+
+    @Test
+    void testFunctionExpressionsWrongType() throws ScriptException {
+        var ds1 = new InMemoryDataset(List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
+        ),
+                Arrays.asList("Toto", 2),
+                Arrays.asList("Hadrien", 4),
+                Arrays.asList("Nico", 8)
+        );
+        engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+        assertThatThrownBy(() -> {
+            engine.eval("res := round(0.123456789, ds1#m1);");
+        }).isInstanceOf(InvalidTypeException.class);
     }
 
     @Test

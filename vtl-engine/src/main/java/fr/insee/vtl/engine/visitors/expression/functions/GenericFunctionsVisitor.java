@@ -124,7 +124,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                             new Structured.Component(parameter.toString(), component.getType(), Dataset.Role.MEASURE), parameter)
                     );
                 } else {
-                    throw new UnsupportedOperationException("TODO: Handle other types of expressions");
+                    componentParams.add(parameter);
                 }
 
             }
