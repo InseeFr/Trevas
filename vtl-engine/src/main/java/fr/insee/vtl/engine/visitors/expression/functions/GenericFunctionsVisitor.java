@@ -88,6 +88,20 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         //          ie: parameterTypes.contains(Dataset.class)
 
         if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
+
+            // If one or more datasets do not contain one measure, and have a common set of
+            // measure that are compatible with the signature of the function
+            // fn(arg1<type1>, arg2<type2>, ..., argN<typeN>)
+            // res := fn(ds1#m1<type1>, ds2#arg2<type2>, ..., dsN#argN<typeN>)
+
+            // is equivalent to:
+
+            // tmp := inner_join(ds1, ds2, ..., dsN)
+            // /* for each measure mX */
+            // tmp := tmp[calc mX := fn(ds1#mX<>, ds2#Mx<type2>, ..., dsN#Mx<typeN>)
+            // /* end */
+            // res := tmp[keep id, mX]
+
             // If all the datasets only contain one measure use it as the parameter:
             // fn(arg1<type1>, arg2<type2>, ..., argN<typeN>)
             // res := fn(ds1#m1<type1>, ds2#arg2<type2>, ..., dsN#argN<typeN>)
