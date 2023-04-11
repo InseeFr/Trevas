@@ -13,14 +13,20 @@ import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -106,6 +112,31 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         return booleanVisitor.visit(ctx);
+    }
+
+    @Override
+    public ResolvableExpression visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+        try {
+            ResolvableExpression ds = this.visit(ctx.expr());
+            if (!(ds instanceof DatasetExpression)) {
+                throw new InvalidTypeException(Dataset.class, ds.getType(), fromContext(ctx.expr()));
+            }
+            Structured.DataStructure structure = ((DatasetExpression) ds).getDataStructure();
+            String componentName = ctx.simpleComponentId().getText();
+            if (!structure.containsKey(componentName)) {
+                throw new VtlScriptException(String.format(
+                        "column %s not found in %s", componentName, ctx.expr().getText()
+                ), fromContext(ctx));
+            }
+
+            ArrayList<String> components = structure.values().stream()
+                    .filter(Structured.Component::isIdentifier)
+                    .map(Structured.Component::getName).collect(Collectors.toCollection(ArrayList::new));
+            components.add(componentName);
+            return this.engine.getProcessingEngine().executeProject((DatasetExpression) ds, components);
+        } catch (VtlScriptException vse) {
+            throw new VtlRuntimeException(vse);
+        }
     }
 
     /**
