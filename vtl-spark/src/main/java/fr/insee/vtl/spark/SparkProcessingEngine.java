@@ -610,7 +610,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
-                    // does we need to use execute executeCalcInterpreted too?
+                    // do we need to use execute executeCalcInterpreted too?
                     return executeCalcEvaluated(renamedDs, resolvableExpressions);
                 }
         ).collect(Collectors.toList());
@@ -662,6 +662,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         DatasetExpression datasetExpression = executeLeftJoin(datasetExpressions, components);
         SparkDataset sparkDataset = asSparkDataset(datasetExpression);
         Dataset<Row> ds = sparkDataset.getSparkDataset();
+
+        // TODO: Extract to a ValidationExpression(ResolvableExpression).
         Class errorCodeType = errorCodeExpr == null ? String.class : errorCodeExpr.getType();
         ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType).withPosition(pos).using(
                 context -> {
@@ -671,6 +673,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     Boolean boolVar = (Boolean) contextMap.get(BOOLVAR);
                     return boolVar ? null : errorCodeType.cast(erCode);
                 });
+        // TODO: Extract to a ValidationExpression(ResolvableExpression).
         Class errorLevelType = errorLevelExpr == null ? String.class : errorLevelExpr.getType();
         ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType).withPosition(pos).using(
                 context -> {
