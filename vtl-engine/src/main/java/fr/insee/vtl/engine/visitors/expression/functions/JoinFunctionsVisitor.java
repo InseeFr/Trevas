@@ -45,7 +45,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         this.processingEngine = Objects.requireNonNull(processingEngine);
     }
 
-    private static Optional<List<Component>> checkSameIdentifiers(Collection<DatasetExpression> datasetExpressions) {
+    public static Optional<List<Component>> checkSameIdentifiers(Collection<DatasetExpression> datasetExpressions) {
         Set<Set<Component>> identifiers = new LinkedHashSet<>();
         for (DatasetExpression datasetExpression : datasetExpressions) {
             var structure = datasetExpression.getDataStructure();
@@ -82,7 +82,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         LinkedHashMap<String, DatasetExpression> datasets = new LinkedHashMap<>();
         for (VtlParser.JoinClauseItemContext joinClauseItem : joinClauseItems) {
 
-            // Expression here is not so nice if alias is optional.. We force var id.
+            // Expression here is not so nice if alias is optional... We force var id.
             var datasetExpressionContext = joinClauseItem.expr();
             if (!(datasetExpressionContext instanceof VtlParser.VarIdExprContext)) {
                 throw new VtlRuntimeException(

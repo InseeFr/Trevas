@@ -179,7 +179,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     exprVisitor.visit(ctx.expr()),
                     ctx.optionalExpr() == null ?
                             ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L) :
-                            exprVisitor.visit(ctx.optionalExpr()).checkInstanceOf(Long.class));
+                            exprVisitor.visit(ctx.optionalExpr()));
             switch (ctx.op.getType()) {
                 case VtlParser.ROUND:
                     return genericFunctionsVisitor.invokeFunction("round", parameters, fromContext(ctx));

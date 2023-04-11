@@ -49,7 +49,7 @@ public class FunctionExpression extends ResolvableExpression {
         try {
             return method.invoke(null, evaluatedParameters);
         } catch (Exception e) {
-            throw new VtlRuntimeException(new VtlScriptException((Exception) e.getCause(), this));
+            throw new VtlRuntimeException(new VtlScriptException(e, this));
         }
     }
 

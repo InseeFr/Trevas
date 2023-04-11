@@ -6,7 +6,6 @@ import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -52,7 +51,6 @@ public class DatasetFunctionExpression extends DatasetExpression {
 
     }
 
-    @NotNull
     private Map<Component, ResolvableExpression> createExpressionMap(Method method, DatasetExpression operand, Class<?> parameterType) throws VtlScriptException {
         // TODO: test with function that changes the type.
         Map<Component, ResolvableExpression> parametersMap = new LinkedHashMap<>();
