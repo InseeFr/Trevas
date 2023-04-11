@@ -65,10 +65,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     // TODO: Use script context to get bindings
     public ExpressionVisitor(Map<String, Object> context, ProcessingEngine processingEngine, VtlScriptEngine engine) {
         Objects.requireNonNull(context);
+        genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
         varIdVisitor = new VarIdVisitor(context);
         booleanVisitor = new BooleanVisitor(this);
         arithmeticVisitor = new ArithmeticVisitor(this);
-        arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this);
+        arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this, genericFunctionsVisitor);
         unaryVisitor = new UnaryVisitor(this);
         comparisonVisitor = new ComparisonVisitor(this);
         conditionalVisitor = new ConditionalVisitor(this);
@@ -76,7 +77,6 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
-        genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
         timeFunctionsVisitor = new TimeFunctionsVisitor();

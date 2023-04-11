@@ -2,11 +2,14 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
@@ -18,14 +21,27 @@ import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
 public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor The visitor for the enclosing expression.
+     * @param expressionVisitor       The visitor for the enclosing expression.
+     * @param genericFunctionsVisitor
      */
-    public ArithmeticExprOrConcatVisitor(ExpressionVisitor expressionVisitor) {
+    public ArithmeticExprOrConcatVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = genericFunctionsVisitor;
+    }
+
+    public static Number addition(Number valueA, Number valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        if (valueA instanceof Long && valueB instanceof Long) {
+            return valueA.longValue() + valueB.longValue();
+        }
+        return valueA.doubleValue() + valueB.doubleValue();
     }
 
     /**
@@ -37,9 +53,14 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
         try {
+            var pos = fromContext(ctx);
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    exprVisitor.visit(ctx.right)
+            );
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
-                    return handlePlus(ctx);
+                    return genericFunctionsVisitor.invokeFunction("addition", parameters, fromContext(ctx));
                 case VtlParser.MINUS:
                     return handleMinus(ctx);
                 case VtlParser.CONCAT:
@@ -48,6 +69,8 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
                     throw new UnsupportedOperationException("unknown operator " + ctx);
             }
         } catch (InvalidTypeException e) {
+            throw new VtlRuntimeException(e);
+        } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
     }

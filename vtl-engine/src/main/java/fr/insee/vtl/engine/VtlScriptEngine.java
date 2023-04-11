@@ -4,6 +4,7 @@ import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
@@ -63,9 +64,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
-    private Map<String, Method> methodCache;
-
     public Set<Method> NATIVE_METHODS = Set.of(
+            // NumericFunctionsVisitor
             Fun.toMethod(NumericFunctionsVisitor::ceil),
             Fun.toMethod(NumericFunctionsVisitor::floor),
             Fun.toMethod(NumericFunctionsVisitor::abs),
@@ -76,8 +76,20 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             Fun.toMethod(NumericFunctionsVisitor::trunc),
             Fun.toMethod(NumericFunctionsVisitor::mod),
             Fun.toMethod(NumericFunctionsVisitor::power),
-            Fun.toMethod(NumericFunctionsVisitor::log)
+            Fun.toMethod(NumericFunctionsVisitor::log),
+            // ArithmeticExprOrConcatVisitor
+            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition)
     );
+    private Map<String, Method> methodCache;
+
+    /**
+     * Constructor taking a script engine factory.
+     *
+     * @param factory The script engine factory associated to the script engine to create.
+     */
+    public VtlScriptEngine(ScriptEngineFactory factory) throws NoSuchMethodException {
+        this.factory = factory;
+    }
 
     public static Positioned fromToken(Token token) {
         Positioned.Position position = new Positioned.Position(
@@ -108,15 +120,6 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                 to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1)
         );
         return () -> position;
-    }
-
-    /**
-     * Constructor taking a script engine factory.
-     *
-     * @param factory The script engine factory associated to the script engine to create.
-     */
-    public VtlScriptEngine(ScriptEngineFactory factory) throws NoSuchMethodException {
-        this.factory = factory;
     }
 
     /**
