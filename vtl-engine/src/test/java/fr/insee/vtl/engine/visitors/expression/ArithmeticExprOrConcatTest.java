@@ -25,9 +25,9 @@ public class ArithmeticExprOrConcatTest {
                     new Structured.Component("me2", Double.class, Dataset.Role.MEASURE)
 
             ),
-            Arrays.asList("Toto", 30L, 12.2D),
-            Arrays.asList("Hadrien", 40L, 1.4D),
-            Arrays.asList("Nico", 50L, -12.34D)
+            Arrays.asList("Toto", 30L, 30.1D),
+            Arrays.asList("Hadrien", 40L, 40.1D),
+            Arrays.asList("Nico", 50L, 50.1D)
     );
     InMemoryDataset ds2 = new InMemoryDataset(
             List.of(
@@ -35,9 +35,9 @@ public class ArithmeticExprOrConcatTest {
                     new Structured.Component("me1", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("me2", Double.class, Dataset.Role.MEASURE)
             ),
-            Arrays.asList("Toto", 300L, 111.2D),
-            Arrays.asList("Hadrien", 400L, 1.2D),
-            Arrays.asList("Nico", 500L, 1.2D),
+            Arrays.asList("Toto", 300L, 300.1D),
+            Arrays.asList("Hadrien", 400L, 400.1D),
+            Arrays.asList("Nico", 500L, 500.1D),
             Arrays.asList("Kiki", 10L, 10.1D)
     );
     private ScriptEngine engine;
@@ -70,20 +70,20 @@ public class ArithmeticExprOrConcatTest {
     @Test
     public void testPlus() throws ScriptException {
         ScriptContext context = engine.getContext();
-//        engine.eval("plus := 2 + 3;");
-//        assertThat(context.getAttribute("plus")).isEqualTo(5L);
-//        engine.eval("plus := 2 + 3.0;");
-//        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
-//        engine.eval("plus := 2.0 + 3;");
-//        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
+        engine.eval("plus := 2 + 3;");
+        assertThat(context.getAttribute("plus")).isEqualTo(5L);
+        engine.eval("plus := 2 + 3.0;");
+        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
+        engine.eval("plus := 2.0 + 3;");
+        assertThat(context.getAttribute("plus")).isEqualTo(5.0);
         context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
-        engine.eval("plus := ds1#me1 + ds2#me1;");
+        engine.eval("plus := ds1 + ds2;");
         var plus = engine.getContext().getAttribute("plus");
         assertThat(((Dataset) plus).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "res", 330L),
-                Map.of("id", "Hadrien", "res", 440L),
-                Map.of("id", "Nico", "res", 550L)
+                Map.of("id", "Toto", "me1", 330L, "me2", 330.2D),
+                Map.of("id", "Hadrien", "me1", 440L, "me2", 440.2D),
+                Map.of("id", "Nico", "me1", 550L, "me2", 550.2D)
         );
 //        assertThatThrownBy(() -> {
 //            engine.eval("e := ceil(\"ko\");");
