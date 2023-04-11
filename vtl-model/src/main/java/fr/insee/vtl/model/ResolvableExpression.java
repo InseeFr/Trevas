@@ -80,13 +80,17 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
 
     public static class Builder<T> implements Serializable {
         private final Class<T> type;
-        private Positioned position;
+        private Position position;
 
         Builder(Class<T> type) {
             this.type = type;
         }
 
-        public Builder<T> withPosition(Positioned position) {
+        public Builder<T> withPosition(Positioned positioned) {
+            return withPosition(positioned.getPosition());
+        }
+
+        public Builder<T> withPosition(Position position) {
             this.position = position;
             return this;
         }
