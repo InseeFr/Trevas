@@ -39,9 +39,9 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
             return null;
         }
         if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() + valueB.longValue();
+            return Long.valueOf(valueA.longValue() + valueB.longValue());
         }
-        return valueA.doubleValue() + valueB.doubleValue();
+        return Double.valueOf(valueA.doubleValue() + valueB.doubleValue());
     }
 
     /**
@@ -60,7 +60,7 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
             );
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
-                    return genericFunctionsVisitor.invokeFunction("addition", parameters, fromContext(ctx));
+                    return genericFunctionsVisitor.invokeFunction("addition", parameters, pos);
                 case VtlParser.MINUS:
                     return handleMinus(ctx);
                 case VtlParser.CONCAT:

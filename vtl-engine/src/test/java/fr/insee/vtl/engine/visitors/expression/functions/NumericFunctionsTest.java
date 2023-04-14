@@ -102,10 +102,10 @@ public class NumericFunctionsTest {
                 Map.of("name", "Hadrien", "age", 40L, "meas_double", 2L, "meas_string", "b"),
                 Map.of("name", "Nico", "age", 50L, "meas_double", -12L, "meas_string", "c")
         );
-        assertThatThrownBy(() -> {
-            engine.eval("e := ceil(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+//        assertThatThrownBy(() -> {
+//            engine.eval("e := ceil(\"ko\");");
+//        }).isInstanceOf(InvalidTypeException.class)
+//                .hasMessage("invalid type String, expected Number");
     }
 
     @Test

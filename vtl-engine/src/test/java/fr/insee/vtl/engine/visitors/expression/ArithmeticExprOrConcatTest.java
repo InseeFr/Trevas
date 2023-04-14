@@ -81,8 +81,8 @@ public class ArithmeticExprOrConcatTest {
         engine.eval("plus := ds1 + ds2;");
         var plus = engine.getContext().getAttribute("plus");
         assertThat(((Dataset) plus).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "me1", 330L, "me2", 330.2D),
-                Map.of("id", "Hadrien", "me1", 440L, "me2", 440.2D),
+                Map.of("id", "Toto", "me1", 330L, "me2", 330.20000000000005D),
+                Map.of("id", "Hadrien", "me1", 440L, "me2", 440.20000000000005D),
                 Map.of("id", "Nico", "me1", 550L, "me2", 550.2D)
         );
 //        assertThatThrownBy(() -> {

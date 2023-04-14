@@ -223,7 +223,6 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
             }
             commonIdentifiers.removeIf(component -> !usingNames.contains(component.getName()));
         }
-
         return processingEngine.executeInnerJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
     }
 }

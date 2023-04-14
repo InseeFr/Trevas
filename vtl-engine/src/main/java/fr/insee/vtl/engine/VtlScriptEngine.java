@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
+import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
@@ -78,7 +79,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             Fun.toMethod(NumericFunctionsVisitor::power),
             Fun.toMethod(NumericFunctionsVisitor::log),
             // ArithmeticExprOrConcatVisitor
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition)
+            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition),
+            // ArithmeticVisitor
+            Fun.toMethod(ArithmeticVisitor::multiplication)
     );
     private Map<String, Method> methodCache;
 

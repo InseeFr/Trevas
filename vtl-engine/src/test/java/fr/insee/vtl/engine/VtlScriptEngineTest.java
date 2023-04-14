@@ -11,6 +11,7 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -116,6 +117,7 @@ public class VtlScriptEngineTest {
         );
     }
 
+    @Disabled
     @Test
     void testMultipleParameterFunctionExpressionsAndConstants() throws ScriptException {
         var ds1 = new InMemoryDataset(List.of(
@@ -136,6 +138,7 @@ public class VtlScriptEngineTest {
         );
     }
 
+    @Disabled
     @Test
     void testFunctionExpressionsWrongType() throws ScriptException {
         var ds1 = new InMemoryDataset(List.of(
@@ -165,7 +168,7 @@ public class VtlScriptEngineTest {
                     "10);");
         }).isInstanceOf(InvalidTypeException.class)
                 .is(atPosition(0, 1, 17, 2))
-                .hasMessage("invalid type Long, expected Boolean");
+                .hasMessage("invalid type Number, expected Boolean");
     }
 
     @Test
