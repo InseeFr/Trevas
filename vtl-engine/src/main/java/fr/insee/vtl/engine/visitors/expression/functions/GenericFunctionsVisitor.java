@@ -130,8 +130,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
             Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
             Map<String, Dataset.Role> roles = new HashMap<>();
-            List<String> parameterNames = parameters.stream().map(p -> p.toString()).collect(Collectors.toList());
-            measureToHandleNames.stream().forEach(m -> {
+            List<String> parameterNames = parameters.stream().map(Object::toString).collect(Collectors.toList());
+            measureToHandleNames.forEach(m -> {
                 ResolvableExpression measureExpression = ResolvableExpression.withType(expectedType).withPosition(position).using(
                         context -> {
                             Map<String, Object> contextMap = (Map<String, Object>) context;
@@ -146,20 +146,18 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                                     .toArray();
                             try {
                                 return expectedType.cast(method.get().invoke(null, params));
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                                e.printStackTrace();
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                throw new VtlRuntimeException(new VtlScriptException(e, position));
                             }
-                            return null;
                         }
                 );
                 resolvableExpressions.put(m, measureExpression);
                 roles.put(m, Dataset.Role.MEASURE);
             });
             tmpDs = proc.executeCalc(tmpDs, resolvableExpressions, roles, Map.of());
-            List<String> identifierNames = identifiers.stream().map(i -> i.getName()).collect(Collectors.toList());
+            List<String> identifierNames = identifiers.stream().map(Structured.Component::getName).collect(Collectors.toList());
             List<String> toKeep = Stream.of(identifierNames, measureNames)
+                    .filter(Objects::nonNull)
                     .flatMap(Collection::stream)
                     .collect(Collectors.toList());
             return proc.executeProject(tmpDs, toKeep);
