@@ -54,7 +54,6 @@ public class ComparisonExprTest {
         engine.eval("bool := true = true;");
         assertThat((Boolean) context.getAttribute("bool")).isTrue();
         engine.eval("long := 6 = (3*2);");
-        var a = context.getAttribute("long");
         assertThat((Boolean) context.getAttribute("long")).isTrue();
         engine.eval("mix := 6 = (3*2.0);");
         assertThat((Boolean) context.getAttribute("mix")).isTrue();
