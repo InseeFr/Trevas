@@ -67,7 +67,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Objects.requireNonNull(context);
         genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
         varIdVisitor = new VarIdVisitor(context);
-        booleanVisitor = new BooleanVisitor(this);
+        booleanVisitor = new BooleanVisitor(this, genericFunctionsVisitor);
         arithmeticVisitor = new ArithmeticVisitor(this, genericFunctionsVisitor);
         arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this, genericFunctionsVisitor);
         unaryVisitor = new UnaryVisitor(this, genericFunctionsVisitor);

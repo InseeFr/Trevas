@@ -29,22 +29,18 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
+
+    private final String UNKNOWN_OPERATOR = "unknown operator ";
 
     /**
      * Constructor taking an expression visitor.
      *
      * @param expressionVisitor the parent expression visitor.
      */
-    public ComparisonVisitor(ExpressionVisitor expressionVisitor) {
+    public ComparisonVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
-    }
-
-    private static <T extends Comparable<T>> boolean isEqual(T left, T right) {
-        return left.compareTo(right) == 0;
-    }
-
-    private static <T extends Comparable<T>> boolean isNotEqual(T left, T right) {
-        return !isEqual(left, right);
+        this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
     public static Boolean isEqual(Double left, Long right) {
@@ -136,41 +132,44 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
-        ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
+        try {
+            Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
+            var leftExpression = exprVisitor.visit(ctx.left);
+            List<ResolvableExpression> parameters = List.of(
+                    leftExpression,
+                    exprVisitor.visit(ctx.right));
+            // As long as both types return Comparable<TYPE>.
 
-        // Get the type of the Token.
-        Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
-
-        // Special case with nulls.
-        if (isNull(leftExpression) || isNull(rightExpression)) {
-            return ResolvableExpression.withType(Boolean.class).withPosition(fromContext(ctx)).using(c -> null);
-        }
-
-        assertNumberOrTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
-
-        var pos = fromContext(ctx);
-
-        // As long as both types return Comparable<TYPE>.
-        if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
-            switch (type.getType()) {
-                case VtlParser.EQ:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isEqual);
-                case VtlParser.NEQ:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isNotEqual);
-                case VtlParser.LT:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isLessThan);
-                case VtlParser.MT:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isGreaterThan);
-                case VtlParser.LE:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isLessThanOrEqual);
-                case VtlParser.ME:
-                    return compareExpressions(pos, leftExpression, rightExpression, ComparisonVisitor::isGreaterThanOrEqual);
-                default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            // If a parameter is the null token
+            if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
+                return ResolvableExpression
+                        .withType(Boolean.class)
+                        .withPosition(fromContext(ctx))
+                        .using(c -> null);
             }
-        } else {
-            throw new Error("type " + leftExpression.getType() + " must implement Comparable");
+
+            if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
+                switch (type.getType()) {
+                    case VtlParser.EQ:
+                        return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
+                    case VtlParser.NEQ:
+                        return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
+                    case VtlParser.LT:
+                        return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
+                    case VtlParser.MT:
+                        return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
+                    case VtlParser.LE:
+                        return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
+                    case VtlParser.ME:
+                        return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
+                    default:
+                        throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+                }
+            } else {
+                throw new Error("type " + leftExpression.getType() + " must implement Comparable");
+            }
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 

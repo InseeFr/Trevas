@@ -3,6 +3,9 @@ package fr.insee.vtl.engine;
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
 import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
+import fr.insee.vtl.engine.visitors.expression.BooleanVisitor;
+import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
+import fr.insee.vtl.engine.visitors.expression.UnaryVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
@@ -50,6 +53,35 @@ public class VtlNativeMethods {
             // ComparisonFunctionsVisitor
             Fun.toMethod(ComparisonFunctionsVisitor::between),
             Fun.toMethod(ComparisonFunctionsVisitor::charsetMatch),
-            Fun.toMethod(ComparisonFunctionsVisitor::isNull)
+            Fun.toMethod(ComparisonFunctionsVisitor::isNull),
+            // BooleanVisitor
+            Fun.toMethod(BooleanVisitor::and),
+            Fun.toMethod(BooleanVisitor::or),
+            Fun.toMethod(BooleanVisitor::xor),
+            // UnaryVisitor
+            Fun.toMethod(UnaryVisitor::plus),
+            Fun.toMethod(UnaryVisitor::minus),
+            Fun.toMethod(UnaryVisitor::not),
+            // ComparisonVisitor
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isEqual),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isEqual),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isEqual),
+
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isNotEqual),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isNotEqual),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isNotEqual),
+
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isLessThan),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isLessThan),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isLessThan),
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isGreaterThan),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isGreaterThan),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isGreaterThan),
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isGreaterThanOrEqual),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isGreaterThanOrEqual),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isGreaterThanOrEqual),
+            Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isLessThanOrEqual),
+            Fun.<Long, Double>toMethod(ComparisonVisitor::isLessThanOrEqual),
+            Fun.<Double, Long>toMethod(ComparisonVisitor::isLessThanOrEqual)
     );
 }
