@@ -5,6 +5,7 @@ import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +49,15 @@ public class FunctionExpression extends ResolvableExpression {
         Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
         try {
             return method.invoke(null, evaluatedParameters);
+        } catch (InvocationTargetException ite) {
+            var cause = ite.getCause();
+            if (cause instanceof Exception) {
+                throw new VtlRuntimeException(
+                        new VtlScriptException((Exception) ite.getCause(), this));
+            } else {
+                throw new VtlRuntimeException(
+                        new VtlScriptException(new Exception(ite.getCause()), this));
+            }
         } catch (Exception e) {
             throw new VtlRuntimeException(new VtlScriptException(e, this));
         }

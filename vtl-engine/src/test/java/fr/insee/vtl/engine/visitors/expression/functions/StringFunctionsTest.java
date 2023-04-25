@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,12 +111,12 @@ public class StringFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",1,\"ok\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'replace(String, Long, String)' not found");
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",\"ok\",true);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'replace(String, String, Boolean)' not found");
     }
 
     @Test

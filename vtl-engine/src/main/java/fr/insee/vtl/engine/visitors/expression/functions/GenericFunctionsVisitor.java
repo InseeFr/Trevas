@@ -20,7 +20,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,7 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,89 +78,89 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
 
     public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
-        // TODO: Use parameters to find functions so we can override them.
-        Optional<Method> method = engine.findMethod(funcName);
-        if (method.isEmpty()) {
-            throw new FunctionNotFoundException(funcName, position);
-        }
-        var parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+        try {
 
-        if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
+            List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+            var method = engine.findMethod(funcName, parameterTypes);
+            if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
 
-            ProcessingEngine proc = engine.getProcessingEngine();
+                ProcessingEngine proc = engine.getProcessingEngine();
 
-            List<String> measureNames = null;
-            List<String> measureToHandleNames = null;
+                List<String> measureNames = null;
+                List<String> measureToHandleNames = null;
 
-            Map<String, DatasetExpression> dsToJoin = new LinkedHashMap<>();
-            var expectedParameter = Arrays.asList(method.get().getParameterTypes()).iterator();
-            Class expectedType = expectedParameter.next();
-            for (ResolvableExpression parameter : parameters) {
-                if (parameter instanceof DatasetExpression) {
-                    var dsExpr = (DatasetExpression) parameter;
+                Map<String, DatasetExpression> dsToJoin = new LinkedHashMap<>();
+                var expectedParameter = Arrays.asList(method.getParameterTypes()).iterator();
+                Class expectedType = expectedParameter.next();
+                for (ResolvableExpression parameter : parameters) {
+                    if (parameter instanceof DatasetExpression) {
+                        var dsExpr = (DatasetExpression) parameter;
 
-                    // TODO: handle all measures, when different ds input shapes
-                    if (measureNames == null) {
-                        measureNames = dsExpr.getDataStructure().values().stream()
-                                .filter(Structured.Component::isMeasure)
-                                .map(m -> m.getName())
-                                .collect(Collectors.toList());
-                    }
-                    if (measureToHandleNames == null) {
-                        measureToHandleNames = dsExpr.getDataStructure().values().stream()
-                                .filter(Structured.Component::isMeasure)
-                                .filter(c -> expectedType.isAssignableFrom(c.getType()))
-                                .map(m -> m.getName())
-                                .collect(Collectors.toList());
-
-                    }
-                    dsToJoin.put(
-                            parameter.toString(),
-                            dsExpr
-                    );
-                }
-            }
-            var identifiers = JoinFunctionsVisitor.checkSameIdentifiers(dsToJoin.values()).orElseThrow(() -> new VtlRuntimeException(
-                    new InvalidArgumentException("datasets must have common identifiers", position)
-            ));
-
-            DatasetExpression tmpDs = proc.executeInnerJoin(renameDuplicates(identifiers, dsToJoin), identifiers);
-
-            Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
-            Map<String, Dataset.Role> roles = new HashMap<>();
-            List<String> parameterNames = parameters.stream().map(Object::toString).collect(Collectors.toList());
-            measureToHandleNames.forEach(m -> {
-                ResolvableExpression measureExpression = ResolvableExpression.withType(expectedType).withPosition(position).using(
-                        context -> {
-                            Map<String, Object> contextMap = (Map<String, Object>) context;
-                            Object[] params = parameterNames.stream()
-                                    .map(p -> {
-                                        // TODO: check alias # conflict with membership
-                                        if (contextMap.containsKey(p + "#" + m)) {
-                                            return contextMap.get(p + "#" + m);
-                                        }
-                                        return contextMap.get(m);
-                                    })
-                                    .toArray();
-                            try {
-                                return expectedType.cast(method.get().invoke(null, params));
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                throw new VtlRuntimeException(new VtlScriptException(e, position));
-                            }
+                        // TODO: handle all measures, when different ds input shapes
+                        if (measureNames == null) {
+                            measureNames = dsExpr.getDataStructure().values().stream()
+                                    .filter(Structured.Component::isMeasure)
+                                    .map(Structured.Component::getName)
+                                    .collect(Collectors.toList());
                         }
-                );
-                resolvableExpressions.put(m, measureExpression);
-                roles.put(m, Dataset.Role.MEASURE);
-            });
-            tmpDs = proc.executeCalc(tmpDs, resolvableExpressions, roles, Map.of());
-            List<String> identifierNames = identifiers.stream().map(Structured.Component::getName).collect(Collectors.toList());
-            List<String> toKeep = Stream.of(identifierNames, measureNames)
-                    .filter(Objects::nonNull)
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
-            return proc.executeProject(tmpDs, toKeep);
-        } else {
-            return new FunctionExpression(method.get(), parameters, position);
+                        if (measureToHandleNames == null) {
+                            measureToHandleNames = dsExpr.getDataStructure().values().stream()
+                                    .filter(Structured.Component::isMeasure)
+                                    .filter(c -> expectedType.isAssignableFrom(c.getType()))
+                                    .map(Structured.Component::getName)
+                                    .collect(Collectors.toList());
+
+                        }
+                        dsToJoin.put(
+                                parameter.toString(),
+                                dsExpr
+                        );
+                    }
+                }
+                var identifiers = JoinFunctionsVisitor.checkSameIdentifiers(dsToJoin.values()).orElseThrow(() -> new VtlRuntimeException(
+                        new InvalidArgumentException("datasets must have common identifiers", position)
+                ));
+
+                DatasetExpression tmpDs = proc.executeInnerJoin(renameDuplicates(identifiers, dsToJoin), identifiers);
+
+                Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
+                Map<String, Dataset.Role> roles = new HashMap<>();
+                List<String> parameterNames = parameters.stream().map(Object::toString).collect(Collectors.toList());
+                measureToHandleNames.forEach(m -> {
+                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedType).withPosition(position).using(
+                            context -> {
+                                Map<String, Object> contextMap = (Map<String, Object>) context;
+                                Object[] params = parameterNames.stream()
+                                        .map(p -> {
+                                            // TODO: check alias # conflict with membership
+                                            if (contextMap.containsKey(p + "#" + m)) {
+                                                return contextMap.get(p + "#" + m);
+                                            }
+                                            return contextMap.get(m);
+                                        })
+                                        .toArray();
+                                try {
+                                    return expectedType.cast(method.invoke(null, params));
+                                } catch (IllegalAccessException | InvocationTargetException e) {
+                                    throw new VtlRuntimeException(new VtlScriptException(e, position));
+                                }
+                            }
+                    );
+                    resolvableExpressions.put(m, measureExpression);
+                    roles.put(m, Dataset.Role.MEASURE);
+                });
+                tmpDs = proc.executeCalc(tmpDs, resolvableExpressions, roles, Map.of());
+                List<String> identifierNames = identifiers.stream().map(Structured.Component::getName).collect(Collectors.toList());
+                List<String> toKeep = Stream.of(identifierNames, measureNames)
+                        .filter(Objects::nonNull)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
+                return proc.executeProject(tmpDs, toKeep);
+            } else {
+                return new FunctionExpression(method, parameters, position);
+            }
+        } catch (NoSuchMethodException e) {
+            throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
         }
     }
 

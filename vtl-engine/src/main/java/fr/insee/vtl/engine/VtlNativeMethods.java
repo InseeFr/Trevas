@@ -42,6 +42,11 @@ public class VtlNativeMethods {
             Fun.toMethod(StringFunctionsVisitor::ucase),
             Fun.toMethod(StringFunctionsVisitor::lcase),
             Fun.toMethod(StringFunctionsVisitor::len),
+            Fun.<String>toMethod(StringFunctionsVisitor::substr),
+            Fun.<String, Long>toMethod(StringFunctionsVisitor::substr),
+            Fun.<String, Long, Long>toMethod(StringFunctionsVisitor::substr),
+            Fun.<String, String, String>toMethod(StringFunctionsVisitor::replace),
+            Fun.<String, String>toMethod(StringFunctionsVisitor::replace),
             // ComparisonFunctionsVisitor
             Fun.toMethod(ComparisonFunctionsVisitor::between),
             Fun.toMethod(ComparisonFunctionsVisitor::charsetMatch),

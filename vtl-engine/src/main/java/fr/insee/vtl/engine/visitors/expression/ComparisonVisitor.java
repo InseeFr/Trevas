@@ -2,17 +2,19 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
-import fr.insee.vtl.model.VtlBiFunction;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,11 +22,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.hasNullArgs;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNumber;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
@@ -50,52 +47,85 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return !isEqual(left, right);
     }
 
-    private static <T extends Comparable<T>> boolean isLessThan(T left, T right) {
+    public static Boolean isEqual(Double left, Long right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) == 0;
+    }
+
+    public static Boolean isEqual(Long left, Double right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) == 0;
+    }
+
+    public static <T extends Comparable<T>> Boolean isEqual(T left, T right) {
+        if (left == null || right == null) {
+            return null;
+        }
+        return left.compareTo(right) == 0;
+    }
+
+    public static Boolean isNotEqual(Double left, Long right) {
+        return !isEqual(left, right);
+    }
+
+    public static Boolean isNotEqual(Long left, Double right) {
+        return !isEqual(left, right);
+    }
+
+    public static <T extends Comparable<T>> Boolean isNotEqual(T left, T right) {
+        return !isEqual(left, right);
+    }
+
+    public static Boolean isLessThan(Double left, Long right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) < 0;
+    }
+
+    public static Boolean isLessThan(Long left, Double right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) < 0;
+    }
+
+    public static <T extends Comparable<T>> Boolean isLessThan(T left, T right) {
+        if (left == null || right == null) {
+            return null;
+        }
         return left.compareTo(right) < 0;
     }
 
-    private static <T extends Comparable<T>> boolean isGreaterThan(T left, T right) {
+    public static Boolean isGreaterThan(Double left, Long right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) > 0;
+    }
+
+    public static Boolean isGreaterThan(Long left, Double right) {
+        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) > 0;
+    }
+
+    public static <T extends Comparable<T>> Boolean isGreaterThan(T left, T right) {
+        if (left == null || right == null) {
+            return null;
+        }
         return left.compareTo(right) > 0;
     }
 
-    private static <T extends Comparable<T>> boolean isLessThanOrEqual(T left, T right) {
+    public static Boolean isLessThanOrEqual(Double left, Long right) {
         return !isGreaterThan(left, right);
     }
 
-    private static <T extends Comparable<T>> boolean isGreaterThanOrEqual(T left, T right) {
+    public static Boolean isLessThanOrEqual(Long left, Double right) {
+        return !isGreaterThan(left, right);
+    }
+
+    public static <T extends Comparable<T>> Boolean isLessThanOrEqual(T left, T right) {
+        return !isGreaterThan(left, right);
+    }
+
+    public static Boolean isGreaterThanOrEqual(Double left, Long right) {
         return !isLessThan(left, right);
     }
 
-    /**
-     * This method handles the comparison between two expressions
-     *
-     * @param leftExpression
-     * @param rightExpression
-     * @param comparisonFn    a lambda or a method reference
-     * @return a VTL boolean expression
-     */
-    public ResolvableExpression compareExpressions(
-            Positioned position,
-            ResolvableExpression leftExpression,
-            ResolvableExpression rightExpression,
-            VtlBiFunction<Comparable, Comparable, Boolean> comparisonFn) {
-        return ResolvableExpression.withType(Boolean.class).withPosition(position).using(context -> {
-            Comparable leftValue;
-            Comparable rightValue;
+    public static Boolean isGreaterThanOrEqual(Long left, Double right) {
+        return !isLessThan(left, right);
+    }
 
-            if (isNumber(leftExpression)) {
-                leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
-                rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
-
-            } else {
-                leftValue = (Comparable) leftExpression.resolve(context);
-                rightValue = (Comparable) rightExpression.resolve(context);
-            }
-
-            if (hasNullArgs(leftValue, rightValue)) return null;
-
-            return comparisonFn.apply(leftValue, rightValue);
-        });
+    public static <T extends Comparable<T>> Boolean isGreaterThanOrEqual(T left, T right) {
+        return !isLessThan(left, right);
     }
 
     /**

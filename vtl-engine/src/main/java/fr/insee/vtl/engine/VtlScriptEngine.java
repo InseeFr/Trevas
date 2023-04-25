@@ -1,12 +1,8 @@
 package fr.insee.vtl.engine;
 
-import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
-import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -36,13 +32,19 @@ import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
@@ -261,6 +263,64 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         }
         return Optional.ofNullable(methodCache.get(name));
     }
+
+    public boolean matchParameters(Method method, Class<?>[] types) {
+
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Type[] genericParameterTypes = method.getGenericParameterTypes();
+        if (parameterTypes.length != types.length) {
+            return false;
+        }
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> parameterType = parameterTypes[i];
+            Type genericParameterType = genericParameterTypes[i];
+            if (genericParameterType instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) genericParameterType;
+                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+                if (actualTypeArguments.length == 1 && actualTypeArguments[0] instanceof Class) {
+                    Class<?> typeArgument = (Class<?>) actualTypeArguments[0];
+                    if (!parameterType.isAssignableFrom(typeArgument)) {
+                        return false;
+                    }
+                }
+            } else {
+                if (!parameterType.isAssignableFrom(types[i])) {
+                    return false;
+                }
+            }
+
+        }
+        return true;
+    }
+
+    public Method findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
+
+        List<Method> candidates = NATIVE_METHODS.stream()
+                .filter(method -> method.getName().equals(name))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
+                .collect(Collectors.toList());
+        if (candidates.size() == 1) {
+            return candidates.get(0);
+        }
+        // TODO: Handle parameter resolution.
+        for (Method method : NATIVE_METHODS) {
+            if (method.getName().equals(name) && types.equals(Arrays.asList(method.getParameterTypes()))) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodException(methodToString(name, types));
+    }
+
+    private String methodToString(String name, Collection<? extends Class<?>> argTypes) {
+        StringJoiner sj = new StringJoiner(", ", name + "(", ")");
+        if (argTypes != null) {
+            for (Class<?> c : argTypes) {
+                sj.add(c == null ? "null" : c.getSimpleName());
+            }
+        }
+        return sj.toString();
+    }
+
 
     public Method registerMethod(String name, Method method) {
         if (methodCache == null) {
