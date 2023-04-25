@@ -73,12 +73,12 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         unaryVisitor = new UnaryVisitor(this);
         comparisonVisitor = new ComparisonVisitor(this);
         conditionalVisitor = new ConditionalVisitor(this);
-        stringFunctionsVisitor = new StringFunctionsVisitor(this);
-        comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this);
+        stringFunctionsVisitor = new StringFunctionsVisitor(this, genericFunctionsVisitor);
+        comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this, genericFunctionsVisitor);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
-        distanceFunctionsVisitor = new DistanceFunctionsVisitor(this);
+        distanceFunctionsVisitor = new DistanceFunctionsVisitor(this, genericFunctionsVisitor);
         timeFunctionsVisitor = new TimeFunctionsVisitor();
         validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine, engine);
         this.processingEngine = Objects.requireNonNull(processingEngine);

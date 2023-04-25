@@ -31,7 +31,7 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     public ArithmeticVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
-        this.genericFunctionsVisitor = genericFunctionsVisitor;
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
     public static Number multiplication(Number valueA, Number valueB) {
@@ -42,6 +42,16 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return valueA.longValue() * valueB.longValue();
         }
         return valueA.doubleValue() * valueB.doubleValue();
+    }
+
+    public static Number division(Number valueA, Number valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        if (valueA instanceof Long && valueB instanceof Long) {
+            return valueA.longValue() / valueB.longValue();
+        }
+        return valueA.doubleValue() / valueB.doubleValue();
     }
 
     /**
@@ -68,23 +78,10 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
             case VtlParser.MUL:
                 return genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
             case VtlParser.DIV:
-                return handleDivision(ctx);
+                return genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
             default:
                 throw new UnsupportedOperationException("unknown operator " + ctx);
         }
-    }
-
-    private ResolvableExpression handleDivision(VtlParser.ArithmeticExprContext ctx) throws InvalidTypeException {
-        var leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(Number.class);
-        var rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(Number.class);
-        return ResolvableExpression.withType(Double.class).withPosition(fromContext(ctx)).using(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return leftDouble / rightDouble;
-        });
     }
 
     static class ArithmeticExpression extends ResolvableExpression {

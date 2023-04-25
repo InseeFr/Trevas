@@ -44,6 +44,8 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 
+import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
+
 /**
  * The {@link ScriptEngine} implementation for VTL.
  * <p>
@@ -65,24 +67,6 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
     private final ScriptEngineFactory factory;
-    public Set<Method> NATIVE_METHODS = Set.of(
-            // NumericFunctionsVisitor
-            Fun.toMethod(NumericFunctionsVisitor::ceil),
-            Fun.toMethod(NumericFunctionsVisitor::floor),
-            Fun.toMethod(NumericFunctionsVisitor::abs),
-            Fun.toMethod(NumericFunctionsVisitor::exp),
-            Fun.toMethod(NumericFunctionsVisitor::ln),
-            Fun.toMethod(NumericFunctionsVisitor::sqrt),
-            Fun.toMethod(NumericFunctionsVisitor::round),
-            Fun.toMethod(NumericFunctionsVisitor::trunc),
-            Fun.toMethod(NumericFunctionsVisitor::mod),
-            Fun.toMethod(NumericFunctionsVisitor::power),
-            Fun.toMethod(NumericFunctionsVisitor::log),
-            // ArithmeticExprOrConcatVisitor
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition),
-            // ArithmeticVisitor
-            Fun.toMethod(ArithmeticVisitor::multiplication)
-    );
     private Map<String, Method> methodCache;
 
     /**

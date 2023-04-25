@@ -32,7 +32,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      */
     public NumericFunctionsVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         this.exprVisitor = Objects.requireNonNull(expressionVisitor);
-        this.genericFunctionsVisitor = genericFunctionsVisitor;
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
     public static Long ceil(Number value) {

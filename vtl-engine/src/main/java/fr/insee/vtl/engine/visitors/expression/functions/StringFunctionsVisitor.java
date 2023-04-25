@@ -6,10 +6,12 @@ import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -21,18 +23,51 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
  */
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    private final Pattern LTRIM = Pattern.compile("^\\s+");
-    private final Pattern RTRIM = Pattern.compile("\\s+$");
+    static final Pattern LTRIM = Pattern.compile("^\\s+");
+    static final Pattern RTRIM = Pattern.compile("\\s+$");
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
      * @param expressionVisitor The visitor for the enclosing expression.
      */
-    public StringFunctionsVisitor(ExpressionVisitor expressionVisitor) {
-        exprVisitor = Objects.requireNonNull(expressionVisitor);
+    public StringFunctionsVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
+        this.exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
+    }
+
+    public static String trim(String value) {
+        return value.trim();
+    }
+
+    public static String ltrim(String value) {
+        return LTRIM.matcher(value).replaceAll("");
+    }
+
+    public static String rtrim(String value) {
+        return RTRIM.matcher(value).replaceAll("");
+    }
+
+    public static String ucase(String value) {
+        return value.toUpperCase();
+    }
+
+    public static String lcase(String value) {
+        return value.toLowerCase();
+    }
+
+    public static Long len(String value) {
+        if (value == null) {
+            return null;
+        }
+        return (long) value.length();
+    }
+
+    public static String substring(String value, Long start, Long end) {
+        return null;
     }
 
     /**
@@ -43,52 +78,29 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
      */
     @Override
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
-        VtlParser.ExprContext expressionCtx = ctx.expr();
-        ResolvableExpression expression;
         try {
-            expression = exprVisitor.visit(expressionCtx).checkInstanceOf(String.class);
-        } catch (InvalidTypeException e) {
+            var pos = fromContext(ctx);
+            var parameters = List.of(exprVisitor.visit(ctx.expr()));
+            switch (ctx.op.getType()) {
+                case VtlParser.TRIM:
+                    return genericFunctionsVisitor.invokeFunction("trim", parameters, pos);
+                case VtlParser.LTRIM:
+                    return genericFunctionsVisitor.invokeFunction("ltrim", parameters, pos);
+                case VtlParser.RTRIM:
+                    return genericFunctionsVisitor.invokeFunction("rtrim", parameters, pos);
+                case VtlParser.UCASE:
+                    return genericFunctionsVisitor.invokeFunction("ucase", parameters, pos);
+                case VtlParser.LCASE:
+                    return genericFunctionsVisitor.invokeFunction("lcase", parameters, pos);
+                case VtlParser.LEN:
+                    return genericFunctionsVisitor.invokeFunction("len", parameters, pos);
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx.op.getText());
+            }
+        } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
 
-        var pos = fromContext(ctx);
-
-        Function<String, String> handle = null;
-
-        switch (ctx.op.getType()) {
-            case VtlParser.TRIM:
-                handle = String::trim;
-                break;
-            case VtlParser.LTRIM:
-                handle = input -> LTRIM.matcher(input).replaceAll("");
-                break;
-            case VtlParser.RTRIM:
-                handle = input -> RTRIM.matcher(input).replaceAll("");
-                break;
-            case VtlParser.UCASE:
-                handle = String::toUpperCase;
-                break;
-            case VtlParser.LCASE:
-                handle = String::toLowerCase;
-                break;
-            case VtlParser.LEN:
-                return ResolvableExpression.withType(Long.class).withPosition(pos)
-                        .using(context -> {
-                            String value = (String) expression.resolve(context);
-                            if (value == null) return null;
-                            return (long) value.length();
-                        });
-        }
-
-        if (handle == null) throw new UnsupportedOperationException("unknown operator " + ctx);
-
-        Function<String, String> finalHandle = handle;
-        return ResolvableExpression.withType(String.class).withPosition(pos)
-                .using(context -> {
-                    String value = (String) expression.resolve(context);
-                    if (value == null) return null;
-                    return finalHandle.apply(value);
-                });
     }
 
     /**
@@ -135,6 +147,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             throw new VtlRuntimeException(e);
         }
     }
+
 
     /**
      * Visits expressions corresponding to the replace function on a string operand.

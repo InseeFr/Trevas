@@ -5,10 +5,12 @@ import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
+import java.util.List;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
@@ -19,14 +21,23 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
+
+    public static Long levenshtein(String stringA, String stringB) {
+        if (stringA == null || stringB == null) {
+            return null;
+        }
+        return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(stringA, stringB));
+    }
 
     /**
      * Constructor taking an expression visitor.
      *
      * @param expressionVisitor The visitor for the enclosing expression.
      */
-    public DistanceFunctionsVisitor(ExpressionVisitor expressionVisitor) {
+    public DistanceFunctionsVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
     /**
@@ -39,18 +50,15 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
     public ResolvableExpression visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {
         var pos = fromContext(ctx);
         try {
-            ResolvableExpression leftExpression = exprVisitor.visit(ctx.left).checkInstanceOf(String.class);
-            ResolvableExpression rightExpression = exprVisitor.visit(ctx.right).checkInstanceOf(String.class);
-
-            return ResolvableExpression.withType(Long.class).withPosition(pos)
-                    .using(context -> {
-                        String leftValue = (String) leftExpression.resolve(context);
-                        String rightValue = (String) rightExpression.resolve(context);
-                        if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-                        return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(leftValue, rightValue));
-                    });
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    exprVisitor.visit(ctx.right)
+            );
+            return genericFunctionsVisitor.invokeFunction("levenshtein", parameters, fromContext(ctx));
         } catch (InvalidTypeException e) {
             throw new VtlRuntimeException(e);
+        } catch (VtlScriptException e) {
+            throw new RuntimeException(e);
         }
     }
 }

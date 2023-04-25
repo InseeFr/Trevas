@@ -49,7 +49,7 @@ public class ComparisonFunctionsTest {
         assertThatThrownBy(() -> {
             engine.eval("b := between(10.5, \"ko\", true);");
         }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected String");
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
