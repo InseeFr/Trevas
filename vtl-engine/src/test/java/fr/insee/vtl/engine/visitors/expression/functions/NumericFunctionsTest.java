@@ -1,9 +1,12 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,17 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class NumericFunctionsTest {
 
-    InMemoryDataset ds = new InMemoryDataset(
-            List.of(
-                    new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
-                    new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
-                    new Structured.Component("meas_double", Double.class, Dataset.Role.MEASURE),
-                    new Structured.Component("meas_string", String.class, Dataset.Role.MEASURE)
-            ),
-            Arrays.asList("Toto", 30, 12.2, "a"),
-            Arrays.asList("Hadrien", 40, 1.4, "b"),
-            Arrays.asList("Nico", 50, -12.34, "c")
-    );
     private ScriptEngine engine;
 
     @BeforeEach
@@ -95,17 +87,17 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-3L);
         engine.eval("d := ceil(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(0L);
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := ceil(ds);");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := ceil(ds[keep id, long1, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "age", 30L, "meas_double", 13L, "meas_string", "a"),
-                Map.of("name", "Hadrien", "age", 40L, "meas_double", 2L, "meas_string", "b"),
-                Map.of("name", "Nico", "age", 50L, "meas_double", -12L, "meas_string", "c")
+                Map.of("id", "Hadrien", "long1", 150L, "double1", 2L, "string1", "hadrien"),
+                Map.of("id", "Nico", "long1", 20L, "double1", 3L, "string1", "nico"),
+                Map.of("id", "Franck", "long1", 100L, "double1", -1L, "string1", "franck")
         );
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := ceil(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("e := ceil(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -119,12 +111,12 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-4L);
         engine.eval("d := floor(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(-1L);
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(ds);");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(ds[keep id, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "age", 30L, "meas_double", 12L, "meas_string", "a"),
-                Map.of("name", "Hadrien", "age", 40L, "meas_double", 1L, "meas_string", "b"),
-                Map.of("name", "Nico", "age", 50L, "meas_double", -13L, "meas_string", "c")
+                Map.of("id", "Hadrien", "double1", 1L, "string1", "hadrien"),
+                Map.of("id", "Nico", "double1", 2L, "string1", "nico"),
+                Map.of("id", "Franck", "double1", -2L, "string1", "franck")
         );
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
@@ -139,18 +131,17 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(5.5D);
         engine.eval("b := abs(-5.5);");
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := abs(ds);");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := abs(ds[keep id, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
-                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
-                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
+                Map.of("id", "Hadrien", "double1", 1.1D, "string1", "hadrien"),
+                Map.of("id", "Nico", "double1", 2.2D, "string1", "nico"),
+                Map.of("id", "Franck", "double1", 1.21D, "string1", "franck")
         );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("c := abs(\"ko\");");
-//        }).isInstanceOf(RuntimeException.class)
-//                .hasMessage("invalid parameter type class java.lang.String, need class java.lang.Number");
+        assertThatThrownBy(() -> {
+            engine.eval("c := abs(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -164,18 +155,17 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(1D);
         engine.eval("d := exp(-1);");
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(0.367D, Percentage.withPercentage(1));
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(exp(ds[drop age]));");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(exp(ds[drop bool1, long1]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "meas_double", 198789L, "meas_string", "a"),
-                Map.of("name", "Hadrien", "meas_double", 4L, "meas_string", "b"),
-                Map.of("name", "Nico", "meas_double", 0L, "meas_string", "c")
+                Map.of("id", "Hadrien", "double1", 3L, "string1", "hadrien"),
+                Map.of("id", "Nico", "double1", 9L, "string1", "nico"),
+                Map.of("id", "Franck", "double1", 0L, "string1", "franck")
         );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := exp(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+        assertThatThrownBy(() -> {
+            engine.eval("e := exp(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -189,18 +179,17 @@ public class NumericFunctionsTest {
         assertThat(((Double) context.getAttribute("c"))).isCloseTo(0D, Percentage.withPercentage(1));
         engine.eval("d := ln(0.5);");
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(-0.69D, Percentage.withPercentage(1));
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(ln(abs(ds[drop age])));");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := floor(ln(abs(ds[drop long1, bool1])));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "meas_double", 2L, "meas_string", "a"),
-                Map.of("name", "Hadrien", "meas_double", 0L, "meas_string", "b"),
-                Map.of("name", "Nico", "meas_double", 2L, "meas_string", "c")
+                Map.of("id", "Hadrien", "double1", 0L, "string1", "hadrien"),
+                Map.of("id", "Nico", "double1", 0L, "string1", "nico"),
+                Map.of("id", "Franck", "double1", 0L, "string1", "franck")
         );
-        // TODO: Rework exception handling
-//                assertThatThrownBy(() -> {
-//            engine.eval("e := ln(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+        assertThatThrownBy(() -> {
+            engine.eval("e := ln(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -251,12 +240,12 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("e")).isEqualTo(12340D);
         // TODO: Method with more that one dataset parameters.
         //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := trunc(ds);");
+//        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+//        Object res = engine.eval("res := trunc(ds[keep id, double1], 1);");
 //        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("name", "Toto", "age", 30D, "meas_double", 12D, "meas_string", "a"),
-//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1D, "meas_string", "b"),
-//                Map.of("name", "Nico", "age", 50D, "meas_double", 12D, "meas_string", "c")
+//                Map.of("id", "Hadrien", "double1", 1.1D, "string1", "hadrien"),
+//                Map.of("id", "Nico", "double1", 2.2D, "string1", "nico"),
+//                Map.of("id", "Franck", "double1", -1.2D, "string1", "franck")
 //        );
         // TODO: Rework exception handling
 //        assertThatThrownBy(() -> {
@@ -276,21 +265,22 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(5D);
         engine.eval("c := sqrt(0);");
         assertThat(context.getAttribute("c")).isEqualTo(0D);
-        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := ceil(sqrt(abs(ds[drop age])));");
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := ceil(sqrt(abs(ds[drop bool1, double1])));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Toto", "meas_double", 4L, "meas_string", "a"),
-                Map.of("name", "Hadrien", "meas_double", 2L, "meas_string", "b"),
-                Map.of("name", "Nico", "meas_double", 4L, "meas_string", "c")
+                Map.of("id", "Hadrien", "long1", 13L, "string1", "hadrien"),
+                Map.of("id", "Nico", "long1", 5L, "string1", "nico"),
+                Map.of("id", "Franck", "long1", 10L, "string1", "franck")
         );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := sqrt(-25);");
-//        }).isInstanceOf(InvalidArgumentException.class)
+        assertThatThrownBy(() -> {
+            engine.eval("e := sqrt(-25);");
+        }).isInstanceOf(VtlScriptException.class);
+        // TODO
 //                .hasMessage("Sqrt operand has to be 0 or positive");
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := sqrt(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
+        assertThatThrownBy(() -> {
+            engine.eval("e := sqrt(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class);
+        // TODO
 //                .hasMessage("invalid type String, expected \"ko\" to be Number");
     }
 
