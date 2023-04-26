@@ -11,8 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -80,8 +78,14 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     }
 
     public static String substr(String value, Long start, Long len) {
-        if (value == null || start == null || len == null) {
+        if (value == null) {
             return null;
+        }
+        if (start == null) {
+            start = 1L;
+        }
+        if (len == null) {
+            len = Long.valueOf(value.length());
         }
         if (start > value.length()) {
             return "";
@@ -97,34 +101,26 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         return value.substring(Math.toIntExact(start), Math.toIntExact(end));
     }
 
-    public static String substr(String value, Long start) {
-        if (value == null) {
+    public static String replace(String value, String pattern, String replacement) {
+        if (value == null || pattern == null) {
             return null;
         }
-        return substr(value, start, (long) value.length());
-    }
-
-    public static String substr(String value) {
-        return value;
-    }
-
-    public static String replace(String value, String pattern, String replacement) {
-        if (value == null || pattern == null || replacement == null) {
-            return null;
+        if (replacement == null) {
+            replacement = "";
         }
         return value.replaceAll(pattern, replacement);
     }
 
-    public static String replace(String value, String pattern) {
-        return replace(value, pattern, "");
-    }
-
-    public static Long instr(String v, String v2, Long a, Long b) {
+    public static Long instr(String v, String v2, Long start, Long occurence) {
         if (v == null || v2 == null) {
             return null;
         }
-        Long start = a == null ? 0L : a;
-        Long occurence = b == null ? 1L : b;
+        if (start == null) {
+            start = 0L;
+        }
+        if (occurence == null) {
+            occurence = 1L;
+        }
         return StringUtils.ordinalIndexOf(v.substring(start.intValue()), v2, occurence.intValue()) + 1L;
     }
 
@@ -170,10 +166,20 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         try {
-            var parameters = Stream.of(ctx.expr(), ctx.startParameter, ctx.endParameter)
-                    .filter(Objects::nonNull)
-                    .map(exprVisitor::visit)
-                    .collect(Collectors.toList());
+            var pos = fromContext(ctx);
+            ResolvableExpression expr = ctx.expr() == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.expr());
+            ResolvableExpression start = ctx.startParameter == null ?
+                    ResolvableExpression.withType(Long.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.startParameter);
+            ResolvableExpression len = ctx.endParameter == null ?
+                    ResolvableExpression.withType(Long.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.endParameter);
+            List<ResolvableExpression> parameters = List.of(expr, start, len);
             return genericFunctionsVisitor.invokeFunction("substr", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
@@ -189,10 +195,20 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
         try {
-            var parameters = Stream.of(ctx.expr(0), ctx.param, ctx.optionalExpr())
-                    .filter(Objects::nonNull)
-                    .map(exprVisitor::visit)
-                    .collect(Collectors.toList());
+            var pos = fromContext(ctx);
+            ResolvableExpression expr = ctx.expr(0) == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.expr(0));
+            ResolvableExpression param = ctx.param == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.param);
+            ResolvableExpression optionalExpr = ctx.optionalExpr() == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.optionalExpr());
+            List<ResolvableExpression> parameters = List.of(expr, param, optionalExpr);
 
             return genericFunctionsVisitor.invokeFunction("replace", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
@@ -232,33 +248,5 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
-
-
-//        var pos = fromContext(ctx);
-//        try {
-//            ResolvableExpression expression = exprVisitor.visit(ctx.expr(0)).checkInstanceOf(String.class);
-//            ResolvableExpression pattern = exprVisitor.visit(ctx.pattern).checkInstanceOf(String.class);
-//
-//            var start = ctx.startParameter == null ?
-//                    ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L)
-//                    : exprVisitor.visit(ctx.startParameter).checkInstanceOf(Long.class);
-//
-//            var occurrence = ctx.occurrenceParameter == null ?
-//                    ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 1L)
-//                    : exprVisitor.visit(ctx.occurrenceParameter).checkInstanceOf(Long.class);
-//
-//            return ResolvableExpression.withType(Long.class).withPosition(pos).using(
-//                    context -> {
-//                        String value = (String) expression.resolve(context);
-//                        String patternValue = (String) pattern.resolve(context);
-//                        Long startValue = (Long) start.resolve(context);
-//                        Long occurrenceValue = (Long) occurrence.resolve(context);
-//                        if (TypeChecking.hasNullArgs(value, patternValue, startValue, occurrenceValue)) return null;
-//                        return StringUtils.ordinalIndexOf(value.substring(startValue.intValue()), patternValue, occurrenceValue.intValue()) + 1L;
-//                    }
-//            );
-//        } catch (InvalidTypeException e) {
-//            throw new VtlRuntimeException(e);
-//        }
     }
 }
