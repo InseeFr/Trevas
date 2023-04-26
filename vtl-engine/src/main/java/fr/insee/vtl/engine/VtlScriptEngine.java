@@ -32,8 +32,6 @@ import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
@@ -264,31 +262,15 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         return Optional.ofNullable(methodCache.get(name));
     }
 
-    public boolean matchParameters(Method method, Class<?>[] types) {
-
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        Type[] genericParameterTypes = method.getGenericParameterTypes();
-        if (parameterTypes.length != types.length) {
+    public boolean matchParameters(Method method, Class<?>... types) {
+        Class<?>[] methodTypes = method.getParameterTypes();
+        if (methodTypes.length != types.length) {
             return false;
         }
-        for (int i = 0; i < parameterTypes.length; i++) {
-            Class<?> parameterType = parameterTypes[i];
-            Type genericParameterType = genericParameterTypes[i];
-            if (genericParameterType instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) genericParameterType;
-                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                if (actualTypeArguments.length == 1 && actualTypeArguments[0] instanceof Class) {
-                    Class<?> typeArgument = (Class<?>) actualTypeArguments[0];
-                    if (!parameterType.isAssignableFrom(typeArgument)) {
-                        return false;
-                    }
-                }
-            } else {
-                if (!parameterType.isAssignableFrom(types[i])) {
-                    return false;
-                }
+        for (int i = 0; i < methodTypes.length; i++) {
+            if (!methodTypes[i].isAssignableFrom(types[i])) {
+                return false;
             }
-
         }
         return true;
     }
