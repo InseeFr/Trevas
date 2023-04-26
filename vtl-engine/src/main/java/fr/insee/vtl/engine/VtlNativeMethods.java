@@ -50,8 +50,6 @@ public class VtlNativeMethods {
             Fun.<String, Long, Long>toMethod(StringFunctionsVisitor::substr),
             Fun.<String, String, String>toMethod(StringFunctionsVisitor::replace),
             Fun.<String, String>toMethod(StringFunctionsVisitor::replace),
-            Fun.<String, String>toMethod(StringFunctionsVisitor::instr),
-            Fun.<String, String, Long>toMethod(StringFunctionsVisitor::instr),
             Fun.<String, String, Long, Long>toMethod(StringFunctionsVisitor::instr),
             // ComparisonFunctionsVisitor
             Fun.toMethod(ComparisonFunctionsVisitor::between),

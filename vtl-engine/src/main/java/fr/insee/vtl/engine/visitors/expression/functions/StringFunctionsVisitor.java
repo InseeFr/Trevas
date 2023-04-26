@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -120,14 +119,6 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         return replace(value, pattern, "");
     }
 
-    public static Long instr(String v, String v2) {
-        return instr(v, v2, 0L, 1L);
-    }
-
-    public static Long instr(String v, String v2, Long a) {
-        return instr(v, v2, a, 1L);
-    }
-
     public static Long instr(String v, String v2, Long a, Long b) {
         if (v == null || v2 == null) {
             return null;
@@ -218,21 +209,24 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
         try {
-            var parameters = Stream.of(
-                            ctx.expr(0),
-                            ctx.pattern,
-                            ctx.startParameter,
-                            ctx.occurrenceParameter)
-                    .map(e -> e == null ? null : exprVisitor.visit(e))
-                    .collect(Collectors.toList());
-
-            // If a parameter is the null token
-            if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
-                return ResolvableExpression
-                        .withType(Boolean.class)
-                        .withPosition(fromContext(ctx))
-                        .using(c -> null);
-            }
+            var pos = fromContext(ctx);
+            ResolvableExpression expr = ctx.expr(0) == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.expr(0));
+            ResolvableExpression pattern = ctx.pattern == null ?
+                    ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.pattern);
+            ResolvableExpression start = ctx.startParameter == null ?
+                    ResolvableExpression.withType(Long.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.startParameter);
+            ResolvableExpression occurence = ctx.occurrenceParameter == null ?
+                    ResolvableExpression.withType(Long.class)
+                            .withPosition(pos)
+                            .using(c -> null) : exprVisitor.visit(ctx.occurrenceParameter);
+            List<ResolvableExpression> parameters = List.of(expr, pattern, start, occurence);
 
             return genericFunctionsVisitor.invokeFunction("instr", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
