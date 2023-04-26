@@ -50,6 +50,9 @@ public class VtlNativeMethods {
             Fun.<String, Long, Long>toMethod(StringFunctionsVisitor::substr),
             Fun.<String, String, String>toMethod(StringFunctionsVisitor::replace),
             Fun.<String, String>toMethod(StringFunctionsVisitor::replace),
+            Fun.<String, String>toMethod(StringFunctionsVisitor::instr),
+            Fun.<String, String, Long>toMethod(StringFunctionsVisitor::instr),
+            Fun.<String, String, Long, Long>toMethod(StringFunctionsVisitor::instr),
             // ComparisonFunctionsVisitor
             Fun.toMethod(ComparisonFunctionsVisitor::between),
             Fun.toMethod(ComparisonFunctionsVisitor::charsetMatch),
@@ -66,11 +69,9 @@ public class VtlNativeMethods {
             Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isEqual),
             Fun.<Long, Double>toMethod(ComparisonVisitor::isEqual),
             Fun.<Double, Long>toMethod(ComparisonVisitor::isEqual),
-
             Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isNotEqual),
             Fun.<Long, Double>toMethod(ComparisonVisitor::isNotEqual),
             Fun.<Double, Long>toMethod(ComparisonVisitor::isNotEqual),
-
             Fun.<Comparable, Comparable>toMethod(ComparisonVisitor::isLessThan),
             Fun.<Long, Double>toMethod(ComparisonVisitor::isLessThan),
             Fun.<Double, Long>toMethod(ComparisonVisitor::isLessThan),
