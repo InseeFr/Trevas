@@ -269,7 +269,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return false;
         }
         for (int i = 0; i < methodTypes.length; i++) {
-            if (!methodTypes[i].isAssignableFrom(types[i]) && types[i] != Dataset.class) {
+            if (!methodTypes[i].isAssignableFrom(types[i])
+                    && types[i] != Dataset.class
+                    && types[i] != Object.class) {
                 return false;
             }
         }
