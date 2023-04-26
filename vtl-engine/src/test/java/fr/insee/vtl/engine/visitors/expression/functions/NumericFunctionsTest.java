@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;

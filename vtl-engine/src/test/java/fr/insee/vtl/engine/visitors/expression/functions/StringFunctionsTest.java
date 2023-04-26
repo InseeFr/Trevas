@@ -1,8 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
-import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +8,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,7 +54,7 @@ public class StringFunctionsTest {
         engine.eval("b := replace(\"ok\", null, \"ttt\");");
         assertThat((String) engine.getContext().getAttribute("b")).isNull();
         engine.eval("c := replace(\"ok\", \"ooo\", null);");
-        assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");;
+        assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
         // Instr
         engine.eval("a := instr(null, \"ooo\", 1, 2);");
         assertThat((Long) engine.getContext().getAttribute("a")).isNull();
