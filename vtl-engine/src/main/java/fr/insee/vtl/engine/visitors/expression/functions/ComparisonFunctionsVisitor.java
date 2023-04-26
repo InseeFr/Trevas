@@ -1,10 +1,8 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -16,9 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 
 /**
  * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving comparison functions.

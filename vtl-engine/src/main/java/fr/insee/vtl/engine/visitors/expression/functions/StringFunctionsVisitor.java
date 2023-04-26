@@ -104,9 +104,6 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     }
 
     public static String substr(String value) {
-        if (value == null) {
-            return null;
-        }
         return value;
     }
 
@@ -198,6 +195,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     public static Long instr(String v, String v2, Long a, Long b) {
         return 0L;
     }
+
     /**
      * Visits expressions corresponding to the pattern location function on a string operand.
      *

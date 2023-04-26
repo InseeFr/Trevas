@@ -48,9 +48,9 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return null;
         }
         if (right instanceof Long) {
-            return - right.longValue();
+            return -right.longValue();
         }
-        return - right.doubleValue();
+        return -right.doubleValue();
     }
 
     public static Boolean not(Boolean right) {

@@ -177,10 +177,8 @@ public class VtlScriptEngineTest {
         engine.registerMethod("testTrim", TextFunctions.class.getMethod("trim", String.class));
         engine.registerMethod("testUpper", Fun.toMethod(TextFunctions::upper));
 
-        engine.eval("" +
-                "res := testUpper(\"  foo bar \");\n" +
-                "res := testTrim(res);" +
-                "");
+        engine.eval("res := testUpper(\"  foo bar \");\n" +
+                "res := testTrim(res);");
         assertThat(engine.get("res")).isEqualTo("FOO BAR");
     }
 

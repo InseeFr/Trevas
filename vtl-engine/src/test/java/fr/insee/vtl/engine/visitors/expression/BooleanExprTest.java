@@ -48,8 +48,7 @@ public class BooleanExprTest {
             context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);
             context.setAttribute("b", b.get(i), ScriptContext.ENGINE_SCOPE);
 
-            engine.eval("" +
-                    "andRes := a and b;" +
+            engine.eval("andRes := a and b;" +
                     "orRes := a or b;" +
                     "xorRes := a xor b;"
             );

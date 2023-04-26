@@ -23,7 +23,7 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     /**
      * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor the parent expression visitor.
+     * @param expressionVisitor       the parent expression visitor.
      * @param genericFunctionsVisitor the parent generic functions visitor.
      */
     public BooleanVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
