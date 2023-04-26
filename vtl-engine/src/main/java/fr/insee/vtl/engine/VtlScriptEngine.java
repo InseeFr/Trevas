@@ -328,7 +328,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public Method findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
-        Set<Method> customMethods = methodCache.values().stream().collect(Collectors.toSet());
+        Set<Method> customMethods = methodCache == null ? Set.of()
+                : methodCache.values().stream().collect(Collectors.toSet());
         Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
                 .collect(Collectors.toSet());
 
