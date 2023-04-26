@@ -47,9 +47,6 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (valueA == null || valueB == null) {
             return null;
         }
-        if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() / valueB.longValue();
-        }
         return valueA.doubleValue() / valueB.doubleValue();
     }
 

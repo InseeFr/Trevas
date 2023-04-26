@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,8 +92,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'ceil(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -115,8 +116,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'floor(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -135,8 +136,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'abs(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -159,8 +160,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'exp(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -183,8 +184,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ln(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'ln(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -274,8 +275,8 @@ public class NumericFunctionsTest {
 //                .hasMessage("Sqrt operand has to be 0 or positive");
         assertThatThrownBy(() -> {
             engine.eval("e := sqrt(\"ko\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'sqrt(String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test

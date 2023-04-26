@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 public class ArithmeticExprOrConcatTest {
 
@@ -85,10 +87,10 @@ public class ArithmeticExprOrConcatTest {
                 Map.of("id", "Hadrien", "me1", 440L, "me2", 440.20000000000005D),
                 Map.of("id", "Nico", "me1", 550L, "me2", 550.2D)
         );
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := ceil(\"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("e := ceil(\"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
