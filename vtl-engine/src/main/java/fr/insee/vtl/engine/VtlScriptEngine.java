@@ -3,6 +3,7 @@ package fr.insee.vtl.engine;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -268,7 +269,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return false;
         }
         for (int i = 0; i < methodTypes.length; i++) {
-            if (!methodTypes[i].isAssignableFrom(types[i])) {
+            if (!methodTypes[i].isAssignableFrom(types[i]) && types[i] != Dataset.class) {
                 return false;
             }
         }
