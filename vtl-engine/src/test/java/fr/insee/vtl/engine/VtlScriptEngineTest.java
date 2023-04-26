@@ -192,6 +192,36 @@ public class VtlScriptEngineTest {
                 .is(atPosition(0, 14, 14));
     }
 
+    public static <T extends Comparable<T>> Boolean test(T left, T right) {
+        return true;
+    }
+
+    @Test
+    void testMatchParameters() throws NoSuchMethodException {
+        var method = this.getClass().getMethod("test", Comparable.class, Comparable.class);
+
+        // Correct combination
+        assertThat(VtlScriptEngine.matchParameters(method, String.class, String.class)).isTrue();
+        assertThat(VtlScriptEngine.matchParameters(method, Long.class, Long.class)).isTrue();
+        assertThat(VtlScriptEngine.matchParameters(method, Double.class, Double.class)).isTrue();
+        assertThat(VtlScriptEngine.matchParameters(method, Boolean.class, Boolean.class)).isTrue();
+
+        // Wrong types
+        assertThat(VtlScriptEngine.matchParameters(method, Number.class, Number.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, VtlScriptEngine.class, VtlScriptEngine.class)).isFalse();
+
+        // Wrong combination
+        assertThat(VtlScriptEngine.matchParameters(method, Double.class, Long.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, Long.class, Double.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, Long.class, String.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, Boolean.class, String.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, Long.class, String.class)).isFalse();
+
+        // Wrong number.
+        assertThat(VtlScriptEngine.matchParameters(method, String.class)).isFalse();
+        assertThat(VtlScriptEngine.matchParameters(method, String.class, String.class, String.class)).isFalse();
+    }
+
     @Test
     public void testSerialization() throws Exception {
 //        VtlScriptEngine engine = (VtlScriptEngine) this.engine;

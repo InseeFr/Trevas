@@ -33,10 +33,14 @@ import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -263,19 +267,65 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         return Optional.ofNullable(methodCache.get(name));
     }
 
-    public boolean matchParameters(Method method, Class<?>... types) {
-        Class<?>[] methodTypes = method.getParameterTypes();
-        if (methodTypes.length != types.length) {
+    static boolean matchParameters(Method method, Class<?>... classes) {
+        Type[] genericParameterTypes = method.getGenericParameterTypes();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+
+        if (classes.length != parameterTypes.length) {
             return false;
         }
-        for (int i = 0; i < methodTypes.length; i++) {
-            if (!methodTypes[i].isAssignableFrom(types[i])
-                    && types[i] != Dataset.class
-                    && types[i] != Object.class) {
+
+        Map<TypeVariable<?>, Class<?>> typeArguments = new HashMap<>();
+
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (!isAssignableTo(classes[i], parameterTypes[i], genericParameterTypes[i], typeArguments)) {
                 return false;
             }
         }
+
         return true;
+    }
+
+    static boolean isAssignableTo(Class<?> clazz, Class<?> target, Type genericTarget, Map<TypeVariable<?>, Class<?>> typeArguments) {
+        if (target.isAssignableFrom(clazz)) {
+            if (genericTarget instanceof TypeVariable) {
+                TypeVariable<?> typeVariable = (TypeVariable<?>) genericTarget;
+                Class<?> existingTypeArgument = typeArguments.get(typeVariable);
+                if (existingTypeArgument == null) {
+                    typeArguments.put(typeVariable, clazz);
+                } else if (!existingTypeArgument.equals(clazz)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (genericTarget instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) genericTarget;
+            Type[] typeArgumentsArray = parameterizedType.getActualTypeArguments();
+
+            if (typeArgumentsArray.length != 1) {
+                return false;
+            }
+
+            Type typeArgument = typeArgumentsArray[0];
+
+            if (typeArgument instanceof TypeVariable) {
+                TypeVariable<?> typeVariable = (TypeVariable<?>) typeArgument;
+                Class<?> existingTypeArgument = typeArguments.get(typeVariable);
+                if (existingTypeArgument == null) {
+                    typeArguments.put(typeVariable, clazz);
+                } else if (!existingTypeArgument.equals(clazz)) {
+                    return false;
+                }
+                return true;
+            } else if (typeArgument instanceof Class) {
+                Class<?> classArgument = (Class<?>) typeArgument;
+                return classArgument.isAssignableFrom(clazz);
+            }
+        }
+
+        return false;
     }
 
     public Method findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
