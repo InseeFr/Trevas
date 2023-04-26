@@ -140,7 +140,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                                         })
                                         .toArray();
                                 try {
-                                    return expectedType.cast(method.invoke(null, params));
+                                    return method.invoke(null, params);
                                 } catch (IllegalAccessException | InvocationTargetException e) {
                                     throw new VtlRuntimeException(new VtlScriptException(e, position));
                                 }
