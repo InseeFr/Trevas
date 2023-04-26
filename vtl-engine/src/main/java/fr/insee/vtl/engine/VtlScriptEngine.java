@@ -46,8 +46,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
@@ -326,8 +328,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public Method findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
+        Set<Method> customMethods = methodCache.values().stream().collect(Collectors.toSet());
+        Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
+                .collect(Collectors.toSet());
 
-        List<Method> candidates = NATIVE_METHODS.stream()
+        List<Method> candidates = methods.stream()
                 .filter(method -> method.getName().equals(name))
                 .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
@@ -335,7 +340,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return candidates.get(0);
         }
         // TODO: Handle parameter resolution.
-        for (Method method : NATIVE_METHODS) {
+        for (Method method : methods) {
             if (method.getName().equals(name) && types.equals(Arrays.asList(method.getParameterTypes()))) {
                 return method;
             }
@@ -366,6 +371,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         ServiceLoader<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class);
         for (FunctionProvider provider : providers) {
             Map<String, Method> functions = provider.getFunctions(this);
+            // TODO: rename function name with 'name' instead of java name
             for (String name : functions.keySet()) {
                 methodCache.put(name, functions.get(name));
             }

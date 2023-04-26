@@ -49,6 +49,10 @@ public class VtlScriptEngineTest {
         return left.compareTo(right) == 0;
     }
 
+    public static <T extends Comparable<T>> Boolean test(T left, T right) {
+        return true;
+    }
+
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -174,8 +178,8 @@ public class VtlScriptEngineTest {
     @Test
     public void testFunctions() throws ScriptException, NoSuchMethodException {
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
-        engine.registerMethod("testTrim", TextFunctions.class.getMethod("trim", String.class));
-        engine.registerMethod("testUpper", Fun.toMethod(TextFunctions::upper));
+        engine.registerMethod("testTrim", Fun.toMethod(TextFunctions::testTrim));
+        engine.registerMethod("testUpper", Fun.toMethod(TextFunctions::testUpper));
 
         engine.eval("res := testUpper(\"  foo bar \");\n" +
                 "res := testTrim(res);");
@@ -190,10 +194,6 @@ public class VtlScriptEngineTest {
                 .isInstanceOf(VtlSyntaxException.class)
                 .hasMessage("missing ';' at '<EOF>'")
                 .is(atPosition(0, 14, 14));
-    }
-
-    public static <T extends Comparable<T>> Boolean test(T left, T right) {
-        return true;
     }
 
     @Test
