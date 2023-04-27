@@ -82,6 +82,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
             List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
             var method = engine.findMethod(funcName, parameterTypes);
+            Class expectedReturnedType = method.getReturnType();
             if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
 
                 ProcessingEngine proc = engine.getProcessingEngine();
@@ -127,7 +128,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 Map<String, Dataset.Role> roles = new HashMap<>();
                 List<String> parameterNames = parameters.stream().map(Object::toString).collect(Collectors.toList());
                 measureToHandleNames.forEach(m -> {
-                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedType).withPosition(position).using(
+                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedReturnedType).withPosition(position).using(
                             context -> {
                                 Map<String, Object> contextMap = (Map<String, Object>) context;
                                 Object[] params = parameterNames.stream()

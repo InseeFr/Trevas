@@ -21,10 +21,10 @@ public class DatasetSamples {
                     new Structured.Component("string1", String.class, Dataset.Role.MEASURE),
                     new Structured.Component("string2", String.class, Dataset.Role.MEASURE)
             ),
-            Arrays.asList("Toto", 30, 300, 12.2, 1.22, true, false, "toto", "t"),
-            Arrays.asList("Hadrien", 10, 1, 1.1, 10.11, true, true, "hadrien", "k"),
-            Arrays.asList("Nico", 20, 250, 12.2, 21.1, false, true, "nico", "l"),
-            Arrays.asList("Franck", 100, 2, 1.21, 100.9, false, false, "franck", "c")
+            Arrays.asList("Toto", 30L, 300L, 12.2D, 1.22D, true, false, "toto", "t"),
+            Arrays.asList("Hadrien", 10L, 1L, 1.1D, 10.11D, true, true, "hadrien", "k"),
+            Arrays.asList("Nico", 20L, 250L, 12.2D, 21.1D, false, true, "nico", "l"),
+            Arrays.asList("Franck", 100L, 2L, 1.21D, 100.9D, false, false, "franck", "c")
     );
 
     public static InMemoryDataset ds2 = new InMemoryDataset(
@@ -35,8 +35,8 @@ public class DatasetSamples {
                     new Structured.Component("bool1", Boolean.class, Dataset.Role.MEASURE),
                     new Structured.Component("string1", String.class, Dataset.Role.MEASURE)
             ),
-            Arrays.asList("Hadrien", 150, 1.1, true, "hadrien"),
-            Arrays.asList("Nico", 20, 2.2, true, "nico"),
-            Arrays.asList("Franck", 100, -1.21, false, "franck")
+            Arrays.asList("Hadrien", 150L, 1.1D, true, "hadrien"),
+            Arrays.asList("Nico", 20L, 2.2D, true, "nico"),
+            Arrays.asList("Franck", 100L, -1.21D, false, "franck")
     );
 }

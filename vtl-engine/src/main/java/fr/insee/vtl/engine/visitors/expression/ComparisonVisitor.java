@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -137,7 +138,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         .using(c -> null);
             }
 
-            if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
+            if (Comparable.class.isAssignableFrom(leftExpression.getType())
+                    || leftExpression.getType().isAssignableFrom(Dataset.class)) {
                 switch (type.getType()) {
                     case VtlParser.EQ:
                         return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));

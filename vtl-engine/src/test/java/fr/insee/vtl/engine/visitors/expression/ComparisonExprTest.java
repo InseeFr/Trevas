@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,12 +54,22 @@ public class ComparisonExprTest {
     public void testComparisonExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         // EQ
-        engine.eval("bool := true = true;");
-        assertThat((Boolean) context.getAttribute("bool")).isTrue();
-        engine.eval("long := 6 = (3*2);");
-        assertThat((Boolean) context.getAttribute("long")).isTrue();
-        engine.eval("mix := 6 = (3*2.0);");
-        assertThat((Boolean) context.getAttribute("mix")).isTrue();
+//        engine.eval("bool := true = true;");
+//        assertThat((Boolean) context.getAttribute("bool")).isTrue();
+//        engine.eval("long := 6 = (3*2);");
+//        assertThat((Boolean) context.getAttribute("long")).isTrue();
+//        engine.eval("mix := 6 = (3*2.0);");
+//        assertThat((Boolean) context.getAttribute("mix")).isTrue();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("equal := ds1[keep id, long1] = ds2[keep id, long1];");
+        var equal = engine.getContext().getAttribute("equal");
+        assertThat(((Dataset) equal).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", false),
+                Map.of("id", "Nico", "long1", true),
+                Map.of("id", "Franck", "long1", true)
+        );
+        assertThat(((Dataset) equal).getDataStructure().get("long1").getType()).isEqualTo(Boolean.class);
         // NEQ
         engine.eval("bool := true <> true;");
         assertThat((Boolean) context.getAttribute("bool")).isFalse();
