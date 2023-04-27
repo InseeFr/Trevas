@@ -66,6 +66,8 @@ public class VtlNativeMethods {
             Fun.toMethod(ComparisonVisitor::isLessThan),
             Fun.toMethod(ComparisonVisitor::isGreaterThan),
             Fun.toMethod(ComparisonVisitor::isGreaterThanOrEqual),
-            Fun.toMethod(ComparisonVisitor::isLessThanOrEqual)
+            Fun.toMethod(ComparisonVisitor::isLessThanOrEqual),
+            Fun.toMethod(ComparisonVisitor::in),
+            Fun.toMethod(ComparisonVisitor::notIn)
     );
 }

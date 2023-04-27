@@ -105,12 +105,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return !isLessThan(left, right);
     }
 
-    public static Boolean in(List<?> list, Object obj) {
+    public static Boolean in(Object obj, List<?> list) {
         return list.contains(obj);
     }
 
-    public static Boolean notIn(List<?> list, Object obj) {
-        return !in(list, obj);
+    public static Boolean notIn(Object obj, List<?> list) {
+        return !in(obj, list);
     }
 
     /**
