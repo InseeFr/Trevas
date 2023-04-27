@@ -54,12 +54,12 @@ public class ComparisonExprTest {
     public void testComparisonExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         // EQ
-//        engine.eval("bool := true = true;");
-//        assertThat((Boolean) context.getAttribute("bool")).isTrue();
-//        engine.eval("long := 6 = (3*2);");
-//        assertThat((Boolean) context.getAttribute("long")).isTrue();
-//        engine.eval("mix := 6 = (3*2.0);");
-//        assertThat((Boolean) context.getAttribute("mix")).isTrue();
+        engine.eval("bool := true = true;");
+        assertThat((Boolean) context.getAttribute("bool")).isTrue();
+        engine.eval("long := 6 = (3*2);");
+        assertThat((Boolean) context.getAttribute("long")).isTrue();
+        engine.eval("mix := 6 = (3*2.0);");
+        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("equal := ds1[keep id, long1] = ds2[keep id, long1];");
@@ -77,6 +77,15 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("long")).isTrue();
         engine.eval("mix := 6 <> (3*20.0);");
         assertThat((Boolean) context.getAttribute("mix")).isTrue();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("notEqual := ds1[keep id, long1] <> ds2[keep id, long1];");
+        var notEqual = engine.getContext().getAttribute("notEqual");
+        assertThat(((Dataset) notEqual).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", true),
+                Map.of("id", "Nico", "long1", false),
+                Map.of("id", "Franck", "long1", false)
+        );
         // LT
         engine.eval("lt := 2 < 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
@@ -84,6 +93,15 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("lt1")).isFalse();
         engine.eval("mix := 6 < 6.1;");
         assertThat((Boolean) context.getAttribute("mix")).isTrue();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("lt := ds1[keep id, long1] < ds2[keep id, long1];");
+        var lt = engine.getContext().getAttribute("lt");
+        assertThat(((Dataset) lt).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", true),
+                Map.of("id", "Nico", "long1", false),
+                Map.of("id", "Franck", "long1", false)
+        );
         // MT
         engine.eval("lt := 2 > 3;");
         assertThat((Boolean) context.getAttribute("lt")).isFalse();
@@ -91,6 +109,15 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("lt1")).isTrue();
         engine.eval("mix := 6 > 6.1;");
         assertThat((Boolean) context.getAttribute("mix")).isFalse();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("mt := ds1[keep id, long1] > ds2[keep id, long1];");
+        var mt = engine.getContext().getAttribute("mt");
+        assertThat(((Dataset) mt).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", false),
+                Map.of("id", "Nico", "long1", false),
+                Map.of("id", "Franck", "long1", false)
+        );
         // LE
         engine.eval("lt := 3 <= 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
@@ -98,13 +125,31 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("lt1")).isFalse();
         engine.eval("mix := 6 <= 6.1;");
         assertThat((Boolean) context.getAttribute("mix")).isTrue();
-        // MT
-        engine.eval("lt := 2 >= 3;");
-        assertThat((Boolean) context.getAttribute("lt")).isFalse();
-        engine.eval("lt1 := 2.1 >= 1.1;");
-        assertThat((Boolean) context.getAttribute("lt1")).isTrue();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("le := ds1[keep id, long1] <= ds2[keep id, long1];");
+        var le = engine.getContext().getAttribute("le");
+        assertThat(((Dataset) le).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", true),
+                Map.of("id", "Nico", "long1", true),
+                Map.of("id", "Franck", "long1", true)
+        );
+        // ME
+        engine.eval("me := 2 >= 3;");
+        assertThat((Boolean) context.getAttribute("me")).isFalse();
+        engine.eval("me1 := 2.1 >= 1.1;");
+        assertThat((Boolean) context.getAttribute("me1")).isTrue();
         engine.eval("mix := 6 >= 6.1;");
         assertThat((Boolean) context.getAttribute("mix")).isFalse();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("me := ds1[keep id, long1] >= ds2[keep id, long1];");
+        var me = engine.getContext().getAttribute("me");
+        assertThat(((Dataset) me).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", false),
+                Map.of("id", "Nico", "long1", true),
+                Map.of("id", "Franck", "long1", true)
+        );
     }
 
     @Test
