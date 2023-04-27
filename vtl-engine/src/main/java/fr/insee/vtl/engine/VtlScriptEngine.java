@@ -3,7 +3,6 @@ package fr.insee.vtl.engine;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -127,8 +126,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         Map<TypeVariable<?>, Class<?>> typeArguments = new HashMap<>();
 
         for (int i = 0; i < parameterTypes.length; i++) {
-            if (!isAssignableTo(classes[i], parameterTypes[i], genericParameterTypes[i], typeArguments)
-                    && classes[i] != Dataset.class && classes[i] != Object.class) {
+            if (!isAssignableTo(classes[i], parameterTypes[i], genericParameterTypes[i], typeArguments)) {
                 return false;
             }
         }
@@ -335,7 +333,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
         List<Method> candidates = methods.stream()
                 .filter(method -> method.getName().equals(name))
-                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
+//                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
         if (candidates.size() == 1) {
             return candidates.get(0);

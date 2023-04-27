@@ -1,12 +1,14 @@
 package fr.insee.vtl.engine.expressions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,9 @@ public class FunctionExpression extends ResolvableExpression {
             var type = typeIt.next();
             if (type.equals(Object.class)) {
                 continue;
+            }
+            if (type.isAssignableFrom(List.class)) {
+                ((ListExpression) expression).containedType();
             }
             expression.checkInstanceOf(type);
         }

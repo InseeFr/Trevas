@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,47 +25,45 @@ public class StringFunctionsTest {
     public void testNull() throws ScriptException {
         // Trim
         engine.eval("a := trim(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Ltrim
         engine.eval("a := ltrim(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Rtrim
         engine.eval("a := rtrim(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Upper
         engine.eval("a := upper(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Lower
         engine.eval("a := lower(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Length
         engine.eval("a := length(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((Long) engine.getContext().getAttribute("a")).isNull();
         // Substr
         engine.eval("a := substr(null);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         engine.eval("b := substr(\"ok\", null, 2);");
-        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        assertThat((String) engine.getContext().getAttribute("b")).isEqualTo("ok");
         engine.eval("c := substr(\"ok\", 1, null);");
-        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
         // Replace
         engine.eval("a := replace(null, \"ooo\", \"ttt\");");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((String) engine.getContext().getAttribute("a")).isNull();
         engine.eval("b := replace(\"ok\", null, \"ttt\");");
-        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        assertThat((String) engine.getContext().getAttribute("b")).isNull();
         engine.eval("c := replace(\"ok\", \"ooo\", null);");
-        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
-        engine.eval("d := replace(\"ok\", \"ooo\", null);");
-        assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
+        assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
         // Instr
         engine.eval("a := instr(null, \"ooo\", 1, 2);");
-        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        assertThat((Long) engine.getContext().getAttribute("a")).isNull();
         engine.eval("b := instr(\"ok\", null, 1, 2);");
-        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        assertThat((Long) engine.getContext().getAttribute("b")).isNull();
         engine.eval("c := instr(\"ok\", \"ooo\", null, 2);");
-        assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
+        assertThat((Long) engine.getContext().getAttribute("c")).isEqualTo(0L);
         engine.eval("d := instr(\"ok\", \"ooo\", 1, null);");
-        assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
+        assertThat((Long) engine.getContext().getAttribute("d")).isEqualTo(0L);
     }
 
     @Test
@@ -111,12 +108,12 @@ public class StringFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",1,\"ok\");");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'replace(String, Long, String)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Long, expected String");
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",\"ok\",true);");
-        }).isInstanceOf(FunctionNotFoundException.class)
-                .hasMessage("function 'replace(String, String, Boolean)' not found");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Boolean, expected String");
     }
 
     @Test

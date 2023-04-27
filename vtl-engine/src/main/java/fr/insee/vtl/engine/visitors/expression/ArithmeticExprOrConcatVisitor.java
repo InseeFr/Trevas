@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -47,9 +46,9 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
             return null;
         }
         if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() + valueB.longValue();
+            return valueA.longValue() - valueB.longValue();
         }
-        return valueA.doubleValue() + valueB.doubleValue();
+        return valueA.doubleValue() - valueB.doubleValue();
     }
 
     public static String concat(String valueA, String valueB) {
@@ -70,28 +69,39 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right));
-            return getResolvableExpression(ctx, pos, parameters);
+            boolean hasDsParameter = parameters.stream()
+                    .map(ResolvableExpression::getType)
+                    .anyMatch(Double.class::equals);
+            if (hasDsParameter) {
+                switch (ctx.op.getType()) {
+                    case VtlParser.PLUS:
+                        return new ArithmeticVisitor.ArithmeticExpression(
+                                genericFunctionsVisitor.invokeFunction("addition", parameters, pos),
+                                parameters
+                        );
+                    case VtlParser.MINUS:
+                        return new ArithmeticVisitor.ArithmeticExpression(
+                                genericFunctionsVisitor.invokeFunction("subtraction", parameters, pos),
+                                parameters
+                        );
+                    case VtlParser.CONCAT:
+                        return genericFunctionsVisitor.invokeFunction("concat", parameters, pos);
+                    default:
+                        throw new UnsupportedOperationException("unknown operator " + ctx);
+                }
+            }
+            switch (ctx.op.getType()) {
+                case VtlParser.PLUS:
+                    return genericFunctionsVisitor.invokeFunction("addition", parameters, pos);
+                case VtlParser.MINUS:
+                    return genericFunctionsVisitor.invokeFunction("subtraction", parameters, pos);
+                case VtlParser.CONCAT:
+                    return genericFunctionsVisitor.invokeFunction("concat", parameters, pos);
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
-        }
-    }
-
-    private ResolvableExpression getResolvableExpression(VtlParser.ArithmeticExprOrConcatContext ctx, Positioned pos, List<ResolvableExpression> parameters) throws VtlScriptException {
-        switch (ctx.op.getType()) {
-            case VtlParser.PLUS:
-                return new ArithmeticVisitor.ArithmeticExpression(
-                        genericFunctionsVisitor.invokeFunction("addition", parameters, pos),
-                        parameters
-                );
-            case VtlParser.MINUS:
-                return new ArithmeticVisitor.ArithmeticExpression(
-                        genericFunctionsVisitor.invokeFunction("subtraction", parameters, pos),
-                        parameters
-                );
-            case VtlParser.CONCAT:
-                return genericFunctionsVisitor.invokeFunction("concat", parameters, pos);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
         }
     }
 }

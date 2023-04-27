@@ -3,11 +3,11 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -43,85 +43,75 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    public static Boolean isEqual(Double left, Long right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) == 0;
-    }
-
-    public static Boolean isEqual(Long left, Double right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) == 0;
-    }
-
-    public static <T extends Comparable<T>> Boolean isEqual(T left, T right) {
+    public static Boolean isEqual(Comparable left, Comparable right) {
         if (left == null || right == null) {
             return null;
         }
-        return left.compareTo(right) == 0;
+
+        Comparable leftValue = left;
+        Comparable rightValue = right;
+
+        if (left instanceof Number && right instanceof Number) {
+            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
+                    : BigDecimal.valueOf((Double) left);
+            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
+                    : BigDecimal.valueOf((Double) right);
+        }
+        return leftValue.compareTo(rightValue) == 0;
     }
 
-    public static Boolean isNotEqual(Double left, Long right) {
+    public static Boolean isNotEqual(Comparable left, Comparable right) {
         return !isEqual(left, right);
     }
 
-    public static Boolean isNotEqual(Long left, Double right) {
-        return !isEqual(left, right);
-    }
-
-    public static <T extends Comparable<T>> Boolean isNotEqual(T left, T right) {
-        return !isEqual(left, right);
-    }
-
-    public static Boolean isLessThan(Double left, Long right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) < 0;
-    }
-
-    public static Boolean isLessThan(Long left, Double right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) < 0;
-    }
-
-    public static <T extends Comparable<T>> Boolean isLessThan(T left, T right) {
+    public static Boolean isLessThan(Comparable left, Comparable right) {
         if (left == null || right == null) {
             return null;
         }
-        return left.compareTo(right) < 0;
+
+        Comparable leftValue = left;
+        Comparable rightValue = right;
+
+        if (left instanceof Number && right instanceof Number) {
+            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
+                    : BigDecimal.valueOf((Double) left);
+            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
+                    : BigDecimal.valueOf((Double) right);
+        }
+        return leftValue.compareTo(rightValue) < 0;
     }
 
-    public static Boolean isGreaterThan(Double left, Long right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) > 0;
-    }
-
-    public static Boolean isGreaterThan(Long left, Double right) {
-        return BigDecimal.valueOf(left).compareTo(BigDecimal.valueOf(right)) > 0;
-    }
-
-    public static <T extends Comparable<T>> Boolean isGreaterThan(T left, T right) {
+    public static Boolean isGreaterThan(Comparable left, Comparable right) {
         if (left == null || right == null) {
             return null;
         }
-        return left.compareTo(right) > 0;
+
+        Comparable leftValue = left;
+        Comparable rightValue = right;
+
+        if (left instanceof Number && right instanceof Number) {
+            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
+                    : BigDecimal.valueOf((Double) left);
+            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
+                    : BigDecimal.valueOf((Double) right);
+        }
+        return leftValue.compareTo(rightValue) > 0;
     }
 
-    public static Boolean isLessThanOrEqual(Double left, Long right) {
+    public static Boolean isLessThanOrEqual(Comparable left, Comparable right) {
         return !isGreaterThan(left, right);
     }
 
-    public static Boolean isLessThanOrEqual(Long left, Double right) {
-        return !isGreaterThan(left, right);
-    }
-
-    public static <T extends Comparable<T>> Boolean isLessThanOrEqual(T left, T right) {
-        return !isGreaterThan(left, right);
-    }
-
-    public static Boolean isGreaterThanOrEqual(Double left, Long right) {
+    public static Boolean isGreaterThanOrEqual(Comparable left, Comparable right) {
         return !isLessThan(left, right);
     }
 
-    public static Boolean isGreaterThanOrEqual(Long left, Double right) {
-        return !isLessThan(left, right);
+    public static Boolean in(Object obj, List<?> list) {
+        return list.contains(obj);
     }
 
-    public static <T extends Comparable<T>> Boolean isGreaterThanOrEqual(T left, T right) {
-        return !isLessThan(left, right);
+    public static Boolean notIn(Object obj, List<?> list) {
+        return !in(obj, list);
     }
 
     /**
@@ -148,7 +138,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         .using(c -> null);
             }
 
-            if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
+            if (Comparable.class.isAssignableFrom(leftExpression.getType())
+                    || leftExpression.getType().isAssignableFrom(Dataset.class)) {
                 switch (type.getType()) {
                     case VtlParser.EQ:
                         return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
@@ -181,31 +172,22 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
-        ResolvableExpression operand = exprVisitor.visit(ctx.left);
-        ListExpression listExpression = (ListExpression) visit(ctx.lists());
+        try {
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    visit(ctx.lists()));
+            Positioned pos = fromContext(ctx);
 
-        Positioned pos = fromContext(ctx);
-        if (!operand.getType().equals(listExpression.containedType())) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(operand.getType(), listExpression.containedType(), pos)
-            );
-        }
-
-        switch (ctx.op.getType()) {
-            case VtlParser.IN:
-                return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(context -> {
-                    List<?> list = listExpression.resolve(context);
-                    Object value = operand.resolve(context);
-                    return list.contains(value);
-                });
-            case VtlParser.NOT_IN:
-                return ResolvableExpression.withType(Boolean.class).withPosition(pos).using(context -> {
-                    List<?> list = listExpression.resolve(context);
-                    Object value = operand.resolve(context);
-                    return !list.contains(value);
-                });
-            default:
-                throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            switch (ctx.op.getType()) {
+                case VtlParser.IN:
+                    return genericFunctionsVisitor.invokeFunction("in", parameters, pos);
+                case VtlParser.NOT_IN:
+                    return genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
+                default:
+                    throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            }
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 
