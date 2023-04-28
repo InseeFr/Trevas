@@ -156,7 +156,20 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                         .filter(Objects::nonNull)
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList());
-                return proc.executeProject(tmpDs, toKeep);
+
+                DatasetExpression res = proc.executeProject(tmpDs, toKeep);
+
+                // Handle mono measure boolean dataset
+                List<Structured.Component> resMeasures = res.getDataStructure()
+                        .values().stream()
+                        .filter(Structured.Component::isMeasure)
+                        .collect(Collectors.toList());
+
+                if (resMeasures.size() == 1 && resMeasures.get(0).getType() == Boolean.class) {
+                    return proc.executeRename(res, Map.of(resMeasures.get(0).getName(), "bool_var"));
+                }
+
+                return res;
             } else {
                 return new FunctionExpression(method, parameters, position);
             }

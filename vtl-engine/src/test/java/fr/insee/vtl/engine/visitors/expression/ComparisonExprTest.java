@@ -29,10 +29,11 @@ public class ComparisonExprTest {
     public void testNull() throws ScriptException {
 
         ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
 
         List<String> operators = List.of("=", "<>", "<", ">", "<=", ">=");
         List<String> values = List.of(
-                "\"string\"", "1.1", "1", "null"
+                "\"string\"", "1.1", "1", "null", "ds1"
         );
 
         for (String operator : operators) {
@@ -65,11 +66,11 @@ public class ComparisonExprTest {
         engine.eval("equal := ds1[keep id, long1] = ds2[keep id, long1];");
         var equal = engine.getContext().getAttribute("equal");
         assertThat(((Dataset) equal).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", false),
-                Map.of("id", "Nico", "long1", true),
-                Map.of("id", "Franck", "long1", true)
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", true),
+                Map.of("id", "Franck", "bool_var", true)
         );
-        assertThat(((Dataset) equal).getDataStructure().get("long1").getType()).isEqualTo(Boolean.class);
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // NEQ
         engine.eval("bool := true <> true;");
         assertThat((Boolean) context.getAttribute("bool")).isFalse();
@@ -82,10 +83,11 @@ public class ComparisonExprTest {
         engine.eval("notEqual := ds1[keep id, long1] <> ds2[keep id, long1];");
         var notEqual = engine.getContext().getAttribute("notEqual");
         assertThat(((Dataset) notEqual).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", true),
-                Map.of("id", "Nico", "long1", false),
-                Map.of("id", "Franck", "long1", false)
+                Map.of("id", "Hadrien", "bool_var", true),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
         );
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // LT
         engine.eval("lt := 2 < 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
@@ -98,10 +100,11 @@ public class ComparisonExprTest {
         engine.eval("lt := ds1[keep id, long1] < ds2[keep id, long1];");
         var lt = engine.getContext().getAttribute("lt");
         assertThat(((Dataset) lt).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", true),
-                Map.of("id", "Nico", "long1", false),
-                Map.of("id", "Franck", "long1", false)
+                Map.of("id", "Hadrien", "bool_var", true),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
         );
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // MT
         engine.eval("lt := 2 > 3;");
         assertThat((Boolean) context.getAttribute("lt")).isFalse();
@@ -114,10 +117,11 @@ public class ComparisonExprTest {
         engine.eval("mt := ds1[keep id, long1] > ds2[keep id, long1];");
         var mt = engine.getContext().getAttribute("mt");
         assertThat(((Dataset) mt).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", false),
-                Map.of("id", "Nico", "long1", false),
-                Map.of("id", "Franck", "long1", false)
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
         );
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // LE
         engine.eval("lt := 3 <= 3;");
         assertThat((Boolean) context.getAttribute("lt")).isTrue();
@@ -130,10 +134,11 @@ public class ComparisonExprTest {
         engine.eval("le := ds1[keep id, long1] <= ds2[keep id, long1];");
         var le = engine.getContext().getAttribute("le");
         assertThat(((Dataset) le).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", true),
-                Map.of("id", "Nico", "long1", true),
-                Map.of("id", "Franck", "long1", true)
+                Map.of("id", "Hadrien", "bool_var", true),
+                Map.of("id", "Nico", "bool_var", true),
+                Map.of("id", "Franck", "bool_var", true)
         );
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // ME
         engine.eval("me := 2 >= 3;");
         assertThat((Boolean) context.getAttribute("me")).isFalse();
@@ -146,10 +151,11 @@ public class ComparisonExprTest {
         engine.eval("me := ds1[keep id, long1] >= ds2[keep id, long1];");
         var me = engine.getContext().getAttribute("me");
         assertThat(((Dataset) me).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", false),
-                Map.of("id", "Nico", "long1", true),
-                Map.of("id", "Franck", "long1", true)
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", true),
+                Map.of("id", "Franck", "bool_var", true)
         );
+        assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
 
     @Test
