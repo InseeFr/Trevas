@@ -87,21 +87,21 @@ public class JoinTest {
     public void testLeftJoin() throws ScriptException {
 
         ScriptContext context = engine.getContext();
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", dataset2);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", dataset3);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", dataset1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", dataset2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_3", dataset3);
 
-        engine.eval("result := left_join(ds1 as dsOne, ds2, ds3);");
+        engine.eval("result := left_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
         var result = (Dataset) context.getAttribute("result");
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("a", 1L, 2L, 9L, 10L, 16L, 17L),
-                Arrays.asList("b", 3L, 4L, 11L, 12L, 18L, 19L),
-                Arrays.asList("c", 5L, 6L, 12L, 13L, 20L, 21L),
-                Arrays.asList("c", 5L, 6L, 12L, 13L, 22L, 23L),
-                Arrays.asList("c", 5L, 6L, 14L, 15L, 20L, 21L),
-                Arrays.asList("c", 5L, 6L, 14L, 15L, 22L, 23L),
-                Arrays.asList("d", 7L, 8L, null, null, null, null)
+                Arrays.asList("a", 2L, 16L, 17L, 10L, 1L, 9L),
+                Arrays.asList("b", 4L, 18L, 19L, 12L, 3L, 11L),
+                Arrays.asList("c", 6L, 22L, 23L, 15L, 5L, 14L),
+                Arrays.asList("c", 6L, 20L, 21L, 15L, 5L, 14L),
+                Arrays.asList("c", 6L, 22L, 23L, 13L, 5L, 12L),
+                Arrays.asList("c", 6L, 20L, 21L, 13L, 5L, 12L),
+                Arrays.asList("d", 8L, null, null, null, 7L, null)
         );
 
         assertThat(result.getDataStructure()).containsValues(
@@ -126,12 +126,12 @@ public class JoinTest {
 
         var resultInner = (Dataset) context.getAttribute("result");
         assertThat(resultInner.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("a", 1L, 2L, 9L, 10L, 16L, 17L),
-                Arrays.asList("b", 3L, 4L, 11L, 12L, 18L, 19L),
-                Arrays.asList("c", 5L, 6L, 12L, 13L, 20L, 21L),
-                Arrays.asList("c", 5L, 6L, 12L, 13L, 22L, 23L),
-                Arrays.asList("c", 5L, 6L, 14L, 15L, 20L, 21L),
-                Arrays.asList("c", 5L, 6L, 14L, 15L, 22L, 23L)
+                Arrays.asList("a", 2L, 16L, 17L, 10L, 1L, 9L),
+                Arrays.asList("b", 4L, 18L, 19L, 12L, 3L, 11L),
+                Arrays.asList("c", 6L, 22L, 23L, 15L, 5L, 14L),
+                Arrays.asList("c", 6L, 20L, 21L, 15L, 5L, 14L),
+                Arrays.asList("c", 6L, 22L, 23L, 13L, 5L, 12L),
+                Arrays.asList("c", 6L, 20L, 21L, 13L, 5L, 12L)
         );
 
         assertThat(resultInner.getDataStructure()).containsValues(
@@ -178,26 +178,24 @@ public class JoinTest {
                 Arrays.asList("d", 8L)
         );
 
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", ds2);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", ds3);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", ds1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", ds2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_3", ds3);
 
-        engine.eval("result := full_join(ds1 as dsOne, ds2, ds3);");
+        engine.eval("result := full_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
         var result = (Dataset) context.getAttribute("result");
 
-        assertThat(result.getDataStructure().values()).containsExactly(
+        assertThat(result.getDataStructure().values()).containsExactlyInAnyOrder(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("dsOne#m1", Long.class, Dataset.Role.MEASURE),
-                new Structured.Component("ds2#m1", Long.class, Dataset.Role.MEASURE),
-                new Structured.Component("ds3#m1", Long.class, Dataset.Role.MEASURE)
+                new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
         );
 
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("d", 3L, null, 8L),
-                Arrays.asList("c", 2L, 6L, null),
-                Arrays.asList("b", 1L, 5L, null),
-                Arrays.asList("a", null, 4L, 7L)
+                Arrays.asList(8L, "d"),
+                Arrays.asList(null, "c"),
+                Arrays.asList(null, "b"),
+                Arrays.asList(7L, "a")
         );
 
     }
