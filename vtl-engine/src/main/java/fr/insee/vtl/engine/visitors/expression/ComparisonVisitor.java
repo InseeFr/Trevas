@@ -8,6 +8,7 @@ import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.VtlComparable;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -43,66 +44,46 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    public static Boolean isEqual(Comparable left, Comparable right) {
+    private static Integer compare(VtlComparable left, VtlComparable right) {
         if (left == null || right == null) {
             return null;
         }
 
-        Comparable leftValue = left;
-        Comparable rightValue = right;
+        var leftValue = left;
+        var rightValue = right;
 
         if (left instanceof Number && right instanceof Number) {
-            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
-                    : BigDecimal.valueOf((Double) left);
-            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
-                    : BigDecimal.valueOf((Double) right);
+            leftValue = (VtlComparable) (left.getClass().isAssignableFrom(Long.class) ?
+                    BigDecimal.valueOf(((Number) left).longValue())
+                    : BigDecimal.valueOf(((Number) left).doubleValue()));
+            rightValue = (VtlComparable) (right.getClass().isAssignableFrom(Long.class) ?
+                    BigDecimal.valueOf(((Number) right).longValue())
+                    : BigDecimal.valueOf(((Number) right).doubleValue()));
         }
-        return leftValue.compareTo(rightValue) == 0;
+        return leftValue.compareTo(rightValue);
     }
 
-    public static Boolean isNotEqual(Comparable left, Comparable right) {
+    public static Boolean isEqual(VtlComparable left, VtlComparable right) {
+        return compare(left, right) == 0;
+    }
+
+    public static Boolean isNotEqual(VtlComparable left, VtlComparable right) {
         return !isEqual(left, right);
     }
 
-    public static Boolean isLessThan(Comparable left, Comparable right) {
-        if (left == null || right == null) {
-            return null;
-        }
-
-        Comparable leftValue = left;
-        Comparable rightValue = right;
-
-        if (left instanceof Number && right instanceof Number) {
-            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
-                    : BigDecimal.valueOf((Double) left);
-            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
-                    : BigDecimal.valueOf((Double) right);
-        }
-        return leftValue.compareTo(rightValue) < 0;
+    public static Boolean isLessThan(VtlComparable left, VtlComparable right) {
+        return compare(left, right) < 0;
     }
 
-    public static Boolean isGreaterThan(Comparable left, Comparable right) {
-        if (left == null || right == null) {
-            return null;
-        }
-
-        Comparable leftValue = left;
-        Comparable rightValue = right;
-
-        if (left instanceof Number && right instanceof Number) {
-            leftValue = left.getClass() == Long.class ? BigDecimal.valueOf((Long) left)
-                    : BigDecimal.valueOf((Double) left);
-            rightValue = right.getClass() == Long.class ? BigDecimal.valueOf((Long) right)
-                    : BigDecimal.valueOf((Double) right);
-        }
-        return leftValue.compareTo(rightValue) > 0;
+    public static Boolean isGreaterThan(VtlComparable left, VtlComparable right) {
+        return compare(left, right) > 0;
     }
 
-    public static Boolean isLessThanOrEqual(Comparable left, Comparable right) {
+    public static Boolean isLessThanOrEqual(VtlComparable left, VtlComparable right) {
         return !isGreaterThan(left, right);
     }
 
-    public static Boolean isGreaterThanOrEqual(Comparable left, Comparable right) {
+    public static Boolean isGreaterThanOrEqual(VtlComparable left, VtlComparable right) {
         return !isLessThan(left, right);
     }
 
