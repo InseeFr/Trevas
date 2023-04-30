@@ -13,6 +13,7 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +57,9 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
         if (left instanceof String && right instanceof String) {
             return ((String) left).compareTo((String) right);
+        }
+        if (left instanceof Date && right instanceof Date) {
+            return ((Date) left).compareTo((Date) right);
         } else {
             throw new Exception("Comparisons require Comparable params");
         }
