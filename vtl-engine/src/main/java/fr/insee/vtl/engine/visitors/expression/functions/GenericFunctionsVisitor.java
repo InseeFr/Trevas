@@ -91,13 +91,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 List<String> measureToHandleNames = null;
 
                 Map<String, DatasetExpression> dsToJoin = new LinkedHashMap<>();
+                Map<String, ResolvableExpression> scalarExpressions = new LinkedHashMap<>();
                 var expectedParameter = Arrays.asList(method.getParameterTypes()).iterator();
                 Class expectedType = expectedParameter.next();
                 for (ResolvableExpression parameter : parameters) {
                     if (parameter instanceof DatasetExpression) {
                         var dsExpr = (DatasetExpression) parameter;
 
-                        // TODO: handle all measures, when different ds input shapes
                         if (measureNames == null) {
                             measureNames = dsExpr.getDataStructure().values().stream()
                                     .filter(Structured.Component::isMeasure)
@@ -113,9 +113,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
                         }
                         dsToJoin.put(
-                                parameter.toString(),
+                                // replace because of spark issue with dot inside col getter arg
+                                parameter.toString().replace(".", ""),
                                 dsExpr
                         );
+                    } else {
+                        // replace because of spark issue with dot inside col getter arg
+                        scalarExpressions.put(parameter.toString().replace(".", ""), parameter);
                     }
                 }
                 var identifiers = JoinFunctionsVisitor.checkSameIdentifiers(dsToJoin.values()).orElseThrow(() -> new VtlRuntimeException(
@@ -124,29 +128,45 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
                 DatasetExpression tmpDs = proc.executeInnerJoin(renameDuplicates(identifiers, dsToJoin), identifiers);
 
+                if (scalarExpressions.size() > 0) {
+                    Map<String, Dataset.Role> tmpDsRoles = tmpDs.getRoles();
+                    scalarExpressions.keySet().forEach(n -> tmpDsRoles.put(n, Dataset.Role.MEASURE));
+                    tmpDs = proc.executeCalc(tmpDs, scalarExpressions, tmpDsRoles, Map.of());
+                }
+
                 Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                 Map<String, Dataset.Role> roles = new HashMap<>();
-                List<String> parameterNames = parameters.stream().map(Object::toString).collect(Collectors.toList());
+                List<String> parameterNames = parameters.stream()
+                        // replace because of spark issue with dot inside col getter arg
+                        .map(p -> p.toString().replace(".", ""))
+                        .collect(Collectors.toList());
                 measureToHandleNames.forEach(m -> {
-                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedReturnedType).withPosition(position).using(
-                            context -> {
-                                Map<String, Object> contextMap = (Map<String, Object>) context;
-                                Object[] params = parameterNames.stream()
-                                        .map(p -> {
-                                            // TODO: check alias # conflict with membership
-                                            if (contextMap.containsKey(p + "#" + m)) {
-                                                return contextMap.get(p + "#" + m);
-                                            }
-                                            return contextMap.get(m);
-                                        })
-                                        .toArray();
-                                try {
-                                    return method.invoke(null, params);
-                                } catch (IllegalAccessException | InvocationTargetException e) {
-                                    throw new VtlRuntimeException(new VtlScriptException(e, position));
-                                }
-                            }
-                    );
+                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedReturnedType)
+                            .withPosition(position)
+                            .using(
+                                    context -> {
+                                        Map<String, Object> contextMap = (Map<String, Object>) context;
+                                        Object[] params = parameterNames.stream()
+                                                .map(p -> {
+                                                    // scalar ResolvableExpression
+                                                    if (contextMap.containsKey(p)) {
+                                                        return contextMap.get(p);
+                                                    }
+                                                    // ds Resolvable expression (present in > 1 ds)
+                                                    else if (contextMap.containsKey(p + "#" + m)) {
+                                                        return contextMap.get(p + "#" + m);
+                                                    }
+                                                    // ds Resolvable expression
+                                                    return contextMap.get(m);
+                                                })
+                                                .toArray();
+                                        try {
+                                            return method.invoke(null, params);
+                                        } catch (IllegalAccessException | InvocationTargetException e) {
+                                            throw new VtlRuntimeException(new VtlScriptException(e, position));
+                                        }
+                                    }
+                            );
                     resolvableExpressions.put(m, measureExpression);
                     roles.put(m, Dataset.Role.MEASURE);
                 });
@@ -200,7 +220,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         // Use duplicates to rename columns
         Map<String, DatasetExpression> result = new LinkedHashMap<>();
         for (Map.Entry<String, DatasetExpression> entry : datasets.entrySet()) {
-            var name = entry.getKey();
+            // replace because of spark issue with dot inside col getter arg
+            var name = entry.getKey().replace(".", "");
             var dataset = entry.getValue();
             Map<String, String> fromTo = new LinkedHashMap<>();
             for (String columnName : dataset.getColumnNames()) {
