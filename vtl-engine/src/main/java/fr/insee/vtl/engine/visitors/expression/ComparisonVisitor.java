@@ -63,7 +63,9 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isEqual(Comparable left, Comparable right) {
-        return compare(left, right) == 0;
+        Integer c = compare(left, right);
+        if (c == null) return null;
+        return c == 0;
     }
 
     public static Boolean isNotEqual(Comparable left, Comparable right) {
@@ -71,11 +73,15 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isLessThan(Comparable left, Comparable right) {
-        return compare(left, right) < 0;
+        Integer c = compare(left, right);
+        if (c == null) return null;
+        return c < 0;
     }
 
     public static Boolean isGreaterThan(Comparable left, Comparable right) {
-        return compare(left, right) > 0;
+        Integer c = compare(left, right);
+        if (c == null) return null;
+        return c > 0;
     }
 
     public static Boolean isLessThanOrEqual(Comparable left, Comparable right) {
