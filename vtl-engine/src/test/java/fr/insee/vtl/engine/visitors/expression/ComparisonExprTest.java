@@ -148,6 +148,7 @@ public class ComparisonExprTest {
         assertThat((Boolean) context.getAttribute("me1")).isTrue();
         engine.eval("mix := 6 >= 6.1;");
         assertThat((Boolean) context.getAttribute("mix")).isFalse();
+
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("me := ds1[keep id, long1] >= ds2[keep id, long1];");
@@ -180,6 +181,18 @@ public class ComparisonExprTest {
 
         engine.getContext().setAttribute("var", 123L, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := var in {1, 2, 3, 123};");
+
+
+        engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.eval("me := ds[keep id, long1, string1] in {\"toto\", \"franck\"};");
+        var in = engine.getContext().getAttribute("me");
+        assertThat(((Dataset) in).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", false, "string1", true),
+                Map.of("id", "Hadrien", "long1", false, "string1", false),
+                Map.of("id", "Nico", "long1", false,"string1", false),
+                Map.of("id", "Franck", "long1", false,"string1", true)
+        );
+        assertThat(((Dataset) in).getDataStructure().get("string1").getType()).isEqualTo(Boolean.class);
 
         assertThat((Boolean) engine.getContext().getAttribute("res")).isTrue();
 
