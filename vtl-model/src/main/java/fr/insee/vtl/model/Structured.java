@@ -34,6 +34,15 @@ public interface Structured {
     }
 
     /**
+     * Returns the map of column names & roles.
+     *
+     * @return The column names & roles.
+     */
+    default Map<String, Dataset.Role> getRoles() {
+        return getDataStructure().values().stream().collect(Collectors.toMap(Component::getName, Component::getRole));
+    }
+
+    /**
      * The <code>Structure</code> class represent a structure component with its name, type, role and nullable.
      */
     class Component implements Serializable {
@@ -42,19 +51,6 @@ public interface Structured {
         private final Class<?> type;
         private final Dataset.Role role;
         private final Boolean nullable;
-
-        /**
-         * Refines the nullable attribute of a <code>Component</code> regarding its role.
-         *
-         * @param initialNullable The dataset nullable attribute.
-         * @param role            The role of the component as a value of the <code>Role</code> enumeration
-         * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
-         */
-        private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
-            if (role.equals(Dataset.Role.IDENTIFIER)) return false;
-            if (initialNullable == null) return true;
-            return initialNullable;
-        }
 
         /**
          * Constructor taking the name, type and role of the component.
@@ -95,6 +91,19 @@ public interface Structured {
             this.type = component.getType();
             this.role = component.getRole();
             this.nullable = component.getNullable();
+        }
+
+        /**
+         * Refines the nullable attribute of a <code>Component</code> regarding its role.
+         *
+         * @param initialNullable The dataset nullable attribute.
+         * @param role            The role of the component as a value of the <code>Role</code> enumeration
+         * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
+         */
+        private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
+            if (role.equals(Dataset.Role.IDENTIFIER)) return false;
+            if (initialNullable == null) return true;
+            return initialNullable;
         }
 
         /**
