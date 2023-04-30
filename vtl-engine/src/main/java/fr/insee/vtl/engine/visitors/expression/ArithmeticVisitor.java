@@ -63,20 +63,36 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );
-            return new ArithmeticExpression(getResolvableExpression(ctx, parameters), parameters);
+            var pos = fromContext(ctx);
+            boolean hasDsParameter = parameters.stream()
+                    .map(ResolvableExpression::getType)
+                    .anyMatch(Double.class::equals);
+            if (hasDsParameter) {
+                switch (ctx.op.getType()) {
+                    case VtlParser.MUL:
+                        return new ArithmeticVisitor.ArithmeticExpression(
+                                genericFunctionsVisitor.invokeFunction("multiplication", parameters, pos),
+                                parameters
+                        );
+                    case VtlParser.DIV:
+                        return new ArithmeticVisitor.ArithmeticExpression(
+                                genericFunctionsVisitor.invokeFunction("division", parameters, pos),
+                                parameters
+                        );
+                    default:
+                        throw new UnsupportedOperationException("unknown operator " + ctx);
+                }
+            }
+            switch (ctx.op.getType()) {
+                case VtlParser.MUL:
+                    return genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
+                case VtlParser.DIV:
+                    return genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
-        }
-    }
-
-    private ResolvableExpression getResolvableExpression(VtlParser.ArithmeticExprContext ctx, List<ResolvableExpression> parameters) throws VtlScriptException {
-        switch (ctx.op.getType()) {
-            case VtlParser.MUL:
-                return genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
-            case VtlParser.DIV:
-                return genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
         }
     }
 
