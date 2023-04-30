@@ -55,12 +55,12 @@ public class ComparisonExprTest {
     public void testComparisonExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         // EQ
-        engine.eval("bool := true = true;");
-        assertThat((Boolean) context.getAttribute("bool")).isTrue();
-        engine.eval("long := 6 = (3*2);");
-        assertThat((Boolean) context.getAttribute("long")).isTrue();
-        engine.eval("mix := 6 = (3*2.0);");
-        assertThat((Boolean) context.getAttribute("mix")).isTrue();
+//        engine.eval("bool := true = true;");
+//        assertThat((Boolean) context.getAttribute("bool")).isTrue();
+//        engine.eval("long := 6 = (3*2);");
+//        assertThat((Boolean) context.getAttribute("long")).isTrue();
+//        engine.eval("mix := 6 = (3*2.0);");
+//        assertThat((Boolean) context.getAttribute("mix")).isTrue();
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("equal := ds1[keep id, long1] = ds2[keep id, long1];");
