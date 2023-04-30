@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -14,7 +13,6 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,52 +41,55 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    private static Integer compare(Comparable left, Comparable right) {
+    private static Integer compare(Object left, Object right) throws Exception {
         if (left == null || right == null) {
             return null;
         }
-
-        var leftValue = left;
-        var rightValue = right;
-
         if (left instanceof Number && right instanceof Number) {
-            leftValue = left.getClass().isAssignableFrom(Long.class) ?
-                    BigDecimal.valueOf(((Number) left).longValue())
-                    : BigDecimal.valueOf(((Number) left).doubleValue());
-            rightValue = right.getClass().isAssignableFrom(Long.class) ?
-                    BigDecimal.valueOf(((Number) right).longValue())
-                    : BigDecimal.valueOf(((Number) right).doubleValue());
+            if (left instanceof Long || right instanceof Long) {
+                Long.compare(((Number) left).longValue(), ((Number) right).longValue());
+            }
+            return Double.compare(((Number) left).doubleValue(), ((Number) right).doubleValue());
         }
-        return leftValue.compareTo(rightValue);
+        if (left instanceof Boolean && right instanceof Boolean) {
+            return Boolean.compare((Boolean) left, (Boolean) right);
+        }
+        if (left instanceof String && right instanceof String) {
+            return ((String) left).compareTo((String) right);
+        } else {
+            throw new Exception("Comparisons require Comparable params");
+        }
     }
 
-    public static Boolean isEqual(Comparable left, Comparable right) {
-        Integer c = compare(left, right);
-        if (c == null) return null;
-        return c == 0;
+    public static Boolean isEqual(Object left, Object right) throws Exception {
+        return compare(left, right) == 0;
     }
 
-    public static Boolean isNotEqual(Comparable left, Comparable right) {
+    public static Boolean isNotEqual(Object left, Object right) throws Exception {
         return !isEqual(left, right);
     }
 
-    public static Boolean isLessThan(Comparable left, Comparable right) {
-        Integer c = compare(left, right);
-        if (c == null) return null;
-        return c < 0;
+    public static Boolean isLessThan(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare < 0;
     }
 
-    public static Boolean isGreaterThan(Comparable left, Comparable right) {
-        Integer c = compare(left, right);
-        if (c == null) return null;
-        return c > 0;
+    public static Boolean isGreaterThan(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare > 0;
     }
 
-    public static Boolean isLessThanOrEqual(Comparable left, Comparable right) {
+    public static Boolean isLessThanOrEqual(Object left, Object right) throws Exception {
         return !isGreaterThan(left, right);
     }
 
-    public static Boolean isGreaterThanOrEqual(Comparable left, Comparable right) {
+    public static Boolean isGreaterThanOrEqual(Object left, Object right) throws Exception {
         return !isLessThan(left, right);
     }
 
@@ -114,8 +115,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             List<ResolvableExpression> parameters = List.of(
                     leftExpression,
                     exprVisitor.visit(ctx.right));
-            // As long as both types return Comparable<TYPE>.
-
             // If a parameter is the null token
             if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
                 return ResolvableExpression
@@ -123,27 +122,21 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         .withPosition(fromContext(ctx))
                         .using(c -> null);
             }
-
-            if (Comparable.class.isAssignableFrom(leftExpression.getType())
-                    || leftExpression.getType().isAssignableFrom(Dataset.class)) {
-                switch (type.getType()) {
-                    case VtlParser.EQ:
-                        return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
-                    case VtlParser.NEQ:
-                        return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
-                    case VtlParser.LT:
-                        return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
-                    case VtlParser.MT:
-                        return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
-                    case VtlParser.LE:
-                        return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
-                    case VtlParser.ME:
-                        return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
-                    default:
-                        throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-                }
-            } else {
-                throw new Error("type " + leftExpression.getType() + " must implement Comparable");
+            switch (type.getType()) {
+                case VtlParser.EQ:
+                    return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
+                case VtlParser.NEQ:
+                    return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
+                case VtlParser.LT:
+                    return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
+                case VtlParser.MT:
+                    return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
+                case VtlParser.LE:
+                    return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
+                case VtlParser.ME:
+                    return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
+                default:
+                    throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
             }
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
