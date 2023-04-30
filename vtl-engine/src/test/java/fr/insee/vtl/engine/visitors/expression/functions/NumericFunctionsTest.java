@@ -82,6 +82,7 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-3L);
         engine.eval("d := ceil(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(0L);
+
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ceil(ds[keep id, long1, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
@@ -106,6 +107,7 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(-4L);
         engine.eval("d := floor(-0.1415);");
         assertThat(context.getAttribute("d")).isEqualTo(-1L);
+
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(ds[keep id, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
@@ -126,6 +128,7 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(5.5D);
         engine.eval("b := abs(-5.5);");
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
+
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := abs(ds[keep id, double1, string1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
@@ -149,6 +152,7 @@ public class NumericFunctionsTest {
         engine.eval("c := exp(0);");
         assertThat(context.getAttribute("c")).isEqualTo(1D);
         engine.eval("d := exp(-1);");
+
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(0.367D, Percentage.withPercentage(1));
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(exp(ds[drop bool1, long1]));");
@@ -174,6 +178,7 @@ public class NumericFunctionsTest {
         assertThat(((Double) context.getAttribute("c"))).isCloseTo(0D, Percentage.withPercentage(1));
         engine.eval("d := ln(0.5);");
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(-0.69D, Percentage.withPercentage(1));
+
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(ln(abs(ds[drop long1, bool1])));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
@@ -200,24 +205,24 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12346D);
         engine.eval("e := round(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12350D);
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := round(ds);");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
-//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
-//                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
-//        );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := round(\"ko\", 2);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := round(2.22222, 2.3);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type Double, expected 2.3 to be Long");
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+
+        Object res = engine.eval("res := round(ds[keep id, long1, double2], 1);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
+                Map.of("id", "Nico", "long1", 20.0D, "double2", 21.1D),
+                Map.of("id", "Franck", "long1", 100.0D, "double2", 100.9D)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+        assertThatThrownBy(() -> {
+            engine.eval("f := round(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("f := round(2.22222, 2.3);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected Long");
     }
 
     @Test
@@ -233,43 +238,44 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12345D);
         engine.eval("e := trunc(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12340D);
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := trunc(ds[keep id, double1], 1);");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("id", "Hadrien", "double1", 1.1D, "string1", "hadrien"),
-//                Map.of("id", "Nico", "double1", 2.2D, "string1", "nico"),
-//                Map.of("id", "Franck", "double1", -1.2D, "string1", "franck")
-//        );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := trunc(\"ko\", 2);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := trunc(2.22222, 2.3);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type Double, expected 2.3 to be Long");
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := trunc(ds[keep id, long1, double2], 1);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
+                Map.of("id", "Nico", "long1", 20.0D, "double2", 21.1D),
+                Map.of("id", "Franck", "long1", 100.0D, "double2", 100.9D)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+        assertThatThrownBy(() -> {
+            engine.eval("f := trunc(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("f := trunc(2.22222, 2.3);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type Double, expected Long");
     }
 
     @Test
     public void testSqrt() throws ScriptException {
         ScriptContext context = engine.getContext();
-//        engine.eval("a := sqrt(25);");
-//        assertThat(context.getAttribute("a")).isEqualTo(5D);
-//        engine.eval("c := sqrt(0);");
-//        assertThat(context.getAttribute("c")).isEqualTo(0D);
-        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := ceil(sqrt(abs(ds[drop bool1, double1])));");
+        engine.eval("a := sqrt(25);");
+        assertThat(context.getAttribute("a")).isEqualTo(5D);
+        engine.eval("c := sqrt(0);");
+        assertThat(context.getAttribute("c")).isEqualTo(0D);
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := round(sqrt(ds[keep id, long1, double2]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", 13L, "string1", "hadrien"),
-                Map.of("id", "Nico", "long1", 5L, "string1", "nico"),
-                Map.of("id", "Franck", "long1", 10L, "string1", "franck")
+                Map.of("id", "Toto", "long1", 5.0D, "double2", 1D),
+                Map.of("id", "Hadrien", "long1", 3.0D, "double2", 3.0D),
+                Map.of("id", "Nico", "long1", 4.0D, "double2", 5.0D),
+                Map.of("id", "Franck", "long1", 10.0D, "double2", 10.0D)
         );
-        assertThatThrownBy(() -> {
-            engine.eval("e := sqrt(-25);");
-        }).isInstanceOf(VtlScriptException.class);
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+
         // TODO: refine message
 //                .hasMessage("Sqrt operand has to be 0 or positive");
         assertThatThrownBy(() -> {
@@ -289,24 +295,21 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("c")).isEqualTo(0D);
         engine.eval("d := mod(9, 0);");
         assertThat(context.getAttribute("d")).isEqualTo(9D);
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := mod(ds, 0);");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("name", "Toto", "age", 30D, "meas_double", 12.2D, "meas_string", "a"),
-//                Map.of("name", "Hadrien", "age", 40D, "meas_double", 1.4D, "meas_string", "b"),
-//                Map.of("name", "Nico", "age", 50D, "meas_double", 12.34D, "meas_string", "c")
-//        );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := mod(10, \"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := mod(\"ko\", 10);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := trunc(mod(ds[keep id, long1, double2], 2), 1);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 0.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 0.0D, "double2", 0.1D),
+                Map.of("id", "Nico", "long1", 0.0D, "double2", 1.1D),
+                Map.of("id", "Franck", "long1", 0.0D, "double2", 0.9D)
+        );
+
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+        assertThatThrownBy(() -> {
+            engine.eval("f := mod(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -322,24 +325,25 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(0.2D);
         engine.eval("e := power(-5, 3);");
         assertThat(context.getAttribute("e")).isEqualTo(-125D);
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := power(ds[drop age], 2);");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("name", "Toto", "meas_double", 12.2D, "meas_string", "a"),
-//                Map.of("name", "Hadrien", "meas_double", 1.4D, "meas_string", "b"),
-//                Map.of("name", "Nico", "meas_double", 12.34D, "meas_string", "c")
-//        );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := power(10, \"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := power(\"ko\", 10);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := trunc(power(ds[keep id, long1, double2], 2), 1);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
+                Map.of("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
+                Map.of("id", "Nico", "long1", 400.0D, "double2", 445.2D),
+                Map.of("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+
+        assertThatThrownBy(() -> {
+            engine.eval("f := power(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("f := power(2, \"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 
     @Test
@@ -349,31 +353,24 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("a")).isEqualTo(10D);
         engine.eval("b := log(1024, 10);");
         assertThat(((Double) context.getAttribute("b"))).isCloseTo(3.01D, Percentage.withPercentage(0.01));
-        // TODO: Method with more that one dataset parameters.
-        //          ie: parameterTypes.contains(Dataset.class)
-//        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
-//        Object res = engine.eval("res := log(abs(ds[drop age]), 2);");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("name", "Toto", "meas_double", 12.2D, "meas_string", "a"),
-//                Map.of("name", "Hadrien", "meas_double", 1.4D, "meas_string", "b"),
-//                Map.of("name", "Nico", "meas_double", 12.34D, "meas_string", "c")
-//        );
-        // TODO: Rework exception handling
-//        assertThatThrownBy(() -> {
-//            engine.eval("c := log(1024, 0);");
-//        }).isInstanceOf(InvalidArgumentException.class)
-//                .hasMessage("Log base has to be greater or equal than 1");
-//        assertThatThrownBy(() -> {
-//            engine.eval("d := log(-2, 10);");
-//        }).isInstanceOf(InvalidArgumentException.class)
-//                .hasMessage("Log operand has to be positive");
-//        assertThatThrownBy(() -> {
-//            engine.eval("e := log(10, \"ko\");");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
-//        assertThatThrownBy(() -> {
-//            engine.eval("f := log(\"ko\", 10);");
-//        }).isInstanceOf(InvalidTypeException.class)
-//                .hasMessage("invalid type String, expected \"ko\" to be Number");
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := trunc(log(ds[keep id, long1, double2], 2), 1);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 4.9D, "double2", 0.2D),
+                Map.of("id", "Hadrien", "long1", 3.3D, "double2", 3.3D),
+                Map.of("id", "Nico", "long1", 4.3D, "double2", 4.3D),
+                Map.of("id", "Franck", "long1", 6.6D, "double2", 6.6D)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+
+        assertThatThrownBy(() -> {
+            engine.eval("f := log(\"ko\", 2);");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
+        assertThatThrownBy(() -> {
+            engine.eval("f := log(2, \"ko\");");
+        }).isInstanceOf(InvalidTypeException.class)
+                .hasMessage("invalid type String, expected Number");
     }
 }

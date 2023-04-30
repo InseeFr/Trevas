@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,13 +55,22 @@ public class ArithmeticExprTest {
         ScriptContext context = engine.getContext();
         engine.eval("mul := 2 * 3;");
         assertThat(context.getAttribute("mul")).isEqualTo(6L);
-
         engine.eval("mul := 1.5 * 2;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);
         engine.eval("mul := 2 * 1.5;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);
         engine.eval("mul := 2.0 * 1.5;");
         assertThat(context.getAttribute("mul")).isEqualTo(3.0);
+
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := round(ds1[keep id, long1, double1] * ds2[keep id, long1, double1]);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", 1500.0, "double1", 1.0),
+                Map.of("id", "Nico", "long1", 400.0, "double1", 27.0),
+                Map.of("id", "Franck", "long1", 10000.0, "double1", -1.0)
+        );
+//        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
 
         engine.eval("div := 6 / 3;");
         assertThat(context.getAttribute("div")).isEqualTo(2.0);
@@ -68,6 +80,16 @@ public class ArithmeticExprTest {
         assertThat(context.getAttribute("div")).isEqualTo(2.0);
         engine.eval("div := 3.0 / 1.5;");
         assertThat(context.getAttribute("div")).isEqualTo(2.0);
+
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        res = engine.eval("res := round(ds1[keep id, long1, double1] / ds2[keep id, long1, double1]);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", 0.0, "double1", 1.0),
+                Map.of("id", "Nico", "long1", 1.0, "double1", 6.0),
+                Map.of("id", "Franck", "long1", 1.0, "double1", -1.0)
+        );
+//        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
     }
 
     @Test
@@ -100,10 +122,28 @@ public class ArithmeticExprTest {
         engine.eval("plus := + 1.5;");
         assertThat(context.getAttribute("plus")).isEqualTo(1.5D);
 
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := + ds[keep id, long1, double1];");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", 150L, "double1", 1.1D),
+                Map.of("id", "Nico", "long1", 20L, "double1", 2.2D),
+                Map.of("id", "Franck", "long1", 100L, "double1", -1.21D)
+        );
+//        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
+
         engine.eval("plus := -1;");
         assertThat(context.getAttribute("plus")).isEqualTo(-1L);
         engine.eval("plus := - 1.5;");
         assertThat(context.getAttribute("plus")).isEqualTo(-1.5D);
+
+        context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        res = engine.eval("res := - ds[keep id, long1, double1];");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Hadrien", "long1", -150L, "double1", -1.1D),
+                Map.of("id", "Nico", "long1", -20L, "double1", -2.2D),
+                Map.of("id", "Franck", "long1", -100L, "double1", 1.21D)
+        );
+//        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
 
         assertThatThrownBy(() -> {
             engine.eval("plus := + \"ko\";");
