@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,20 +83,37 @@ public class BooleanExprTest {
     }
 
     @Test
-    public void testUnaryNot() throws ScriptException {
+    public void testOnDatasets() throws ScriptException {
         ScriptContext context = engine.getContext();
 
-        engine.eval("t := not false;");
-        assertThat((Boolean) context.getAttribute("t")).isTrue();
-        engine.eval("f := not true;");
-        assertThat((Boolean) context.getAttribute("f")).isFalse();
-//        engine.eval("n := not null;");
-//        assertThat(context.getAttribute("n")).isNull();
-
-        assertThatThrownBy(() -> {
-            engine.eval("s := not 888;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected Boolean");
+        context.setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds_2", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.eval("ds1 := ds_1[keep id, bool2][rename bool2 to bool1]; " +
+                "ds2 := ds_2[keep id, bool1]; " +
+                "andDs := ds1 and ds2; " +
+                "orDs := ds1 or ds2; " +
+                "xorDs := ds1 xor ds2; ");
+        Dataset and = (Dataset) context.getAttribute("andDs");
+        assertThat(and.getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "bool_var", false),
+                Map.of("id", "Hadrien", "bool_var", true),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
+        );
+        Dataset or = (Dataset) context.getAttribute("orDs");
+        assertThat(or.getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "bool_var", true),
+                Map.of("id", "Hadrien", "bool_var", true),
+                Map.of("id", "Nico", "bool_var", true),
+                Map.of("id", "Franck", "bool_var", false)
+        );
+        Dataset xor = (Dataset) context.getAttribute("xorDs");
+        assertThat(xor.getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "bool_var", true),
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", true),
+                Map.of("id", "Franck", "bool_var", false)
+        );
     }
 
 }
