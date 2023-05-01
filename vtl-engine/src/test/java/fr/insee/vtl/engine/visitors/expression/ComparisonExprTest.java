@@ -189,8 +189,8 @@ public class ComparisonExprTest {
         assertThat(((Dataset) in).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("id", "Toto", "long1", false, "string1", true),
                 Map.of("id", "Hadrien", "long1", false, "string1", false),
-                Map.of("id", "Nico", "long1", false,"string1", false),
-                Map.of("id", "Franck", "long1", false,"string1", true)
+                Map.of("id", "Nico", "long1", false, "string1", false),
+                Map.of("id", "Franck", "long1", false, "string1", true)
         );
         assertThat(((Dataset) in).getDataStructure().get("string1").getType()).isEqualTo(Boolean.class);
 

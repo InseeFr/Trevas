@@ -10,7 +10,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
