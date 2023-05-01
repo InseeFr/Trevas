@@ -40,6 +40,22 @@ public class ConditionalExprTest {
         assertThat(context.getAttribute("s")).isEqualTo("true");
         engine.eval("l := if false then 1 else 0;");
         assertThat(context.getAttribute("l")).isEqualTo(0L);
+
+        // TODO
+//        engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+//        engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+//        engine.eval("" +
+//                "ds1 := ds_1[keep id, long1]; " +
+//                "ds2 := ds_2[keep id, long1]; " +
+//                "res := if ds1 > ds2 then ds1 else ds2;");
+//        var res = engine.getContext().getAttribute("res");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("id", "Toto", "bool_var", false),
+//                Map.of("id", "Hadrien", "bool_var", false),
+//                Map.of("id", "Nico", "bool_var", false),
+//                Map.of("id", "Franck", "bool_var", false)
+//        );
+//        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
 
     @Test
@@ -49,6 +65,19 @@ public class ConditionalExprTest {
         assertThat(context.getAttribute("s")).isEqualTo("toto");
         engine.eval("s := nvl(null, \"default\");");
         assertThat(context.getAttribute("s")).isEqualTo("default");
+
+        // TODO
+//        engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+//        engine.eval("res := nvl(ds[keep id, long1], 0);");
+//        var res = engine.getContext().getAttribute("res");
+//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+//                Map.of("id", "Toto", "long1", false),
+//                Map.of("id", "Hadrien", "long1", false),
+//                Map.of("id", "Nico", "long1", false),
+//                Map.of("id", "Franck", "long1", false)
+//        );
+//        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
+
         assertThatThrownBy(() -> {
             engine.eval("s := nvl(3, \"toto\");");
         }).isInstanceOf(InvalidTypeException.class)
