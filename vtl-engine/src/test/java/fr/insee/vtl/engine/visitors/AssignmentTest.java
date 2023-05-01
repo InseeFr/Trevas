@@ -1,10 +1,14 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.script.Bindings;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -86,7 +90,7 @@ public class AssignmentTest {
     }
 
     @Test
-    public void testDataPointRulesetExceptions() throws ScriptException {
+    public void testDataPointRulesetExceptions() {
         assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (variable Id_3 as Id_1, Me_1) is " +
                 "when Id_1 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
                 "when Id_1 = \"DEBIT\" then Me_1 >= 0 errorcode true " +
@@ -97,6 +101,18 @@ public class AssignmentTest {
                 "when Id_1 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" errorlevel \"2\"" +
                 "end datapoint ruleset; "))
                 .hasMessageContaining("Error levels of rules have different types");
+    }
+
+    @Test
+    public void testMembership() throws ScriptException {
+        engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.eval("res := ds#long1;");
+        Dataset res = (Dataset) engine.getContext().getAttribute("res");
+        assertThat(res.getDataStructure().size()).isEqualTo(2);
+
+        assertThatThrownBy(() -> engine.eval("res := ds#baaaddd;"))
+                .isInstanceOf(VtlScriptException.class)
+                .hasMessage("column baaaddd not found in ds");
     }
 
 }
