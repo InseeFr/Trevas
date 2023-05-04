@@ -30,12 +30,18 @@ public class VtlNativeMethods {
             Fun.toMethod(NumericFunctionsVisitor::power),
             Fun.toMethod(NumericFunctionsVisitor::log),
             // ArithmeticExprOrConcatVisitor
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Double, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
+
             Fun.toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
             // ArithmeticVisitor
             Fun.toMethod(ArithmeticVisitor::multiplication),
-            Fun.toMethod(ArithmeticVisitor::division),
+            Fun.<Long,Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Double,Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Long,Double>toMethod(ArithmeticVisitor::division),
             // DistanceFunctionsVisitor
             Fun.toMethod(DistanceFunctionsVisitor::levenshtein),
             // String function visitor

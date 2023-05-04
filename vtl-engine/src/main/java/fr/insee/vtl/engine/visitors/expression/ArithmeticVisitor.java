@@ -43,11 +43,26 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return valueA.doubleValue() * valueB.doubleValue();
     }
 
-    public static Number division(Number valueA, Number valueB) {
+    public static Double division(Long valueA, Double valueB) {
         if (valueA == null || valueB == null) {
             return null;
         }
-        return valueA.doubleValue() / valueB.doubleValue();
+        return valueA.doubleValue() / valueB;
+    }
+
+    public static Double division(Double valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA / valueB.doubleValue();
+    }
+
+
+    public static Double division(Long valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return  ((double)valueA / valueB);
     }
 
     /**

@@ -42,6 +42,22 @@ public interface Structured {
         return getDataStructure().values().stream().collect(Collectors.toMap(Component::getName, Component::getRole));
     }
 
+    default List<Component> getIdentifiers() {
+        return getDataStructure().getIdentifiers();
+    }
+
+    default List<Component> getMeasures() {
+        return getDataStructure().getMeasures();
+    }
+
+    default List<Component> getAttributes() {
+        return getDataStructure().getAttributes();
+    }
+
+    default Boolean isMonoMeasure() {
+        return getDataStructure().isMonoMeasure();
+    }
+
     /**
      * The <code>Structure</code> class represent a structure component with its name, type, role and nullable.
      */
@@ -265,6 +281,22 @@ public interface Structured {
         //        constructor with Collection<Component>
         public DataStructure(DataStructure dataStructure) {
             super(dataStructure);
+        }
+
+        public List<Component> getIdentifiers() {
+            return values().stream().filter(Component::isIdentifier).collect(Collectors.toList());
+        }
+
+        public List<Component> getMeasures() {
+            return values().stream().filter(Component::isMeasure).collect(Collectors.toList());
+        }
+
+        public List<Component> getAttributes() {
+            return values().stream().filter(Component::isAttribute).collect(Collectors.toList());
+        }
+
+        public Boolean isMonoMeasure() {
+            return getMeasures().size() == 1;
         }
     }
 

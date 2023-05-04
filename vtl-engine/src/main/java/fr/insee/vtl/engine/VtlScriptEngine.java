@@ -333,7 +333,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
         List<Method> candidates = methods.stream()
                 .filter(method -> method.getName().equals(name))
-//                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
         if (candidates.size() == 1) {
             return candidates.get(0);

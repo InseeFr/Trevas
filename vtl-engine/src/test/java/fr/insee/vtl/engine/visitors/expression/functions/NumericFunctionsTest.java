@@ -312,6 +312,22 @@ public class NumericFunctionsTest {
     }
 
     @Test
+    public void testDELELEME() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+
+        Object test = engine.eval("res := cast(null, integer);");
+
+        Object res = engine.eval("res := trunc((ds#long1 + cast(null, integer)) / 3, 2);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
+                Map.of("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
+                Map.of("id", "Nico", "long1", 400.0D, "double2", 445.2D),
+                Map.of("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
+        );
+    }
+
+    @Test
     public void testPower() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := power(5, 2);");

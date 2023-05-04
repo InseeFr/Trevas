@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
@@ -13,16 +14,15 @@ import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -79,120 +79,51 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
     public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
         try {
+            // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
+            // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
 
-            List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-            var method = engine.findMethod(funcName, parameterTypes);
-            Class expectedReturnedType = method.getReturnType();
-            if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
-
+            if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
+                // Only scalar types. We can invoke the function directly.
+                var method = engine.findMethod(funcName, parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList()));
+                return new FunctionExpression(method, parameters, position);
+            } else {
                 ProcessingEngine proc = engine.getProcessingEngine();
 
-                List<String> measureNames = null;
-                List<String> measureToHandleNames = null;
+                // Normalize all parameters to datasets first.
+                // 1. Join all the datasets together and build a new expression map.
+                Map<String, ResolvableExpression> monoExprs = new HashMap<>();
+                var dsExprs = parameters.stream()
+                        .filter(e -> e instanceof DatasetExpression)
+                        .map(e -> ((DatasetExpression) e))
+                        .map(ds -> {
+                            if (!ds.isMonoMeasure()) {
+                                throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
+                            }
+                            var uniqueName = "arg" + ds.hashCode();
+                            var measure = ds.getMeasures().get(0);
+                            ds = proc.executeRename(ds, Map.of(measure.getName(), uniqueName));
+                            var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
+                            monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
+                            return ds;
+                        })
+                        .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
 
-                Map<String, DatasetExpression> dsToJoin = new LinkedHashMap<>();
-                Map<String, ResolvableExpression> scalarExpressions = new LinkedHashMap<>();
-                var expectedParameter = Arrays.asList(method.getParameterTypes()).iterator();
-                Class expectedType = expectedParameter.next();
-                for (ResolvableExpression parameter : parameters) {
-                    if (parameter instanceof DatasetExpression) {
-                        var dsExpr = (DatasetExpression) parameter;
+                DatasetExpression ds = proc.executeInnerJoin(dsExprs);
 
-                        if (measureNames == null) {
-                            measureNames = dsExpr.getDataStructure().values().stream()
-                                    .filter(Structured.Component::isMeasure)
-                                    .map(Structured.Component::getName)
-                                    .collect(Collectors.toList());
-                        }
-                        if (measureToHandleNames == null) {
-                            measureToHandleNames = dsExpr.getDataStructure().values().stream()
-                                    .filter(Structured.Component::isMeasure)
-                                    .filter(c -> expectedType.isAssignableFrom(c.getType()))
-                                    .map(Structured.Component::getName)
-                                    .collect(Collectors.toList());
-
-                        }
-                        dsToJoin.put(
-                                // replace because of spark issue with dot inside col getter arg
-                                parameter.toString().replace(".", ""),
-                                dsExpr
-                        );
-                    } else {
-                        // replace because of spark issue with dot inside col getter arg
-                        scalarExpressions.put(parameter.toString().replace(".", ""), parameter);
-                    }
-                }
-                var identifiers = JoinFunctionsVisitor.checkSameIdentifiers(dsToJoin.values()).orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", position)
-                ));
-
-                DatasetExpression tmpDs = proc.executeInnerJoin(renameDuplicates(identifiers, dsToJoin), identifiers);
-
-                if (scalarExpressions.size() > 0) {
-                    Map<String, Dataset.Role> tmpDsRoles = tmpDs.getRoles();
-                    scalarExpressions.keySet().forEach(n -> tmpDsRoles.put(n, Dataset.Role.MEASURE));
-                    tmpDs = proc.executeCalc(tmpDs, scalarExpressions, tmpDsRoles, Map.of());
-                }
-
-                Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
-                Map<String, Dataset.Role> roles = new HashMap<>();
-                List<String> parameterNames = parameters.stream()
-                        // replace because of spark issue with dot inside col getter arg
-                        .map(p -> p.toString().replace(".", ""))
-                        .collect(Collectors.toList());
-                measureToHandleNames.forEach(m -> {
-                    ResolvableExpression measureExpression = ResolvableExpression.withType(expectedReturnedType)
-                            .withPosition(position)
-                            .using(
-                                    context -> {
-                                        Map<String, Object> contextMap = (Map<String, Object>) context;
-                                        Object[] params = parameterNames.stream()
-                                                .map(p -> {
-                                                    // scalar ResolvableExpression
-                                                    if (contextMap.containsKey(p)) {
-                                                        return contextMap.get(p);
-                                                    }
-                                                    // ds Resolvable expression (present in > 1 ds)
-                                                    else if (contextMap.containsKey(p + "#" + m)) {
-                                                        return contextMap.get(p + "#" + m);
-                                                    }
-                                                    // ds Resolvable expression
-                                                    return contextMap.get(m);
-                                                })
-                                                .toArray();
-                                        try {
-                                            return method.invoke(null, params);
-                                        } catch (IllegalAccessException | InvocationTargetException e) {
-                                            throw new VtlRuntimeException(new VtlScriptException(e, position));
-                                        }
-                                    }
-                            );
-                    resolvableExpressions.put(m, measureExpression);
-                    roles.put(m, Dataset.Role.MEASURE);
-                });
-                tmpDs = proc.executeCalc(tmpDs, resolvableExpressions, roles, Map.of());
-                List<String> identifierNames = identifiers.stream().map(Structured.Component::getName).collect(Collectors.toList());
-                List<String> toKeep = Stream.of(identifierNames, measureNames)
-                        .filter(Objects::nonNull)
-                        .flatMap(Collection::stream)
+                // Rebuild the function parameters. TODO: All component?
+                var normalizedParams = parameters.stream()
+                        .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
                         .collect(Collectors.toList());
 
-                DatasetExpression res = proc.executeProject(tmpDs, toKeep);
-
-                // Handle mono measure boolean dataset
-                List<Structured.Component> resMeasures = res.getDataStructure()
-                        .values().stream()
-                        .filter(Structured.Component::isMeasure)
-                        .collect(Collectors.toList());
-
-                if (resMeasures.size() == 1 && resMeasures.get(0).getType() == Boolean.class) {
-                    return proc.executeRename(res, Map.of(resMeasures.get(0).getName(), "bool_var"));
-                }
-
-                return res;
-            } else {
-                return new FunctionExpression(method, parameters, position);
+                // 3. Invoke the function.
+                Method method = engine.findMethod(funcName, normalizedParams.stream()
+                        .map(TypedExpression::getType)
+                        .collect(Collectors.toList()));
+                var funcExrp = new FunctionExpression(method, normalizedParams, position);
+                ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
+                return proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
             }
+
         } catch (NoSuchMethodException e) {
             throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
         }
@@ -270,7 +201,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
 
         if (Object.class.equals(expression.getType())) {
-            return ResolvableExpression.withType(Object.class).withPosition(fromContext(ctx)).using(c -> null);
+            return ResolvableExpression.withType(outputClass).withPosition(fromContext(ctx)).using(c -> null);
         }
         try {
             return new CastExpression(fromContext(ctx), expression, mask, outputClass);
