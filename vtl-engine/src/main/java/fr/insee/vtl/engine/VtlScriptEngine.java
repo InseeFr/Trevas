@@ -7,6 +7,7 @@ import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.VtlMethod;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -313,19 +314,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         return factory;
     }
 
-    public Optional<Method> findMethod(String name) {
-        for (Method method : NATIVE_METHODS) {
-            if (method.getName().equals(name)) {
-                return Optional.of(method);
-            }
-        }
-        if (methodCache == null) {
-            loadMethods();
-        }
-        return Optional.ofNullable(methodCache.get(name));
-    }
-
-    public Method findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
+    public VtlMethod findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
         Set<Method> customMethods = methodCache == null ? Set.of()
                 : methodCache.values().stream().collect(Collectors.toSet());
         Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
@@ -336,12 +325,12 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 //                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
         if (candidates.size() == 1) {
-            return candidates.get(0);
+            return new VtlMethod(candidates.get(0));
         }
         // TODO: Handle parameter resolution.
         for (Method method : methods) {
             if (method.getName().equals(name) && types.equals(Arrays.asList(method.getParameterTypes()))) {
-                return method;
+                return new VtlMethod(method);
             }
         }
         throw new NoSuchMethodException(methodToString(name, types));

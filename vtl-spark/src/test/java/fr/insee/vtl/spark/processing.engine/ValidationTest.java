@@ -270,7 +270,6 @@ public class ValidationTest {
         );
     }
 
-    @Disabled
     @Test
     public void testCheck() throws ScriptException {
         ScriptContext context = engine.getContext();

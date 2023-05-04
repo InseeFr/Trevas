@@ -20,6 +20,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -81,7 +82,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         try {
 
             List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-            var method = engine.findMethod(funcName, parameterTypes);
+            Method method = engine.findMethod(funcName, parameterTypes)
+                    .getMethod(position, parameterTypes.toArray(Class[]::new));
+
             Class expectedReturnedType = method.getReturnType();
             if (parameterTypes.stream().anyMatch(clazz -> clazz.equals(Dataset.class))) {
 
@@ -140,6 +143,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                         // replace because of spark issue with dot inside col getter arg
                         .map(p -> p.toString().replace(".", ""))
                         .collect(Collectors.toList());
+                Method finalMethod = method;
                 measureToHandleNames.forEach(m -> {
                     ResolvableExpression measureExpression = ResolvableExpression.withType(expectedReturnedType)
                             .withPosition(position)
@@ -161,7 +165,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                                                 })
                                                 .toArray();
                                         try {
-                                            return method.invoke(null, params);
+                                            return finalMethod.invoke(null, params);
                                         } catch (IllegalAccessException | InvocationTargetException e) {
                                             throw new VtlRuntimeException(new VtlScriptException(e, position));
                                         }
