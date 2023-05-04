@@ -27,45 +27,45 @@ public class StringFunctionsTest {
     @Test
     public void testNull() throws ScriptException {
         // Trim
-        engine.eval("a := trim(null);");
+        engine.eval("a := trim(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Ltrim
-        engine.eval("a := ltrim(null);");
+        engine.eval("a := ltrim(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Rtrim
-        engine.eval("a := rtrim(null);");
+        engine.eval("a := rtrim(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Upper
-        engine.eval("a := upper(null);");
+        engine.eval("a := upper(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Lower
-        engine.eval("a := lower(null);");
+        engine.eval("a := lower(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
         // Length
-        engine.eval("a := length(null);");
+        engine.eval("a := length(cast(null, string));");
         assertThat((Long) engine.getContext().getAttribute("a")).isNull();
         // Substr
-        engine.eval("a := substr(null);");
+        engine.eval("a := substr(cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := substr(\"ok\", null, 2);");
+        engine.eval("b := substr(\"ok\", cast(null, integer), 2);");
         assertThat((String) engine.getContext().getAttribute("b")).isEqualTo("ok");
-        engine.eval("c := substr(\"ok\", 1, null);");
+        engine.eval("c := substr(\"ok\", 1, cast(null, integer));");
         assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
         // Replace
-        engine.eval("a := replace(null, \"ooo\", \"ttt\");");
+        engine.eval("a := replace(cast(null, string), \"ooo\", \"ttt\");");
         assertThat((String) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := replace(\"ok\", null, \"ttt\");");
+        engine.eval("b := replace(\"ok\", cast(null, string), \"ttt\");");
         assertThat((String) engine.getContext().getAttribute("b")).isNull();
-        engine.eval("c := replace(\"ok\", \"ooo\", null);");
+        engine.eval("c := replace(\"ok\", \"ooo\", cast(null, string));");
         assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
         // Instr
-        engine.eval("a := instr(null, \"ooo\", 1, 2);");
+        engine.eval("a := instr(cast(null, string), \"ooo\", 1, 2);");
         assertThat((Long) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := instr(\"ok\", null, 1, 2);");
+        engine.eval("b := instr(\"ok\", cast(null, string), 1, 2);");
         assertThat((Long) engine.getContext().getAttribute("b")).isNull();
-        engine.eval("c := instr(\"ok\", \"ooo\", null, 2);");
+        engine.eval("c := instr(\"ok\", \"ooo\", cast(null, integer), 2);");
         assertThat((Long) engine.getContext().getAttribute("c")).isEqualTo(0L);
-        engine.eval("d := instr(\"ok\", \"ooo\", 1, null);");
+        engine.eval("d := instr(\"ok\", \"ooo\", 1, cast(null, integer));");
         assertThat((Long) engine.getContext().getAttribute("d")).isEqualTo(0L);
     }
 

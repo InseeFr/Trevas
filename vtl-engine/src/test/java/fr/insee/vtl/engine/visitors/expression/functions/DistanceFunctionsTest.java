@@ -27,9 +27,9 @@ public class DistanceFunctionsTest {
     @Test
     public void testNull() throws ScriptException {
         // Levenshtein
-        engine.eval("a := levenshtein(null, \"two\");");
+        engine.eval("a := levenshtein(cast(null, string), \"two\");");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := levenshtein(\"one\", null);");
+        engine.eval("b := levenshtein(\"one\", cast(null, string));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
     }
 

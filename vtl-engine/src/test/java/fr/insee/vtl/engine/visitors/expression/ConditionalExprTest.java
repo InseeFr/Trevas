@@ -23,13 +23,13 @@ public class ConditionalExprTest {
 
     @Test
     public void testNull() throws ScriptException {
-        engine.eval("a := if null then \"true\" else \"false\";");
+        engine.eval("a := if cast(null, boolean) then \"true\" else \"false\";");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := if true then null else \"false\";");
+        engine.eval("b := if true then cast(null, string) else \"false\";");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
-        engine.eval("c := if false then \"true\" else null;");
+        engine.eval("c := if false then \"true\" else cast(null, string);");
         assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
-        engine.eval("d := if false then null else null;");
+        engine.eval("d := if false then cast(null, integer) else cast(null, integer);");
         assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
     }
 

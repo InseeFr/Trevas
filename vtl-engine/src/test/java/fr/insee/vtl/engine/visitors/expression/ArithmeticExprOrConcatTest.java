@@ -26,19 +26,19 @@ public class ArithmeticExprOrConcatTest {
     public void testNull() throws ScriptException {
         ScriptContext context = engine.getContext();
         // Plus
-        engine.eval("res := 1 + null;");
+        engine.eval("res := 1 + cast(null, integer);");
         assertThat((Long) context.getAttribute("res")).isNull();
-        engine.eval("res := null + 1;");
+        engine.eval("res := cast(null, integer) + 1;");
         assertThat((Long) context.getAttribute("res")).isNull();
         // Minus
-        engine.eval("res := 1 - null;");
+        engine.eval("res := 1 - cast(null, integer);");
         assertThat((Long) context.getAttribute("res")).isNull();
-        engine.eval("res := null - 1;");
+        engine.eval("res := cast(null, integer) - 1;");
         assertThat((Long) context.getAttribute("res")).isNull();
         // Concat
-        engine.eval("res := \"\" || null;");
+        engine.eval("res := \"\" || cast(null, string);");
         assertThat((Boolean) context.getAttribute("res")).isNull();
-        engine.eval("res := null || \"\";");
+        engine.eval("res := cast(null, string) || \"\";");
         assertThat((Boolean) context.getAttribute("res")).isNull();
     }
 

@@ -51,9 +51,9 @@ public class BooleanExprTest {
             context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);
             context.setAttribute("b", b.get(i), ScriptContext.ENGINE_SCOPE);
 
-            engine.eval("andRes := a and b;" +
-                    "orRes := a or b;" +
-                    "xorRes := a xor b;"
+            engine.eval("andRes := cast(a, boolean) and cast(b, boolean);" +
+                    "orRes := cast(a, boolean) or cast(b, boolean);" +
+                    "xorRes := cast(a, boolean) xor cast(b, boolean);"
             );
             assertThat(context.getAttribute("andRes"))
                     .as("%s && %s -> %s", a.get(i), b.get(i), and.get(i))
