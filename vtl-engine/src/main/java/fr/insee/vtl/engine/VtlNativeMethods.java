@@ -34,8 +34,10 @@ public class VtlNativeMethods {
             Fun.<Double, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
             Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
             Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
-
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Double, Long>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
             // ArithmeticVisitor
             Fun.toMethod(ArithmeticVisitor::multiplication),

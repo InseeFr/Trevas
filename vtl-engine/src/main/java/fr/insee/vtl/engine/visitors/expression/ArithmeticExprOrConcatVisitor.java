@@ -46,10 +46,7 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     }
 
     public static Double addition(Double valueA, Long valueB) {
-        if (valueA == null || valueB == null) {
-            return null;
-        }
-        return valueA + valueB;
+        return addition(valueB, valueA);
     }
 
     public static Double addition(Double valueA, Double valueB) {
@@ -59,14 +56,29 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         return valueA + valueB;
     }
 
-    public static Number subtraction(Number valueA, Number valueB) {
+    public static Long subtraction(Long valueA, Long valueB) {
         if (valueA == null || valueB == null) {
             return null;
         }
-        if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() - valueB.longValue();
+        return valueA - valueB;
+    }
+
+    public static Double subtraction(Long valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
         }
-        return valueA.doubleValue() - valueB.doubleValue();
+        return valueA - valueB;
+    }
+
+    public static Double subtraction(Double valueA, Long valueB) {
+        return subtraction(valueB, valueA);
+    }
+
+    public static Double subtraction(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA - valueB;
     }
 
     public static String concat(String valueA, String valueB) {
