@@ -99,6 +99,9 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 return null;
             }
             var cond = (Boolean) conditionExpr.resolve(context);
+            if (cond == null) {
+                return null;
+            }
             return Boolean.TRUE.equals(cond)
                     ? thenExpr.resolve(context)
                     : elseExpr.resolve(context);
