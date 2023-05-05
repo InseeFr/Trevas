@@ -1,8 +1,8 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,8 +62,8 @@ public class ComparisonFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("b := between(10.5, \"ko\", true);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'between(Double, String, Boolean)' not found");
     }
 
     @Test
@@ -90,12 +90,12 @@ public class ComparisonFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("t := match_characters(\"test\", true);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'charsetMatch(String, Boolean)' not found");
         assertThatThrownBy(() -> {
             engine.eval("t := match_characters(10.5, \"pattern\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'charsetMatch(Double, String)' not found");
     }
 
     @Test

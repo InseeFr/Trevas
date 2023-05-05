@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -73,13 +74,13 @@ public class BooleanExprTest {
     public void testBooleanTypeExceptions() {
         assertThatThrownBy(() -> {
             engine.eval("s := 1 and 2;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected Boolean");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'and(Long, Long)' not found");
 
         assertThatThrownBy(() -> {
             engine.eval("s := true or 2;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected Boolean");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'or(Boolean, Long)' not found");
     }
 
     @Test

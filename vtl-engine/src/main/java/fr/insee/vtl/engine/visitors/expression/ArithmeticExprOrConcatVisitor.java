@@ -71,7 +71,10 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     }
 
     public static Double subtraction(Double valueA, Long valueB) {
-        return subtraction(valueB, valueA);
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA - valueB.doubleValue();
     }
 
     public static Double subtraction(Double valueA, Double valueB) {

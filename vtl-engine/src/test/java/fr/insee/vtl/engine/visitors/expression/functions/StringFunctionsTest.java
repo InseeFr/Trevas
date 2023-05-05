@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -159,12 +160,12 @@ public class StringFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",1,\"ok\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'replace(String, Long, String)' not found");
         assertThatThrownBy(() -> {
             engine.eval("re1 := replace(\"abc\",\"ok\",true);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Boolean, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'replace(String, String, Boolean)' not found");
     }
 
     @Test
@@ -191,15 +192,15 @@ public class StringFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("re1 := instr(\"abc\",1);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'instr(String, Long, Long, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("re2 := instr(\"abc\", \"c\", \"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Long");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'instr(String, String, String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("re2 := instr(\"abc\", \"c\", 1, \"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Long");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'instr(String, String, Long, String)' not found");
     }
 }

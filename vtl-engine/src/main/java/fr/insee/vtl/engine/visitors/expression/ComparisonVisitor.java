@@ -74,7 +74,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isNotEqual(Object left, Object right) throws Exception {
-        return !isEqual(left, right);
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare != 0;
     }
 
     public static Boolean isLessThan(Object left, Object right) throws Exception {

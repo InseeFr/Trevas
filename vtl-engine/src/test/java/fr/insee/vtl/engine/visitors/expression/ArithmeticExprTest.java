@@ -87,7 +87,7 @@ public class ArithmeticExprTest {
                 Map.of("id", "Nico", "long1", 1.0, "double1", 6.0),
                 Map.of("id", "Franck", "long1", 1.0, "double1", -1.0)
         );
-//        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
+        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
     }
 
     @Test

@@ -32,20 +32,23 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
 
         List<String> operators = List.of("=", "<>", "<", ">", "<=", ">=");
-        List<String> values = List.of(
-                "\"string\"", "1.1", "1", "cast(null, number)", "ds1"
+        List<List<String>> values = List.of(
+                List.of("\"string\"", "string"),
+                List.of("1.1", "number"),
+                List.of("1", "integer"),
+                List.of("cast(null, number)", "number")
         );
 
         for (String operator : operators) {
             // Left is null
-            for (String value : values) {
-                engine.eval("bool := cast(null, string) " + operator + " " + value + " ;");
+            for (List<String> value : values) {
+                engine.eval("bool := cast(null, " + value.get(1) + ") " + operator + " " + value.get(0) + " ;");
                 assertThat((Boolean) context.getAttribute("bool")).isNull();
             }
 
             // Right is null
-            for (String value : values) {
-                engine.eval("bool := " + value + " " + operator + " cast(null, number);");
+            for (List<String> value : values) {
+                engine.eval("bool := " + value.get(0) + " " + operator + " cast(null, " + value.get(1) + ");");
                 assertThat((Boolean) context.getAttribute("bool")).isNull();
             }
         }
