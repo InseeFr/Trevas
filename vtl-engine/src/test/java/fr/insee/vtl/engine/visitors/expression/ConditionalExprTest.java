@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,21 +45,19 @@ public class ConditionalExprTest {
         engine.eval("l := if false then 1 else 0;");
         assertThat(context.getAttribute("l")).isEqualTo(0L);
 
-        // TODO
-//        engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-//        engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-//        engine.eval("" +
-//                "ds1 := ds_1[keep id, long1]; " +
-//                "ds2 := ds_2[keep id, long1]; " +
-//                "res := if ds1 > ds2 then ds1 else ds2;");
-//        var res = engine.getContext().getAttribute("res");
-//        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-//                Map.of("id", "Toto", "bool_var", false),
-//                Map.of("id", "Hadrien", "bool_var", false),
-//                Map.of("id", "Nico", "bool_var", false),
-//                Map.of("id", "Franck", "bool_var", false)
-//        );
-//        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
+        engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("ds1 := ds_1[keep id, long1]; " +
+                "ds2 := ds_2[keep id, long1]; " +
+                "res := if ds1 > ds2 then ds1 else ds2;");
+        var res = engine.getContext().getAttribute("res");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "bool_var", false),
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
 
     @Test
