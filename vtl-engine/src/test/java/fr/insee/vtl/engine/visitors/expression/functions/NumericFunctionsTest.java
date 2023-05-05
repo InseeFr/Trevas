@@ -154,11 +154,11 @@ public class NumericFunctionsTest {
 
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(0.367D, Percentage.withPercentage(1));
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(exp(ds[drop bool1, long1]));");
+        Object res = engine.eval("res := floor(exp(ds[keep id, double1, long1]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 3L, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 9L, "string1", "nico"),
-                Map.of("id", "Franck", "double1", 0L, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 3L, "long1", 9223372036854775807L),
+                Map.of("id", "Nico", "double1", 9L, "long1", 485165195L),
+                Map.of("id", "Franck", "double1", 0L, "long1", 9223372036854775807L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");

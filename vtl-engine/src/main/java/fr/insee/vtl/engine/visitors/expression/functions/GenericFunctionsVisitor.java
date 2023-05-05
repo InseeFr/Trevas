@@ -78,64 +78,93 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
+    public List<DatasetExpression> splitToMonoMeasure(DatasetExpression dataset) {
+        ProcessingEngine proc = engine.getProcessingEngine();
+        List<Structured.Component> identifiers = dataset.getIdentifiers();
+        return dataset.getMeasures().stream().map(measure -> {
+            List<String> idAndMeasure = Stream.concat(identifiers.stream(), Stream.of(measure))
+                    .map(Structured.Component::getName)
+                    .collect(Collectors.toList());
+            return proc.executeProject(dataset, idAndMeasure);
+        }).collect(Collectors.toList());
+    }
+
     public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
         try {
             // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
             // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
 
+            // Only one parameter, and it's a dataset. We can invoke the function on each measure.
             if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
                 // Only scalar types. We can invoke the function directly.
                 var method = engine.findMethod(funcName, parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList()));
                 return new FunctionExpression(method, parameters, position);
-            } else {
-                ProcessingEngine proc = engine.getProcessingEngine();
-
-                // Normalize all parameters to datasets first.
-                // 1. Join all the datasets together and build a new expression map.
-                Map<String, ResolvableExpression> monoExprs = new HashMap<>();
-                Set<String> measureNames = new HashSet();
-                var dsExprs = parameters.stream()
-                        .filter(e -> e instanceof DatasetExpression)
-                        .map(e -> ((DatasetExpression) e))
-                        .map(ds -> {
-                            if (!ds.isMonoMeasure()) {
-                                throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
-                            }
-                            var uniqueName = "arg" + ds.hashCode();
-                            var measure = ds.getMeasures().get(0);
-                            String measureName = measure.getName();
-                            measureNames.add(measureName);
-                            ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
-                            var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
-                            monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
-                            return ds;
-                        })
-                        .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
-                if (measureNames.size() != 1) {
-                    throw new VtlRuntimeException(
-                            new InvalidArgumentException("mono-measure datasets don't contain same measures (number or names)", position)
+            } else if (parameters.size() == 1) {
+                var ds = (DatasetExpression) parameters.get(0);
+                Map<String, DatasetExpression> results = new LinkedHashMap<>();
+                for (DatasetExpression monoDs : splitToMonoMeasure(ds)) {
+                    results.put(
+                            monoDs.getMeasures().get(0).getName(),
+                            invokeFunctionOnDataset(funcName, List.of(monoDs), position)
                     );
                 }
-                DatasetExpression ds = proc.executeInnerJoin(dsExprs);
+                return engine.getProcessingEngine().executeInnerJoin(results);
+            } else if (parameters.stream().filter(e -> e instanceof DatasetExpression && ((DatasetExpression)e).isMonoMeasure()).count() == 2) {
 
-                // Rebuild the function parameters. TODO: All component?
-                var normalizedParams = parameters.stream()
-                        .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
-                        .collect(Collectors.toList());
+                // Check structure of both datasets.
+                // Invote in pairs.
+            } else {
 
-                // 3. Invoke the function.
-                Method method = engine.findMethod(funcName, normalizedParams.stream()
-                        .map(TypedExpression::getType)
-                        .collect(Collectors.toList()));
-                var funcExrp = new FunctionExpression(method, normalizedParams, position);
-                ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
-                ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
-                return proc.executeRename(ds, Map.of("result", measureNames.iterator().next()));
             }
-
         } catch (NoSuchMethodException e) {
             throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
         }
+    }
+
+    private DatasetExpression invokeFunctionOnDataset(String funcName, List<ResolvableExpression> parameters, Positioned position) throws NoSuchMethodException, VtlScriptException {
+        ProcessingEngine proc = engine.getProcessingEngine();
+
+        // Normalize all parameters to datasets first.
+        // 1. Join all the datasets together and build a new expression map.
+        Map<String, ResolvableExpression> monoExprs = new HashMap<>();
+        Set<String> measureNames = new HashSet();
+        var dsExprs = parameters.stream()
+                .filter(e -> e instanceof DatasetExpression)
+                .map(e -> ((DatasetExpression) e))
+                .map(ds -> {
+                    if (!ds.isMonoMeasure()) {
+                        throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
+                    }
+                    var uniqueName = "arg" + ds.hashCode();
+                    var measure = ds.getMeasures().get(0);
+                    String measureName = measure.getName();
+                    measureNames.add(measureName);
+                    ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
+                    var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
+                    monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
+                    return ds;
+                })
+                .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
+        if (measureNames.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("mono-measure datasets don't contain same measures (number or names)", position)
+            );
+        }
+        DatasetExpression ds = proc.executeInnerJoin(dsExprs);
+
+        // Rebuild the function parameters. TODO: All component?
+        var normalizedParams = parameters.stream()
+                .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
+                .collect(Collectors.toList());
+
+        // 3. Invoke the function.
+        Method method = engine.findMethod(funcName, normalizedParams.stream()
+                .map(TypedExpression::getType)
+                .collect(Collectors.toList()));
+        var funcExrp = new FunctionExpression(method, normalizedParams, position);
+        ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
+        ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
+        return proc.executeRename(ds, Map.of("result", measureNames.iterator().next()));
     }
 
     // TODO: This is copied from JoinFunctionVisitor.
