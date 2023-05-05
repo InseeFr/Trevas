@@ -91,6 +91,19 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
     public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
         try {
+            List<DatasetExpression> noMonoDs = parameters.stream().filter(e -> e instanceof DatasetExpression && !(((DatasetExpression) e).isMonoMeasure()))
+                    .map(ds -> (DatasetExpression) ds)
+                    .collect(Collectors.toList());
+            if (noMonoDs.size() > 2) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("too many no mono-measure datasets (" + noMonoDs.size() + ")", position)
+                );
+            }
+
+            ProcessingEngine proc = engine.getProcessingEngine();
+//            TODO
+//            if (noMonoDs has not same shape) throw
+
             // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
             // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
 
@@ -99,22 +112,22 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // Only scalar types. We can invoke the function directly.
                 var method = engine.findMethod(funcName, parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList()));
                 return new FunctionExpression(method, parameters, position);
-            } else if (parameters.size() == 1) {
-                var ds = (DatasetExpression) parameters.get(0);
-                Map<String, DatasetExpression> results = new LinkedHashMap<>();
-                for (DatasetExpression monoDs : splitToMonoMeasure(ds)) {
-                    results.put(
-                            monoDs.getMeasures().get(0).getName(),
-                            invokeFunctionOnDataset(funcName, List.of(monoDs), position)
-                    );
-                }
-                return engine.getProcessingEngine().executeInnerJoin(results);
-            } else if (parameters.stream().filter(e -> e instanceof DatasetExpression && ((DatasetExpression)e).isMonoMeasure()).count() == 2) {
-
-                // Check structure of both datasets.
-                // Invote in pairs.
             } else {
-
+                List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
+                Map<String, DatasetExpression> results = new HashMap();
+                for (Structured.Component measure : measures) {
+                    List<ResolvableExpression> params = parameters.stream().map(p -> {
+                        if (p instanceof DatasetExpression) {
+                            DatasetExpression ds = (DatasetExpression) p;
+                            List<String> idAndMeasure = Stream.concat(ds.getIdentifiers().stream(), Stream.of(measure))
+                                    .map(Structured.Component::getName)
+                                    .collect(Collectors.toList());
+                            return proc.executeProject(ds, idAndMeasure);
+                        } else return p;
+                    }).collect(Collectors.toList());
+                    results.put(measure.getName(), invokeFunctionOnDataset(funcName, params, position));
+                }
+                return proc.executeInnerJoin(results);
             }
         } catch (NoSuchMethodException e) {
             throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
