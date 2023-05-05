@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -51,10 +52,9 @@ public class ConditionalExprTest {
                 "res := if ds1 > ds2 then ds1 else ds2;");
         var res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "bool_var", false),
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Map.of("id", "Hadrien", "bool_var", 150L),
+                Map.of("id", "Nico", "bool_var", 20L),
+                Map.of("id", "Franck", "bool_var", 100L)
         );
         assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
@@ -89,12 +89,12 @@ public class ConditionalExprTest {
     public void testIfTypeExceptions() {
         assertThatThrownBy(() -> {
             engine.eval("s := if \"\" then 1 else 2;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Boolean");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'ifThenElse(String, Long, Long)' not found");
 
         assertThatThrownBy(() -> {
             engine.eval("s := if true then \"\" else 2;");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'ifThenElse(Boolean, String, Long)' not found");
     }
 }
