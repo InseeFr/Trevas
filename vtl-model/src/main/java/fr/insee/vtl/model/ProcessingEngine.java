@@ -151,6 +151,7 @@ public interface ProcessingEngine {
                 .collect(Collectors.toSet());
         return executeInnerJoin(datasets, new ArrayList<>(commonIdentifiers));
     }
+
     /**
      * Execute a cross join transformations on the dataset expressions.
      *
