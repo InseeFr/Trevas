@@ -33,14 +33,29 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
-    public static Number multiplication(Number valueA, Number valueB) {
+    public static Long multiplication(Long valueA, Long valueB) {
         if (valueA == null || valueB == null) {
             return null;
         }
-        if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() * valueB.longValue();
+        return valueA * valueB;
+    }
+
+    public static Double multiplication(Long valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
         }
-        return valueA.doubleValue() * valueB.doubleValue();
+        return valueA.doubleValue() * valueB;
+    }
+
+    public static Double multiplication(Double valueA, Long valueB) {
+        return multiplication(valueB, valueA);
+    }
+
+    public static Double multiplication(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA * valueB;
     }
 
     public static Double division(Long valueA, Double valueB) {
@@ -62,7 +77,14 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (valueA == null || valueB == null) {
             return null;
         }
-        return  ((double)valueA / valueB);
+        return ((double) valueA / valueB);
+    }
+
+    public static Double division(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA / valueB;
     }
 
     /**

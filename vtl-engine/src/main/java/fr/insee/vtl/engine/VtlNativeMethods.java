@@ -40,10 +40,14 @@ public class VtlNativeMethods {
             Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
             // ArithmeticVisitor
-            Fun.toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long,Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double,Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long,Double>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double,Double>toMethod(ArithmeticVisitor::multiplication),
             Fun.<Long,Long>toMethod(ArithmeticVisitor::division),
             Fun.<Double,Long>toMethod(ArithmeticVisitor::division),
             Fun.<Long,Double>toMethod(ArithmeticVisitor::division),
+            Fun.<Double,Double>toMethod(ArithmeticVisitor::division),
             // DistanceFunctionsVisitor
             Fun.toMethod(DistanceFunctionsVisitor::levenshtein),
             // String function visitor
