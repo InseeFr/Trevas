@@ -111,7 +111,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
                 // Only scalar types. We can invoke the function directly.
                 var method = engine.findMethod(funcName, parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList()));
-                finalRes = new FunctionExpression(method, parameters, position);
+                return new FunctionExpression(method, parameters, position);
             } else if (noMonoDs.size() == 0) {
                 finalRes = invokeFunctionOnDataset(funcName, parameters, position);
             } else {
@@ -137,7 +137,6 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     // TODO: refine with constraints matrix
                     return proc.executeRename((DatasetExpression) finalRes, Map.of(measures.get(0).getName(), "bool_var"));
                 }
-                return finalRes;
             }
             return finalRes;
         } catch (NoSuchMethodException e) {

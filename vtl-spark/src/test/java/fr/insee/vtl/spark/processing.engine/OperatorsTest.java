@@ -71,4 +71,14 @@ public class OperatorsTest {
                 "res := ds_1 || ds_2; "
         );
     }
+
+    @Test
+    public void testPlan() throws ScriptException {
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("res := (ds1[keep id, string1] || ds2[keep id, string1]) || \"toto\";");
+    }
 }
