@@ -66,7 +66,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isEqual(Object left, Object right) throws Exception {
-        return compare(left, right) == 0;
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare == 0;
     }
 
     public static Boolean isNotEqual(Object left, Object right) throws Exception {
@@ -90,11 +94,19 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isLessThanOrEqual(Object left, Object right) throws Exception {
-        return !isGreaterThan(left, right);
+        var greater = isGreaterThan(left, right);
+        if (greater == null) {
+            return null;
+        }
+        return !greater;
     }
 
     public static Boolean isGreaterThanOrEqual(Object left, Object right) throws Exception {
-        return !isLessThan(left, right);
+        var less = isLessThan(left, right);
+        if (less == null) {
+            return null;
+        }
+        return !less;
     }
 
     public static Boolean in(Object obj, List<?> list) {
