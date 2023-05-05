@@ -8,17 +8,19 @@ import java.util.List;
 
 public class VtlMethod implements Serializable {
 
-    String className;
-    String methodName;
+    private final Class<?>[] types;
+    private final String className;
+    private final String methodName;
 
     public VtlMethod(Method method) {
         className = method.getDeclaringClass().getName();
         methodName = method.getName();
+        types = method.getParameterTypes();
     }
 
     public Method getMethod(Positioned pos, List<? extends Class<?>> parameterTypes) throws VtlScriptException {
         try {
-            return Class.forName(className).getMethod(methodName, parameterTypes.toArray(Class[]::new));
+            return Class.forName(className).getMethod(methodName, this.types);
         } catch (Exception e) {
             throw new VtlScriptException("could not deserialize method " + methodName, pos);
         }

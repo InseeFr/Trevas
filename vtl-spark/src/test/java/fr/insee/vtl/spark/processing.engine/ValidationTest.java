@@ -7,7 +7,6 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -275,6 +274,7 @@ public class ValidationTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS1", ds_1_check, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("DS2", ds_2_check, ScriptContext.ENGINE_SCOPE);
+        engine.eval("ds := DS1 >= DS2;");
 
         engine.eval("ds := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2);" +
                 "ds1 := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2 invalid);");
