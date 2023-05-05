@@ -247,11 +247,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
             }
             // Execute the ResolvableExpression by wrapping it in a UserDefinedFunction.
             ResolvableExpression expression = expressions.get(name);
-            UserDefinedFunction exprFunction = udf((Row row) -> {
-                SparkRowMap context = new SparkRowMap(row);
-                return expression.resolve(context);
-            }, fromVtlType(expression.getType()));
-            interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
+            try {
+                UserDefinedFunction exprFunction = udf((Row row) -> {
+                    SparkRowMap context = new SparkRowMap(row);
+                    return expression.resolve(context);
+                }, fromVtlType(expression.getType()));
+                interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
+            } catch (Exception e) {
+                System.out.println(name);
+            }
         }
         return interpreted;
     }
