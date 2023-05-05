@@ -98,19 +98,19 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean isLessThanOrEqual(Object left, Object right) throws Exception {
-        var greater = isGreaterThan(left, right);
-        if (greater == null) {
+        Integer compare = compare(left, right);
+        if (compare == null) {
             return null;
         }
-        return !greater;
+        return compare <= 0;
     }
 
     public static Boolean isGreaterThanOrEqual(Object left, Object right) throws Exception {
-        var less = isLessThan(left, right);
-        if (less == null) {
+        Integer compare = compare(left, right);
+        if (compare == null) {
             return null;
         }
-        return !less;
+        return compare >= 0;
     }
 
     public static Boolean in(Object obj, List<?> list) {
