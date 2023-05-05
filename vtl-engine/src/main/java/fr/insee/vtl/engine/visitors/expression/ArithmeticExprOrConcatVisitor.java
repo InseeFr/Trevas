@@ -99,27 +99,6 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right));
-            boolean hasDsParameter = parameters.stream()
-                    .map(ResolvableExpression::getType)
-                    .anyMatch(Double.class::equals);
-            if (hasDsParameter) {
-                switch (ctx.op.getType()) {
-                    case VtlParser.PLUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("addition", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.MINUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("subtraction", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.CONCAT:
-                        return genericFunctionsVisitor.invokeFunction("concat", parameters, pos);
-                    default:
-                        throw new UnsupportedOperationException("unknown operator " + ctx);
-                }
-            }
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
                     return genericFunctionsVisitor.invokeFunction("addition", parameters, pos);

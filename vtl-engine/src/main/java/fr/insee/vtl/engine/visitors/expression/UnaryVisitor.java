@@ -70,27 +70,6 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.right));
-            boolean hasDsParameter = parameters.stream()
-                    .map(ResolvableExpression::getType)
-                    .anyMatch(Double.class::equals);
-            if (hasDsParameter) {
-                switch (ctx.op.getType()) {
-                    case VtlParser.PLUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("plus", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.MINUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("minus", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.NOT:
-                        return genericFunctionsVisitor.invokeFunction("not", parameters, pos);
-                    default:
-                        throw new UnsupportedOperationException("unknown operator " + ctx);
-                }
-            }
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
                     return genericFunctionsVisitor.invokeFunction("plus", parameters, pos);
