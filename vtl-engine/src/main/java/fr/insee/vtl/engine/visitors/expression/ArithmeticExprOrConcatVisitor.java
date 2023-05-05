@@ -31,24 +31,54 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
-    public static Number addition(Number valueA, Number valueB) {
+    public static Long addition(Long valueA, Long valueB) {
         if (valueA == null || valueB == null) {
             return null;
         }
-        if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() + valueB.longValue();
-        }
-        return valueA.doubleValue() + valueB.doubleValue();
+        return valueA + valueB;
     }
 
-    public static Number subtraction(Number valueA, Number valueB) {
+    public static Double addition(Long valueA, Double valueB) {
         if (valueA == null || valueB == null) {
             return null;
         }
-        if (valueA instanceof Long && valueB instanceof Long) {
-            return valueA.longValue() - valueB.longValue();
+        return valueA + valueB;
+    }
+
+    public static Double addition(Double valueA, Long valueB) {
+        return addition(valueB, valueA);
+    }
+
+    public static Double addition(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
         }
-        return valueA.doubleValue() - valueB.doubleValue();
+        return valueA + valueB;
+    }
+
+    public static Long subtraction(Long valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA - valueB;
+    }
+
+    public static Double subtraction(Long valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA - valueB;
+    }
+
+    public static Double subtraction(Double valueA, Long valueB) {
+        return subtraction(valueB, valueA);
+    }
+
+    public static Double subtraction(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA - valueB;
     }
 
     public static String concat(String valueA, String valueB) {
@@ -69,27 +99,6 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right));
-            boolean hasDsParameter = parameters.stream()
-                    .map(ResolvableExpression::getType)
-                    .anyMatch(Double.class::equals);
-            if (hasDsParameter) {
-                switch (ctx.op.getType()) {
-                    case VtlParser.PLUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("addition", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.MINUS:
-                        return new ArithmeticVisitor.ArithmeticExpression(
-                                genericFunctionsVisitor.invokeFunction("subtraction", parameters, pos),
-                                parameters
-                        );
-                    case VtlParser.CONCAT:
-                        return genericFunctionsVisitor.invokeFunction("concat", parameters, pos);
-                    default:
-                        throw new UnsupportedOperationException("unknown operator " + ctx);
-                }
-            }
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
                     return genericFunctionsVisitor.invokeFunction("addition", parameters, pos);

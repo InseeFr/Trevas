@@ -1,7 +1,10 @@
 package fr.insee.vtl.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.model.Structured.Component;
 
@@ -141,6 +144,13 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    default DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets) {
+        Set<Component> commonIdentifiers = datasets.values().stream()
+                .flatMap(datasetExpression -> datasetExpression.getDataStructure().values().stream())
+                .filter(Structured.Component::isIdentifier)
+                .collect(Collectors.toSet());
+        return executeInnerJoin(datasets, new ArrayList<>(commonIdentifiers));
+    }
     /**
      * Execute a cross join transformations on the dataset expressions.
      *

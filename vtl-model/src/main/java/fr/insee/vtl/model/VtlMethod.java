@@ -4,6 +4,7 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class VtlMethod implements Serializable {
 
@@ -15,9 +16,9 @@ public class VtlMethod implements Serializable {
         methodName = method.getName();
     }
 
-    public Method getMethod(Positioned pos, Class<?>... parameterTypes) throws VtlScriptException {
+    public Method getMethod(Positioned pos, List<? extends Class<?>> parameterTypes) throws VtlScriptException {
         try {
-            return Class.forName(className).getMethod(methodName, parameterTypes);
+            return Class.forName(className).getMethod(methodName, parameterTypes.toArray(Class[]::new));
         } catch (Exception e) {
             throw new VtlScriptException("could not deserialize method " + methodName, pos);
         }

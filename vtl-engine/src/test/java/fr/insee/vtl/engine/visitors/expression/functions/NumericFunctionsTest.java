@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -28,45 +29,45 @@ public class NumericFunctionsTest {
     @Test
     public void testNull() throws ScriptException {
         // Ceil
-        engine.eval("a := ceil(null);");
+        engine.eval("a := ceil(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Floor
-        engine.eval("a := floor(null);");
+        engine.eval("a := floor(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Abs
-        engine.eval("a := abs(null);");
+        engine.eval("a := abs(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Exp
-        engine.eval("a := exp(null);");
+        engine.eval("a := exp(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Ln
-        engine.eval("a := ln(null);");
+        engine.eval("a := ln(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Round
-        engine.eval("a := round(null, 10);");
+        engine.eval("a := round(cast(null, number), 10);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := round(10.55, null);");
+        engine.eval("b := round(10.55, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Trunc
-        engine.eval("a := trunc(null);");
+        engine.eval("a := trunc(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Sqrt
-        engine.eval("a := sqrt(null);");
+        engine.eval("a := sqrt(cast(null, number));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         // Mod
-        engine.eval("a := mod(null, 10);");
+        engine.eval("a := mod(cast(null, number), 10);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := mod(10, null);");
+        engine.eval("b := mod(10, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
         // Power
-        engine.eval("a := power(null, 10);");
+        engine.eval("a := power(cast(null, number), 10);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := power(10, null);");
+        engine.eval("b := power(10, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
         // Log
-        engine.eval("a := log(null, 10);");
+        engine.eval("a := log(cast(null, number), 10);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := log(10, null);");
+        engine.eval("b := log(10, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
     }
 
@@ -129,16 +130,16 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
 
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := abs(ds[keep id, double1, string1]);");
+        Object res = engine.eval("res := abs(ds[keep id, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 1.1D, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 2.2D, "string1", "nico"),
-                Map.of("id", "Franck", "double1", 1.21D, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 1.1D),
+                Map.of("id", "Nico", "double1", 2.2D),
+                Map.of("id", "Franck", "double1", 1.21D)
         );
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'abs(String)' not found");
     }
 
     @Test
@@ -154,11 +155,11 @@ public class NumericFunctionsTest {
 
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(0.367D, Percentage.withPercentage(1));
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(exp(ds[drop bool1, long1]));");
+        Object res = engine.eval("res := floor(exp(ds[keep id, double1, long1]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 3L, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 9L, "string1", "nico"),
-                Map.of("id", "Franck", "double1", 0L, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 3L, "long1", 9223372036854775807L),
+                Map.of("id", "Nico", "double1", 9L, "long1", 485165195L),
+                Map.of("id", "Franck", "double1", 0L, "long1", 9223372036854775807L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");
@@ -204,8 +205,8 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12346D);
         engine.eval("e := round(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12350D);
-        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
 
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := round(ds[keep id, long1, double2], 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
@@ -216,12 +217,12 @@ public class NumericFunctionsTest {
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
             engine.eval("f := round(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'round(String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("f := round(2.22222, 2.3);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected Long");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'round(Double, Double)' not found");
     }
 
     @Test
@@ -307,8 +308,24 @@ public class NumericFunctionsTest {
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
             engine.eval("f := mod(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'mod(String, Long)' not found");
+    }
+
+    @Test
+    public void testDELELEME() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+
+        Object test = engine.eval("res := cast(null, integer);");
+
+        Object res = engine.eval("res := trunc((ds#long1 + cast(null, integer)) / 3, 2);");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
+                Map.of("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
+                Map.of("id", "Nico", "long1", 400.0D, "double2", 445.2D),
+                Map.of("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
+        );
     }
 
     @Test

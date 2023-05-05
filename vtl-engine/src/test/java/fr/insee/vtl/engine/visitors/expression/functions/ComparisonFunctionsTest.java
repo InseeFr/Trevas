@@ -27,16 +27,16 @@ public class ComparisonFunctionsTest {
     @Test
     public void testNull() throws ScriptException {
         // Between
-        engine.eval("a := between(null, 1, 100);");
+        engine.eval("a := between(cast(null, integer), 1, 100);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := between(10, null, 100);");
+        engine.eval("b := between(10, cast(null, integer), 100);");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
-        engine.eval("c := between(10, 1, null);");
+        engine.eval("c := between(10, 1, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
         // CharsetMatch
-        engine.eval("a := match_characters(\"ko\", null);");
+        engine.eval("a := match_characters(\"ko\", cast(null, string));");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := match_characters(null, \"test\");");
+        engine.eval("b := match_characters(cast(null, string), \"test\");");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
     }
 

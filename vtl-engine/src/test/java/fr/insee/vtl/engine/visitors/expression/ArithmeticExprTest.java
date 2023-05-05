@@ -30,19 +30,19 @@ public class ArithmeticExprTest {
 
         List<String> operators = List.of("+", "-", "/", "*");
         List<String> values = List.of(
-                "1.1", "1", "null"
+                "1.1", "1", "cast(null, integer)"
         );
 
         for (String operator : operators) {
             // Left is null
             for (String value : values) {
-                engine.eval("res := null " + operator + " " + value + " ;");
+                engine.eval("res := cast(null, integer) " + operator + " " + value + " ;");
                 assertThat((Boolean) context.getAttribute("res")).isNull();
             }
 
             // Right is null
             for (String value : values) {
-                engine.eval("res := " + value + " " + operator + " null ;");
+                engine.eval("res := " + value + " " + operator + " cast(null, integer) ;");
                 assertThat((Boolean) context.getAttribute("res")).isNull();
             }
         }

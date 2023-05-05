@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
 import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
 import fr.insee.vtl.engine.visitors.expression.BooleanVisitor;
 import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
+import fr.insee.vtl.engine.visitors.expression.ConditionalVisitor;
 import fr.insee.vtl.engine.visitors.expression.UnaryVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
@@ -30,12 +31,26 @@ public class VtlNativeMethods {
             Fun.toMethod(NumericFunctionsVisitor::power),
             Fun.toMethod(NumericFunctionsVisitor::log),
             // ArithmeticExprOrConcatVisitor
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::addition),
-            Fun.toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Double, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::addition),
+            Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Double, Long>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
+            Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
+            // Conditional
+            Fun.<Boolean, Object, Object>toMethod(ConditionalVisitor::ifThenElse),
             // ArithmeticVisitor
-            Fun.toMethod(ArithmeticVisitor::multiplication),
-            Fun.toMethod(ArithmeticVisitor::division),
+            Fun.<Long, Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double, Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long, Double>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double, Double>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long, Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Double, Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Long, Double>toMethod(ArithmeticVisitor::division),
+            Fun.<Double, Double>toMethod(ArithmeticVisitor::division),
             // DistanceFunctionsVisitor
             Fun.toMethod(DistanceFunctionsVisitor::levenshtein),
             // String function visitor
@@ -57,8 +72,10 @@ public class VtlNativeMethods {
             Fun.toMethod(BooleanVisitor::or),
             Fun.toMethod(BooleanVisitor::xor),
             // UnaryVisitor
-            Fun.toMethod(UnaryVisitor::plus),
-            Fun.toMethod(UnaryVisitor::minus),
+            Fun.<Long>toMethod(UnaryVisitor::plus),
+            Fun.<Double>toMethod(UnaryVisitor::plus),
+            Fun.<Long>toMethod(UnaryVisitor::minus),
+            Fun.<Double>toMethod(UnaryVisitor::minus),
             Fun.toMethod(UnaryVisitor::not),
             // ComparisonVisitor
             Fun.toMethod(ComparisonVisitor::isEqual),

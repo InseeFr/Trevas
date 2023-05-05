@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -27,9 +28,9 @@ public class DistanceFunctionsTest {
     @Test
     public void testNull() throws ScriptException {
         // Levenshtein
-        engine.eval("a := levenshtein(null, \"two\");");
+        engine.eval("a := levenshtein(cast(null, string), \"two\");");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-        engine.eval("b := levenshtein(\"one\", null);");
+        engine.eval("b := levenshtein(\"one\", cast(null, string));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
     }
 
@@ -53,7 +54,7 @@ public class DistanceFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("z := levenshtein(1, \"test\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Long, expected String");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'levenshtein(Long, String)' not found");
     }
 }

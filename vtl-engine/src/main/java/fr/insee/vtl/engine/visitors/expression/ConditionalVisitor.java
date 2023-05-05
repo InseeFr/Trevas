@@ -1,12 +1,15 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -20,13 +23,17 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
+
     /**
      * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor The visitor for the enclosing expression.
+     * @param expressionVisitor       The visitor for the enclosing expression.
+     * @param genericFunctionsVisitor
      */
-    public ConditionalVisitor(ExpressionVisitor expressionVisitor) {
-        exprVisitor = Objects.requireNonNull(expressionVisitor);
+    public ConditionalVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
+        this.exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
     /**
@@ -38,12 +45,37 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
         try {
-            var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr).checkInstanceOf(Boolean.class);
+            var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
             var thenExpression = exprVisitor.visit(ctx.thenExpr);
             var elseExpression = exprVisitor.visit(ctx.elseExpr);
-            return new IfThenExpression(fromContext(ctx), conditionalExpr, thenExpression, elseExpression);
-        } catch (InvalidTypeException e) {
-            throw new VtlRuntimeException(e);
+            Positioned position = fromContext(ctx);
+            ResolvableExpression expression = genericFunctionsVisitor.invokeFunction("ifThenElse", List.of(conditionalExpr, thenExpression, elseExpression), position);
+            Class<?> actualType = thenExpression.getType();
+            return new CastExpresison(position, expression, actualType);
+        } catch (VtlScriptException e) {
+            // Is FunctionNotFoundException actually type exception?
+            throw new RuntimeException(e);
+        }
+    }
+
+    static class CastExpresison extends ResolvableExpression {
+        private final Class<?> type;
+        private final ResolvableExpression expression;
+
+        CastExpresison(Positioned pos, ResolvableExpression expression, Class<?> type) {
+            super(pos);
+            this.type = type;
+            this.expression = expression;
+        }
+
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            return type.cast(expression.resolve(context));
+        }
+
+        @Override
+        public Class<?> getType() {
+            return type;
         }
     }
 
@@ -63,6 +95,13 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
 
         return new NvlExpression(fromContext(ctx), expression, defaultExpression);
+    }
+
+    public static <T> T ifThenElse(Boolean condition, T thenExpr, T elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
     }
 
     static class IfThenExpression extends ResolvableExpression {
@@ -99,6 +138,9 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 return null;
             }
             var cond = (Boolean) conditionExpr.resolve(context);
+            if (cond == null) {
+                return null;
+            }
             return Boolean.TRUE.equals(cond)
                     ? thenExpr.resolve(context)
                     : elseExpr.resolve(context);
