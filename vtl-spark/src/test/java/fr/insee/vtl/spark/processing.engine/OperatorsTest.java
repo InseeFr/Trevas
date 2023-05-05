@@ -12,6 +12,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +41,17 @@ public class OperatorsTest {
     public void tearDown() {
         if (spark != null)
             spark.close();
+    }
+
+    @Test
+    public void methodNonSerializableTODELETE() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds_1 := ds1[keep id, long1]; ds_2 := ds2[keep id, long1]; " +
+                "ds := ds_1 - ds_2;");
+        List<Map<String, Object>> ds = ((Dataset) context.getAttribute("ds")).getDataAsMap();
     }
 
     @Test

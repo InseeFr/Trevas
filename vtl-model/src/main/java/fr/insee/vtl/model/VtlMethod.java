@@ -18,7 +18,7 @@ public class VtlMethod implements Serializable {
         types = method.getParameterTypes();
     }
 
-    public Method getMethod(Positioned pos, List<? extends Class<?>> parameterTypes) throws VtlScriptException {
+    public Method getMethod(Positioned pos) throws VtlScriptException {
         try {
             return Class.forName(className).getMethod(methodName, this.types);
         } catch (Exception e) {
