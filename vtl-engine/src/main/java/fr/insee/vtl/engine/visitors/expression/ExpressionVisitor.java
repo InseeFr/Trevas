@@ -72,7 +72,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         arithmeticExprOrConcatVisitor = new ArithmeticExprOrConcatVisitor(this, genericFunctionsVisitor);
         unaryVisitor = new UnaryVisitor(this, genericFunctionsVisitor);
         comparisonVisitor = new ComparisonVisitor(this, genericFunctionsVisitor);
-        conditionalVisitor = new ConditionalVisitor(this);
+        conditionalVisitor = new ConditionalVisitor(this, genericFunctionsVisitor);
         stringFunctionsVisitor = new StringFunctionsVisitor(this, genericFunctionsVisitor);
         comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this, genericFunctionsVisitor);
         setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);

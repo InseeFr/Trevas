@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
 import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
 import fr.insee.vtl.engine.visitors.expression.BooleanVisitor;
 import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
+import fr.insee.vtl.engine.visitors.expression.ConditionalVisitor;
 import fr.insee.vtl.engine.visitors.expression.UnaryVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
@@ -39,6 +40,8 @@ public class VtlNativeMethods {
             Fun.<Long, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
+            // Conditional
+            Fun.<Boolean, Object, Object>toMethod(ConditionalVisitor::ifThenElse),
             // ArithmeticVisitor
             Fun.<Long, Long>toMethod(ArithmeticVisitor::multiplication),
             Fun.<Double, Long>toMethod(ArithmeticVisitor::multiplication),

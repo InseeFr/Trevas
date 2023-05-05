@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.spark.samples.DatasetSamples;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +12,9 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OperatorsTest {
 
@@ -74,11 +78,18 @@ public class OperatorsTest {
 
     @Test
     public void testPlan() throws ScriptException {
-
-        ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-        context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-
-        engine.eval("res := (ds1[keep id, string1] || ds2[keep id, string1]) || \"toto\";");
+        engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("ds1 := ds_1[keep id, long1][rename long1 to bool_var]; " +
+                "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; " +
+                "res := if ds1 > ds2 then ds1 else ds2;");
+        var res = engine.getContext().getAttribute("res");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "bool_var", false),
+                Map.of("id", "Hadrien", "bool_var", false),
+                Map.of("id", "Nico", "bool_var", false),
+                Map.of("id", "Franck", "bool_var", false)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
 }

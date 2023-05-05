@@ -10,7 +10,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,8 +46,8 @@ public class ConditionalExprTest {
 
         engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        engine.eval("ds1 := ds_1[keep id, long1]; " +
-                "ds2 := ds_2[keep id, long1]; " +
+        engine.eval("ds1 := ds_1[keep id, long1][rename long1 to bool_var]; " +
+                "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; " +
                 "res := if ds1 > ds2 then ds1 else ds2;");
         var res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
