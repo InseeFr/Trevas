@@ -81,7 +81,7 @@ public class ArithmeticExprOrConcatTest {
                 Map.of("id", "Nico", "long1", 1L),
                 Map.of("id", "Franck", "long1", 1L)
         );
-//        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
     }
 
     @Test

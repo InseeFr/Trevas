@@ -1,10 +1,8 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -94,7 +92,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             Positioned position = fromContext(ctx);
             ResolvableExpression expression = genericFunctionsVisitor.invokeFunction("ifThenElse", List.of(conditionalExpr, thenExpression, elseExpression), position);
             Class<?> actualType = thenExpression.getType();
-            return new CastExpresison(position, expression, actualType);
+            return new CastExpression(position, expression, actualType);
         } catch (VtlScriptException e) {
             // Is FunctionNotFoundException actually type exception?
             throw new RuntimeException(e);
@@ -121,11 +119,11 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
-    static class CastExpresison extends ResolvableExpression {
+    static class CastExpression extends ResolvableExpression {
         private final Class<?> type;
         private final ResolvableExpression expression;
 
-        CastExpresison(Positioned pos, ResolvableExpression expression, Class<?> type) {
+        CastExpression(Positioned pos, ResolvableExpression expression, Class<?> type) {
             super(pos);
             this.type = type;
             this.expression = expression;
@@ -139,38 +137,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         @Override
         public Class<?> getType() {
             return type;
-        }
-    }
-
-    static class NvlExpression extends ResolvableExpression {
-
-        private final ResolvableExpression defaultExpr;
-        private final ResolvableExpression expr;
-
-        protected NvlExpression(Positioned positioned, ResolvableExpression expr, ResolvableExpression defaultExpr) {
-            super(positioned);
-            try {
-                defaultExpr.checkInstanceOf(expr.getType()).tryCast(expr.getType());
-                expr.checkInstanceOf(defaultExpr.getType());
-            } catch (InvalidTypeException e) {
-                throw new VtlRuntimeException(e);
-            }
-            this.expr = expr;
-            this.defaultExpr = defaultExpr;
-
-        }
-
-        @Override
-        public Object resolve(Map<String, Object> context) {
-            var resolvedExpression = expr.resolve(context);
-            return resolvedExpression == null ?
-                    defaultExpr.resolve(context) :
-                    resolvedExpression;
-        }
-
-        @Override
-        public Class<?> getType() {
-            return expr.getType();
         }
     }
 }

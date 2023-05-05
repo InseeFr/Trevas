@@ -59,13 +59,12 @@ public class GenericFunctionsTest {
         assertThat((Instant) context.getAttribute("e")).isEqualTo("1998-12-01T00:00:00.000Z");
         engine.eval("f := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
         assertThat((Instant) context.getAttribute("f")).isEqualTo("1998-12-31T00:00:00.000Z");
-        // See TODO in GenericFunctionsVisitor
-        /* assertThatThrownBy(() -> {
+        assertThatThrownBy(() -> {
             engine.eval("a := cast(\"\", integer);");
-        }).isInstanceOf(ScriptException.class);
+        }).isInstanceOf(NumberFormatException.class).hasMessage("For input string: \"\"");
         assertThatThrownBy(() -> {
             engine.eval("a := cast(\"\", number);");
-        }).isInstanceOf(ScriptException.class); */
+        }).isInstanceOf(NumberFormatException.class).hasMessage("empty String");
 
         // Cast Boolean to...
         engine.eval("a := cast(true, integer);");
