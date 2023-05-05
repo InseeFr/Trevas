@@ -41,7 +41,14 @@ public class VtlNativeMethods {
             Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
             // Conditional
-            Fun.<Boolean, Object, Object>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Boolean, Long, Long>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Boolean, Double, Double>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Boolean, String, String>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Boolean, Boolean, Boolean>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Long, Long>toMethod(ConditionalVisitor::nvl),
+            Fun.<Double, Double>toMethod(ConditionalVisitor::nvl),
+            Fun.<String, String>toMethod(ConditionalVisitor::nvl),
+            Fun.<Boolean, Boolean>toMethod(ConditionalVisitor::nvl),
             // ArithmeticVisitor
             Fun.<Long, Long>toMethod(ArithmeticVisitor::multiplication),
             Fun.<Double, Long>toMethod(ArithmeticVisitor::multiplication),

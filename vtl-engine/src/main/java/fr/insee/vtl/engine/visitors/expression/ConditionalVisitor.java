@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
 
 /**
  * <code>IfVisitor</code> is the base visitor for if-then-else expressions.
@@ -34,6 +33,50 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ConditionalVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         this.exprVisitor = Objects.requireNonNull(expressionVisitor);
         this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
+    }
+
+    public static Long ifThenElse(Boolean condition, Long thenExpr, Long elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Double ifThenElse(Boolean condition, Double thenExpr, Double elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static String ifThenElse(Boolean condition, String thenExpr, String elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Boolean ifThenElse(Boolean condition, Boolean thenExpr, Boolean elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Long nvl(Long value, Long defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static Double nvl(Double value, Double defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static String nvl(String value, String defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static Boolean nvl(Boolean value, Boolean defaultValue) {
+        return value == null ? defaultValue : value;
     }
 
     /**
@@ -58,6 +101,26 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         }
     }
 
+    /**
+     * Visits nvl expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the null value clause.
+     */
+    @Override
+    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+        try {
+            ResolvableExpression expression = exprVisitor.visit(ctx.left);
+            ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
+
+            Positioned position = fromContext(ctx);
+            return genericFunctionsVisitor.invokeFunction("nvl", List.of(expression, defaultExpression), position);
+        } catch (VtlScriptException e) {
+            // Is FunctionNotFoundException actually type exception?
+            throw new RuntimeException(e);
+        }
+    }
+
     static class CastExpresison extends ResolvableExpression {
         private final Class<?> type;
         private final ResolvableExpression expression;
@@ -71,79 +134,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         @Override
         public Object resolve(Map<String, Object> context) {
             return type.cast(expression.resolve(context));
-        }
-
-        @Override
-        public Class<?> getType() {
-            return type;
-        }
-    }
-
-    /**
-     * Visits nvl expressions.
-     *
-     * @param ctx The scripting context for the expression.
-     * @return A <code>ResolvableExpression</code> resolving to the null value clause.
-     */
-    @Override
-    public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
-        ResolvableExpression expression = exprVisitor.visit(ctx.left);
-        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
-
-        if (isNull(expression)) {
-            return defaultExpression;
-        }
-
-        return new NvlExpression(fromContext(ctx), expression, defaultExpression);
-    }
-
-    public static <T> T ifThenElse(Boolean condition, T thenExpr, T elseExpr) {
-        if (condition == null) {
-            return null;
-        }
-        return condition ? thenExpr : elseExpr;
-    }
-
-    static class IfThenExpression extends ResolvableExpression {
-
-        final ResolvableExpression conditionExpr;
-        final ResolvableExpression thenExpr;
-        final ResolvableExpression elseExpr;
-
-        final Class<?> type;
-
-        IfThenExpression(Positioned position,
-                         ResolvableExpression conditionExpr,
-                         ResolvableExpression thenExpr,
-                         ResolvableExpression elseExpr) throws InvalidTypeException {
-            super(position);
-            this.conditionExpr = conditionExpr.checkInstanceOf(Boolean.class);
-
-            // Normalize the types of the branches.
-            if (!isNull(thenExpr)) {
-                elseExpr = elseExpr.checkInstanceOf(thenExpr.getType()).tryCast(thenExpr.getType());
-            }
-            if (!isNull(elseExpr)) {
-                thenExpr = thenExpr.checkInstanceOf(elseExpr.getType()).tryCast(elseExpr.getType());
-            }
-
-            this.thenExpr = thenExpr;
-            this.elseExpr = elseExpr;
-            this.type = thenExpr.getType();
-        }
-
-        @Override
-        public Object resolve(Map<String, Object> context) {
-            if (isNull(conditionExpr)) {
-                return null;
-            }
-            var cond = (Boolean) conditionExpr.resolve(context);
-            if (cond == null) {
-                return null;
-            }
-            return Boolean.TRUE.equals(cond)
-                    ? thenExpr.resolve(context)
-                    : elseExpr.resolve(context);
         }
 
         @Override
