@@ -24,6 +24,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -92,6 +93,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 // Normalize all parameters to datasets first.
                 // 1. Join all the datasets together and build a new expression map.
                 Map<String, ResolvableExpression> monoExprs = new HashMap<>();
+                Set<String> measureNames = new HashSet();
                 var dsExprs = parameters.stream()
                         .filter(e -> e instanceof DatasetExpression)
                         .map(e -> ((DatasetExpression) e))
@@ -101,13 +103,19 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                             }
                             var uniqueName = "arg" + ds.hashCode();
                             var measure = ds.getMeasures().get(0);
-                            ds = proc.executeRename(ds, Map.of(measure.getName(), uniqueName));
+                            String measureName = measure.getName();
+                            measureNames.add(measureName);
+                            ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
                             var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
                             monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
                             return ds;
                         })
                         .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
-
+                if (measureNames.size() != 1) {
+                    throw new VtlRuntimeException(
+                            new InvalidArgumentException("mono-measure datasets don't contain same measures (number or names)", position)
+                    );
+                }
                 DatasetExpression ds = proc.executeInnerJoin(dsExprs);
 
                 // Rebuild the function parameters. TODO: All component?
@@ -121,7 +129,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                         .collect(Collectors.toList()));
                 var funcExrp = new FunctionExpression(method, normalizedParams, position);
                 ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
-                return proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
+                ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
+                return proc.executeRename(ds, Map.of("result", measureNames.iterator().next()));
             }
 
         } catch (NoSuchMethodException e) {
