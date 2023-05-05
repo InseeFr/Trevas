@@ -4,8 +4,6 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.spark.SparkDataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -276,7 +274,6 @@ public class ValidationTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS1", ds_1_check, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("DS2", ds_2_check, ScriptContext.ENGINE_SCOPE);
-        engine.eval("ds := DS1 >= DS2;");
 
         engine.eval("ds := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2);" +
                 "ds1 := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2 invalid);");
@@ -342,7 +339,6 @@ public class ValidationTest {
                         "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
                 Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
                         "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
-
     }
 
     @Test

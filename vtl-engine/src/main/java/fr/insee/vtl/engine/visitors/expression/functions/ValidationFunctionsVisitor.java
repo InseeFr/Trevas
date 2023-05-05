@@ -106,7 +106,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
         List<Structured.Component> exprMeasures = dsExpression.getDataStructure().values().stream()
-                .filter(c -> c.isMeasure()).collect(Collectors.toList());
+                .filter(Structured.Component::isMeasure).collect(Collectors.toList());
         if (exprMeasures.size() != 1) {
             throw new VtlRuntimeException(
                     new InvalidArgumentException("Check operand dataset contains several measures", pos)
@@ -123,7 +123,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 Dataset.class, ctx.imbalanceExpr());
         if (null != imbalanceExpression) {
             List<Structured.Component> imbalanceMeasures = imbalanceExpression.getDataStructure().values().stream()
-                    .filter(c -> c.isMeasure()).collect(Collectors.toList());
+                    .filter(Structured.Component::isMeasure).collect(Collectors.toList());
             if (imbalanceMeasures.size() != 1) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Check imbalance dataset contains several measures", pos)

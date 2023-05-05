@@ -58,14 +58,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         return assignedObject;
     }
 
-    private String getName(VtlParser.ConstantContext ctx) {
-        String text = ctx.getText();
-        if (text.startsWith("\"") && text.endsWith("\"")) {
-            text = text.substring(1, text.length() - 1);
-        }
-        return text;
-    }
-
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
         String rulesetName = ctx.rulesetID().getText();
