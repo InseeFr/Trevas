@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -204,8 +205,8 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(12346D);
         engine.eval("e := round(12345.6, -1);");
         assertThat(context.getAttribute("e")).isEqualTo(12350D);
-        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
 
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := round(ds[keep id, long1, double2], 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
@@ -216,12 +217,12 @@ public class NumericFunctionsTest {
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
             engine.eval("f := round(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'round(String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("f := round(2.22222, 2.3);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected Long");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'round(Double, Double)' not found");
     }
 
     @Test
