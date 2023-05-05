@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,16 +83,16 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(0L);
 
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := ceil(ds[keep id, long1, double1, string1]);");
+        Object res = engine.eval("res := ceil(ds[keep id, long1, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", 150L, "double1", 2L, "string1", "hadrien"),
-                Map.of("id", "Nico", "long1", 20L, "double1", 3L, "string1", "nico"),
-                Map.of("id", "Franck", "long1", 100L, "double1", -1L, "string1", "franck")
+                Map.of("id", "Hadrien", "long1", 150L, "double1", 2L),
+                Map.of("id", "Nico", "long1", 20L, "double1", 3L),
+                Map.of("id", "Franck", "long1", 100L, "double1", -1L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'ceil(String)' not found");
     }
 
     @Test
@@ -109,16 +108,16 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("d")).isEqualTo(-1L);
 
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(ds[keep id, double1, string1]);");
+        Object res = engine.eval("res := floor(ds[keep id, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 1L, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 2L, "string1", "nico"),
-                Map.of("id", "Franck", "double1", -2L, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 1L),
+                Map.of("id", "Nico", "double1", 2L),
+                Map.of("id", "Franck", "double1", -2L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'floor(String)' not found");
     }
 
     @Test
@@ -163,8 +162,8 @@ public class NumericFunctionsTest {
         );
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'exp(String)' not found");
     }
 
     @Test
@@ -180,16 +179,16 @@ public class NumericFunctionsTest {
         assertThat(((Double) context.getAttribute("d"))).isCloseTo(-0.69D, Percentage.withPercentage(1));
 
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := floor(ln(abs(ds[drop long1, bool1])));");
+        Object res = engine.eval("res := floor(ln(abs(ds[keep id, double1])));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 0L, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 0L, "string1", "nico"),
-                Map.of("id", "Franck", "double1", 0L, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 0L),
+                Map.of("id", "Nico", "double1", 0L),
+                Map.of("id", "Franck", "double1", 0L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ln(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'ln(String)' not found");
     }
 
     @Test
@@ -250,12 +249,12 @@ public class NumericFunctionsTest {
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
             engine.eval("f := trunc(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'trunc(String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("f := trunc(2.22222, 2.3);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type Double, expected Long");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'trunc(Double, Double)' not found");
     }
 
     @Test
@@ -280,8 +279,8 @@ public class NumericFunctionsTest {
 //                .hasMessage("Sqrt operand has to be 0 or positive");
         assertThatThrownBy(() -> {
             engine.eval("e := sqrt(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'sqrt(String)' not found");
     }
 
     @Test
@@ -313,22 +312,6 @@ public class NumericFunctionsTest {
     }
 
     @Test
-    public void testDELELEME() throws ScriptException {
-        ScriptContext context = engine.getContext();
-        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-
-        Object test = engine.eval("res := cast(null, integer);");
-
-        Object res = engine.eval("res := trunc((ds#long1 + cast(null, integer)) / 3, 2);");
-        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
-                Map.of("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
-                Map.of("id", "Nico", "long1", 400.0D, "double2", 445.2D),
-                Map.of("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
-        );
-    }
-
-    @Test
     public void testPower() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("a := power(5, 2);");
@@ -354,12 +337,12 @@ public class NumericFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("f := power(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'power(String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("f := power(2, \"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'power(Long, String)' not found");
     }
 
     @Test
@@ -382,11 +365,11 @@ public class NumericFunctionsTest {
 
         assertThatThrownBy(() -> {
             engine.eval("f := log(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'log(String, Long)' not found");
         assertThatThrownBy(() -> {
             engine.eval("f := log(2, \"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'log(Long, String)' not found");
     }
 }
