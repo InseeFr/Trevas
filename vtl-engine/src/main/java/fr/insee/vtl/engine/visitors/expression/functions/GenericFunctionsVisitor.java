@@ -106,12 +106,14 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
             // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
             // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
-
+            ResolvableExpression finalRes;
             // Only one parameter, and it's a dataset. We can invoke the function on each measure.
             if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
                 // Only scalar types. We can invoke the function directly.
                 var method = engine.findMethod(funcName, parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList()));
-                return new FunctionExpression(method, parameters, position);
+                finalRes = new FunctionExpression(method, parameters, position);
+            } else if (noMonoDs.size() == 0) {
+                finalRes = invokeFunctionOnDataset(funcName, parameters, position);
             } else {
                 List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
                 Map<String, DatasetExpression> results = new HashMap();
@@ -127,8 +129,17 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     }).collect(Collectors.toList());
                     results.put(measure.getName(), invokeFunctionOnDataset(funcName, params, position));
                 }
-                return proc.executeInnerJoin(results);
+                finalRes = proc.executeInnerJoin(results);
             }
+            if (finalRes instanceof DatasetExpression) {
+                List<Structured.Component> measures = ((DatasetExpression) finalRes).getMeasures();
+                if (measures.size() == 1 && measures.get(0).getType().equals(Boolean.class)) {
+                    // TODO: refine with constraints matrix
+                    return proc.executeRename((DatasetExpression) finalRes, Map.of(measures.get(0).getName(), "bool_var"));
+                }
+                return finalRes;
+            }
+            return finalRes;
         } catch (NoSuchMethodException e) {
             throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
         }

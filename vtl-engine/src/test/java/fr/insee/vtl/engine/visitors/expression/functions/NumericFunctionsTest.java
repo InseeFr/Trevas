@@ -130,16 +130,16 @@ public class NumericFunctionsTest {
         assertThat(context.getAttribute("b")).isEqualTo(5.5D);
 
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-        Object res = engine.eval("res := abs(ds[keep id, double1, string1]);");
+        Object res = engine.eval("res := abs(ds[keep id, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "double1", 1.1D, "string1", "hadrien"),
-                Map.of("id", "Nico", "double1", 2.2D, "string1", "nico"),
-                Map.of("id", "Franck", "double1", 1.21D, "string1", "franck")
+                Map.of("id", "Hadrien", "double1", 1.1D),
+                Map.of("id", "Nico", "double1", 2.2D),
+                Map.of("id", "Franck", "double1", 1.21D)
         );
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'abs(String)' not found");
     }
 
     @Test
@@ -308,8 +308,8 @@ public class NumericFunctionsTest {
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
             engine.eval("f := mod(\"ko\", 2);");
-        }).isInstanceOf(InvalidTypeException.class)
-                .hasMessage("invalid type String, expected Number");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'mod(String, Long)' not found");
     }
 
     @Test

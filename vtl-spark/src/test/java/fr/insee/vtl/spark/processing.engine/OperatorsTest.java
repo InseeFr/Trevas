@@ -67,8 +67,8 @@ public class OperatorsTest {
                 "res := mod(ds_1, 5); " +
                 "res := power(ds_1, 5); " +
                 "res := log(abs(ds_1), 5); " +
-                "ds_1 := ds1[keep id, string1, string2]; ds_2 := ds2[keep id, string1, string2]; " +
-                "res := ds1 || ds2; "
+                "ds_1 := ds1[keep id, string1, string2]; ds_2 := ds2[keep id, string1][calc string2 := string1]; " +
+                "res := ds_1 || ds_2; "
         );
     }
 }

@@ -30,24 +30,26 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
         this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    public static Number plus(Number right) {
-        if (right == null) {
-            return null;
-        }
-        if (right instanceof Long) {
-            return right.longValue();
-        }
-        return right.doubleValue();
+    public static Long plus(Long right) {
+        return right;
     }
 
-    public static Number minus(Number right) {
+    public static Double plus(Double right) {
+        return right;
+    }
+
+    public static Long minus(Long right) {
         if (right == null) {
             return null;
         }
-        if (right instanceof Long) {
-            return -right.longValue();
+        return -right;
+    }
+
+    public static Double minus(Double right) {
+        if (right == null) {
+            return null;
         }
-        return -right.doubleValue();
+        return -right;
     }
 
     public static Boolean not(Boolean right) {

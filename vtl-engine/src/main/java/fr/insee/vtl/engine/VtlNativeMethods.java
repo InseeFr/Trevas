@@ -40,14 +40,14 @@ public class VtlNativeMethods {
             Fun.<Double, Double>toMethod(ArithmeticExprOrConcatVisitor::subtraction),
             Fun.toMethod(ArithmeticExprOrConcatVisitor::concat),
             // ArithmeticVisitor
-            Fun.<Long,Long>toMethod(ArithmeticVisitor::multiplication),
-            Fun.<Double,Long>toMethod(ArithmeticVisitor::multiplication),
-            Fun.<Long,Double>toMethod(ArithmeticVisitor::multiplication),
-            Fun.<Double,Double>toMethod(ArithmeticVisitor::multiplication),
-            Fun.<Long,Long>toMethod(ArithmeticVisitor::division),
-            Fun.<Double,Long>toMethod(ArithmeticVisitor::division),
-            Fun.<Long,Double>toMethod(ArithmeticVisitor::division),
-            Fun.<Double,Double>toMethod(ArithmeticVisitor::division),
+            Fun.<Long, Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double, Long>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long, Double>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Double, Double>toMethod(ArithmeticVisitor::multiplication),
+            Fun.<Long, Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Double, Long>toMethod(ArithmeticVisitor::division),
+            Fun.<Long, Double>toMethod(ArithmeticVisitor::division),
+            Fun.<Double, Double>toMethod(ArithmeticVisitor::division),
             // DistanceFunctionsVisitor
             Fun.toMethod(DistanceFunctionsVisitor::levenshtein),
             // String function visitor
@@ -69,8 +69,10 @@ public class VtlNativeMethods {
             Fun.toMethod(BooleanVisitor::or),
             Fun.toMethod(BooleanVisitor::xor),
             // UnaryVisitor
-            Fun.toMethod(UnaryVisitor::plus),
-            Fun.toMethod(UnaryVisitor::minus),
+            Fun.<Long>toMethod(UnaryVisitor::plus),
+            Fun.<Double>toMethod(UnaryVisitor::plus),
+            Fun.<Long>toMethod(UnaryVisitor::minus),
+            Fun.<Double>toMethod(UnaryVisitor::minus),
             Fun.toMethod(UnaryVisitor::not),
             // ComparisonVisitor
             Fun.toMethod(ComparisonVisitor::isEqual),
