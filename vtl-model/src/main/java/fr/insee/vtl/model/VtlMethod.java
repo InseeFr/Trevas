@@ -4,7 +4,6 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class VtlMethod implements Serializable {
 
@@ -22,7 +21,7 @@ public class VtlMethod implements Serializable {
         try {
             return Class.forName(className).getMethod(methodName, this.types);
         } catch (Exception e) {
-            throw new VtlScriptException("could not deserialize method " + methodName, pos);
+            throw new VtlScriptException("could not deserialize method " + methodName + ": " + e.getMessage(), pos);
         }
     }
 }

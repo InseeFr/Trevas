@@ -4,10 +4,10 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.VtlMethod;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,15 +18,18 @@ import java.util.Objects;
  */
 public class FunctionExpression extends ResolvableExpression {
 
-    private final Method method;
+    private final VtlMethod method;
+
+    private final Class<?> returnType;
     private final List<ResolvableExpression> parameters;
 
-    public FunctionExpression(Method method, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
+    public FunctionExpression(VtlMethod method, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
         super(position);
         this.method = Objects.requireNonNull(method);
         this.parameters = Objects.requireNonNull(parameters);
+        this.returnType = this.method.getMethod(position).getReturnType();
 
-        var expectedTypes = Arrays.asList(this.method.getParameterTypes());
+        var expectedTypes = Arrays.asList(this.method.getMethod(position).getParameterTypes());
         if (expectedTypes.size() < parameters.size()) {
             throw new VtlScriptException("unexpected parameter", parameters.get(expectedTypes.size()));
         } else if (expectedTypes.size() > parameters.size()) {
@@ -52,7 +55,7 @@ public class FunctionExpression extends ResolvableExpression {
     public Object resolve(Map<String, Object> context) {
         Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
         try {
-            return method.invoke(null, evaluatedParameters);
+            return method.getMethod(this).invoke(null, evaluatedParameters);
         } catch (InvocationTargetException ite) {
             var cause = ite.getCause();
             if (cause instanceof Exception) {
@@ -69,6 +72,6 @@ public class FunctionExpression extends ResolvableExpression {
 
     @Override
     public Class<?> getType() {
-        return method.getReturnType();
+        return this.returnType;
     }
 }

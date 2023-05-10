@@ -21,7 +21,6 @@ import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,7 +110,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
                 // Only scalar types. We can invoke the function directly.
                 List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-                var method = engine.findMethod(funcName, parameterTypes).getMethod(position);
+                var method = engine.findMethod(funcName, parameterTypes);
                 return new FunctionExpression(method, parameters, position);
             } else if (noMonoDs.size() == 0) {
                 finalRes = invokeFunctionOnDataset(funcName, parameters, position);
@@ -185,7 +184,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         List<? extends Class<?>> parametersTypes = normalizedParams.stream()
                 .map(TypedExpression::getType)
                 .collect(Collectors.toList());
-        Method method = engine.findMethod(funcName, parametersTypes).getMethod(position);
+        var method = engine.findMethod(funcName, parametersTypes);
         var funcExrp = new FunctionExpression(method, normalizedParams, position);
         ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
         ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
