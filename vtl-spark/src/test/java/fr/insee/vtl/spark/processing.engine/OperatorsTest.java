@@ -97,11 +97,10 @@ public class OperatorsTest {
                 "res := if ds1 > ds2 then ds1 else ds2;");
         var res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "bool_var", false),
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Map.of("id", "Hadrien", "bool_var", 150L),
+                Map.of("id", "Nico", "bool_var", 20L),
+                Map.of("id", "Franck", "bool_var", 100L)
         );
-        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
+        assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Long.class);
     }
 }
