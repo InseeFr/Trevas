@@ -324,20 +324,20 @@ public class ValidationTest {
         var ds1 = (Dataset) engine.getContext().getAttribute("ds1");
         assertThat(ds1).isInstanceOf(Dataset.class);
 
-        List<Map<String, Object>> ds1WithNull = ds.getDataAsMap();
+        List<Map<String, Object>> ds1WithNull = ds1.getDataAsMap();
         List<Map<String, Object>> ds1WithoutNull = new ArrayList<>();
         for (Map<String, Object> map : ds1WithNull) {
             ds1WithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
         assertThat(ds1WithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+                Map.of("Id_1", "2010", "Id_2", "I",
                         "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2013", "Id_2", "I", "bool_var", false,
+                Map.of("Id_1", "2013", "Id_2", "I",
                         "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2010", "Id_2", "D", "bool_var", false,
+                Map.of("Id_1", "2010", "Id_2", "D",
                         "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
+                Map.of("Id_1", "2014", "Id_2", "D",
                         "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
     }
 
