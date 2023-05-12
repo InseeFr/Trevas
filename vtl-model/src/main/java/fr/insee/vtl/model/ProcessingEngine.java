@@ -1,7 +1,10 @@
 package fr.insee.vtl.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.model.Structured.Component;
 
@@ -29,7 +32,7 @@ public interface ProcessingEngine {
      * @param filter     a filter expression
      * @return the result of the filter transformation
      */
-    DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterString);
+    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterString);
 
     /**
      * Execute a rename transformations on the dataset expression.
@@ -141,6 +144,14 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    default DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets) {
+        Set<Component> commonIdentifiers = datasets.values().stream()
+                .flatMap(datasetExpression -> datasetExpression.getDataStructure().values().stream())
+                .filter(Structured.Component::isIdentifier)
+                .collect(Collectors.toSet());
+        return executeInnerJoin(datasets, new ArrayList<>(commonIdentifiers));
+    }
+
     /**
      * Execute a cross join transformations on the dataset expressions.
      *
@@ -165,8 +176,24 @@ public interface ProcessingEngine {
      * @param dpr               datapoint ruleset
      * @param datasetExpression datasets
      * @param output            validation output
+     * @param pos               script error position
      * @return the result of the validation DP ruleset transformation
      */
-    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output);
+    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output, Positioned pos);
+
+    /**
+     * Execute a simple validation on dataset expressions.
+     *
+     * @param dsExpr        dataset expression
+     * @param erCodeExpr    error code expression
+     * @param erLevelExpr   error level expression
+     * @param imbalanceExpr dataset expression
+     * @param output        validation output
+     * @param pos           script error position
+     * @return the result of the validation
+     */
+    DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr,
+                                              ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr,
+                                              String output, Positioned pos);
 
 }

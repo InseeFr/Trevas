@@ -1,14 +1,16 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.utils.TypeChecking;
-import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>BooleanVisitor</code> is the base visitor for expressions involving boolean operations.
@@ -16,18 +18,44 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
 public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor the parent expression visitor.
+     * @param expressionVisitor       the parent expression visitor.
+     * @param genericFunctionsVisitor the parent generic functions visitor.
      */
-    public BooleanVisitor(ExpressionVisitor expressionVisitor) {
+    public BooleanVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
-    private static boolean nullFalse(Boolean b) {
-        return b != null ? b : false;
+    public static Boolean and(Boolean left, Boolean right) {
+        if (left != null && !left) return false;
+        if (right != null && !right) return false;
+        if (left == null || right == null) return null;
+        return true;
+    }
+
+    public static Boolean or(Boolean left, Boolean right) {
+        if (left != null && left) {
+            return true;
+        }
+        if (right != null && right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return null;
+        }
+        return false;
+    }
+
+    public static Boolean xor(Boolean left, Boolean right) {
+        if (left == null || right == null) {
+            return null;
+        }
+        return left ^ right;
     }
 
     /**
@@ -38,67 +66,23 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
-        switch (ctx.op.getType()) {
-            case VtlParser.AND:
-                return handleAnd(ctx.left, ctx.right);
-            case VtlParser.OR:
-                return handleOr(ctx.left, ctx.right);
-            case VtlParser.XOR:
-                return handleXor(ctx.left, ctx.right);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+        try {
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    exprVisitor.visit(ctx.right)
+            );
+            switch (ctx.op.getType()) {
+                case VtlParser.AND:
+                    return genericFunctionsVisitor.invokeFunction("and", parameters, fromContext(ctx));
+                case VtlParser.OR:
+                    return genericFunctionsVisitor.invokeFunction("or", parameters, fromContext(ctx));
+                case VtlParser.XOR:
+                    return genericFunctionsVisitor.invokeFunction("xor", parameters, fromContext(ctx));
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-    }
-
-    private ResolvableExpression handleAnd(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
-
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue != null && !leftValue) return false;
-
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue != null && !rightValue) return false;
-
-            if (TypeChecking.hasNullArgs(rightValue, leftValue)) return null;
-
-            return true;
-        });
-    }
-
-    private ResolvableExpression handleOr(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue != null && leftValue) {
-                return true;
-            }
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue != null && rightValue) {
-                return true;
-            }
-            if (TypeChecking.hasNullArgs(rightValue, leftValue)) {
-                return null;
-            }
-            return false;
-        });
-    }
-
-    private ResolvableExpression handleXor(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertBoolean(exprVisitor.visit(left), left);
-        var rightExpression = assertBoolean(exprVisitor.visit(right), right);
-        return BooleanExpression.of(context -> {
-            var leftValue = (Boolean) leftExpression.resolve(context);
-            if (leftValue == null) {
-                return null;
-            }
-            var rightValue = (Boolean) rightExpression.resolve(context);
-            if (rightValue == null) {
-                return null;
-            }
-            return nullFalse(leftValue) ^ nullFalse(rightValue);
-        });
     }
 }

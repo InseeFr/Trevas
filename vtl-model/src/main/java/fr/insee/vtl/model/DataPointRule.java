@@ -1,6 +1,7 @@
 package fr.insee.vtl.model;
 
-import java.util.function.Function;
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Data point rule
@@ -8,11 +9,11 @@ import java.util.function.Function;
  * The <code>DataPointRule</code> represent rule to be applied to each individual Data Point of a Data Set for validation
  */
 
-public class DataPointRule {
+public class DataPointRule implements Serializable {
 
     private final String name;
-    private final Function<Structured.DataStructure, ResolvableExpression> untypedAntecedentExpr;
-    private final Function<Structured.DataStructure, ResolvableExpression> untypedConsequentExpr;
+    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression;
+    private final VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression;
     private final ResolvableExpression errorCodeExpression;
     private final ResolvableExpression errorLevelExpression;
 
@@ -34,13 +35,13 @@ public class DataPointRule {
      */
 
     public <T> DataPointRule(String name,
-                             Function<Structured.DataStructure, ResolvableExpression> untypedAntecedentExpr,
-                             Function<Structured.DataStructure, ResolvableExpression> untypedConsequentExpr,
+                             VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression,
+                             VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression,
                              ResolvableExpression errorCodeExpression,
                              ResolvableExpression errorLevelExpression) {
         this.name = name;
-        this.untypedAntecedentExpr = untypedAntecedentExpr;
-        this.untypedConsequentExpr = untypedConsequentExpr;
+        this.buildAntecedentExpression = buildAntecedentExpression;
+        this.buildConsequentExpression = buildConsequentExpression;
         this.errorCodeExpression = errorCodeExpression;
         this.errorLevelExpression = errorLevelExpression;
     }
@@ -49,12 +50,12 @@ public class DataPointRule {
         return name;
     }
 
-    public ResolvableExpression getBuildAntecedentExpression(Structured.DataStructure dataStructure) {
-        return this.untypedAntecedentExpr.apply(dataStructure);
+    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildAntecedentExpression() {
+        return buildAntecedentExpression;
     }
 
-    public ResolvableExpression getBuildConsequentExpression(Structured.DataStructure dataStructure) {
-        return this.untypedConsequentExpr.apply(dataStructure);
+    public VtlFunction<Map<String, Object>, ResolvableExpression> getBuildConsequentExpression() {
+        return buildConsequentExpression;
     }
 
     public ResolvableExpression getErrorCodeExpression() {

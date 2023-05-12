@@ -4,11 +4,11 @@ import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Analytics;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -50,7 +50,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             );
         }
 
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var dataset = expression.resolve(context);
@@ -72,8 +72,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
-        return new DatasetExpression() {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
+        return new DatasetExpression(expression) {
 
             @Override
             public DataStructure getDataStructure() {
@@ -112,7 +112,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                         )
                 ).collect(Collectors.toList());
         DataStructure renamedStructure = new DataStructure(structure);
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var result = expression.resolve(context).getDataPoints().stream()
@@ -142,7 +142,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 .collect(Collectors.toList());
         var newStructure = new DataStructure(structure);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var columnNames = getColumnNames();
@@ -167,7 +167,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-        return new DatasetExpression() {
+        return new DatasetExpression(datasets.get(0)) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 Stream<DataPoint> stream = Stream.empty();
@@ -209,7 +209,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         }
 
         Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
 
@@ -302,7 +302,14 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeValidationSimple(DatasetExpression dsE, ResolvableExpression erCodeE,
+                                                     ResolvableExpression erLevelE, DatasetExpression imbalanceE,
+                                                     String output, Positioned pos) {
         throw new UnsupportedOperationException();
     }
 
@@ -342,7 +349,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         var structure = createCommonStructure(identifiers, left, right);
         var predicate = createPredicate(identifiers);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();
@@ -394,7 +401,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         var structure = createCommonStructure(identifiers, left, right);
         var predicate = createPredicate(identifiers);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();
@@ -439,7 +446,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     private DatasetExpression handleCrossJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
         var structure = createCommonStructure(identifiers, left, right);
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();

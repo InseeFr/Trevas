@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
-import org.antlr.v4.runtime.tree.ParseTree;
+import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -16,8 +17,8 @@ public class ConflictingTypesException extends VtlScriptException {
      * @param types The conflicting types.
      * @param tree  The parsing context where the exception is thrown.
      */
-    public ConflictingTypesException(Collection<Class<?>> types, ParseTree tree) {
+    public ConflictingTypesException(Collection<Class<?>> types, Positioned position) {
         super(String.format("conflicting types: %s", types.stream().map(Class::getSimpleName)
-                .collect(Collectors.toList())), tree);
+                .collect(Collectors.toList())), position);
     }
 }

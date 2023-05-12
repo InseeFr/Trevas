@@ -4,8 +4,6 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.spark.SparkDataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +35,90 @@ public class ValidationTest {
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final InMemoryDataset ds_1_check = new InMemoryDataset(
+            List.of(
+                    List.of("2010", "I", 1L),
+                    List.of("2011", "I", 2L),
+                    List.of("2012", "I", 10L),
+                    List.of("2013", "I", 4L),
+                    List.of("2014", "I", 5L),
+                    List.of("2015", "I", 6L),
+                    List.of("2010", "D", 25L),
+                    List.of("2011", "D", 35L),
+                    List.of("2012", "D", 45L),
+                    List.of("2013", "D", 55L),
+                    List.of("2014", "D", 50L),
+                    List.of("2015", "D", 75L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final InMemoryDataset ds_2_check = new InMemoryDataset(
+            List.of(
+                    List.of("2010", "I", 9L),
+                    List.of("2011", "I", 2L),
+                    List.of("2012", "I", 10L),
+                    List.of("2013", "I", 7L),
+                    List.of("2014", "I", 5L),
+                    List.of("2015", "I", 6L),
+                    List.of("2010", "D", 50L),
+                    List.of("2011", "D", 35L),
+                    List.of("2012", "D", 40L),
+                    List.of("2013", "D", 55L),
+                    List.of("2014", "D", 65L),
+                    List.of("2015", "D", 75L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsExpr = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true),
+                    List.of("2011", "I", "DEBIT", false),
+                    List.of("2012", "I", "CREDIT", false),
+                    List.of("2012", "I", "DEBIT", true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalance = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 2L),
+                    List.of("2012", "I", "CREDIT", 2L),
+                    List.of("2012", "I", "DEBIT", 3L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalanceToRename = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 2L),
+                    List.of("2012", "I", "CREDIT", 2L),
+                    List.of("2012", "I", "DEBIT", 3L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("imbalance_1", Long.class, Dataset.Role.MEASURE)
             )
     );
     private SparkSession spark;
@@ -185,29 +267,100 @@ public class ValidationTest {
                         "Me_1", -2L, "ruleid", "dpr1_2",
                         "errorcode", "Bad debit", "errorlevel", "null")
         );
-
     }
 
     @Test
-    public void testValidateDPrulesetSerialization() throws ScriptException {
-        org.apache.spark.sql.Dataset<Row> parquet = spark.read().parquet("src/main/resources/input_sample");
-        SparkDataset sparkDataset = new SparkDataset(parquet);
+    public void testCheck() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS1", ds_1_check, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("DS2", ds_2_check, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2);" +
+                "ds1 := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2 invalid);");
+
+        var ds = (Dataset) engine.getContext().getAttribute("ds");
+        assertThat(ds).isInstanceOf(Dataset.class);
+
+        List<Map<String, Object>> dsWithNull = ds.getDataAsMap();
+        List<Map<String, Object>> dsWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsWithNull) {
+            dsWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2011", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2012", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2013", "Id_2", "I", "bool_var", false,
+                        "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2014", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2015", "Id_2", "I", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "bool_var", false,
+                        "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2011", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2012", "Id_2", "D", "bool_var", true,
+                        "imbalance", 5L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2013", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
+                        "imbalance", -15L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2015", "Id_2", "D", "bool_var", true,
+                        "imbalance", 0L, "errorcode", "null", "errorlevel", "null")));
+        assertThat(ds.getDataStructure()).containsValues(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
+        );
+
+        var ds1 = (Dataset) engine.getContext().getAttribute("ds1");
+        assertThat(ds1).isInstanceOf(Dataset.class);
+
+        List<Map<String, Object>> ds1WithNull = ds1.getDataAsMap();
+        List<Map<String, Object>> ds1WithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : ds1WithNull) {
+            ds1WithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(ds1WithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "I",
+                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2013", "Id_2", "I",
+                        "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2010", "Id_2", "D",
+                        "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
+                Map.of("Id_1", "2014", "Id_2", "D",
+                        "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
+    }
+
+    @Test
+    public void testValidationSimpleException() throws ScriptException {
 
         ScriptContext context = engine.getContext();
-        context.setAttribute("DS_1", sparkDataset, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExpr", dsExpr, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalance", dsImbalance, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalanceToRename", dsImbalanceToRename, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("define datapoint ruleset dpr1 (variable student_number) is " +
-                "my_rule : student_number > 5 errorcode \"Not enough\" " +
-                "end datapoint ruleset; " +
-                "DS_r := check_datapoint(DS_1, dpr1 all);" +
-                "DS_r_invalid := check_datapoint(DS_1, dpr1 invalid);");
-
+        engine.eval("DS_r := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalance);");
+        engine.eval("DS_r_invalid := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalance invalid);");
+        engine.eval("DS_r_to_rename := check(dsExpr errorcode \"error\" errorlevel 1 imbalance dsImbalanceToRename);");
         Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
-        List<Map<String, Object>> dataAsMap = DS_r.getDataAsMap();
-        assertThat(dataAsMap.size()).isEqualTo(146678L);
-
+        assertThat(DS_r.getDataAsMap().size()).isEqualTo(4);
         Dataset DS_r_invalid = (Dataset) engine.getContext().getAttribute("DS_r_invalid");
-        List<Map<String, Object>> dataAsMapInvalid = DS_r_invalid.getDataAsMap();
-        assertThat(dataAsMapInvalid.size()).isEqualTo(26L);
+        assertThat(DS_r_invalid.getDataAsMap().size()).isEqualTo(2);
+        Dataset DS_r_to_rename = (Dataset) engine.getContext().getAttribute("DS_r_to_rename");
+        List<String> DS_r_to_renameMeasure = DS_r_to_rename.getDataStructure().values()
+                .stream().filter(c -> c.isMeasure())
+                .map(c -> c.getName()).collect(Collectors.toList());
+        assertThat(DS_r_to_renameMeasure.size()).isEqualTo(4);
+        assertThat(DS_r_to_renameMeasure.contains("imbalance")).isTrue();
     }
 }

@@ -1,99 +1,123 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ListExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
-import fr.insee.vtl.model.VtlBiFunction;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.engine.utils.NumberConvertors.asBigDecimal;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumberOrTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.hasNullArgs;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNumber;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list expressions.
  */
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    private static final String unknownOperator = "unknown operator ";
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
      * @param expressionVisitor the parent expression visitor.
      */
-    public ComparisonVisitor(ExpressionVisitor expressionVisitor) {
+    public ComparisonVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = genericFunctionsVisitor;
     }
 
-    private static <T extends Comparable<T>> boolean isEqual(T left, T right) {
-        return left.compareTo(right) == 0;
-    }
-
-    private static <T extends Comparable<T>> boolean isNotEqual(T left, T right) {
-        return !isEqual(left, right);
-    }
-
-    private static <T extends Comparable<T>> boolean isLessThan(T left, T right) {
-        return left.compareTo(right) < 0;
-    }
-
-    private static <T extends Comparable<T>> boolean isGreaterThan(T left, T right) {
-        return left.compareTo(right) > 0;
-    }
-
-    private static <T extends Comparable<T>> boolean isLessThanOrEqual(T left, T right) {
-        return !isGreaterThan(left, right);
-    }
-
-    private static <T extends Comparable<T>> boolean isGreaterThanOrEqual(T left, T right) {
-        return !isLessThan(left, right);
-    }
-
-    /**
-     * This method handles the comparison between two expressions
-     *
-     * @param leftExpression
-     * @param rightExpression
-     * @param comparisonFn    a lambda or a method reference
-     * @return a VTL boolean expression
-     */
-    public BooleanExpression compareExpressions(
-            ResolvableExpression leftExpression,
-            ResolvableExpression rightExpression,
-            VtlBiFunction<Comparable, Comparable, Boolean> comparisonFn) {
-        return BooleanExpression.of(context -> {
-            Comparable leftValue;
-            Comparable rightValue;
-
-            if (isNumber(leftExpression)) {
-                leftValue = asBigDecimal(leftExpression, leftExpression.resolve(context));
-                rightValue = asBigDecimal(rightExpression, rightExpression.resolve(context));
-
-            } else {
-                leftValue = (Comparable) leftExpression.resolve(context);
-                rightValue = (Comparable) rightExpression.resolve(context);
+    private static Integer compare(Object left, Object right) throws Exception {
+        if (left == null || right == null) {
+            return null;
+        }
+        if (left instanceof Number && right instanceof Number) {
+            if (left instanceof Long && right instanceof Long) {
+                return Long.compare(((Number) left).longValue(), ((Number) right).longValue());
             }
+            return Double.compare(((Number) left).doubleValue(), ((Number) right).doubleValue());
+        }
+        if (left instanceof Boolean && right instanceof Boolean) {
+            return Boolean.compare((Boolean) left, (Boolean) right);
+        }
+        if (left instanceof String && right instanceof String) {
+            return ((String) left).compareTo((String) right);
+        }
+        if (left instanceof Date && right instanceof Date) {
+            return ((Date) left).compareTo((Date) right);
+        } else {
+            throw new Exception("Comparisons require Comparable params");
+        }
+    }
 
-            if (hasNullArgs(leftValue, rightValue)) return null;
+    public static Boolean isEqual(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare == 0;
+    }
 
-            return comparisonFn.apply(leftValue, rightValue);
-        });
+    public static Boolean isNotEqual(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare != 0;
+    }
+
+    public static Boolean isLessThan(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare < 0;
+    }
+
+    public static Boolean isGreaterThan(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare > 0;
+    }
+
+    public static Boolean isLessThanOrEqual(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare <= 0;
+    }
+
+    public static Boolean isGreaterThanOrEqual(Object left, Object right) throws Exception {
+        Integer compare = compare(left, right);
+        if (compare == null) {
+            return null;
+        }
+        return compare >= 0;
+    }
+
+    public static Boolean in(Object obj, List<?> list) {
+        return list.contains(obj);
+    }
+
+    public static Boolean notIn(Object obj, List<?> list) {
+        return !in(obj, list);
     }
 
     /**
@@ -104,39 +128,37 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
-        ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-        ResolvableExpression rightExpression = exprVisitor.visit(ctx.right);
-
-        // Get the type of the Token.
-        Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
-
-        // Special case with nulls.
-        if (isNull(leftExpression) || isNull(rightExpression)) {
-            return BooleanExpression.of((Boolean) null);
-        }
-
-        assertNumberOrTypeExpression(rightExpression, leftExpression.getType(), ctx.right);
-
-        // As long as both types return Comparable<TYPE>.
-        if (Comparable.class.isAssignableFrom(leftExpression.getType())) {
+        try {
+            Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
+            var leftExpression = exprVisitor.visit(ctx.left);
+            List<ResolvableExpression> parameters = List.of(
+                    leftExpression,
+                    exprVisitor.visit(ctx.right));
+            // If a parameter is the null token
+            if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
+                return ResolvableExpression
+                        .withType(Boolean.class)
+                        .withPosition(fromContext(ctx))
+                        .using(c -> null);
+            }
             switch (type.getType()) {
                 case VtlParser.EQ:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isEqual);
+                    return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
                 case VtlParser.NEQ:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isNotEqual);
+                    return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
                 case VtlParser.LT:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isLessThan);
+                    return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
                 case VtlParser.MT:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isGreaterThan);
+                    return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
                 case VtlParser.LE:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isLessThanOrEqual);
+                    return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
                 case VtlParser.ME:
-                    return compareExpressions(leftExpression, rightExpression, ComparisonVisitor::isGreaterThanOrEqual);
+                    return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
                 default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx);
+                    throw new UnsupportedOperationException(unknownOperator + ctx);
             }
-        } else {
-            throw new Error("type " + leftExpression.getType() + " must implement Comparable");
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 
@@ -148,30 +170,22 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
-        ResolvableExpression operand = exprVisitor.visit(ctx.left);
-        ListExpression listExpression = (ListExpression) visit(ctx.lists());
+        try {
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    visit(ctx.lists()));
+            Positioned pos = fromContext(ctx);
 
-        if (!operand.getType().equals(listExpression.containedType())) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(operand.getType(), listExpression.containedType(), ctx.lists())
-            );
-        }
-
-        switch (ctx.op.getType()) {
-            case VtlParser.IN:
-                return BooleanExpression.of(context -> {
-                    List<?> list = listExpression.resolve(context);
-                    Object value = operand.resolve(context);
-                    return list.contains(value);
-                });
-            case VtlParser.NOT_IN:
-                return BooleanExpression.of(context -> {
-                    List<?> list = listExpression.resolve(context);
-                    Object value = operand.resolve(context);
-                    return !list.contains(value);
-                });
-            default:
-                throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            switch (ctx.op.getType()) {
+                case VtlParser.IN:
+                    return genericFunctionsVisitor.invokeFunction("in", parameters, pos);
+                case VtlParser.NOT_IN:
+                    return genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
+                default:
+                    throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            }
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
     }
 
@@ -193,9 +207,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
 
+        var pos = fromContext(ctx);
+
         if (types.size() > 1) {
             throw new VtlRuntimeException(
-                    new ConflictingTypesException(types, ctx)
+                    new ConflictingTypesException(types, pos)
             );
         }
 
@@ -209,6 +225,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 .map(expression -> expression.resolve(Map.of()))
                 .collect(Collectors.toList());
 
-        return ListExpression.withContainedType(values, type);
+        return ListExpression.withContainedType(values, type, pos);
     }
 }

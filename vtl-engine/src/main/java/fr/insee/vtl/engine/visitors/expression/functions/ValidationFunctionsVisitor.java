@@ -14,8 +14,13 @@ import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 /**
@@ -54,7 +59,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         Object dprObject = engine.getContext().getAttribute((dprName));
         String output = getValidationOutput(ctx.validationOutput());
         if (!(dprObject instanceof DataPointRuleset))
-            throw new VtlRuntimeException(new UndefinedVariableException(ctx.IDENTIFIER()));
+            throw new VtlRuntimeException(new UndefinedVariableException(dprName, fromContext(ctx)));
         DataPointRuleset dpr = (DataPointRuleset) dprObject;
 
         DatasetExpression ds = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.op),
@@ -66,7 +71,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
             if (!dataStructure.containsKey(v)) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Variable " + v +
-                                " not contained in " + ctx.op.getText(), ctx.op)
+                                " not contained in " + ctx.op.getText(), fromContext(ctx))
                 );
             }
         });
@@ -78,13 +83,61 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                         throw new VtlRuntimeException(
                                 new InvalidArgumentException("Alias " + v +
                                         " from " + dprName + " ruleset already defined in " +
-                                        ctx.op.getText(), ctx.op)
+                                        ctx.op.getText(), fromContext(ctx))
                         );
                     }
                 }
         );
 
-        return processingEngine.executeValidateDPruleset(dpr, ds, output);
+        var pos = fromContext(ctx);
+
+        return processingEngine.executeValidateDPruleset(dpr, ds, output, pos);
+    }
+
+    /**
+     * Visits a datasets to validate.
+     *
+     * @param ctx The scripting context for the expression...
+     * @return A <code>ResolvableExpression</code> resolving to...
+     */
+    @Override
+    public ResolvableExpression visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
+        var pos = fromContext(ctx);
+        DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
+                Dataset.class, ctx.expr());
+        List<Structured.Component> exprMeasures = dsExpression.getDataStructure().values().stream()
+                .filter(Structured.Component::isMeasure).collect(Collectors.toList());
+        if (exprMeasures.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Check operand dataset contains several measures", pos)
+            );
+        }
+        if (exprMeasures.get(0).getType() != Boolean.class) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Check operand dataset measure has to be boolean", pos)
+            );
+        }
+        ResolvableExpression erCodeExpression = null != ctx.erCode() ? expressionVisitor.visit(ctx.erCode()) : null;
+        ResolvableExpression erLevelExpression = null != ctx.erLevel() ? expressionVisitor.visit(ctx.erLevel()) : null;
+        DatasetExpression imbalanceExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.imbalanceExpr()),
+                Dataset.class, ctx.imbalanceExpr());
+        if (null != imbalanceExpression) {
+            List<Structured.Component> imbalanceMeasures = imbalanceExpression.getDataStructure().values().stream()
+                    .filter(Structured.Component::isMeasure).collect(Collectors.toList());
+            if (imbalanceMeasures.size() != 1) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Check imbalance dataset contains several measures", pos)
+                );
+            }
+            List<Class<?>> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
+            if (!supportedClasses.contains(imbalanceMeasures.get(0).getType())) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Check imbalance dataset measure has to be numeric", pos)
+                );
+            }
+        }
+        String output = ctx.output != null ? ctx.output.getText() : null;
+        return processingEngine.executeValidationSimple(dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output, pos);
     }
 
     private String getValidationOutput(VtlParser.ValidationOutputContext voc) {

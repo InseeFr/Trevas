@@ -1,10 +1,13 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.time.Instant;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>TimeFunctionsVisitor</code> is the base visitor for expressions involving time functions.
@@ -19,6 +22,6 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
-        return ResolvableExpression.withType(Instant.class, context -> Instant.now());
+        return new ConstantExpression(Instant.now(), fromContext(ctx));
     }
 }

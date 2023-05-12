@@ -1,5 +1,7 @@
 package fr.insee.vtl.engine.exceptions;
 
+import fr.insee.vtl.model.exceptions.VtlScriptException;
+
 /**
  * The <code>VtlRuntimeException</code> is the base class for exceptions happening during execution.
  */

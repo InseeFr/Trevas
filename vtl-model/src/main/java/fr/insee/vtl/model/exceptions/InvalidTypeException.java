@@ -1,6 +1,6 @@
-package fr.insee.vtl.engine.exceptions;
+package fr.insee.vtl.model.exceptions;
 
-import org.antlr.v4.runtime.tree.ParseTree;
+import fr.insee.vtl.model.Positioned;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,12 +19,12 @@ public class InvalidTypeException extends VtlScriptException {
      *
      * @param expectedType The type supported in the context.
      * @param receivedType The type actually encountered.
-     * @param tree         The parsing context where the exception is thrown.
+     * @param position     The position of the error.
      */
-    public InvalidTypeException(Class<?> expectedType, Class<?> receivedType, ParseTree tree) {
-        super(String.format("invalid type %s, expected %s to be %s",
-                receivedType.getSimpleName(), tree.getText(), expectedType.getSimpleName()
-        ), tree);
+    public InvalidTypeException(Class<?> expectedType, Class<?> receivedType, Positioned position) {
+        super(String.format("invalid type %s, expected %s",
+                receivedType.getSimpleName(), expectedType.getSimpleName()
+        ), position);
         this.expectedType = expectedType;
         this.expectedTypes = Set.of(expectedType);
         this.receivedType = receivedType;
@@ -35,17 +35,17 @@ public class InvalidTypeException extends VtlScriptException {
      *
      * @param expectedTypes The list of types supported in the context.
      * @param receivedType  The type actually encountered.
-     * @param tree          The parsing context where the exception is thrown.
+     * @param position      The parsing context where the exception is thrown.
      */
-    public InvalidTypeException(Set<Class<?>> expectedTypes, Class<?> receivedType, ParseTree tree) {
-        super(String.format("invalid type %s, expected %s to be %s",
-                receivedType.getSimpleName(), tree.getText(),
+    public InvalidTypeException(Set<Class<?>> expectedTypes, Class<?> receivedType, Positioned position) {
+        super(String.format("invalid type %s to be %s",
+                receivedType.getSimpleName(),
                 expectedTypes
                         .stream()
                         .map(Class::getSimpleName)
                         .sorted()
                         .collect(Collectors.joining(" or "))
-        ), tree);
+        ), position);
         this.expectedType = null;
         this.expectedTypes = expectedTypes;
         this.receivedType = receivedType;

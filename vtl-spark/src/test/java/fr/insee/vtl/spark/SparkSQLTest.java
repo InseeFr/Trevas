@@ -34,8 +34,7 @@ public class SparkSQLTest {
         databaseFile.deleteOnExit();
         var connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
         var statement = connection.createStatement();
-        statement.executeUpdate("" +
-                "create table if not exists ds1 (" +
+        statement.executeUpdate("create table if not exists ds1 (" +
                 "  id integer," +
                 "  colChar char(7), " +
                 "  colVarchar varchar, " +

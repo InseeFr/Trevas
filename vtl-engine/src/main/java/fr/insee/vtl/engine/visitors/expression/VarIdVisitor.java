@@ -1,24 +1,21 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
-import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
+import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.DoubleExpression;
-import fr.insee.vtl.model.InstantExpression;
-import fr.insee.vtl.model.LongExpression;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.StringExpression;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>VarIdVisitor</code> is the base visitor for variable identifiers.
@@ -39,47 +36,34 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
     @Override
     public ResolvableExpression visitVarID(VtlParser.VarIDContext ctx) {
         final String variableName = ctx.getText();
+        var pos = fromContext(ctx);
 
         if (!context.containsKey(variableName)) {
-            throw new VtlRuntimeException(new UndefinedVariableException(ctx));
+            throw new VtlRuntimeException(new UndefinedVariableException(variableName, pos));
         }
 
         Object value = context.get(variableName);
         if (value instanceof Dataset) {
-            return DatasetExpression.of((Dataset) value);
+            return DatasetExpression.of((Dataset) value, pos);
         }
 
         if (value instanceof Structured.Component) {
             var component = (Structured.Component) value;
-            String name = component.getName();
-            Class type = component.getType();
-            return ResolvableExpression.withType(type, c -> c.get(name));
+            return new ComponentExpression(component, pos);
         }
 
-        if (value instanceof Integer || value instanceof Long) {
-            return LongExpression.of(((Number) value).longValue());
+        if (value instanceof Integer) {
+            value = Long.valueOf((Integer) value);
         }
 
-        if (value instanceof Float || value instanceof Double) {
-            return DoubleExpression.of(((Number) value).doubleValue());
-        }
-
-        if (value instanceof Boolean) {
-            return BooleanExpression.of((Boolean) value);
-        }
-
-        if (value instanceof CharSequence) {
-            return StringExpression.of((CharSequence) value);
-        }
-
-        if (value instanceof Instant) {
-            return InstantExpression.of((Instant) value);
+        if (value instanceof Float) {
+            value = Double.valueOf((Float) value);
         }
 
         if (value == null) {
-            return ResolvableExpression.withType(Object.class, c -> c.get(variableName));
+            return ResolvableExpression.withType(Object.class).withPosition(pos).using(c -> c.get(variableName));
         }
 
-        throw new VtlRuntimeException(new UnsupportedTypeException(value.getClass(), ctx));
+        return new ConstantExpression(value, pos);
     }
 }

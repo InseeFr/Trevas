@@ -1,13 +1,16 @@
 package fr.insee.vtl.engine.utils;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+
 
 /**
  * The <code>TypeChecking</code> class contains useful methods for checking the type of VTL expressions.
@@ -34,10 +37,11 @@ public class TypeChecking {
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
         if (isNull(expression)) {
-            return (T) ResolvableExpression.withType(type, ctx -> null);
+            var pos = fromContext(tree);
+            return (T) ResolvableExpression.withType(type).withPosition(pos).using(c -> null);
         }
         if (!isType(expression, type)) {
-            throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
+            throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), fromContext(tree)));
         }
         return expression;
     }
@@ -66,7 +70,7 @@ public class TypeChecking {
      */
     public static <T extends TypedExpression> T assertNumberOrTypeExpression(T expression, Class<?> type, ParseTree tree) {
         if (!isNumberOrSameType(expression, type)) {
-            throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), tree));
+            throw new VtlRuntimeException(new InvalidTypeException(type, expression.getType(), fromContext(tree)));
         }
         return expression;
     }

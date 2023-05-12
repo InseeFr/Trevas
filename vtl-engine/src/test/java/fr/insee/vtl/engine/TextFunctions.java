@@ -8,11 +8,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextFunctions {
-    public static String trim(String str) {
+    public static String testTrim(String str) {
         return str.trim();
     }
 
-    public static String upper(String str) {
+    public static String testUpper(String str) {
         return str.toUpperCase();
     }
 

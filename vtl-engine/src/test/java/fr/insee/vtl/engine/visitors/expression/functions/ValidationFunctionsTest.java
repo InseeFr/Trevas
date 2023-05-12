@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ValidationFunctionsTest {
 
-    private final InMemoryDataset dataset = new InMemoryDataset(
+    private final Dataset dataset = new InMemoryDataset(
             List.of(
                     List.of("2011", "I", "CREDIT", 10L),
                     List.of("2011", "I", "DEBIT", -2L),
@@ -30,6 +30,65 @@ public class ValidationFunctionsTest {
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
+
+    private final Dataset dsExprOk = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true),
+                    List.of("2011", "I", "DEBIT", false),
+                    List.of("2012", "I", "CREDIT", false),
+                    List.of("2012", "I", "DEBIT", true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsExprKo1 = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", true, true),
+                    List.of("2011", "I", "DEBIT", false, true),
+                    List.of("2012", "I", "CREDIT", false, true),
+                    List.of("2012", "I", "DEBIT", true, true)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Boolean.class, Dataset.Role.MEASURE),
+                    new Structured.Component("toto2", Boolean.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsExprKo2 = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 1L),
+                    List.of("2012", "I", "CREDIT", 1L),
+                    List.of("2012", "I", "DEBIT", 1L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private final Dataset dsImbalanceKo = new InMemoryDataset(
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L, 1L),
+                    List.of("2011", "I", "DEBIT", 2L, 1L),
+                    List.of("2012", "I", "CREDIT", 2L, 1L),
+                    List.of("2012", "I", "DEBIT", 3L, 1L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("toto", Long.class, Dataset.Role.MEASURE),
+                    new Structured.Component("toto2", Long.class, Dataset.Role.MEASURE)
+            )
+    );
     private ScriptEngine engine;
 
     @BeforeEach
@@ -38,7 +97,7 @@ public class ValidationFunctionsTest {
     }
 
     @Test
-    public void testValidateExceptions() throws ScriptException {
+    public void testValidateExceptions() {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
 
@@ -56,5 +115,24 @@ public class ValidationFunctionsTest {
                 "end datapoint ruleset; " +
                 "DS_r := check_datapoint(DS_1, dpr1);"))
                 .hasMessageContaining("Alias Id_1 from dpr1 ruleset already defined in DS_1");
+    }
+
+    @Test
+    public void testValidationSimpleException() throws ScriptException {
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("dsExprOk", dsExprOk, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExprKo1", dsExprKo1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsExprKo2", dsExprKo2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("dsImbalanceKo", dsImbalanceKo, ScriptContext.ENGINE_SCOPE);
+
+        assertThatThrownBy(() -> engine.eval("DS_1 := check(dsExprKo1);"))
+                .hasMessageContaining("Check operand dataset contains several measures");
+        assertThatThrownBy(() -> engine.eval("DS_2 := check(dsExprKo2);"))
+                .hasMessageContaining("Check operand dataset measure has to be boolean");
+        assertThatThrownBy(() -> engine.eval("DS_3 := check(dsExprOk imbalance dsImbalanceKo);"))
+                .hasMessageContaining("Check imbalance dataset contains several measures");
+        assertThatThrownBy(() -> engine.eval("DS_4 := check(dsExprOk imbalance dsExprOk);"))
+                .hasMessageContaining("Check imbalance dataset measure has to be numeric");
     }
 }

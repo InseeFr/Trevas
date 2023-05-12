@@ -4,12 +4,11 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.BooleanExpression;
 import fr.insee.vtl.model.DataPointRule;
 import fr.insee.vtl.model.DataPointRuleset;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.VtlFunction;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -22,6 +21,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions.
@@ -57,14 +58,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         return assignedObject;
     }
 
-    private String getName(VtlParser.ConstantContext ctx) {
-        String text = ctx.getText();
-        if (text.startsWith("\"") && text.endsWith("\"")) {
-            text = text.substring(1, text.length() - 1);
-        }
-        return text;
-    }
-
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
         String rulesetName = ctx.rulesetID().getText();
@@ -84,7 +77,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         List<Class> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErCodeTypes.size() > 1) {
             throw new VtlRuntimeException(
-                    new InvalidArgumentException("Error codes of rules have different types", ctx)
+                    new InvalidArgumentException("Error codes of rules have different types", fromContext(ctx))
             );
         }
         Class erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
@@ -97,7 +90,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         List<Class> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErLevelTypes.size() > 1) {
             throw new VtlRuntimeException(
-                    new InvalidArgumentException("Error levels of rules have different types", ctx)
+                    new InvalidArgumentException("Error levels of rules have different types", fromContext(ctx))
             );
         }
         Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
@@ -109,28 +102,17 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     TerminalNode identifier = c.IDENTIFIER();
                     int i = index.getAndIncrement() + 1;
                     String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
-
-                    VtlParser.ExprContext antecedentContiditonContext = c.antecedentContiditon;
-                    VtlParser.ExprContext consequentConditionContext = c.consequentCondition;
-
+                    VtlParser.ExprContext antecedentCondition = c.antecedentContiditon;
+                    VtlParser.ExprContext consequentCondition = c.consequentCondition;
+                    VtlFunction<Map<String, Object>, ExpressionVisitor> getExpressionVisitor = m -> new ExpressionVisitor(m, processingEngine, engine);
+                    VtlFunction<Map<String, Object>, ResolvableExpression> buildAntecedentExpression = m -> getExpressionVisitor.apply(m).visit(antecedentCondition);
+                    VtlFunction<Map<String, Object>, ResolvableExpression> buildConsequentExpression = m -> getExpressionVisitor.apply(m).visit(consequentCondition);
                     ResolvableExpression errorCodeExpression = null != c.erCode() ? expressionVisitor.visit(c.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != c.erLevel() ? expressionVisitor.visit(c.erLevel()) : null;
                     return new DataPointRule(
                             name,
-                            dataStructure -> {
-                                if (antecedentContiditonContext != null) {
-                                    Map<String, Object> componentMap = dataStructure.values().stream()
-                                            .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-                                    return new ExpressionVisitor(componentMap, processingEngine, engine).visit(antecedentContiditonContext);
-                                } else {
-                                    return BooleanExpression.of(Boolean.TRUE);
-                                }
-                            },
-                            dataStructure -> {
-                                Map<String, Object> componentMap = dataStructure.values().stream()
-                                        .collect(Collectors.toMap(Dataset.Component::getName, component -> component));
-                                return new ExpressionVisitor(componentMap, processingEngine, engine).visit(consequentConditionContext);
-                            },
+                            buildAntecedentExpression,
+                            buildConsequentExpression,
                             errorCodeExpression,
                             errorLevelExpression
                     );
