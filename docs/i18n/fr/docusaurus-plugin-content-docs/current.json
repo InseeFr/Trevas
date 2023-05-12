@@ -66,5 +66,9 @@
 	"sidebar.docs.category.Administrator guide": {
 		"message": "Administrator guide",
 		"description": "The label for category Administrator guide in sidebar docs"
+	},
+	"sidebar.docs.category.Releases": {
+		"message": "Publications",
+		"description": "The label for category Releases in sidebar docs"
 	}
 }
