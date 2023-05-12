@@ -18,6 +18,8 @@ public class CastExpression extends ResolvableExpression {
     private final Class<?> target;
     private final ResolvableExpression expr;
 
+    private final String isNotSupported = " is not supported";
+
     public CastExpression(Positioned position, ResolvableExpression expr, String mask, Class<?> target) throws VtlScriptException {
         super(position);
         this.target = target;
@@ -64,7 +66,7 @@ public class CastExpression extends ResolvableExpression {
                 return exprValue ? 1D : 0D;
             });
         }
-        throw new ClassCastException("Cast Boolean to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast Boolean to " + outputClass + isNotSupported);
     }
 
     private ResolvableExpression castDouble(ResolvableExpression expr) {
@@ -84,17 +86,16 @@ public class CastExpression extends ResolvableExpression {
                 return exprValue.longValue();
             });
         if (outputClass.equals(Double.class))
-            return ResolvableExpression.withType(Double.class).withPosition(expr).using(context -> {
-                Double exprValue = (Double) expr.resolve(context);
-                return exprValue;
-            });
+            return ResolvableExpression.withType(Double.class).withPosition(expr).using(context ->
+                    (Double) expr.resolve(context)
+            );
         if (outputClass.equals(Boolean.class))
             return ResolvableExpression.withType(Boolean.class).withPosition(expr).using(context -> {
                 Double exprValue = (Double) expr.resolve(context);
                 if (exprValue == null) return null;
                 return !exprValue.equals(0D);
             });
-        throw new ClassCastException("Cast Double to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast Double to " + outputClass + isNotSupported);
     }
 
     private ResolvableExpression castInstant(ResolvableExpression expr, String mask) {
@@ -113,7 +114,7 @@ public class CastExpression extends ResolvableExpression {
                 DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
                 return maskFormatter.format(exprValue.atOffset(ZoneOffset.UTC));
             });
-        throw new ClassCastException("Cast Date to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast Date to " + outputClass + isNotSupported);
     }
 
     private ResolvableExpression castLong(ResolvableExpression expr) {
@@ -136,7 +137,7 @@ public class CastExpression extends ResolvableExpression {
                 if (exprValue == null) return null;
                 return !exprValue.equals(0L);
             });
-        throw new ClassCastException("Cast Long to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast Long to " + outputClass + isNotSupported);
     }
 
     private ResolvableExpression castString(ResolvableExpression expr, String mask) {
@@ -175,7 +176,7 @@ public class CastExpression extends ResolvableExpression {
                 }
 
             });
-        throw new ClassCastException("Cast String to " + outputClass + " is not supported");
+        throw new ClassCastException("Cast String to " + outputClass + isNotSupported);
     }
 
     @Override

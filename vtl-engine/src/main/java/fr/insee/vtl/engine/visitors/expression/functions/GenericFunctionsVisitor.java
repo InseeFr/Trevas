@@ -24,8 +24,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +38,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
  */
 public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    private static final String result = "result";
     private final VtlScriptEngine engine;
     private final ExpressionVisitor exprVisitor;
 
@@ -100,23 +99,23 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             }
 
             ProcessingEngine proc = engine.getProcessingEngine();
-//            TODO
-//            if (noMonoDs has not same shape) throw
+
+            // TODO: if (noMonoDs has not same shape) throw
 
             // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
             // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
             ResolvableExpression finalRes;
             // Only one parameter, and it's a dataset. We can invoke the function on each measure.
-            if (!parameters.stream().anyMatch(e -> e instanceof DatasetExpression)) {
+            if (parameters.stream().noneMatch(DatasetExpression.class::isInstance)) {
                 // Only scalar types. We can invoke the function directly.
-                List<? extends Class<?>> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+                List<Class> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
                 var method = engine.findMethod(funcName, parameterTypes);
                 return new FunctionExpression(method, parameters, position);
-            } else if (noMonoDs.size() == 0) {
+            } else if (noMonoDs.isEmpty()) {
                 finalRes = invokeFunctionOnDataset(funcName, parameters, position);
             } else {
                 List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
-                Map<String, DatasetExpression> results = new HashMap();
+                Map<String, DatasetExpression> results = new HashMap<>();
                 for (Structured.Component measure : measures) {
                     List<ResolvableExpression> params = parameters.stream().map(p -> {
                         if (p instanceof DatasetExpression) {
@@ -150,12 +149,12 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         // Normalize all parameters to datasets first.
         // 1. Join all the datasets together and build a new expression map.
         Map<String, ResolvableExpression> monoExprs = new HashMap<>();
-        Set<String> measureNames = new HashSet();
+        Set<String> measureNames = new HashSet<>();
         var dsExprs = parameters.stream()
-                .filter(e -> e instanceof DatasetExpression)
+                .filter(DatasetExpression.class::isInstance)
                 .map(e -> ((DatasetExpression) e))
                 .map(ds -> {
-                    if (!ds.isMonoMeasure()) {
+                    if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
                         throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
                     }
                     var uniqueName = "arg" + ds.hashCode();
@@ -181,53 +180,15 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 .collect(Collectors.toList());
 
         // 3. Invoke the function.
-        List<? extends Class<?>> parametersTypes = normalizedParams.stream()
+        List<Class> parametersTypes = normalizedParams.stream()
                 .map(TypedExpression::getType)
                 .collect(Collectors.toList());
         var method = engine.findMethod(funcName, parametersTypes);
         var funcExrp = new FunctionExpression(method, normalizedParams, position);
-        ds = proc.executeCalc(ds, Map.of("result", funcExrp), Map.of("result", Dataset.Role.MEASURE), Map.of());
-        ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of("result")).collect(Collectors.toList()));
-        return proc.executeRename(ds, Map.of("result", measureNames.iterator().next()));
+        ds = proc.executeCalc(ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
+        ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of(result)).collect(Collectors.toList()));
+        return proc.executeRename(ds, Map.of(result, measureNames.iterator().next()));
     }
-
-    // TODO: This is copied from JoinFunctionVisitor.
-    private Map<String, DatasetExpression> renameDuplicates(List<Structured.Component> identifiers,
-                                                            Map<String, DatasetExpression> datasets) {
-        Set<String> identifierNames = identifiers.stream().map(Structured.Component::getName).collect(Collectors.toSet());
-        Set<String> duplicates = new LinkedHashSet<>();
-        Set<String> uniques = new LinkedHashSet<>();
-        for (DatasetExpression dataset : datasets.values()) {
-            for (String name : dataset.getColumnNames()) {
-                // Ignore identifiers.
-                if (identifierNames.contains(name)) {
-                    continue;
-                }
-                // Compute duplicates.
-                if (!uniques.add(name)) {
-                    duplicates.add(name);
-                }
-            }
-        }
-
-        // Use duplicates to rename columns
-        Map<String, DatasetExpression> result = new LinkedHashMap<>();
-        for (Map.Entry<String, DatasetExpression> entry : datasets.entrySet()) {
-            // replace because of spark issue with dot inside col getter arg
-            var name = entry.getKey().replace(".", "");
-            var dataset = entry.getValue();
-            Map<String, String> fromTo = new LinkedHashMap<>();
-            for (String columnName : dataset.getColumnNames()) {
-                if (duplicates.contains(columnName)) {
-                    fromTo.put(columnName, name + "#" + columnName);
-                }
-            }
-            result.put(name, this.engine.getProcessingEngine().executeRename(dataset, fromTo));
-        }
-
-        return result;
-    }
-
 
     @Override
     public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
@@ -255,7 +216,9 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         // STRING_CONSTANT().getText return null or a string wrapped by quotes
         String mask = maskNode == null
                 ? null
-                : maskNode.getText().replaceAll("\"", "").replace("YYYY", "yyyy").replace("DD", "dd");
+                : maskNode.getText().replace("\"", "")
+                .replace("YYYY", "yyyy")
+                .replace("DD", "dd");
         Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
         Integer basicScalarType = symbol.getType();
         String basicScalarText = symbol.getText();

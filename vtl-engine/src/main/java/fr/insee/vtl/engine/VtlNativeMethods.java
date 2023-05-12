@@ -17,7 +17,7 @@ import java.util.Set;
 
 public class VtlNativeMethods {
 
-    public static Set<Method> NATIVE_METHODS = Set.of(
+    public static final Set<Method> NATIVE_METHODS = Set.of(
             // NumericFunctionsVisitor
             Fun.toMethod(NumericFunctionsVisitor::ceil),
             Fun.toMethod(NumericFunctionsVisitor::floor),
@@ -94,4 +94,8 @@ public class VtlNativeMethods {
             Fun.toMethod(ComparisonVisitor::in),
             Fun.toMethod(ComparisonVisitor::notIn)
     );
+
+    private VtlNativeMethods() {
+        throw new IllegalStateException("Utility class");
+    }
 }

@@ -129,7 +129,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                         new InvalidArgumentException("Check imbalance dataset contains several measures", pos)
                 );
             }
-            List<Class> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
+            List<Class<?>> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
             if (!supportedClasses.contains(imbalanceMeasures.get(0).getType())) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Check imbalance dataset measure has to be numeric", pos)

@@ -108,7 +108,7 @@ public class AssignmentTest {
         engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := ds#long1;");
         Dataset res = (Dataset) engine.getContext().getAttribute("res");
-        assertThat(res.getDataStructure().size()).isEqualTo(2);
+        assertThat(res.getDataStructure()).hasSize(2);
 
         assertThatThrownBy(() -> engine.eval("res := ds#baaaddd;"))
                 .isInstanceOf(VtlScriptException.class)

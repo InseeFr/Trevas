@@ -8,7 +8,6 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
@@ -122,7 +121,6 @@ public class VtlScriptEngineTest {
         );
     }
 
-    @Disabled
     @Test
     void testMultipleParameterFunctionExpressionsAndConstants() throws ScriptException {
         var ds1 = new InMemoryDataset(List.of(
@@ -143,7 +141,6 @@ public class VtlScriptEngineTest {
         );
     }
 
-    @Disabled
     @Test
     void testFunctionExpressionsWrongType() throws ScriptException {
         var ds1 = new InMemoryDataset(List.of(
@@ -157,7 +154,7 @@ public class VtlScriptEngineTest {
         engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
         assertThatThrownBy(() -> {
             engine.eval("res := round(0.123456789, ds1#m1);");
-        }).isInstanceOf(InvalidTypeException.class);
+        }).isInstanceOf(VtlScriptException.class);
     }
 
     @Disabled

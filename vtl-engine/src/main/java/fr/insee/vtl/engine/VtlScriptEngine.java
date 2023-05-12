@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
      *
      * @param factory The script engine factory associated to the script engine to create.
      */
-    public VtlScriptEngine(ScriptEngineFactory factory) throws NoSuchMethodException {
+    public VtlScriptEngine(ScriptEngineFactory factory) {
         this.factory = factory;
     }
 
@@ -314,9 +315,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         return factory;
     }
 
-    public VtlMethod findMethod(String name, Collection<? extends Class<?>> types) throws NoSuchMethodException {
+    public VtlMethod findMethod(String name, Collection<Class> types) throws NoSuchMethodException {
         Set<Method> customMethods = methodCache == null ? Set.of()
-                : methodCache.values().stream().collect(Collectors.toSet());
+                : new HashSet<>(methodCache.values());
         Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
                 .collect(Collectors.toSet());
 
@@ -336,7 +337,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         throw new NoSuchMethodException(methodToString(name, types));
     }
 
-    private String methodToString(String name, Collection<? extends Class<?>> argTypes) {
+    private String methodToString(String name, Collection<Class> argTypes) {
         StringJoiner sj = new StringJoiner(", ", name + "(", ")");
         if (argTypes != null) {
             for (Class<?> c : argTypes) {

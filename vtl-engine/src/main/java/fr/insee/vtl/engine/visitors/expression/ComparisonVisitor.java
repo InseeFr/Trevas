@@ -27,10 +27,9 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
  */
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    private static final String unknownOperator = "unknown operator ";
     private final ExpressionVisitor exprVisitor;
     private final GenericFunctionsVisitor genericFunctionsVisitor;
-
-    private final String UNKNOWN_OPERATOR = "unknown operator ";
 
     /**
      * Constructor taking an expression visitor.
@@ -47,8 +46,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return null;
         }
         if (left instanceof Number && right instanceof Number) {
-            if (left instanceof Long || right instanceof Long) {
-                Long.compare(((Number) left).longValue(), ((Number) right).longValue());
+            if (left instanceof Long && right instanceof Long) {
+                return Long.compare(((Number) left).longValue(), ((Number) right).longValue());
             }
             return Double.compare(((Number) left).doubleValue(), ((Number) right).doubleValue());
         }
@@ -156,7 +155,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 case VtlParser.ME:
                     return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
                 default:
-                    throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+                    throw new UnsupportedOperationException(unknownOperator + ctx);
             }
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);

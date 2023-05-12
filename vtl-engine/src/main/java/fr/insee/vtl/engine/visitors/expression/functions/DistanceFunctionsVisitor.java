@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -22,13 +21,6 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
     private final ExpressionVisitor exprVisitor;
     private final GenericFunctionsVisitor genericFunctionsVisitor;
 
-    public static Long levenshtein(String stringA, String stringB) {
-        if (stringA == null || stringB == null) {
-            return null;
-        }
-        return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(stringA, stringB));
-    }
-
     /**
      * Constructor taking an expression visitor.
      *
@@ -39,6 +31,13 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
         this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
     }
 
+    public static Long levenshtein(String stringA, String stringB) {
+        if (stringA == null || stringB == null) {
+            return null;
+        }
+        return Long.valueOf(LevenshteinDistance.getDefaultInstance().apply(stringA, stringB));
+    }
+
     /**
      * Visits a 'Levenshtein distance' expression with two strings parameters.
      *
@@ -47,17 +46,14 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
      */
     @Override
     public ResolvableExpression visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {
-        var pos = fromContext(ctx);
         try {
             List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );
             return genericFunctionsVisitor.invokeFunction("levenshtein", parameters, fromContext(ctx));
-        } catch (InvalidTypeException e) {
-            throw new VtlRuntimeException(e);
         } catch (VtlScriptException e) {
-            throw new RuntimeException(e);
+            throw new VtlRuntimeException(e);
         }
     }
 }

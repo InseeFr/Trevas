@@ -64,9 +64,9 @@ public class StringFunctionsTest {
         engine.eval("b := instr(\"ok\", cast(null, string), 1, 2);");
         assertThat((Long) engine.getContext().getAttribute("b")).isNull();
         engine.eval("c := instr(\"ok\", \"ooo\", cast(null, integer), 2);");
-        assertThat((Long) engine.getContext().getAttribute("c")).isEqualTo(0L);
+        assertThat((Long) engine.getContext().getAttribute("c")).isZero();
         engine.eval("d := instr(\"ok\", \"ooo\", 1, cast(null, integer));");
-        assertThat((Long) engine.getContext().getAttribute("d")).isEqualTo(0L);
+        assertThat((Long) engine.getContext().getAttribute("d")).isZero();
     }
 
     @Test

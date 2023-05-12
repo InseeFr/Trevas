@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -94,8 +95,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             Class<?> actualType = thenExpression.getType();
             return new CastExpression(position, expression, actualType);
         } catch (VtlScriptException e) {
-            // Is FunctionNotFoundException actually type exception?
-            throw new RuntimeException(e);
+            throw new VtlRuntimeException(e);
         }
     }
 
@@ -114,8 +114,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             Positioned position = fromContext(ctx);
             return genericFunctionsVisitor.invokeFunction("nvl", List.of(expression, defaultExpression), position);
         } catch (VtlScriptException e) {
-            // Is FunctionNotFoundException actually type exception?
-            throw new RuntimeException(e);
+            throw new VtlRuntimeException(e);
         }
     }
 

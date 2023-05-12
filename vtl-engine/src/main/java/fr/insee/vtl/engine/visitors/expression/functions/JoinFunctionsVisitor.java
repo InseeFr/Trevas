@@ -31,6 +31,7 @@ import static fr.insee.vtl.model.Dataset.Role;
  */
 public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
+    private static final String mustHaveCommonIdentifiers = "datasets must have common identifiers";
     private final ExpressionVisitor expressionVisitor;
     private final ProcessingEngine processingEngine;
 
@@ -178,7 +179,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Left join require that all the datasets have one or more common identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
+                        new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
                 ));
 
         // Remove the identifiers that are not part of the "using" list
@@ -224,7 +225,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Full join require that all the datasets have one or more common identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
+                        new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
                 ));
 
         DatasetExpression res = processingEngine.executeFullJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
@@ -238,7 +239,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Left join require that all the datasets have the same identifiers.
         var commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException("datasets must have common identifiers", fromContext(joinClauseContext))
+                        new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
                 ));
 
         // Remove the identifiers
