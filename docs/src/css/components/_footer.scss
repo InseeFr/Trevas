@@ -2,34 +2,26 @@
 	position: relative;
 	padding: 0;
 	overflow: hidden;
-	background-color: $trevas-purple;
+	background-color: $trevas-dark;
 	font-family: $trevas-font-book;
+	border-top: 2px solid $trevas-purple;
 
 	.container {
 		position: relative;
-		padding-top: 10px;
-		padding-bottom: 10 px;
-
-		@include mobile {
-			padding-top: 47px;
-			padding-bottom: 44px;
-		}
-
 		.row {
 			z-index: 2;
 			position: relative;
 		}
-
-		.sponsors-title {
-			color: black;
-		}
-
 		.sponsors {
 			display: flex;
-			margin-bottom: 15px;
+			margin-top: 20px;
+			@include mobile {
+				margin-top: 5px;
+			}
 			justify-content: center;
 			a {
-				margin-right: 60px;
+				margin-right: 30px;
+				margin-left: 30px;
 			}
 		}
 	}

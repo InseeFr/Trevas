@@ -3,7 +3,20 @@
 }
 
 .navbar-sidebar {
-	background-color: $primary-black;
+	@include light {
+		background-color: $trevas-light;
+	}
+	@include dark {
+		background-color: $trevas-dark;
+	}
+	.navbar-sidebar__back {
+		@include light {
+			color: black;
+		}
+		@include dark {
+			color: white;
+		}
+	}
 	box-shadow: none;
 
 	&__backdrop {
@@ -12,6 +25,7 @@
 
 	&__brand {
 		box-shadow: none;
+		background-color: $trevas-dark;
 	}
 
 	&__items {
@@ -33,15 +47,13 @@
 			border-radius: 0;
 			background-color: transparent;
 			font-size: 17px;
-			color: $white;
 		}
 	}
 }
 
 .navbar {
-	padding: 14px 15px;
-	height: auto;
-	border-radius: 0 0 10px 10px;
+	padding: 15px 40px;
+	height: 85px;
 	background-color: $trevas-dark;
 	box-shadow: none;
 	font-family: $trevas-font-book;
@@ -53,7 +65,7 @@
 	&__brand,
 	&__logo {
 		width: 80px;
-		height: auto;
+		height: 50px;
 	}
 
 	&__link {

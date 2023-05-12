@@ -1,5 +1,5 @@
 .search-icon {
-	background-image: var(--ifm-navbar-search-input-icon);
+	color: white;
 	height: auto;
 	width: 24px;
 	cursor: pointer;
@@ -9,16 +9,17 @@
 	background-position: center;
 	display: none;
 }
-
 .search-icon-hidden {
 	visibility: hidden;
 }
 
 .navbar__search {
 	.navbar__search-input {
+		background: url('data:image/svg+xml;utf8,<svg fill="white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>')
+			no-repeat 0.75rem center / 1rem 1rem;
 		width: 300px;
-		background-color: $trevas-purple;
 		color: white;
+		background-color: $trevas-purple;
 		&::placeholder {
 			color: white;
 		}
@@ -203,7 +204,7 @@
 	width: 14px;
 	height: 14px;
 	vertical-align: middle;
-	fill: #6d7e96;
+	fill: white;
 }
 
 .searchbox__reset {
@@ -221,7 +222,7 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-	fill: rgba(0, 0, 0, 0.5);
+	fill: white;
 }
 
 .searchbox__reset.hide {

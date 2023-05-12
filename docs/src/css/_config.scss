@@ -1,6 +1,7 @@
 $trevas-purple: #9211ff;
 $trevas-purple-secondary: #30122f;
-$trevas-dark: #1e1e1e;
+$trevas-dark: #323137;
+$trevas-light: #f2f2f3;
 $primary-blue: #161f31;
 $secondary-blue: #0565ff;
 $red: #dc382c;
@@ -67,14 +68,20 @@ $roboto: 'Roboto Mono', monospace;
 
 body {
 	@include light {
-		background-color: white;
+		background-color: $trevas-light;
 	}
 	@include dark {
-		background-color: #000000;
+		background-color: black;
+	}
+	.menu__link--active {
+		color: $trevas-purple;
 	}
 	.menu__link:not(.menu__link--active) {
 		@include light {
 			color: black;
+		}
+		@include dark {
+			color: white;
 		}
 	}
 }
