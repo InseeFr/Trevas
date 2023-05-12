@@ -57,7 +57,7 @@
 	},
 	"theme.ErrorPageContent.tryAgain": {
 		"message": "重试",
-		"description": "The label of the button to try again when the page crashed"
+		"description": "The label of the button to try again rendering when the React error boundary captures an error"
 	},
 	"theme.NotFound.title": {
 		"message": "找不到页面",
@@ -325,5 +325,13 @@
 	"theme.docs.sidebar.navAriaLabel": {
 		"message": "Docs sidebar",
 		"description": "The ARIA label for the sidebar navigation"
+	},
+	"Trevas releases": {
+		"message": "Trevas 发布",
+		"description": "Release title VTL"
+	},
+	"Explore the Trevas Maven releases": {
+		"message": "探索 Trevas Maven 版本",
+		"description": "Release description VTL"
 	}
 }

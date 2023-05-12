@@ -4,7 +4,7 @@ module.exports = {
 	title: 'Trevas',
 	tagline: '',
 	url: 'https://trevas.info',
-	baseUrl: '/Trevas',
+	baseUrl: '/',
 	onBrokenLinks: 'throw',
 	onBrokenMarkdownLinks: 'warn',
 	favicon: 'img/favicon.ico',
