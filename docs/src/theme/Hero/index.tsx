@@ -5,6 +5,7 @@ import Translate from '@docusaurus/Translate';
 
 import SvgArrowRight from '@site/src/svg/ArrowRight';
 import SvgClientApps from '@site/src/svg/ClientApps';
+import SvgReleaseNote from '@site/src/svg/ReleaseNote';
 import SvgDevelop from '@site/src/svg/Develop';
 import SvgEngine from '@site/src/svg/Engine';
 import SvgTrevasBox from '@site/src/svg/TrevasBox';
@@ -71,6 +72,31 @@ function Hero() {
 									</span>
 								</div>
 								<a href={useBaseUrl('/user-guide/coverage')} className="link">
+									<Translate description="See more">See more</Translate>
+								</a>
+							</div>
+
+							<div className="box">
+								<span className="icon">
+									<SvgReleaseNote color={svgColor} />
+								</span>
+								<div className="text">
+									<h3 className="title">
+										<Translate description="Release title VTL">
+											Trevas releases
+										</Translate>
+									</h3>
+									<p className="description">
+										<Translate description="Release description VTL">
+											Explore the Trevas Maven releases
+										</Translate>
+									</p>
+									<span className="more">
+										<Translate description="See more">See more</Translate>{' '}
+										<SvgArrowRight color="#DC382C" />
+									</span>
+								</div>
+								<a href={useBaseUrl('/releases')} className="link">
 									<Translate description="See more">See more</Translate>
 								</a>
 							</div>
