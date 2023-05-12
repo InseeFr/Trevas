@@ -17,9 +17,10 @@
 		"swizzle": "docusaurus swizzle",
 		"deploy": "docusaurus deploy",
 		"postinstall": "yarn write-translations",
-		"format": "prettier --loglevel warn --write \"src/**/*.{js,ts,jsx,tsx}\" \"docs/**/*.{md,mdx}\"",
+		"format:js": "prettier --loglevel warn --write \"src/**/*.{js,ts,jsx,tsx}\" \"docs/**/*.{md,mdx}\"",
 		"format:docs": "prettier --loglevel warn --write \"docs/**/*.{md,mdx}\"",
 		"format:i18n": "prettier --loglevel warn --write \"i18n/**/*.{md,mdx,json}\"",
+		"format": "yarn format:js && yarn format:docs && yarn format:i18n",
 		"lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --parser-options=project:tsconfig.json --fix",
 		"lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --parser-options=project:tsconfig.json",
 		"clear": "docusaurus clear",
@@ -48,23 +49,23 @@
 		"react-player": "^2.11.0",
 		"react-scroll": "^1.8.8",
 		"react-slick": "^0.29.0",
-		"sass": "^1.55.0",
+		"sass": "^1.58.0",
 		"typed.js": "^2.0.12"
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "2.3.1",
 		"@tsconfig/docusaurus": "^1.0.6",
 		"@types/react-slick": "^0.23.10",
-		"@typescript-eslint/eslint-plugin": "^5.42.0",
-		"@typescript-eslint/parser": "^5.42.0",
-		"eslint": "^8.26.0",
+		"@typescript-eslint/eslint-plugin": "^5.50.0",
+		"@typescript-eslint/parser": "^5.50.0",
+		"eslint": "^8.33.0",
 		"eslint-config-prettier": "^8.5.0",
-		"eslint-plugin-import": "^2.26.0",
+		"eslint-plugin-import": "^2.27.5",
 		"eslint-plugin-prettier": "^4.2.1",
 		"eslint-plugin-simple-import-sort": "^10.0.0",
 		"prettier": "^2.7.1",
 		"prettier-linter-helpers": "^1.0.0",
-		"typescript": "^4.8.4"
+		"typescript": "^4.9.5"
 	},
 	"browserslist": {
 		"production": [

@@ -1,39 +1,87 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.utils.TypeChecking;
-import fr.insee.vtl.model.DoubleExpression;
-import fr.insee.vtl.model.LongExpression;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
-import static fr.insee.vtl.engine.utils.TypeChecking.isLong;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>ArithmeticVisitor</code> is the base visitor for multiplication or division expressions.
  */
 public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-    // TODO: Support dataset as argument of unary numeric.
-    //          ceil_ds := ceil(ds) -> ds[calc m1 := ceil(m1), m2 := ...]
-    //          ceil_ds := ceil(ds#measure)
-    //       Evaluate when we have a proper function abstraction:
-    //          var function = findFunction(name);
-    //          function.run(ctx.expr());
-    //
-
     private final ExpressionVisitor exprVisitor;
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
 
     /**
      * Constructor taking an expression visitor.
      *
      * @param expressionVisitor The visitor for the enclosing expression.
      */
-    public ArithmeticVisitor(ExpressionVisitor expressionVisitor) {
+    public ArithmeticVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
         exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
+    }
+
+    public static Long multiplication(Long valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA * valueB;
+    }
+
+    public static Double multiplication(Long valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA.doubleValue() * valueB;
+    }
+
+    public static Double multiplication(Double valueA, Long valueB) {
+        return multiplication(valueB, valueA);
+    }
+
+    public static Double multiplication(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA * valueB;
+    }
+
+    public static Double division(Long valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA.doubleValue() / valueB;
+    }
+
+    public static Double division(Double valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA / valueB.doubleValue();
+    }
+
+
+    public static Double division(Long valueA, Long valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return ((double) valueA / valueB);
+    }
+
+    public static Double division(Double valueA, Double valueB) {
+        if (valueA == null || valueB == null) {
+            return null;
+        }
+        return valueA / valueB;
     }
 
     /**
@@ -44,48 +92,21 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
-
-        switch (ctx.op.getType()) {
-            case VtlParser.MUL:
-                return handleMultiplication(ctx.left, ctx.right);
-            case VtlParser.DIV:
-                return handleDivision(ctx.left, ctx.right);
-            default:
-                throw new UnsupportedOperationException("unknown operator " + ctx);
+        try {
+            List<ResolvableExpression> parameters = List.of(
+                    exprVisitor.visit(ctx.left),
+                    exprVisitor.visit(ctx.right)
+            );
+            switch (ctx.op.getType()) {
+                case VtlParser.MUL:
+                    return genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
+                case VtlParser.DIV:
+                    return genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
+                default:
+                    throw new UnsupportedOperationException("unknown operator " + ctx);
+            }
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-    }
-
-    private ResolvableExpression handleMultiplication(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
-        if (isLong(leftExpression) && isLong(rightExpression)) {
-            return LongExpression.of(context -> {
-                Long leftValue = (Long) leftExpression.resolve(context);
-                Long rightValue = (Long) rightExpression.resolve(context);
-                if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-                return leftValue * rightValue;
-            });
-        }
-        return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return leftDouble * rightDouble;
-        });
-    }
-
-    private ResolvableExpression handleDivision(VtlParser.ExprContext left, VtlParser.ExprContext right) {
-        var leftExpression = assertNumber(exprVisitor.visit(left), left);
-        var rightExpression = assertNumber(exprVisitor.visit(right), right);
-        return DoubleExpression.of(context -> {
-            var leftValue = leftExpression.resolve(context);
-            var rightValue = rightExpression.resolve(context);
-            if (TypeChecking.hasNullArgs(leftValue, rightValue)) return null;
-            var leftDouble = leftValue instanceof Long ? ((Long) leftValue).doubleValue() : (Double) leftValue;
-            var rightDouble = rightValue instanceof Long ? ((Long) rightValue).doubleValue() : (Double) rightValue;
-            return leftDouble / rightDouble;
-        });
     }
 }

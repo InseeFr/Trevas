@@ -37,7 +37,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
     /**
      * Deserializes a JSON dataset into a <code>Dataset</code> object.
      *
-     * @param p The base JSON parser.
+     * @param p    The base JSON parser.
      * @param ctxt A deserialization context.
      * @return The deserialized dataset.
      * @throws IOException In case of problem while processing the JSON dataset.

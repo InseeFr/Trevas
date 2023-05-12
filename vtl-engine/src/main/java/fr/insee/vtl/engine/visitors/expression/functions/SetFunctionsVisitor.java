@@ -3,7 +3,11 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.RuleContext;
@@ -13,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 /**
@@ -26,8 +31,9 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     /**
      * Constructor taking an expression visitor and a processing engine.
+     *
      * @param expressionVisitor A visitor for the expression corresponding to the set function.
-     * @param processingEngine The processing engine.
+     * @param processingEngine  The processing engine.
      */
     public SetFunctionsVisitor(ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
@@ -55,7 +61,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                                 ctx.expr().stream().map(RuleContext::getText)
                                         .collect(Collectors.joining(", "))
                         ),
-                        ctx
+                        fromContext(ctx)
                 ));
             }
 

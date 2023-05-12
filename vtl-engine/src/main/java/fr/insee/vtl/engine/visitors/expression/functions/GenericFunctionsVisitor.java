@@ -1,30 +1,44 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
+import fr.insee.vtl.engine.expressions.CastExpression;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
+import fr.insee.vtl.engine.expressions.FunctionExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>GenericFunctionsVisitor</code> is the base visitor for cast expressions.
  */
 public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
+    private static final String result = "result";
     private final VtlScriptEngine engine;
     private final ExpressionVisitor exprVisitor;
 
@@ -62,57 +76,131 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
     }
 
+    public List<DatasetExpression> splitToMonoMeasure(DatasetExpression dataset) {
+        ProcessingEngine proc = engine.getProcessingEngine();
+        List<Structured.Component> identifiers = dataset.getIdentifiers();
+        return dataset.getMeasures().stream().map(measure -> {
+            List<String> idAndMeasure = Stream.concat(identifiers.stream(), Stream.of(measure))
+                    .map(Structured.Component::getName)
+                    .collect(Collectors.toList());
+            return proc.executeProject(dataset, idAndMeasure);
+        }).collect(Collectors.toList());
+    }
+
+    public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
+        try {
+            List<DatasetExpression> noMonoDs = parameters.stream().filter(e -> e instanceof DatasetExpression && !(((DatasetExpression) e).isMonoMeasure()))
+                    .map(ds -> (DatasetExpression) ds)
+                    .collect(Collectors.toList());
+            if (noMonoDs.size() > 2) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("too many no mono-measure datasets (" + noMonoDs.size() + ")", position)
+                );
+            }
+
+            ProcessingEngine proc = engine.getProcessingEngine();
+
+            // TODO: if (noMonoDs has not same shape) throw
+
+            // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
+            // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
+            ResolvableExpression finalRes;
+            // Only one parameter, and it's a dataset. We can invoke the function on each measure.
+            if (parameters.stream().noneMatch(DatasetExpression.class::isInstance)) {
+                // Only scalar types. We can invoke the function directly.
+                List<Class> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
+                var method = engine.findMethod(funcName, parameterTypes);
+                return new FunctionExpression(method, parameters, position);
+            } else if (noMonoDs.isEmpty()) {
+                finalRes = invokeFunctionOnDataset(funcName, parameters, position);
+            } else {
+                List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
+                Map<String, DatasetExpression> results = new HashMap<>();
+                for (Structured.Component measure : measures) {
+                    List<ResolvableExpression> params = parameters.stream().map(p -> {
+                        if (p instanceof DatasetExpression) {
+                            DatasetExpression ds = (DatasetExpression) p;
+                            List<String> idAndMeasure = Stream.concat(ds.getIdentifiers().stream(), Stream.of(measure))
+                                    .map(Structured.Component::getName)
+                                    .collect(Collectors.toList());
+                            return proc.executeProject(ds, idAndMeasure);
+                        } else return p;
+                    }).collect(Collectors.toList());
+                    results.put(measure.getName(), invokeFunctionOnDataset(funcName, params, position));
+                }
+                finalRes = proc.executeInnerJoin(results);
+            }
+            if (finalRes instanceof DatasetExpression) {
+                List<Structured.Component> measures = ((DatasetExpression) finalRes).getMeasures();
+                if (measures.size() == 1 && measures.get(0).getType().equals(Boolean.class)) {
+                    // TODO: refine with constraints matrix
+                    return proc.executeRename((DatasetExpression) finalRes, Map.of(measures.get(0).getName(), "bool_var"));
+                }
+            }
+            return finalRes;
+        } catch (NoSuchMethodException e) {
+            throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
+        }
+    }
+
+    private DatasetExpression invokeFunctionOnDataset(String funcName, List<ResolvableExpression> parameters, Positioned position) throws NoSuchMethodException, VtlScriptException {
+        ProcessingEngine proc = engine.getProcessingEngine();
+
+        // Normalize all parameters to datasets first.
+        // 1. Join all the datasets together and build a new expression map.
+        Map<String, ResolvableExpression> monoExprs = new HashMap<>();
+        Set<String> measureNames = new HashSet<>();
+        var dsExprs = parameters.stream()
+                .filter(DatasetExpression.class::isInstance)
+                .map(e -> ((DatasetExpression) e))
+                .map(ds -> {
+                    if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
+                        throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
+                    }
+                    var uniqueName = "arg" + ds.hashCode();
+                    var measure = ds.getMeasures().get(0);
+                    String measureName = measure.getName();
+                    measureNames.add(measureName);
+                    ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
+                    var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
+                    monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
+                    return ds;
+                })
+                .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
+        if (measureNames.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("mono-measure datasets don't contain same measures (number or names)", position)
+            );
+        }
+        DatasetExpression ds = proc.executeInnerJoin(dsExprs);
+
+        // Rebuild the function parameters. TODO: All component?
+        var normalizedParams = parameters.stream()
+                .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
+                .collect(Collectors.toList());
+
+        // 3. Invoke the function.
+        List<Class> parametersTypes = normalizedParams.stream()
+                .map(TypedExpression::getType)
+                .collect(Collectors.toList());
+        var method = engine.findMethod(funcName, parametersTypes);
+        var funcExrp = new FunctionExpression(method, normalizedParams, position);
+        ds = proc.executeCalc(ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
+        ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of(result)).collect(Collectors.toList()));
+        return proc.executeRename(ds, Map.of(result, measureNames.iterator().next()));
+    }
+
     @Override
     public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
         // Strange name, this is the generic function syntax; fnName ( param, * ).
-
-        Method method = engine.findMethod(ctx.operatorID().getText()).orElseThrow(() -> {
-            throw new VtlRuntimeException(new UnimplementedException("could not find function", ctx.operatorID()));
-        });
-        List<ResolvableExpression> parameters = ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-        if (method.getReturnType().equals(Dataset.class)) {
-            return new DatasetExpression() {
-
-                private Dataset dataset;
-
-                @Override
-                public Dataset resolve(Map<String, Object> context) {
-                    if (dataset == null) {
-                        Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
-                        try {
-                            dataset = (Dataset) method.invoke(null, evaluatedParameters);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new VtlRuntimeException(new VtlScriptException(e, ctx));
-                        }
-                    }
-                    return dataset;
-                }
-
-                @Override
-                public DataStructure getDataStructure() {
-                    return null;
-                }
-            };
-        } else {
-            return new ResolvableExpression() {
-
-                @Override
-                public Class<?> getType() {
-                    return method.getReturnType();
-                }
-
-                @Override
-                public Object resolve(Map<String, Object> context) {
-                    Object[] evaluatedParameters = parameters.stream().map(p -> p.resolve(context)).toArray();
-                    try {
-                        return method.invoke(null, evaluatedParameters);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new VtlRuntimeException(new VtlScriptException(e, ctx));
-                    }
-                }
-            };
+        try {
+            List<ResolvableExpression> parameters = ctx.parameter().stream().
+                    map(exprVisitor::visit)
+                    .collect(Collectors.toList());
+            return invokeFunction(ctx.operatorID().getText(), parameters, fromContext(ctx));
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-
     }
 
     /**
@@ -126,11 +214,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         ResolvableExpression expression = exprVisitor.visit(ctx.expr());
         TerminalNode maskNode = ctx.STRING_CONSTANT();
         // STRING_CONSTANT().getText return null or a string wrapped by quotes
-        String mask = maskNode == null ? null :
-                maskNode.getText()
-                        .replaceAll("\"", "")
-                        .replace("YYYY", "yyyy")
-                        .replace("DD", "dd");
+        String mask = maskNode == null
+                ? null
+                : maskNode.getText().replace("\"", "")
+                .replace("YYYY", "yyyy")
+                .replace("DD", "dd");
         Token symbol = ((TerminalNode) ctx.basicScalarType().getChild(0)).getSymbol();
         Integer basicScalarType = symbol.getType();
         String basicScalarText = symbol.getText();
@@ -138,31 +226,12 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         Class<?> outputClass = getOutputClass(basicScalarType, basicScalarText);
 
         if (Object.class.equals(expression.getType())) {
-            return ResolvableExpression.ofType(outputClass, null);
+            return ResolvableExpression.withType(outputClass).withPosition(fromContext(ctx)).using(c -> null);
         }
-        if (String.class.equals(expression.getType())) {
-            return StringExpression.castTo(expression, outputClass, mask);
-            // Antlr context is not serializable
-            // TODO: Find a way to make ctx serializable
-            //        .handleException(NumberFormatException.class, nfe -> new VtlRuntimeException(
-            //                new InvalidArgumentException("cannot cast to number: " + nfe.getMessage(), ctx)));
+        try {
+            return new CastExpression(fromContext(ctx), expression, mask, outputClass);
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-        if (Boolean.class.equals(expression.getType())) {
-            return BooleanExpression.castTo(expression, outputClass);
-        }
-        if (Long.class.equals(expression.getType())) {
-            return LongExpression.castTo(expression, outputClass);
-        }
-        if (Double.class.equals(expression.getType())) {
-            return DoubleExpression.castTo(expression, outputClass);
-        }
-        if (Instant.class.equals(expression.getType())) {
-            if (mask == null || mask.isEmpty()) {
-                throw new VtlRuntimeException(new InvalidArgumentException("cannot cast date: no mask specified", ctx));
-            }
-            return InstantExpression.castTo(expression, outputClass, mask);
-        }
-        throw new UnsupportedOperationException("cast unsupported on expression of type: " + expression.getType());
     }
-
 }

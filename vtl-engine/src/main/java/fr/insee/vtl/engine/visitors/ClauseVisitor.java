@@ -3,18 +3,28 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import javax.script.ScriptContext;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 /**
@@ -95,7 +105,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.varSamp(numberExpression);
         } else {
-            throw new VtlRuntimeException(new VtlScriptException("not implemented", groupFunctionCtx));
+            throw new VtlRuntimeException(new VtlScriptException("not implemented", fromContext(groupFunctionCtx)));
         }
     }
 
@@ -153,7 +163,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     @Override
     public DatasetExpression visitFilterClause(VtlParser.FilterClauseContext ctx) {
-        BooleanExpression filter = (BooleanExpression) componentExpressionVisitor.visit(ctx.expr());
+        ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
         return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
     }
 
@@ -166,7 +176,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var fromNameString = getName(renameCtx.fromName);
             if (!renamed.add(toNameString)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("duplicate column: %s", toNameString), renameCtx
+                        String.format("duplicate column: %s", toNameString), fromContext(renameCtx)
                 ));
             }
             fromTo.put(fromNameString, toNameString);
@@ -214,7 +224,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 var aggregationFunction = convertToAggregation(
                         // Note that here we replace the expression by the name of the columns.
                         (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                        new ResolvableExpression() {
+                        new ResolvableExpression(fromContext(ctx)) {
                             @Override
                             public Object resolve(Map<String, Object> context) {
                                 return context.get(alias);

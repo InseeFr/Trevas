@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -66,16 +67,16 @@ public class JoinFunctionsTest {
 
         assertThatThrownBy(() -> engine.eval("result := left_join(ds1[filter true], ds2[filter true]);"))
                 .is(atPosition(0, 20, 36))
-                .hasMessage("cannot use expression in join clause");
+                .hasMessage("cannot use expression without alias in join clause");
         assertThatThrownBy(() -> engine.eval("result := inner_join(ds1, ds2[filter true]);"))
                 .is(atPosition(0, 26, 42))
-                .hasMessage("cannot use expression in join clause");
+                .hasMessage("cannot use expression without alias in join clause");
         assertThatThrownBy(() -> engine.eval("result := cross_join(ds1[filter true], ds2);"))
                 .is(atPosition(0, 21, 37))
-                .hasMessage("cannot use expression in join clause");
+                .hasMessage("cannot use expression without alias in join clause");
         assertThatThrownBy(() -> engine.eval("result := full_join(ds1[filter true], ds2[filter true]);"))
                 .is(atPosition(0, 20, 36))
-                .hasMessage("cannot use expression in join clause");
+                .hasMessage("cannot use expression without alias in join clause");
     }
 
     @Test
@@ -87,19 +88,19 @@ public class JoinFunctionsTest {
 
         var result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
-                "id1", "ds1#id2", "m1", "aliasDs#id2", "m2"
+                "id1", "id2", "m1", "m2"
         );
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("a", 1L, 1L, 1L, 7L),
-                Arrays.asList("a", 1L, 1L, 2L, 8L),
-                Arrays.asList("a", 2L, 2L, 1L, 7L),
-                Arrays.asList("a", 2L, 2L, 2L, 8L),
-                Arrays.asList("b", 1L, 3L, 1L, 9L),
-                Arrays.asList("b", 1L, 3L, 2L, 10L),
-                Arrays.asList("b", 2L, 4L, 1L, 9L),
-                Arrays.asList("b", 2L, 4L, 2L, 10L),
-                Arrays.asList("c", 1L, 5L, null, null),
-                Arrays.asList("c", 2L, 6L, null, null)
+                Arrays.asList("a", 1L, 1L, 7L),
+                Arrays.asList("a", 1L, 2L, 8L),
+                Arrays.asList("a", 2L, 1L, 7L),
+                Arrays.asList("a", 2L, 2L, 8L),
+                Arrays.asList("b", 3L, 1L, 9L),
+                Arrays.asList("b", 3L, 2L, 10L),
+                Arrays.asList("b", 4L, 1L, 9L),
+                Arrays.asList("b", 4L, 2L, 10L),
+                Arrays.asList("c", 5L, null, null),
+                Arrays.asList("c", 6L, null, null)
         );
     }
 
@@ -127,13 +128,17 @@ public class JoinFunctionsTest {
         );
 
         ScriptContext context = engine.getContext();
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", dataset2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", dataset1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", dataset2);
 
-        engine.eval("result := left_join(ds1, ds2);");
+        assertThatThrownBy(() -> engine.eval("result := left_join(ds_1, ds_2);"))
+                .isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name");
+
+        engine.eval("result := left_join(ds_1 as ds1, ds_2 as ds2);");
         assertThat(((Dataset) engine.getContext().getAttribute("result")).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Hadrien", "ds1#age", 10L, "ds2#age", 20L),
-                Map.of("name", "Nico", "ds1#age", 11L, "ds2#age", 22L)
+                Map.of("name", "Hadrien", "age", 20L),
+                Map.of("name", "Nico", "age", 22L)
         );
 
     }
@@ -186,9 +191,9 @@ public class JoinFunctionsTest {
     @Test
     public void testInnerJoin() throws ScriptException {
 
-        engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
-        engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
-        engine.eval("result := inner_join(ds1, ds2);");
+        engine.getContext().setAttribute("ds_1", ds1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds_2", ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("result := inner_join(ds_1[keep id1, id2, m1] as ds1, ds_2 as ds2);");
 
         var result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
@@ -201,21 +206,26 @@ public class JoinFunctionsTest {
                 Arrays.asList("b", 2L, 4L, 10L)
         );
 
-        engine.eval("result := inner_join(ds1, ds2 using id1);");
+        assertThatThrownBy(() -> engine.eval("ds_3 := ds_2[rename m2 to m1];" +
+                "result := inner_join(ds_1, ds_3);"))
+                .isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name");
+
+        engine.eval("result := inner_join(ds_1 as ds1, ds_2 as ds2 using id1);");
 
         result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
-                "id1", "ds1#id2", "m1", "ds2#id2", "m2"
+                "id1", "m1", "id2", "m2"
         );
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("a", 1L, 1L, 1L, 7L),
-                Arrays.asList("a", 1L, 1L, 2L, 8L),
-                Arrays.asList("a", 2L, 2L, 1L, 7L),
-                Arrays.asList("a", 2L, 2L, 2L, 8L),
-                Arrays.asList("b", 1L, 3L, 1L, 9L),
-                Arrays.asList("b", 1L, 3L, 2L, 10L),
-                Arrays.asList("b", 2L, 4L, 1L, 9L),
-                Arrays.asList("b", 2L, 4L, 2L, 10L)
+                Arrays.asList("a", 1L, 1L, 7L),
+                Arrays.asList("a", 1L, 2L, 8L),
+                Arrays.asList("a", 2L, 1L, 7L),
+                Arrays.asList("a", 2L, 2L, 8L),
+                Arrays.asList("b", 3L, 1L, 9L),
+                Arrays.asList("b", 3L, 2L, 10L),
+                Arrays.asList("b", 4L, 1L, 9L),
+                Arrays.asList("b", 4L, 2L, 10L)
         );
     }
 
@@ -252,26 +262,24 @@ public class JoinFunctionsTest {
                 Arrays.asList("d", 8L)
         );
 
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds2", ds2);
-        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds3", ds3);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", ds1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", ds2);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_3", ds3);
 
-        engine.eval("result := full_join(ds1 as dsOne, ds2, ds3);");
+        engine.eval("result := full_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
         var result = (Dataset) context.getAttribute("result");
 
         assertThat(result.getDataStructure().values()).containsExactly(
                 new Structured.Component("id", String.class, Role.IDENTIFIER),
-                new Structured.Component("dsOne#m1", Long.class, Role.MEASURE),
-                new Structured.Component("ds2#m1", Long.class, Role.MEASURE),
-                new Structured.Component("ds3#m1", Long.class, Role.MEASURE)
+                new Structured.Component("m1", Long.class, Role.MEASURE)
         );
 
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
-                Arrays.asList("d", 3L, null, 8L),
-                Arrays.asList("c", 2L, 6L, null),
-                Arrays.asList("b", 1L, 5L, null),
-                Arrays.asList("a", null, 4L, 7L)
+                Arrays.asList("d", 8L),
+                Arrays.asList("c", null),
+                Arrays.asList("b", null),
+                Arrays.asList("a", 7L)
         );
 
     }
@@ -306,9 +314,9 @@ public class JoinFunctionsTest {
                 )
         );
 
-        engine.getContext().setAttribute("ds3", ds3, ScriptContext.ENGINE_SCOPE);
-        engine.getContext().setAttribute("ds4", ds4, ScriptContext.ENGINE_SCOPE);
-        engine.eval("result := cross_join(ds3, ds4);");
+        engine.getContext().setAttribute("ds_3", ds3, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds_4", ds4, ScriptContext.ENGINE_SCOPE);
+        engine.eval("result := cross_join(ds_3 as ds3, ds_4 as ds4);");
 
         var result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactly(

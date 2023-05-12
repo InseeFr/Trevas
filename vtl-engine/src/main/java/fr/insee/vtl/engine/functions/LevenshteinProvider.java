@@ -12,5 +12,5 @@ public class LevenshteinProvider implements FunctionProvider {
     public Map<String, Method> getFunctions(ScriptEngine vtlEngine) {
         return Map.of();
     }
-    
+
 }

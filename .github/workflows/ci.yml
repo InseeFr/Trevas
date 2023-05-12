@@ -5,10 +5,11 @@ on:
     branches:
       - master
       - develop
+      - "feature/**"
     paths-ignore:
       - "docs/**"
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   build:

@@ -1,7 +1,15 @@
 package fr.insee.vtl.model;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +34,31 @@ public interface Structured {
     }
 
     /**
+     * Returns the map of column names & roles.
+     *
+     * @return The column names & roles.
+     */
+    default Map<String, Dataset.Role> getRoles() {
+        return getDataStructure().values().stream().collect(Collectors.toMap(Component::getName, Component::getRole));
+    }
+
+    default List<Component> getIdentifiers() {
+        return getDataStructure().getIdentifiers();
+    }
+
+    default List<Component> getMeasures() {
+        return getDataStructure().getMeasures();
+    }
+
+    default List<Component> getAttributes() {
+        return getDataStructure().getAttributes();
+    }
+
+    default Boolean isMonoMeasure() {
+        return getDataStructure().isMonoMeasure();
+    }
+
+    /**
      * The <code>Structure</code> class represent a structure component with its name, type, role and nullable.
      */
     class Component implements Serializable {
@@ -36,24 +69,11 @@ public interface Structured {
         private final Boolean nullable;
 
         /**
-         * Refines the nullable attribute of a <code>Component</code> regarding its role.
-         *
-         * @param initialNullable   The dataset nullable attribute.
-         * @param role              The role of the component as a value of the <code>Role</code> enumeration
-         * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
-         */
-        private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
-            if (role.equals(Dataset.Role.IDENTIFIER)) return false;
-            if (initialNullable == null) return true;
-            return initialNullable;
-        }
-
-        /**
          * Constructor taking the name, type and role of the component.
          *
-         * @param name     A string giving the name of the structure component to create
-         * @param type     A <code>Class</code> giving the type of the structure component to create
-         * @param role     A <code>Role</code> giving the role of the structure component to create
+         * @param name A string giving the name of the structure component to create
+         * @param type A <code>Class</code> giving the type of the structure component to create
+         * @param role A <code>Role</code> giving the role of the structure component to create
          */
         public Component(String name, Class<?> type, Dataset.Role role) {
             this.name = Objects.requireNonNull(name);
@@ -87,6 +107,19 @@ public interface Structured {
             this.type = component.getType();
             this.role = component.getRole();
             this.nullable = component.getNullable();
+        }
+
+        /**
+         * Refines the nullable attribute of a <code>Component</code> regarding its role.
+         *
+         * @param initialNullable The dataset nullable attribute.
+         * @param role            The role of the component as a value of the <code>Role</code> enumeration
+         * @return A boolean which is <code>true</code> if the component values can be null, <code>false</code> otherwise.
+         */
+        private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
+            if (role.equals(Dataset.Role.IDENTIFIER)) return false;
+            if (initialNullable == null) return true;
+            return initialNullable;
         }
 
         /**
@@ -205,8 +238,8 @@ public interface Structured {
         /**
          * Creates a DataStructure with type, role and nullable maps.
          *
-         * @param types The types of each component, by name
-         * @param roles The roles of each component, by name
+         * @param types     The types of each component, by name
+         * @param roles     The roles of each component, by name
          * @param nullables The nullables of each component, by name
          * @throws IllegalArgumentException if the key set of types and roles are not equal.
          */
@@ -248,6 +281,22 @@ public interface Structured {
         //        constructor with Collection<Component>
         public DataStructure(DataStructure dataStructure) {
             super(dataStructure);
+        }
+
+        public List<Component> getIdentifiers() {
+            return values().stream().filter(Component::isIdentifier).collect(Collectors.toList());
+        }
+
+        public List<Component> getMeasures() {
+            return values().stream().filter(Component::isMeasure).collect(Collectors.toList());
+        }
+
+        public List<Component> getAttributes() {
+            return values().stream().filter(Component::isAttribute).collect(Collectors.toList());
+        }
+
+        public Boolean isMonoMeasure() {
+            return getMeasures().size() == 1;
         }
     }
 

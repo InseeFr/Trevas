@@ -1,21 +1,58 @@
 package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.FunctionProvider;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.VtlMethod;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
-import javax.script.*;
+import javax.script.AbstractScriptEngine;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.
@@ -47,6 +84,94 @@ public class VtlScriptEngine extends AbstractScriptEngine {
      */
     public VtlScriptEngine(ScriptEngineFactory factory) {
         this.factory = factory;
+    }
+
+    public static Positioned fromToken(Token token) {
+        Positioned.Position position = new Positioned.Position(
+                token.getLine() - 1,
+                token.getLine() - 1,
+                token.getCharPositionInLine(),
+                token.getCharPositionInLine() + (token.getStopIndex() - token.getStartIndex() + 1)
+        );
+        return () -> position;
+    }
+
+    public static Positioned fromContext(ParseTree tree) {
+        if (tree instanceof ParserRuleContext) {
+            ParserRuleContext parserRuleContext = (ParserRuleContext) tree;
+            return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
+        }
+        if (tree instanceof TerminalNode) {
+            return fromToken(((TerminalNode) tree).getSymbol());
+        }
+        throw new IllegalStateException();
+    }
+
+    public static Positioned fromTokens(Token from, Token to) {
+        var position = new Positioned.Position(
+                from.getLine() - 1,
+                to.getLine() - 1,
+                from.getCharPositionInLine(),
+                to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1)
+        );
+        return () -> position;
+    }
+
+    static boolean matchParameters(Method method, Class<?>... classes) {
+        Type[] genericParameterTypes = method.getGenericParameterTypes();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+
+        if (classes.length != parameterTypes.length) {
+            return false;
+        }
+
+        Map<TypeVariable<?>, Class<?>> typeArguments = new HashMap<>();
+
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (!isAssignableTo(classes[i], parameterTypes[i], genericParameterTypes[i], typeArguments)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    static boolean isAssignableTo(Class<?> clazz, Class<?> target, Type genericTarget, Map<TypeVariable<?>, Class<?>> typeArguments) {
+        if (target.isAssignableFrom(clazz)) {
+            if (genericTarget instanceof TypeVariable) {
+                TypeVariable<?> typeVariable = (TypeVariable<?>) genericTarget;
+                Class<?> existingTypeArgument = typeArguments.get(typeVariable);
+                if (existingTypeArgument == null) {
+                    typeArguments.put(typeVariable, clazz);
+                } else return existingTypeArgument.equals(clazz);
+            }
+            return true;
+        }
+
+        if (genericTarget instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) genericTarget;
+            Type[] typeArgumentsArray = parameterizedType.getActualTypeArguments();
+
+            if (typeArgumentsArray.length != 1) {
+                return false;
+            }
+
+            Type typeArgument = typeArgumentsArray[0];
+
+            if (typeArgument instanceof TypeVariable) {
+                TypeVariable<?> typeVariable = (TypeVariable<?>) typeArgument;
+                Class<?> existingTypeArgument = typeArguments.get(typeVariable);
+                if (existingTypeArgument == null) {
+                    typeArguments.put(typeVariable, clazz);
+                } else return existingTypeArgument.equals(clazz);
+                return true;
+            } else if (typeArgument instanceof Class) {
+                Class<?> classArgument = (Class<?>) typeArgument;
+                return classArgument.isAssignableFrom(clazz);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -96,10 +221,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                 @Override
                 public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int startLine, int startColumn, String msg, RecognitionException e) {
                     if (e != null && e.getCtx() != null) {
-                        errors.add(new VtlScriptException(msg, e.getCtx()));
+                        errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
                     } else {
                         if (offendingSymbol instanceof Token) {
-                            errors.add(new VtlSyntaxException(msg, (Token) offendingSymbol));
+                            errors.add(new VtlSyntaxException(msg, fromToken((Token) offendingSymbol)));
                         } else {
                             throw new Error("offendingSymbol was not a Token");
                         }
@@ -190,12 +315,38 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         return factory;
     }
 
-    public Optional<Method> findMethod(String name) {
-        if (methodCache == null) {
-            loadMethods();
+    public VtlMethod findMethod(String name, Collection<Class> types) throws NoSuchMethodException {
+        Set<Method> customMethods = methodCache == null ? Set.of()
+                : new HashSet<>(methodCache.values());
+        Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
+                .collect(Collectors.toSet());
+
+        List<Method> candidates = methods.stream()
+                .filter(method -> method.getName().equals(name))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
+                .collect(Collectors.toList());
+        if (candidates.size() == 1) {
+            return new VtlMethod(candidates.get(0));
         }
-        return Optional.ofNullable(methodCache.get(name));
+        // TODO: Handle parameter resolution.
+        for (Method method : methods) {
+            if (method.getName().equals(name) && types.equals(Arrays.asList(method.getParameterTypes()))) {
+                return new VtlMethod(method);
+            }
+        }
+        throw new NoSuchMethodException(methodToString(name, types));
     }
+
+    private String methodToString(String name, Collection<Class> argTypes) {
+        StringJoiner sj = new StringJoiner(", ", name + "(", ")");
+        if (argTypes != null) {
+            for (Class<?> c : argTypes) {
+                sj.add(c == null ? "null" : c.getSimpleName());
+            }
+        }
+        return sj.toString();
+    }
+
 
     public Method registerMethod(String name, Method method) {
         if (methodCache == null) {
@@ -209,6 +360,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         ServiceLoader<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class);
         for (FunctionProvider provider : providers) {
             Map<String, Method> functions = provider.getFunctions(this);
+            // TODO: rename function name with 'name' instead of java name
             for (String name : functions.keySet()) {
                 methodCache.put(name, functions.get(name));
             }

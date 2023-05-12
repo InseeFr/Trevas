@@ -1,9 +1,12 @@
 package fr.insee.vtl.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
 
 /**
  * Interface used for dataset transformations.
@@ -29,7 +32,7 @@ public interface ProcessingEngine {
      * @param filter     a filter expression
      * @return the result of the filter transformation
      */
-    DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterString);
+    DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterString);
 
     /**
      * Execute a rename transformations on the dataset expression.
@@ -68,7 +71,7 @@ public interface ProcessingEngine {
     /**
      * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a given
      * window specification (e.g. partitionBy, orderBy, datapoints)
-     * */
+     */
     DatasetExpression executeSimpleAnalytic(
             DatasetExpression dataset,
             String targetColumnName,
@@ -82,9 +85,9 @@ public interface ProcessingEngine {
     /**
      * Execute lead/lag analytic function on the dataset expression based on a given
      * window specification (e.g. partitionBy, orderBy).
-     *
+     * <p>
      * Note lead and lag can't take a window frame (e.g. data points, range)
-     * */
+     */
     DatasetExpression executeLeadOrLagAn(
             DatasetExpression dataset,
             String targetColumnName,
@@ -99,22 +102,23 @@ public interface ProcessingEngine {
     /**
      * Execute ratio_to_report analytic function on the dataset expression based on a given
      * window specification.
-     *
+     * <p>
      * Note ratio_to_report can only take a partitionBy window specification
-     * */
+     */
     DatasetExpression executeRatioToReportAn(
             DatasetExpression dataset,
             String targetColumnName,
             Analytics.Function function,
             String sourceColumnName,
             List<String> partitionBy
-        );
+    );
+
     /**
      * Execute rank analytic function on the dataset expression based on a given
      * window specification.
-     *
+     * <p>
      * Note rank can only take a window specification with partitionBy, orderBy. orderBy is mandatory
-     * */
+     */
     DatasetExpression executeRankAn(
             DatasetExpression dataset,
             String targetColumnName,
@@ -140,10 +144,18 @@ public interface ProcessingEngine {
      */
     DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components);
 
+    default DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets) {
+        Set<Component> commonIdentifiers = datasets.values().stream()
+                .flatMap(datasetExpression -> datasetExpression.getDataStructure().values().stream())
+                .filter(Structured.Component::isIdentifier)
+                .collect(Collectors.toSet());
+        return executeInnerJoin(datasets, new ArrayList<>(commonIdentifiers));
+    }
+
     /**
      * Execute a cross join transformations on the dataset expressions.
      *
-     * @param datasets   a map of aliased datasets
+     * @param datasets    a map of aliased datasets
      * @param identifiers the components to join on
      * @return the result of the left join transformation
      */
@@ -152,7 +164,7 @@ public interface ProcessingEngine {
     /**
      * Execute a full join transformations on the dataset expressions.
      *
-     * @param datasets   a map of aliased datasets
+     * @param datasets    a map of aliased datasets
      * @param identifiers the components to join on
      * @return the result of the left join transformation
      */
@@ -161,9 +173,27 @@ public interface ProcessingEngine {
     /**
      * Execute a validation DP ruleset on the dataset expressions.
      *
+     * @param dpr               datapoint ruleset
      * @param datasetExpression datasets
+     * @param output            validation output
+     * @param pos               script error position
      * @return the result of the validation DP ruleset transformation
      */
-    DatasetExpression executeValidateDPruleset(DatasetExpression datasetExpression);
+    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output, Positioned pos);
+
+    /**
+     * Execute a simple validation on dataset expressions.
+     *
+     * @param dsExpr        dataset expression
+     * @param erCodeExpr    error code expression
+     * @param erLevelExpr   error level expression
+     * @param imbalanceExpr dataset expression
+     * @param output        validation output
+     * @param pos           script error position
+     * @return the result of the validation
+     */
+    DatasetExpression executeValidationSimple(DatasetExpression dsExpr, ResolvableExpression erCodeExpr,
+                                              ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr,
+                                              String output, Positioned pos);
 
 }

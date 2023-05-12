@@ -2,10 +2,10 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.exceptions.VtlScriptException;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
@@ -15,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
@@ -71,7 +73,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 return Analytics.Function.RANK;
             default:
                 throw new VtlRuntimeException(
-                        new InvalidArgumentException("not an analytic function", ctx)
+                        new InvalidArgumentException("not an analytic function", fromContext(ctx))
                 );
         }
     }
@@ -151,7 +153,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
         } else if (ctx.INTEGER_CONSTANT() != null) {
             return Long.parseLong(ctx.getChild(0).getText());
         }
-        throw new VtlRuntimeException(new VtlScriptException("invalid range", ctx));
+        throw new VtlRuntimeException(new VtlScriptException("invalid range", fromContext(ctx)));
     }
 
     private String toTargetColName(VtlParser.ExprContext expr) {

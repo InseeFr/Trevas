@@ -2,14 +2,31 @@ package fr.insee.vtl.engine.processors;
 
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.Analytics;
+import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 
 import javax.script.ScriptEngine;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.model.Structured.DataPoint;
+import static fr.insee.vtl.model.Structured.DataStructure;
 
 /**
  * The <code>InMemoryProcessingEngine</code> class is an implementation of a VTL engine that performs all operations in memory.
@@ -33,7 +50,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             );
         }
 
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var dataset = expression.resolve(context);
@@ -55,8 +72,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeFilter(DatasetExpression expression, BooleanExpression filter, String filterText) {
-        return new DatasetExpression() {
+    public DatasetExpression executeFilter(DatasetExpression expression, ResolvableExpression filter, String filterText) {
+        return new DatasetExpression(expression) {
 
             @Override
             public DataStructure getDataStructure() {
@@ -95,7 +112,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                         )
                 ).collect(Collectors.toList());
         DataStructure renamedStructure = new DataStructure(structure);
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var result = expression.resolve(context).getDataPoints().stream()
@@ -125,7 +142,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 .collect(Collectors.toList());
         var newStructure = new DataStructure(structure);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var columnNames = getColumnNames();
@@ -150,7 +167,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     @Override
     public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-        return new DatasetExpression() {
+        return new DatasetExpression(datasets.get(0)) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 Stream<DataPoint> stream = Stream.empty();
@@ -192,7 +209,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         }
 
         Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
-        return new DatasetExpression() {
+        return new DatasetExpression(expression) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
 
@@ -285,7 +302,14 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DatasetExpression dataset) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeValidationSimple(DatasetExpression dsE, ResolvableExpression erCodeE,
+                                                     ResolvableExpression erLevelE, DatasetExpression imbalanceE,
+                                                     String output, Positioned pos) {
         throw new UnsupportedOperationException();
     }
 
@@ -325,7 +349,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         var structure = createCommonStructure(identifiers, left, right);
         var predicate = createPredicate(identifiers);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();
@@ -377,7 +401,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         var structure = createCommonStructure(identifiers, left, right);
         var predicate = createPredicate(identifiers);
 
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();
@@ -422,7 +446,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
     private DatasetExpression handleCrossJoin(List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
         var structure = createCommonStructure(identifiers, left, right);
-        return new DatasetExpression() {
+        return new DatasetExpression(left) {
             @Override
             public Dataset resolve(Map<String, Object> context) {
                 var leftPoints = left.resolve(context).getDataPoints();

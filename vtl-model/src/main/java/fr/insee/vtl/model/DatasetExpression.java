@@ -5,7 +5,11 @@ import java.util.Map;
 /**
  * The <code>DatasetExpression</code> class is an abstract representation of a dataset expression.
  */
-public abstract class DatasetExpression implements ResolvableExpression, Structured {
+public abstract class DatasetExpression extends ResolvableExpression implements Structured {
+
+    public DatasetExpression(Positioned position) {
+        super(position);
+    }
 
     /**
      * Returns a dataset expression based on a given dataset.
@@ -13,8 +17,8 @@ public abstract class DatasetExpression implements ResolvableExpression, Structu
      * @param value The dataset on which the expression should be based.
      * @return The dataset expression.
      */
-    public static DatasetExpression of(Dataset value) {
-        return new DatasetExpression() {
+    public static DatasetExpression of(Dataset value, Positioned position) {
+        return new DatasetExpression(position) {
 
             @Override
             public Structured.DataStructure getDataStructure() {

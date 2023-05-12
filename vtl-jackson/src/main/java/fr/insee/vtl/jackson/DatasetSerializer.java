@@ -22,8 +22,8 @@ public class DatasetSerializer extends StdSerializer<Dataset> {
     /**
      * Serializes a <code>Dataset</code> object in JSON.
      *
-     * @param value The dataset component to serialize.
-     * @param gen The base JSON generator.
+     * @param value    The dataset component to serialize.
+     * @param gen      The base JSON generator.
      * @param provider The serialization provider.
      * @throws IOException In case of problem while creating the JSON dataset.
      */

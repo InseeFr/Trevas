@@ -1,16 +1,18 @@
 package fr.insee.vtl.engine.visitors.expression;
 
-import fr.insee.vtl.engine.exceptions.InvalidTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.BooleanExpression;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
-import static fr.insee.vtl.engine.utils.TypeChecking.isNull;
+import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
  * <code>IfVisitor</code> is the base visitor for if-then-else expressions.
@@ -19,13 +21,61 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final ExpressionVisitor exprVisitor;
 
+    private final GenericFunctionsVisitor genericFunctionsVisitor;
+
     /**
      * Constructor taking an expression visitor.
      *
-     * @param expressionVisitor The visitor for the enclosing expression.
+     * @param expressionVisitor       The visitor for the enclosing expression.
+     * @param genericFunctionsVisitor
      */
-    public ConditionalVisitor(ExpressionVisitor expressionVisitor) {
-        exprVisitor = Objects.requireNonNull(expressionVisitor);
+    public ConditionalVisitor(ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
+        this.exprVisitor = Objects.requireNonNull(expressionVisitor);
+        this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
+    }
+
+    public static Long ifThenElse(Boolean condition, Long thenExpr, Long elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Double ifThenElse(Boolean condition, Double thenExpr, Double elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static String ifThenElse(Boolean condition, String thenExpr, String elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Boolean ifThenElse(Boolean condition, Boolean thenExpr, Boolean elseExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : elseExpr;
+    }
+
+    public static Long nvl(Long value, Long defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static Double nvl(Double value, Double defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static String nvl(String value, String defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    public static Boolean nvl(Boolean value, Boolean defaultValue) {
+        return value == null ? defaultValue : value;
     }
 
     /**
@@ -36,45 +86,17 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
-
-        ResolvableExpression nullableExpression = exprVisitor.visit(ctx.conditionalExpr);
-        if (isNull(nullableExpression)) {
-            return BooleanExpression.of((Boolean) null);
+        try {
+            var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
+            var thenExpression = exprVisitor.visit(ctx.thenExpr);
+            var elseExpression = exprVisitor.visit(ctx.elseExpr);
+            Positioned position = fromContext(ctx);
+            ResolvableExpression expression = genericFunctionsVisitor.invokeFunction("ifThenElse", List.of(conditionalExpr, thenExpression, elseExpression), position);
+            Class<?> actualType = thenExpression.getType();
+            return new CastExpression(position, expression, actualType);
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
         }
-
-        ResolvableExpression conditionalExpression = assertTypeExpression(
-                exprVisitor.visit(ctx.conditionalExpr),
-                Boolean.class,
-                ctx.conditionalExpr
-        );
-
-        // Find the common non null type.
-        ResolvableExpression thenExpression = exprVisitor.visit(ctx.thenExpr);
-        ResolvableExpression elseExpression = exprVisitor.visit(ctx.elseExpr);
-
-        // Normalize the type if we have nulls.
-        if (isNull(elseExpression) && !isNull(thenExpression)) {
-            elseExpression = assertTypeExpression(elseExpression, thenExpression.getType(),
-                    ctx.elseExpr);
-        } else if (isNull(thenExpression)) {
-            thenExpression = assertTypeExpression(thenExpression, elseExpression.getType(),
-                    ctx.thenExpr);
-        }
-
-        if (!thenExpression.getType().equals(elseExpression.getType())) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(thenExpression.getType(), elseExpression.getType(), ctx.elseExpr)
-            );
-        }
-
-        ResolvableExpression finalThenExpression = thenExpression;
-        ResolvableExpression finalElseExpression = elseExpression;
-        return ResolvableExpression.withTypeCasting(thenExpression.getType(), (clazz, context) -> {
-            Boolean conditionalValue = (Boolean) conditionalExpression.resolve(context);
-            return Boolean.TRUE.equals(conditionalValue) ?
-                    clazz.cast(finalThenExpression.resolve(context)) :
-                    clazz.cast(finalElseExpression.resolve(context));
-        });
     }
 
     /**
@@ -85,29 +107,35 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
-        ResolvableExpression expression = exprVisitor.visit(ctx.left);
-        ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
+        try {
+            ResolvableExpression expression = exprVisitor.visit(ctx.left);
+            ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
 
-        if (isNull(expression)) {
-            return ResolvableExpression.withTypeCasting(defaultExpression.getType(), (clazz, context) ->
-                clazz.cast(defaultExpression.resolve(context))
-            );
+            Positioned position = fromContext(ctx);
+            return genericFunctionsVisitor.invokeFunction("nvl", List.of(expression, defaultExpression), position);
+        } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
+        }
+    }
+
+    static class CastExpression extends ResolvableExpression {
+        private final Class<?> type;
+        private final ResolvableExpression expression;
+
+        CastExpression(Positioned pos, ResolvableExpression expression, Class<?> type) {
+            super(pos);
+            this.type = type;
+            this.expression = expression;
         }
 
-        Class<?> expressionType = expression.getType();
-        Class<?> defaultExpressionType = defaultExpression.getType();
-
-        if (!expressionType.equals(defaultExpressionType)) {
-            throw new VtlRuntimeException(
-                    new InvalidTypeException(expressionType, defaultExpressionType, ctx.right)
-            );
+        @Override
+        public Object resolve(Map<String, Object> context) {
+            return type.cast(expression.resolve(context));
         }
 
-        return ResolvableExpression.withTypeCasting(defaultExpressionType, (clazz, context) -> {
-            var resolvedExpression = expression.resolve(context);
-            return resolvedExpression == null ?
-                    clazz.cast(defaultExpression.resolve(context)) :
-                    clazz.cast(resolvedExpression);
-        });
+        @Override
+        public Class<?> getType() {
+            return type;
+        }
     }
 }
