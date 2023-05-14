@@ -58,5 +58,9 @@
 	"sidebar.docs.link.Home": {
 		"message": "Hjem",
 		"description": "The label for link Home in sidebar docs, linking to /"
+	},
+	"sidebar.docs.category.Releases": {
+		"message": "Utgivelse",
+		"description": "The label for category Releases in sidebar docs"
 	}
 }

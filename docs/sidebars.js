@@ -23,6 +23,14 @@ module.exports = {
 						'introduction/modules/jackson',
 					],
 				},
+				{
+					type: 'category',
+					label: 'Releases',
+					items: [
+						'introduction/releases/index-releases',
+						'introduction/releases/1.x.x',
+					],
+				},
 			],
 		},
 		{

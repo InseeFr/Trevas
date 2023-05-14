@@ -2,5 +2,9 @@
 	"item.label.Documentation": {
 		"message": "文档",
 		"description": "Navbar item with label Documentation"
+	},
+	"logo.alt": {
+		"message": "Trevas logo",
+		"description": "The alt text of navbar logo"
 	}
 }
