@@ -4,6 +4,8 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.spark.SparkDataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -362,5 +364,38 @@ public class ValidationTest {
                 .map(c -> c.getName()).collect(Collectors.toList());
         assertThat(DS_r_to_renameMeasure.size()).isEqualTo(4);
         assertThat(DS_r_to_renameMeasure.contains("imbalance")).isTrue();
+    }
+
+    @Test
+    public void serializationCheckDatapointTest() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        org.apache.spark.sql.Dataset<Row> ds1_csv = spark.read()
+                .option("delimiter", ";")
+                .option("header", "true")
+                .csv("src/main/resources/ds1.csv");
+        SparkDataset sparkDataset1 = new SparkDataset(ds1_csv);
+        context.setAttribute("ds1", sparkDataset1, ScriptContext.ENGINE_SCOPE);
+        org.apache.spark.sql.Dataset<Row> ds2_csv = spark.read()
+                .option("delimiter", ";")
+                .option("header", "true")
+                .csv("src/main/resources/ds2.csv");
+        SparkDataset sparkDataset2 = new SparkDataset(ds1_csv);
+        context.setAttribute("ds2", sparkDataset2, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("ds1 := ds1[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; " +
+                "ds2 := ds2[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; " +
+                "ds_concat := ds1#string1 || \" and \" || ds2#string1; " +
+                "ds1_num := ds1[keep id, long1, double1]; " +
+                "ds2_num := ds2[keep id, long1, double1]; " +
+                "ds_mod := mod(ds1_num, 2); " +
+                "ds_sum := ds1_num + ds2_num; " +
+                "ds_compare := ds1_num = ds2_num; " +
+                "define datapoint ruleset dpr1 ( variable double1, long1 ) is " +
+                "   my_rule_1 : double1 > 0 errorcode \"Double <= 0\" errorlevel 1; " +
+                "   my_rule_2 : long1 > 0 errorcode \"Long <= 0\" errorlevel 100 " +
+                "end datapoint ruleset; " +
+                "ds_check_datapoint := check_datapoint(ds1_num, dpr1 all); " +
+                "ds_check := check(ds1#long1 > ds2#long1 errorcode \"error\" errorlevel 1 imbalance ds1#long1 + ds2#long1 invalid);");
+        List<Structured.DataPoint> dsCheckDatapoint = ((Dataset) engine.getContext().getAttribute("ds_check_datapoint")).getDataPoints();
     }
 }
