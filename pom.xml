@@ -5,7 +5,7 @@
     <groupId>fr.insee.trevas</groupId>
     <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <modules>
         <module>vtl-parser</module>
         <module>vtl-model</module>
@@ -239,7 +239,7 @@
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <configuration>
-                                    <keyname>6CA98FFB</keyname>
+                                    <keyname>B28A31C8AD9D237A6FFABCBC8C7A5EED3D7D3BCD</keyname>
                                 </configuration>
                                 <goals>
                                     <goal>sign</goal>

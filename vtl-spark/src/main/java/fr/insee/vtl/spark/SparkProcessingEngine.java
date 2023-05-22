@@ -1,16 +1,6 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.Analytics;
-import fr.insee.vtl.model.DataPointRuleset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.IndexedHashMap;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.ValidationOutput;
+import fr.insee.vtl.model.*;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,50 +12,21 @@ import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import javax.script.ScriptEngine;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.model.AggregationExpression.AverageAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.CountAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.MaxAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.MedianAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.MinAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.StdDevSampAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.SumAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.VarPopAggregationExpression;
-import static fr.insee.vtl.model.AggregationExpression.VarSampAggregationExpression;
+import static fr.insee.vtl.model.AggregationExpression.*;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.model.Dataset.Role.MEASURE;
 import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
 import static org.apache.spark.sql.functions.avg;
-import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
-import static org.apache.spark.sql.functions.expr;
-import static org.apache.spark.sql.functions.first;
-import static org.apache.spark.sql.functions.lag;
-import static org.apache.spark.sql.functions.last;
-import static org.apache.spark.sql.functions.lead;
-import static org.apache.spark.sql.functions.lit;
 import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.min;
-import static org.apache.spark.sql.functions.percentile_approx;
-import static org.apache.spark.sql.functions.rank;
-import static org.apache.spark.sql.functions.stddev_pop;
-import static org.apache.spark.sql.functions.stddev_samp;
-import static org.apache.spark.sql.functions.struct;
 import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.udf;
-import static org.apache.spark.sql.functions.var_pop;
-import static org.apache.spark.sql.functions.var_samp;
+import static org.apache.spark.sql.functions.*;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 /**
@@ -569,45 +530,63 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> ds = sparkDataset.getSparkDataset();
         Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
 
-        List<Dataset<Row>> datasets = dpr.getRules().stream().map(rule -> {
+        SparkDataset sparkDs = new SparkDataset(renamedDs);
+        DatasetExpression sparkDsExpr = new SparkDatasetExpression(sparkDs, pos);
+        Structured.DataStructure dataStructure = sparkDs.getDataStructure();
+
+        var roleMap = getRoleMap(sparkDataset);
+        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
+
+        Class errorCodeType = dpr.getErrorCodeType();
+        Class errorLevelType = dpr.getErrorLevelType();
+
+        List<DatasetExpression> datasetsExpression = dpr.getRules().stream().map(rule -> {
                     String ruleName = rule.getName();
-                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class).withPosition(pos).using(c -> ruleName);
-                    Class errorCodeType = dpr.getErrorCodeType();
-                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType).withPosition(pos).using(
-                            context -> {
-                                Map<String, Object> contextMap = (Map<String, Object>) context;
-                                ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(context -> ruleName);
+
+                    ResolvableExpression antecedentExpression = rule.getBuildAntecedentExpression(dataStructure);
+                    ResolvableExpression consequentExpression = rule.getBuildConsequentExpression(dataStructure);
+
+                    ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType)
+                            .withPosition(pos)
+                            .using(context -> {
                                 if (errorCodeExpr == null) return null;
-                                Object erCode = errorCodeExpr.resolve(contextMap);
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erCode = errorCodeExpr.resolve(mapContext);
                                 if (erCode == null) return null;
-                                if (errorCodeExpr == null) return null;
-                                Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(contextMap).resolve(contextMap);
-                                Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(contextMap).resolve(contextMap);
-                                return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ?
-                                        errorCodeType.cast(erCode)
-                                        : null;
-                            }
-                    );
-                    Class errorLevelType = dpr.getErrorLevelType();
-                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType).withPosition(pos).using(
-                            context -> {
-                                Map<String, Object> contextMap = (Map<String, Object>) context;
-                                ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                                Boolean antecedentValue = (Boolean) antecedentExpression.resolve(mapContext);
+                                Boolean consequentValue = (Boolean) consequentExpression.resolve(mapContext);
+                                return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? errorCodeType.cast(erCode) : null;
+                            });
+
+                    ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType)
+                            .withPosition(pos)
+                            .using(context -> {
                                 if (errorLevelExpr == null) return null;
-                                Object erLevel = errorLevelExpr.resolve(contextMap);
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erLevel = errorLevelExpr.resolve(mapContext);
                                 if (erLevel == null) return null;
-                                Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(contextMap).resolve(contextMap);
-                                Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(contextMap).resolve(contextMap);
+                                Boolean antecedentValue = (Boolean) antecedentExpression.resolve(mapContext);
+                                Boolean consequentValue = (Boolean) consequentExpression.resolve(mapContext);
                                 return Boolean.TRUE.equals(antecedentValue) && Boolean.FALSE.equals(consequentValue) ? errorLevelType.cast(erLevel) : null;
-                            }
-                    );
-                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class).withPosition(pos).using(
-                            context -> {
-                                Boolean antecedentValue = (Boolean) rule.getBuildAntecedentExpression().apply(context).resolve(context);
-                                Boolean consequentValue = (Boolean) rule.getBuildConsequentExpression().apply(context).resolve(context);
+                            });
+
+                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Boolean antecedentValue = (Boolean) antecedentExpression.resolve(context);
+                                Boolean consequentValue = (Boolean) consequentExpression.resolve(context);
+                                if (antecedentValue == null) return consequentValue;
+                                if (consequentValue == null) return antecedentValue;
                                 return !antecedentValue || consequentValue;
-                            }
-                    );
+                            });
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                     resolvableExpressions.put("ruleid", ruleIdExpression);
@@ -615,24 +594,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // do we need to use execute executeCalcInterpreted too?
-                    return executeCalcEvaluated(renamedDs, resolvableExpressions);
+                    return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());
 
-        var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("ruleid", IDENTIFIER);
-        roleMap.put(BOOLVAR, MEASURE);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
-        List<DatasetExpression> datasetsExpression = datasets.stream()
-                .map(d -> new SparkDatasetExpression(new SparkDataset(d, roleMap), pos))
-                .collect(Collectors.toList());
-        Dataset<Row> renamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
-        SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(renamedSparkDs), pos);
+        Dataset<Row> invertRenamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
+        SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(invertRenamedSparkDs), pos);
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
-            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression,
-                    ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
-                    BOOLVAR + " = false");
+            ResolvableExpression defaultExpression = ResolvableExpression.withType(Boolean.class)
+                    .withPosition(pos).using(c -> null);
+            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, defaultExpression, BOOLVAR + " = false");
             Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
             return new SparkDatasetExpression(new SparkDataset(result), pos);
         }

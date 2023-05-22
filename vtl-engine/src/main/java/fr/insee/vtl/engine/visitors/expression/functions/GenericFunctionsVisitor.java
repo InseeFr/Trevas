@@ -105,11 +105,15 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             // Invoking a function only supports a combination of scalar types and mono-measure arrays. In the special
             // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and measures.
             ResolvableExpression finalRes;
+            List<Class> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
             // Only one parameter, and it's a dataset. We can invoke the function on each measure.
-            if (parameters.stream().noneMatch(DatasetExpression.class::isInstance)) {
+            // Or method found in global methods
+            var method = engine.findGlobalMethod(funcName, parameterTypes);
+            if (parameters.stream().noneMatch(DatasetExpression.class::isInstance) || method != null) {
                 // Only scalar types. We can invoke the function directly.
-                List<Class> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-                var method = engine.findMethod(funcName, parameterTypes);
+                if (method == null) {
+                    method = engine.findMethod(funcName, parameterTypes);
+                }
                 return new FunctionExpression(method, parameters, position);
             } else if (noMonoDs.isEmpty()) {
                 finalRes = invokeFunctionOnDataset(funcName, parameters, position);

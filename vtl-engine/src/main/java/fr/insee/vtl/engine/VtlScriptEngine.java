@@ -77,6 +77,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private final ScriptEngineFactory factory;
     private Map<String, Method> methodCache;
 
+    private Map<String, Method> globalMethodCache;
+
     /**
      * Constructor taking a script engine factory.
      *
@@ -337,6 +339,26 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         throw new NoSuchMethodException(methodToString(name, types));
     }
 
+    public VtlMethod findGlobalMethod(String name, Collection<Class> types) throws NoSuchMethodException {
+        if (globalMethodCache == null) return null;
+        Set<Method> methods = new HashSet<>(globalMethodCache.values());
+
+        List<Method> candidates = methods.stream()
+                .filter(method -> method.getName().equals(name))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
+                .collect(Collectors.toList());
+        if (candidates.size() == 1) {
+            return new VtlMethod(candidates.get(0));
+        }
+        // TODO: Handle parameter resolution.
+        for (Method method : methods) {
+            if (method.getName().equals(name) && types.equals(Arrays.asList(method.getParameterTypes()))) {
+                return new VtlMethod(method);
+            }
+        }
+        throw new NoSuchMethodException(methodToString(name, types));
+    }
+
     private String methodToString(String name, Collection<Class> argTypes) {
         StringJoiner sj = new StringJoiner(", ", name + "(", ")");
         if (argTypes != null) {
@@ -353,6 +375,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             loadMethods();
         }
         return methodCache.put(name, method);
+    }
+
+    public Method registerGlobalMethod(String name, Method method) {
+        if (globalMethodCache == null) {
+            globalMethodCache = new LinkedHashMap<>();
+        }
+        return globalMethodCache.put(name, method);
     }
 
     private void loadMethods() {
