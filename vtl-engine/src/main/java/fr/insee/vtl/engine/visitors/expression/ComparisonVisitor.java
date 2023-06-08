@@ -113,11 +113,17 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     public static Boolean in(Object obj, List<?> list) {
+        if (obj == null) {
+            return null;
+        }
         return list.contains(obj);
     }
 
     public static Boolean notIn(Object obj, List<?> list) {
-        return !in(obj, list);
+        if (obj == null) {
+            return null;
+        }
+        return !list.contains(obj);
     }
 
     /**
