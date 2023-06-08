@@ -176,6 +176,12 @@ public class ComparisonExprTest {
     @Test
     public void testInNotIn() throws ScriptException {
 
+        engine.eval("res := null in {1, 2, 3, 123};");
+        assertThat((Boolean) engine.getContext().getAttribute("res")).isNull();
+
+        engine.eval("res := null not_in {1, 2, 3, 123};");
+        assertThat((Boolean) engine.getContext().getAttribute("res")).isNull();
+
         engine.eval("res := \"string\" in {\"a\",\"list\",\"with\",\"string\"};");
         assertThat((Boolean) engine.getContext().getAttribute("res")).isTrue();
 
