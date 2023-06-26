@@ -243,6 +243,33 @@ public class VtlScriptEngineTest {
 //        System.out.println(res);
     }
 
+    @Test
+    public void testRegisterGlobal() throws NoSuchMethodException, ScriptException {
+
+        InMemoryDataset ds = new InMemoryDataset(
+                List.of(
+                        new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
+                        new Structured.Component("weight", Double.class, Dataset.Role.MEASURE)
+                ),
+                Arrays.asList("Toto", null, 12.34),
+                Arrays.asList("Hadrien", 12.34, 12.34),
+                Arrays.asList("Nico", 12.34, 12.34)
+        );
+
+        var doNothingMethod = DoNothingClass.class.getMethod("doNothingMethod");
+        var ceilMethod = MathFunctions.class.getMethod("myCustomCeil", Double.class);
+
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        engine.registerGlobalMethod("doNothingMethod", doNothingMethod);
+        engine.registerMethod("myCustomCeil", ceilMethod);
+        ScriptContext context = engine.getContext();
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+        Object res1 = engine.eval("res := myCustomCeil(ds);");
+        assertThat(res1).isNotNull();
+    }
+
     public static class MathFunctions {
         public static Double myCustomCeil(Double op) {
             if (op == null) {
@@ -252,4 +279,8 @@ public class VtlScriptEngineTest {
         }
     }
 
+    public static class DoNothingClass {
+        public static void doNothingMethod() {
+        }
+    }
 }
