@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -397,5 +398,55 @@ public class ValidationTest {
                 "ds_check_datapoint := check_datapoint(ds1_num, dpr1 all); " +
                 "ds_check := check(ds1#long1 > ds2#long1 errorcode \"error\" errorlevel 1 imbalance ds1#long1 + ds2#long1 invalid);");
         List<Structured.DataPoint> dsCheckDatapoint = ((Dataset) engine.getContext().getAttribute("ds_check_datapoint")).getDataPoints();
+    }
+
+    @Test
+    public void checkHierarchy() throws ScriptException {
+
+        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 ( valuedomain rule VD_1 ) is\n" +
+                "R010 : A = J + K + L errorlevel 5;\n" +
+                "R020 : B = M + N + O errorlevel 5;\n" +
+                "R030 : C = P + Q errorcode XX errorlevel 5;\n" +
+                "R040 : D = R + S errorlevel 1;\n" +
+                "R060 : F = Y + W + Z errorlevel 7;\n" +
+                "R070 : G = B + C;\n" +
+                "R080 : H = D + E errorlevel 0;\n" +
+                "R090 : I = D + G errorcode YY errorlevel 0;\n" +
+                "R100 : M >= N errorlevel 5;\n" +
+                "R110 : M <= G errorlevel 5;\n" +
+                "end hierarchical ruleset;\n";
+
+        Dataset DS_1 = new InMemoryDataset(
+                List.of(
+                        List.of("2010", "A", 5L),
+                        List.of("2010", "B", 11L),
+                        List.of("2010", "C", 0L),
+                        List.of("2010", "G", 19L),
+                        Stream.of("2010", "H", null).collect(Collectors.toList()),
+                        List.of("2010", "I", 14L),
+                        List.of("2010", "M", 2L),
+                        List.of("2010", "N", 5L),
+                        List.of("2010", "O", 4L),
+                        List.of("2010", "P", 7L),
+                        List.of("2010", "Q", -7L),
+                        List.of("2010", "S", 3L),
+                        List.of("2010", "T", 9L),
+                        Stream.of("2010", "U", null).collect(Collectors.toList()),
+                        List.of("2010", "V", 6L)
+                ),
+                List.of(
+                        new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS_1", DS_1, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval(hierarchicalRulesetDef /*+
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"*/
+        );
+//        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
     }
 }
