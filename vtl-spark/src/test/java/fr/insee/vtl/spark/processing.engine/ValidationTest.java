@@ -408,6 +408,7 @@ public class ValidationTest {
                 "R020 : B = M + N + O errorlevel 5;\n" +
                 "R030 : C = P + Q errorcode XX errorlevel 5;\n" +
                 "R040 : D = R + S errorlevel 1;\n" +
+                "R050 : E = T + U + V errorlevel 0;\n" +
                 "R060 : F = Y + W + Z errorlevel 7;\n" +
                 "R070 : G = B + C;\n" +
                 "R080 : H = D + E errorlevel 0;\n" +
