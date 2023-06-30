@@ -347,6 +347,12 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                 .filter(method -> method.getName().equals(name))
                 .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
+
+        if (candidates.size() == 0) {
+            // It's not a global method
+            return null;
+        }
+
         if (candidates.size() == 1) {
             return new VtlMethod(candidates.get(0));
         }
