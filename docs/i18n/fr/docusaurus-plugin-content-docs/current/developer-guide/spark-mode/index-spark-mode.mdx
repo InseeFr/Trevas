@@ -57,6 +57,11 @@ try {
 
 Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
 SparkDataset result = (SparkDataset) outputBindings.get("res");
+// Ensure direct resolution because of spark lazy mechanism (performance warning!)
+InMemoryDataset imResult = new InMemoryDataset(
+                        result.getDataPoints(),
+                        result.getDataStructure()
+                    );
 ```
 
 ### Exécution distribuée
