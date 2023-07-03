@@ -1,0 +1,32 @@
+---
+slug: /trevas-batch-0.1.1
+title: Trevas Batch 0.1.1
+authors: [nicolas]
+tags: [Trevas Batch]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+[Trevas Batch](https://github.com/Making-Sense-Info/Trevas-Batch) `0.1.1` utilise la version `1.0.2` de [Trevas](https://github.com/InseeFr/Trevas).
+
+Ce batch Java permet d'obtenir des métriques d'exécutions Trevas en mode Spark.
+
+Le fichier de configuration à renseigner est décrit de le [README](https://github.com/Making-Sense-Info/Trevas-Batch/tree/main#readme) du projet.
+Le lancement du batch produiera un fichier Markdown en sortie.
+
+### Lancement
+
+#### Local
+
+```java
+java -jar trevas-batch-0.1.1.jar -Dconfig.path="..." -Dreport.path="..."
+```
+
+L'exécution java se fera en Spark local.
+
+#### Kubernetes
+
+Des objets Kubernetes par défaut sont définis dans le dossier [.kubernetes](https://github.com/Making-Sense-Info/Trevas-Batch/tree/main/.kubernetes).
+
+Alimenter le fichier `config-map.yml` puis lancer le job dans votre cluster.

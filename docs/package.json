@@ -34,11 +34,11 @@
 	},
 	"dependencies": {
 		"@abrookins-redis/redis-sitesearch-frontend": "^1.0.2",
-		"@docusaurus/core": "2.4.0",
-		"@docusaurus/plugin-content-pages": "2.4.0",
-		"@docusaurus/plugin-sitemap": "2.4.0",
-		"@docusaurus/preset-classic": "2.4.0",
-		"@docusaurus/theme-search-algolia": "2.4.0",
+		"@docusaurus/core": "2.4.1",
+		"@docusaurus/plugin-content-pages": "2.4.1",
+		"@docusaurus/plugin-sitemap": "2.4.1",
+		"@docusaurus/preset-classic": "2.4.1",
+		"@docusaurus/theme-search-algolia": "2.4.1",
 		"@mdx-js/react": "^1.6.22",
 		"clsx": "^1.2.1",
 		"docusaurus-lunr-search": "^2.3.2",
@@ -49,23 +49,23 @@
 		"react-player": "^2.11.0",
 		"react-scroll": "^1.8.8",
 		"react-slick": "^0.29.0",
-		"sass": "^1.58.0",
+		"sass": "^1.63.6",
 		"typed.js": "^2.0.12"
 	},
 	"devDependencies": {
-		"@docusaurus/module-type-aliases": "2.4.0",
-		"@tsconfig/docusaurus": "^1.0.6",
+		"@docusaurus/module-type-aliases": "2.4.1",
+		"@tsconfig/docusaurus": "^2.0.0",
 		"@types/react-slick": "^0.23.10",
-		"@typescript-eslint/eslint-plugin": "^5.50.0",
-		"@typescript-eslint/parser": "^5.50.0",
-		"eslint": "^8.33.0",
+		"@typescript-eslint/eslint-plugin": "^5.60.1",
+		"@typescript-eslint/parser": "^5.60.1",
+		"eslint": "^8.43.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-import": "^2.27.5",
 		"eslint-plugin-prettier": "^4.2.1",
 		"eslint-plugin-simple-import-sort": "^10.0.0",
 		"prettier": "^2.7.1",
 		"prettier-linter-helpers": "^1.0.0",
-		"typescript": "^5.0.4"
+		"typescript": "^5.1.6"
 	},
 	"browserslist": {
 		"production": [

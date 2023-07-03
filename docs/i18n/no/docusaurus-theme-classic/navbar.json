@@ -6,5 +6,9 @@
 	"logo.alt": {
 		"message": "Trevas logo",
 		"description": "The alt text of navbar logo"
+	},
+	"item.label.Blog": {
+		"message": "Blog",
+		"description": "Navbar item with label Blog"
 	}
 }
