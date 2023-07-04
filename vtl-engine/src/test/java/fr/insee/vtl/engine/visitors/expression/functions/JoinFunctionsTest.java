@@ -105,6 +105,43 @@ public class JoinFunctionsTest {
     }
 
     @Test
+    public void testLeftJoinWithDifferentIdentifiers() throws ScriptException {
+        InMemoryDataset dataset1 = new InMemoryDataset(
+                List.of(
+                        List.of(1L, 1L),
+                        List.of(1L, 2L),
+                        List.of(2L, 1L)
+                ),
+                List.of(
+                        new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("Id_2", Long.class, Role.IDENTIFIER)
+                )
+        );
+        InMemoryDataset dataset2 = new InMemoryDataset(
+                List.of(
+                        List.of(1L, "X"),
+                        List.of(2L, "Y")
+                ),
+                List.of(
+                        new Structured.Component("Id_2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("Me_1", String.class, Role.MEASURE)
+                )
+        );
+
+        ScriptContext context = engine.getContext();
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", dataset1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", dataset2);
+
+        engine.eval("result := left_join(ds_1, ds_2);");
+        assertThat(((Dataset) engine.getContext().getAttribute("result")).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("Id_1", 1L, "Id_2", 1L, "Me_1", "X"),
+                Map.of("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
+                Map.of("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
+        );
+
+    }
+
+    @Test
     public void testLeftJoinWithDouble() throws ScriptException {
         InMemoryDataset dataset1 = new InMemoryDataset(
                 List.of(
