@@ -133,12 +133,15 @@ public class JoinFunctionsTest {
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", dataset2);
 
         engine.eval("result := left_join(ds_1, ds_2 using Id_2);");
-        assertThat(((Dataset) engine.getContext().getAttribute("result")).getDataAsMap()).containsExactlyInAnyOrder(
+        Dataset result = ((Dataset) engine.getContext().getAttribute("result"));
+        assertThat(result.getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("Id_1", 1L, "Id_2", 1L, "Me_1", "X"),
                 Map.of("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
                 Map.of("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
         );
-
+        assertThat(result.getDataStructure().get("Id_1").getRole().equals(Role.IDENTIFIER));
+        assertThat(result.getDataStructure().get("Id_2").getRole().equals(Role.IDENTIFIER));
+        assertThat(result.getDataStructure().get("Me_1").getRole().equals(Role.MEASURE));
     }
 
     @Test
