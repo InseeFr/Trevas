@@ -6,19 +6,11 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
@@ -47,6 +39,25 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     public static Optional<List<Component>> checkSameIdentifiers(Collection<DatasetExpression> datasetExpressions) {
+        Set<Set<Component>> identifiers = new LinkedHashSet<>();
+        for (DatasetExpression datasetExpression : datasetExpressions) {
+            var structure = datasetExpression.getDataStructure();
+            var ids = new LinkedHashSet<Component>();
+            for (Component component : structure.values()) {
+                if (component.getRole().equals(Role.IDENTIFIER)) {
+                    ids.add(component);
+                }
+            }
+            identifiers.add(ids);
+        }
+        if (identifiers.size() != 1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new ArrayList<>(identifiers.iterator().next()));
+        }
+    }
+
+    public static Optional<List<Component>> checkAtLeastOneCommonIdentifier(Collection<DatasetExpression> datasetExpressions) {
         Set<Set<Component>> identifiers = new LinkedHashSet<>();
         for (DatasetExpression datasetExpression : datasetExpressions) {
             var structure = datasetExpression.getDataStructure();
@@ -176,28 +187,33 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         var joinClauseContext = ctx.joinClause();
         var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
-        // Left join require that all the datasets have one or more common identifiers.
-        var commonIdentifiers = checkSameIdentifiers(datasets.values())
-                .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
-                ));
+        List<Structured.Component> commonIdentifiers = new ArrayList<>();
 
-        // Remove the identifiers that are not part of the "using" list
+        if (joinClauseContext.USING() == null) {
+            commonIdentifiers = checkSameIdentifiers(datasets.values())
+                    .orElseThrow(() -> new VtlRuntimeException(
+                            new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
+                    ));
+        }
+
+        // Remove the identifiers
         if (joinClauseContext.USING() != null) {
-            var identifierNames = commonIdentifiers.stream()
-                    .map(Component::getName)
-                    .collect(Collectors.toList());
             var usingNames = new ArrayList<String>();
             for (VtlParser.ComponentIDContext usingContext : joinClauseContext.componentID()) {
                 var name = usingContext.getText();
-                if (!identifierNames.contains(name)) {
-                    throw new VtlRuntimeException(
-                            new InvalidArgumentException("not in the set of common identifiers", fromContext(usingContext))
-                    );
+                for (DatasetExpression datasetExpression : datasets.values()) {
+                    List<String> names = datasetExpression.getColumnNames();
+                    if (!names.contains(name)) {
+                        throw new VtlRuntimeException(
+                                new InvalidArgumentException("using component " + name + " is not present in all datasets", fromContext(usingContext))
+                        );
+                    }
                 }
-                usingNames.add(name);
+                Component component = datasets.values().iterator().next()
+                        .getDataStructure().values().stream()
+                        .filter(c -> c.getName().equals(name)).collect(Collectors.toList()).get(0);
+                commonIdentifiers.add(component);
             }
-            commonIdentifiers.removeIf(component -> !usingNames.contains(component.getName()));
         }
 
         DatasetExpression res = processingEngine.executeLeftJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
@@ -236,28 +252,33 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         var joinClauseContext = ctx.joinClause();
         var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
-        // Left join require that all the datasets have the same identifiers.
-        var commonIdentifiers = checkSameIdentifiers(datasets.values())
-                .orElseThrow(() -> new VtlRuntimeException(
-                        new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
-                ));
+        List<Structured.Component> commonIdentifiers = new ArrayList<>();
+
+        if (joinClauseContext.USING() == null) {
+            commonIdentifiers = checkSameIdentifiers(datasets.values())
+                    .orElseThrow(() -> new VtlRuntimeException(
+                            new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
+                    ));
+        }
 
         // Remove the identifiers
         if (joinClauseContext.USING() != null) {
-            var identifierNames = commonIdentifiers.stream()
-                    .map(Component::getName)
-                    .collect(Collectors.toList());
             var usingNames = new ArrayList<String>();
             for (VtlParser.ComponentIDContext usingContext : joinClauseContext.componentID()) {
                 var name = usingContext.getText();
-                if (!identifierNames.contains(name)) {
-                    throw new VtlRuntimeException(
-                            new InvalidArgumentException("not in the set of common identifiers", fromContext(usingContext))
-                    );
+                for (DatasetExpression datasetExpression : datasets.values()) {
+                    List<String> names = datasetExpression.getColumnNames();
+                    if (!names.contains(name)) {
+                        throw new VtlRuntimeException(
+                                new InvalidArgumentException("using component " + name + " is not present in all datasets", fromContext(usingContext))
+                        );
+                    }
                 }
-                usingNames.add(name);
+                Component component = datasets.values().iterator().next()
+                        .getDataStructure().values().stream()
+                        .filter(c -> c.getName().equals(name)).collect(Collectors.toList()).get(0);
+                commonIdentifiers.add(component);
             }
-            commonIdentifiers.removeIf(component -> !usingNames.contains(component.getName()));
         }
         DatasetExpression res = processingEngine.executeInnerJoin(renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
         return removeComponentAlias(res);
