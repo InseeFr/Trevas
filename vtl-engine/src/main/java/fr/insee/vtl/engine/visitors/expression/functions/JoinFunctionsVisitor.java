@@ -57,25 +57,6 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         }
     }
 
-    public static Optional<List<Component>> checkAtLeastOneCommonIdentifier(Collection<DatasetExpression> datasetExpressions) {
-        Set<Set<Component>> identifiers = new LinkedHashSet<>();
-        for (DatasetExpression datasetExpression : datasetExpressions) {
-            var structure = datasetExpression.getDataStructure();
-            var ids = new LinkedHashSet<Component>();
-            for (Component component : structure.values()) {
-                if (component.getRole().equals(Role.IDENTIFIER)) {
-                    ids.add(component);
-                }
-            }
-            identifiers.add(ids);
-        }
-        if (identifiers.size() != 1) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new ArrayList<>(identifiers.iterator().next()));
-        }
-    }
-
     @Override
     public DatasetExpression visitJoinExpr(VtlParser.JoinExprContext ctx) {
         if (ctx.LEFT_JOIN() != null) {
