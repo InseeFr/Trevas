@@ -208,10 +208,16 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                                 new InvalidArgumentException("using component " + name + " is not present in all datasets", fromContext(usingContext))
                         );
                     }
+                    if (!datasetExpression.getDataStructure().get(name).isIdentifier()) {
+                        throw new VtlRuntimeException(
+                                new InvalidArgumentException("using component " + name + " has to be an identifier", fromContext(usingContext))
+                        );
+                    }
                 }
                 Component component = datasets.values().iterator().next()
                         .getDataStructure().values().stream()
-                        .filter(c -> c.getName().equals(name)).collect(Collectors.toList()).get(0);
+                        .filter(c -> c.getName().equals(name))
+                        .collect(Collectors.toList()).get(0);
                 commonIdentifiers.add(component);
             }
         }
@@ -273,10 +279,16 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                                 new InvalidArgumentException("using component " + name + " is not present in all datasets", fromContext(usingContext))
                         );
                     }
+                    if (!datasetExpression.getDataStructure().get(name).isIdentifier()) {
+                        throw new VtlRuntimeException(
+                                new InvalidArgumentException("using component " + name + " has to be an identifier", fromContext(usingContext))
+                        );
+                    }
                 }
                 Component component = datasets.values().iterator().next()
                         .getDataStructure().values().stream()
-                        .filter(c -> c.getName().equals(name)).collect(Collectors.toList()).get(0);
+                        .filter(c -> c.getName().equals(name))
+                        .collect(Collectors.toList()).get(0);
                 commonIdentifiers.add(component);
             }
         }

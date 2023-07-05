@@ -142,6 +142,11 @@ public class JoinFunctionsTest {
         assertThat(result.getDataStructure().get("Id_1").getRole().equals(Role.IDENTIFIER));
         assertThat(result.getDataStructure().get("Id_2").getRole().equals(Role.IDENTIFIER));
         assertThat(result.getDataStructure().get("Me_1").getRole().equals(Role.MEASURE));
+
+        assertThatThrownBy(() -> engine.eval("ds_1 := ds_1[calc measure Id_2 := Id_2];\n" +
+                "result := left_join(ds_1, ds_2 using Id_2);"))
+                .isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("using component Id_2 has to be an identifier");
     }
 
     @Test
