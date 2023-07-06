@@ -8,6 +8,11 @@ on:
       - "feature/**"
     paths-ignore:
       - "docs/**"
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches:
+      - 'master'
+      - 'develop'
 
 jobs:
   build:
