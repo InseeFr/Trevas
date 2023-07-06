@@ -3,6 +3,9 @@ name: Trevas CI
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
+    branches:
+      - "!master"
+      - "!develop"
 
 jobs:
   test:
