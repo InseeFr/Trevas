@@ -403,19 +403,19 @@ public class ValidationTest {
     @Test
     public void checkHierarchy() throws ScriptException {
 
-        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 ( valuedomain rule VD_1 ) is\n" +
+        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
                 "R010 : A = J + K + L errorlevel 5;\n" +
                 "R020 : B = M + N + O errorlevel 5;\n" +
-                "R030 : C = P + Q errorcode XX errorlevel 5;\n" +
+                "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
                 "R040 : D = R + S errorlevel 1;\n" +
                 "R050 : E = T + U + V errorlevel 0;\n" +
                 "R060 : F = Y + W + Z errorlevel 7;\n" +
                 "R070 : G = B + C;\n" +
                 "R080 : H = D + E errorlevel 0;\n" +
-                "R090 : I = D + G errorcode YY errorlevel 0;\n" +
+                "R090 : I = D + G errorcode \"YY\" errorlevel 0;\n" +
                 "R100 : M >= N errorlevel 5;\n" +
-                "R110 : M <= G errorlevel 5;\n" +
-                "end hierarchical ruleset;\n";
+                "R110 : M <= G errorlevel 5\n" +
+                "end hierarchical ruleset; \n";
 
         Dataset DS_1 = new InMemoryDataset(
                 List.of(
