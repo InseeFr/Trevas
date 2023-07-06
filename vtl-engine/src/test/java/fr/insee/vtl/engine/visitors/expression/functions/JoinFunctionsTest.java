@@ -105,6 +105,51 @@ public class JoinFunctionsTest {
     }
 
     @Test
+    public void testLeftJoinWithDifferentIdentifiers() throws ScriptException {
+        InMemoryDataset dataset1 = new InMemoryDataset(
+                List.of(
+                        List.of(1L, 1L),
+                        List.of(1L, 2L),
+                        List.of(2L, 1L)
+                ),
+                List.of(
+                        new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("Id_2", Long.class, Role.IDENTIFIER)
+                )
+        );
+        InMemoryDataset dataset2 = new InMemoryDataset(
+                List.of(
+                        List.of(1L, "X"),
+                        List.of(2L, "Y")
+                ),
+                List.of(
+                        new Structured.Component("Id_2", Long.class, Role.IDENTIFIER),
+                        new Structured.Component("Me_1", String.class, Role.MEASURE)
+                )
+        );
+
+        ScriptContext context = engine.getContext();
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_1", dataset1);
+        context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds_2", dataset2);
+
+        engine.eval("result := left_join(ds_1, ds_2 using Id_2);");
+        Dataset result = ((Dataset) engine.getContext().getAttribute("result"));
+        assertThat(result.getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("Id_1", 1L, "Id_2", 1L, "Me_1", "X"),
+                Map.of("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
+                Map.of("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
+        );
+        assertThat(result.getDataStructure().get("Id_1").getRole().equals(Role.IDENTIFIER));
+        assertThat(result.getDataStructure().get("Id_2").getRole().equals(Role.IDENTIFIER));
+        assertThat(result.getDataStructure().get("Me_1").getRole().equals(Role.MEASURE));
+
+        assertThatThrownBy(() -> engine.eval("ds_1 := ds_1[calc measure Id_2 := Id_2];\n" +
+                "result := left_join(ds_1, ds_2 using Id_2);"))
+                .isInstanceOf(InvalidArgumentException.class)
+                .hasMessage("using component Id_2 has to be an identifier");
+    }
+
+    @Test
     public void testLeftJoinWithDouble() throws ScriptException {
         InMemoryDataset dataset1 = new InMemoryDataset(
                 List.of(
