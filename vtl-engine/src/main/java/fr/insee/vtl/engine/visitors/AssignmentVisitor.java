@@ -139,4 +139,44 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         bindings.put(rulesetName, dataPointRuleset);
         return dataPointRuleset;
     }
+
+    @Override
+    public Object visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
+        var pos = fromContext(ctx);
+        String rulesetName = ctx.rulesetID().getText();
+        // Only support variables, not valuedomain
+        String variable = ctx.hierRuleSignature().IDENTIFIER().getText();
+
+        Set<Class> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+            VtlParser.ErCodeContext erCodeContext = c.erCode();
+            if (null == erCodeContext) return Object.class;
+            return expressionVisitor.visit(c.erCode()).getType();
+        }).collect(Collectors.toSet());
+        List<Class> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErCodeTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error codes of rules have different types", pos)
+            );
+        }
+        Class erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
+
+        Set<Class> erLevelTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+            VtlParser.ErLevelContext erLevelContext = c.erLevel();
+            if (null == erLevelContext) return Object.class;
+            return expressionVisitor.visit(c.erLevel()).getType();
+        }).collect(Collectors.toSet());
+        List<Class> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErLevelTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error levels of rules have different types", pos)
+            );
+        }
+        Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
+
+        //TODO: handle rules
+        //TODO: define model object to save hierarchical ruleset
+
+        // Temp
+        return null;
+    }
 }
