@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -144,7 +145,9 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     public Object visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
         var pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
+
         // Only support variables, not valuedomain
+        // TODO: handle alias?
         String variable = ctx.hierRuleSignature().IDENTIFIER().getText();
 
         Set<Class> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
@@ -174,9 +177,49 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
 
         //TODO: handle rules
-        //TODO: define model object to save hierarchical ruleset
+        AtomicInteger index = new AtomicInteger();
+        List<HierarchicalRule> rules = ctx.ruleClauseHierarchical().ruleItemHierarchical()
+                .stream()
+                .map(r -> {
+                    TerminalNode identifier = r.IDENTIFIER();
+                    int i = index.getAndIncrement() + 1;
+                    String ruleName = null != identifier ? identifier.getText() : rulesetName + "_" + i;
 
-        // Temp
-        return null;
+                    VtlParser.CodeItemRelationContext codeItemRelationContext = r.codeItemRelation();
+                    String valueDomainValue = codeItemRelationContext.valueDomainValue().IDENTIFIER().getText();
+
+                    VtlParser.ComparisonOperandContext comparisonOperandContext = codeItemRelationContext.comparisonOperand();
+
+                    StringBuilder codeItemExpressionBuilder = new StringBuilder();
+                    codeItemRelationContext.codeItemRelationClause()
+                            .forEach(circ -> {
+                                TerminalNode minus = circ.MINUS();
+                                if (minus != null)
+                                    codeItemExpressionBuilder.append(" -" + circ.rightCodeItem.getText());
+                                // plus value or plus null & minus null mean plus
+                                codeItemExpressionBuilder.append(" +" + circ.rightCodeItem.getText());
+                            });
+
+                    String expressionToEval = valueDomainValue + " " + comparisonOperandContext.getText() +
+                            " " + codeItemExpressionBuilder;
+
+                    ResolvableExpression expression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                try {
+                                    return (Boolean) engine.eval(expressionToEval, (ScriptContext) context);
+                                } catch (VtlScriptException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                    ResolvableExpression errorCodeExpression = null != r.erCode() ? expressionVisitor.visit(r.erCode()) : null;
+                    ResolvableExpression errorLevelExpression = null != r.erLevel() ? expressionVisitor.visit(r.erLevel()) : null;
+                    return new HierarchicalRule(ruleName, valueDomainValue, expression, errorCodeExpression, errorLevelExpression);
+                }).collect(Collectors.toList());
+        HierarchicalRuleset hr = new HierarchicalRuleset(rules, variable, erCodeType, erLevelType);
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindings.put(rulesetName, hr);
+        return hr;
     }
 }
