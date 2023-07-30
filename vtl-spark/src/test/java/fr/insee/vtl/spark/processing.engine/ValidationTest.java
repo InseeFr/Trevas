@@ -403,7 +403,7 @@ public class ValidationTest {
     @Test
     public void checkHierarchy() throws ScriptException {
 
-        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
+        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Id_2) is \n" +
                 "R010 : A = J + K + L errorlevel 5;\n" +
                 "R020 : B = M + N + O errorlevel 5;\n" +
                 "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
@@ -448,6 +448,7 @@ public class ValidationTest {
         engine.eval(hierarchicalRulesetDef /*+
                 "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"*/
         );
+       engine.getContext().getAttribute("HR_1");
 //        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
     }
 }
