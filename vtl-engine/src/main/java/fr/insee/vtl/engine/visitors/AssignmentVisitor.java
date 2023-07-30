@@ -200,6 +200,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                                 codeItemExpressionBuilder.append(" +" + circ.rightCodeItem.getText());
                             });
 
+                    // TODO: handle when clause
+                    // TODO: optimize expr calculation (without eval?)
                     String expressionToEval = valueDomainValue + " " + comparisonOperandContext.getText() +
                             " " + codeItemExpressionBuilder;
 

@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -401,6 +402,7 @@ public class ValidationTest {
     }
 
     @Test
+    @Disabled
     public void checkHierarchy() throws ScriptException {
 
         String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Id_2) is \n" +
@@ -445,10 +447,9 @@ public class ValidationTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", DS_1, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval(hierarchicalRulesetDef /*+
-                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"*/
+        engine.eval(hierarchicalRulesetDef +
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"
         );
-       engine.getContext().getAttribute("HR_1");
 //        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
     }
 }

@@ -683,6 +683,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return new SparkDatasetExpression(new SparkDataset(result), pos);
     }
 
+    @Override
+    public DatasetExpression executeHierarchicalValidation(DatasetExpression dsE, HierarchicalRuleset hr,
+                                                           String componentID, String validationMode,
+                                                           String inputMode, String validationOutput, Positioned pos) {
+        throw new UnsupportedOperationException();
+    }
+
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
         return map.entrySet()
                 .stream()
