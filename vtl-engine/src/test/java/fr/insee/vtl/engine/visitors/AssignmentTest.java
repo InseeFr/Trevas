@@ -115,7 +115,7 @@ public class AssignmentTest {
     @Test
     public void checkHierarchy() throws ScriptException {
 
-        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Id_2) is \n" +
+        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
                 "R010 : A = J + K + L errorlevel 5;\n" +
                 "R020 : B = M + N + O errorlevel 5;\n" +
                 "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
