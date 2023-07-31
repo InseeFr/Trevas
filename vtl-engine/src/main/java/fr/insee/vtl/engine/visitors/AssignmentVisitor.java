@@ -5,17 +5,15 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -190,34 +188,41 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
                     VtlParser.ComparisonOperandContext comparisonOperandContext = codeItemRelationContext.comparisonOperand();
 
+                    List<String> rightCodeItems = new ArrayList<>();
                     StringBuilder codeItemExpressionBuilder = new StringBuilder();
                     codeItemRelationContext.codeItemRelationClause()
                             .forEach(circ -> {
                                 TerminalNode minus = circ.MINUS();
+                                String rightCodeItem = circ.rightCodeItem.getText();
+                                rightCodeItems.add(rightCodeItem);
                                 if (minus != null)
-                                    codeItemExpressionBuilder.append(" -" + circ.rightCodeItem.getText());
+                                    codeItemExpressionBuilder.append(" -" + rightCodeItem);
                                 // plus value or plus null & minus null mean plus
-                                codeItemExpressionBuilder.append(" +" + circ.rightCodeItem.getText());
+                                codeItemExpressionBuilder.append(" +" + rightCodeItem);
                             });
 
                     // TODO: handle when clause
                     // TODO: optimize expr calculation (without eval?)
-                    String expressionToEval = valueDomainValue + " " + comparisonOperandContext.getText() +
-                            " " + codeItemExpressionBuilder;
+                    String expressionToEval = "bool_var := " + valueDomainValue + " " +
+                            comparisonOperandContext.getText() + " " +
+                            codeItemExpressionBuilder + ";";
 
                     ResolvableExpression expression = ResolvableExpression.withType(Boolean.class)
                             .withPosition(pos)
                             .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
                                 try {
-                                    return (Boolean) engine.eval(expressionToEval, (ScriptContext) context);
-                                } catch (VtlScriptException e) {
+                                    engine.eval(expressionToEval);
+                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
                             });
 
                     ResolvableExpression errorCodeExpression = null != r.erCode() ? expressionVisitor.visit(r.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != r.erLevel() ? expressionVisitor.visit(r.erLevel()) : null;
-                    return new HierarchicalRule(ruleName, valueDomainValue, expression, errorCodeExpression, errorLevelExpression);
+                    return new HierarchicalRule(ruleName, valueDomainValue, expression, rightCodeItems, errorCodeExpression, errorLevelExpression);
                 }).collect(Collectors.toList());
         HierarchicalRuleset hr = new HierarchicalRuleset(rules, variable, erCodeType, erLevelType);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
