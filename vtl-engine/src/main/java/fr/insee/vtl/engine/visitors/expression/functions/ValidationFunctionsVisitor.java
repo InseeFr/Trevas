@@ -140,12 +140,38 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         var pos = fromContext(ctx);
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
+        String datasetName = ctx.expr().getText();
         String hrName = ctx.hrName.getText();
         Object hrObject = engine.getContext().getAttribute((hrName));
         if (!(hrObject instanceof HierarchicalRuleset))
             throw new VtlRuntimeException(new UndefinedVariableException(hrName, pos));
         HierarchicalRuleset hr = (HierarchicalRuleset) hrObject;
+
+        // Check that dsE is a monomeasure<number> dataset
+        Structured.DataStructure dataStructure = dsExpression.getDataStructure();
+        List<Structured.Component> measures = dataStructure.getMeasures();
+        if (measures.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Dataset " + datasetName +
+                            " is not monomeasure", fromContext(ctx))
+            );
+        }
+        List<Class<?>> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
+        if (!supportedClasses.contains(measures.get(0).getType())) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Dataset " + datasetName +
+                            " measure " + measures.get(0).getName() + " has to have number type", fromContext(ctx))
+            );
+        }
+
+        // check if hr componentID is in ds structure
         String componentID = ctx.componentID().getText();
+        if (!dataStructure.containsKey(componentID)) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("ComponentID " + componentID +
+                            " not contained in dataset " + datasetName, fromContext(ctx))
+            );
+        }
         String validationMode = getValidationMode(ctx.validationMode());
         String inputMode = getInputMode(ctx.inputMode());
         String validationOutput = getValidationOutput(ctx.validationOutput());

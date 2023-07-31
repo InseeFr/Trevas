@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ValidationTest {
 
@@ -127,6 +128,19 @@ public class ValidationTest {
     );
     private SparkSession spark;
     private ScriptEngine engine;
+    private final String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
+            "R010 : A = J + K + L errorlevel 5;\n" +
+            "R020 : B = M + N + O errorlevel 5;\n" +
+            "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
+            "R040 : D = R + S errorlevel 1;\n" +
+            "R050 : E = T + U + V errorlevel 0;\n" +
+            "R060 : F = Y + W + Z errorlevel 7;\n" +
+            "R070 : G = B + C;\n" +
+            "R080 : H = D + E errorlevel 0;\n" +
+            "R090 : I = D + G errorcode \"YY\" errorlevel 0;\n" +
+            "R100 : M >= N errorlevel 5;\n" +
+            "R110 : M <= G errorlevel 5\n" +
+            "end hierarchical ruleset; \n";
 
     private static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue) {
 
@@ -404,22 +418,7 @@ public class ValidationTest {
     @Test
     @Disabled
     public void checkHierarchy() throws ScriptException {
-
-        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
-                "R010 : A = J + K + L errorlevel 5;\n" +
-                "R020 : B = M + N + O errorlevel 5;\n" +
-                "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
-                "R040 : D = R + S errorlevel 1;\n" +
-                "R050 : E = T + U + V errorlevel 0;\n" +
-                "R060 : F = Y + W + Z errorlevel 7;\n" +
-                "R070 : G = B + C;\n" +
-                "R080 : H = D + E errorlevel 0;\n" +
-                "R090 : I = D + G errorcode \"YY\" errorlevel 0;\n" +
-                "R100 : M >= N errorlevel 5;\n" +
-                "R110 : M <= G errorlevel 5\n" +
-                "end hierarchical ruleset; \n";
-
-        Dataset DS_1 = new InMemoryDataset(
+        Dataset DS_1_HR = new InMemoryDataset(
                 List.of(
                         List.of("2010", "A", 5L),
                         List.of("2010", "B", 11L),
@@ -445,11 +444,64 @@ public class ValidationTest {
         );
 
         ScriptContext context = engine.getContext();
-        context.setAttribute("DS_1", DS_1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
 
         engine.eval(hierarchicalRulesetDef +
                 "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"
         );
-//        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
+    }
+
+    @Test
+    public void checkHierarchyException() {
+        Dataset DS_2_HR = new InMemoryDataset(
+                List.of(
+                        List.of("2010", "A", 5L, 5L)
+                ),
+                List.of(
+                        new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+                        new Structured.Component("Me_2", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        Dataset DS_3_HR = new InMemoryDataset(
+                List.of(
+                        List.of("2010", "A", "5")
+                ),
+                List.of(
+                        new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Me_1", String.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        Dataset DS_4_HR = new InMemoryDataset(
+                List.of(
+                        List.of("2010", "A", 5L)
+                ),
+                List.of(
+                        new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                        new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+                )
+        );
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS_2", DS_2_HR, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("DS_3", DS_3_HR, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("DS_4", DS_4_HR, ScriptContext.ENGINE_SCOPE);
+
+        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
+                " DS_r := check_hierarchy(DS_2, HR_1 rule Id_2 partial_null all);"))
+                .hasMessageContaining("Dataset DS_2 is not monomeasure");
+
+        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
+                " DS_r := check_hierarchy(DS_3, HR_1 rule Id_2 partial_null all);"))
+                .hasMessageContaining("Dataset DS_3 measure Me_1 has to have number type");
+
+        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
+                " DS_r := check_hierarchy(DS_4, HR_1 rule Id_3 partial_null all);"))
+                .hasMessageContaining("ComponentID Id_3 not contained in dataset DS_4");
     }
 }
