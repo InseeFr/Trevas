@@ -632,7 +632,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 Map.entry("imbalanceExpr", imbalanceRenamedExpr)
         );
         List<Component> components = dsExpr.getDataStructure().values().stream()
-                .filter(c -> c.isIdentifier())
+                .filter(Component::isIdentifier)
                 .collect(Collectors.toList());
         DatasetExpression datasetExpression = executeLeftJoin(datasetExpressions, components);
         SparkDataset sparkDataset = asSparkDataset(datasetExpression);
@@ -687,7 +687,31 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeHierarchicalValidation(DatasetExpression dsE, HierarchicalRuleset hr,
                                                            String componentID, String validationMode,
                                                            String inputMode, String validationOutput, Positioned pos) {
-        throw new UnsupportedOperationException();
+        // Create "bindings" (componentID column values)
+        fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
+
+        Map<String, Object> bindings = ds.getDataAsMap().stream()
+                .collect(
+                        HashMap::new,
+                        (acc, dp) -> acc.put(dp.get(componentID).toString(), dp.get(hr.getVariable())),
+                        HashMap::putAll
+                );
+        // Iterate on rules to resolve expressions
+        Map<String, Boolean> resolvedRuleExpressions = new HashMap<>();
+        hr.getRules()
+                .forEach(rule -> {
+                    // check that all code items are in bindings
+                    boolean allCodeItemInBindings = rule.getCodeItems().stream()
+                            .map(code -> bindings.containsKey(code))
+                            .filter(b -> b.equals(false))
+                            .collect(Collectors.toList())
+                            .size() == 0;
+                    String ruleName = rule.getName();
+                    if (!allCodeItemInBindings) {
+                        resolvedRuleExpressions.put(ruleName, null);
+                    } else resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(bindings));
+                });
+        return null;
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {

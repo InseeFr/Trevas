@@ -183,18 +183,19 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                     int i = index.getAndIncrement() + 1;
                     String ruleName = null != identifier ? identifier.getText() : rulesetName + "_" + i;
 
+                    List<String> codeItems = new ArrayList<>();
                     VtlParser.CodeItemRelationContext codeItemRelationContext = r.codeItemRelation();
                     String valueDomainValue = codeItemRelationContext.valueDomainValue().IDENTIFIER().getText();
+                    codeItems.add(valueDomainValue);
 
                     VtlParser.ComparisonOperandContext comparisonOperandContext = codeItemRelationContext.comparisonOperand();
 
-                    List<String> rightCodeItems = new ArrayList<>();
                     StringBuilder codeItemExpressionBuilder = new StringBuilder();
                     codeItemRelationContext.codeItemRelationClause()
                             .forEach(circ -> {
                                 TerminalNode minus = circ.MINUS();
                                 String rightCodeItem = circ.rightCodeItem.getText();
-                                rightCodeItems.add(rightCodeItem);
+                                codeItems.add(rightCodeItem);
                                 if (minus != null)
                                     codeItemExpressionBuilder.append(" -" + rightCodeItem);
                                 // plus value or plus null & minus null mean plus
@@ -222,7 +223,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
                     ResolvableExpression errorCodeExpression = null != r.erCode() ? expressionVisitor.visit(r.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != r.erLevel() ? expressionVisitor.visit(r.erLevel()) : null;
-                    return new HierarchicalRule(ruleName, valueDomainValue, expression, rightCodeItems, errorCodeExpression, errorLevelExpression);
+                    return new HierarchicalRule(ruleName, valueDomainValue, expression, codeItems, errorCodeExpression, errorLevelExpression);
                 }).collect(Collectors.toList());
         HierarchicalRuleset hr = new HierarchicalRuleset(rules, variable, erCodeType, erLevelType);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
