@@ -203,10 +203,39 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             });
 
                     // TODO: handle when clause
-                    // TODO: optimize expr calculation (without eval?)
-                    String expressionToEval = "bool_var := " + valueDomainValue + " " +
+                    // TODO: optimize expr calculation? (without eval?)
+                    String leftExpressionToEval = valueDomainValue;
+                    String rightExpressionToEval = codeItemExpressionBuilder.toString();
+                    String expressionToEval = "bool_var := " +
+                            leftExpressionToEval + " " +
                             comparisonOperandContext.getText() + " " +
-                            codeItemExpressionBuilder + ";";
+                            rightExpressionToEval + ";";
+
+                    ResolvableExpression leftExpression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+                                try {
+                                    engine.eval(leftExpressionToEval);
+                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                } catch (ScriptException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                    ResolvableExpression rightExpression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+                                try {
+                                    engine.eval(rightExpressionToEval);
+                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                } catch (ScriptException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
 
                     ResolvableExpression expression = ResolvableExpression.withType(Boolean.class)
                             .withPosition(pos)
@@ -223,7 +252,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
                     ResolvableExpression errorCodeExpression = null != r.erCode() ? expressionVisitor.visit(r.erCode()) : null;
                     ResolvableExpression errorLevelExpression = null != r.erLevel() ? expressionVisitor.visit(r.erLevel()) : null;
-                    return new HierarchicalRule(ruleName, valueDomainValue, expression, codeItems, errorCodeExpression, errorLevelExpression);
+                    return new HierarchicalRule(ruleName, valueDomainValue, expression, leftExpression, rightExpression, codeItems, errorCodeExpression, errorLevelExpression);
                 }).collect(Collectors.toList());
         HierarchicalRuleset hr = new HierarchicalRuleset(rules, variable, erCodeType, erLevelType);
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
