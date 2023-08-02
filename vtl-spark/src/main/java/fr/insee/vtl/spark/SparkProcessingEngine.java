@@ -225,6 +225,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         for (String name : expressionStrings.keySet()) {
             try {
                 String expression = expressionStrings.get(name);
+                if (expression == null) continue;
                 result = result.withColumn(name, expr(expression));
             } catch (Exception ignored) {
             }
@@ -697,21 +698,81 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         HashMap::putAll
                 );
         // Iterate on rules to resolve expressions
-        Map<String, Boolean> resolvedRuleExpressions = new HashMap<>();
+        Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
+        Map<Object, String> idRuleBindings = new HashMap<>();
         hr.getRules()
                 .forEach(rule -> {
+                    String ruleName = rule.getName();
+                    idRuleBindings.put(ruleName, rule.getValueDomainValue());
                     // check that all code items are in bindings
                     boolean allCodeItemInBindings = rule.getCodeItems().stream()
-                            .map(code -> bindings.containsKey(code))
+                            .map(bindings::containsKey)
                             .filter(b -> b.equals(false))
-                            .collect(Collectors.toList())
-                            .size() == 0;
-                    String ruleName = rule.getName();
+                            .count() == 0;
                     if (!allCodeItemInBindings) {
                         resolvedRuleExpressions.put(ruleName, null);
                     } else resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(bindings));
                 });
-        return null;
+
+        var roleMap = getRoleMap(ds);
+        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put("errorlevel", MEASURE);
+        roleMap.put("errorcode", MEASURE);
+
+        Class errorCodeType = hr.getErrorCodeType();
+        Class errorLevelType = hr.getErrorLevelType();
+
+        List<DatasetExpression> datasetsExpression = hr.getRules().stream().map(rule -> {
+                    String ruleName = rule.getName();
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(context -> ruleName);
+
+                    Boolean expression = resolvedRuleExpressions.get(ruleName);
+
+                    ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                if (errorCodeExpr == null|| expression == null) return null;
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erCode = errorCodeExpr.resolve(mapContext);
+                                if (erCode == null) return null;
+                                return expression.equals(Boolean.TRUE) ? errorCodeType.cast(erCode) : null;
+                            });
+
+                    ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                if (errorLevelExpr == null || expression == null) return null;
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erLevel = errorLevelExpr.resolve(mapContext);
+                                if (erLevel == null) return null;
+                                return expression.equals(Boolean.TRUE) ? errorLevelType.cast(erLevel) : null;
+                            });
+
+                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> expression);
+
+                    Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
+                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
+                    resolvableExpressions.put("errorlevel", errorLevelExpression);
+                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    // TODO calc imbalance
+                    // do we need to use execute executeCalcInterpreted too?
+                    DatasetExpression filteredDataset = executeFilter(dsE,
+                            ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
+                            componentID + " = \"" + rule.getValueDomainValue() + "\"");
+                    return executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of());
+                }
+        ).collect(Collectors.toList());
+        // TODO handle HR options
+        // TODO return union datasetsExpression
+        return dsE;
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
