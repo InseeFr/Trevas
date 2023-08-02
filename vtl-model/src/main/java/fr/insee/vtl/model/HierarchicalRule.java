@@ -13,6 +13,8 @@ public class HierarchicalRule {
     private final String name;
     private final String valueDomainValue;
     private final ResolvableExpression expression;
+    private final ResolvableExpression leftExpression;
+    private final ResolvableExpression rightExpression;
     private final List<String> codeItems;
     private final ResolvableExpression errorCodeExpression;
     private final ResolvableExpression errorLevelExpression;
@@ -31,12 +33,16 @@ public class HierarchicalRule {
     public <T> HierarchicalRule(String name,
                                 String valueDomainValue,
                                 ResolvableExpression expression,
+                                ResolvableExpression leftExpression,
+                                ResolvableExpression rightExpression,
                                 List<String> codeItems,
                                 ResolvableExpression errorCodeExpression,
                                 ResolvableExpression errorLevelExpression) {
         this.name = name;
         this.valueDomainValue = valueDomainValue;
         this.expression = expression;
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
         this.codeItems = codeItems;
         this.errorCodeExpression = errorCodeExpression;
         this.errorLevelExpression = errorLevelExpression;
@@ -52,6 +58,14 @@ public class HierarchicalRule {
 
     public ResolvableExpression getExpression() {
         return expression;
+    }
+
+    public ResolvableExpression getLeftExpression() {
+        return leftExpression;
+    }
+
+    public ResolvableExpression getRightExpression() {
+        return rightExpression;
     }
 
     public List<String> getCodeItems() {
