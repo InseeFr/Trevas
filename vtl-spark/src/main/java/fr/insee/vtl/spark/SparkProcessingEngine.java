@@ -757,7 +757,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                 Map<String, Object> mapContext = (Map<String, Object>) context;
                                 Object erCode = errorCodeExpr.resolve(mapContext);
                                 if (erCode == null) return null;
-                                return expression.equals(Boolean.TRUE) ? errorCodeType.cast(erCode) : null;
+                                return expression.equals(Boolean.FALSE) ? errorCodeType.cast(erCode) : null;
                             });
 
                     ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
@@ -768,7 +768,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                 Map<String, Object> mapContext = (Map<String, Object>) context;
                                 Object erLevel = errorLevelExpr.resolve(mapContext);
                                 if (erLevel == null) return null;
-                                return expression.equals(Boolean.TRUE) ? errorLevelType.cast(erLevel) : null;
+                                return expression.equals(Boolean.FALSE) ? errorLevelType.cast(erLevel) : null;
                             });
 
                     ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class)
