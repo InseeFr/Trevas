@@ -446,9 +446,9 @@ public class ValidationTest {
         context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
 
         engine.eval(hierarchicalRulesetDef +
-                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2); " /*+
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2); " +
                 "DS_r_all := check_hierarchy(DS_1, HR_1 rule Id_2 all); " +
-                "DS_r_all_measures := check_hierarchy(DS_1, HR_1 rule Id_2 all_measures"*/
+                "DS_r_all_measures := check_hierarchy(DS_1, HR_1 rule Id_2 all_measures);"
         );
 
         Dataset dsR = (Dataset) engine.getContext().getAttribute("DS_r");
@@ -457,7 +457,6 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRWithNull) {
             dsRWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-
 //        assertThat(dsRWithoutNull).isEqualTo(List.of(
 //                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
 //                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L))
@@ -472,9 +471,46 @@ public class ValidationTest {
                 new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
         );
 
-//        Dataset dsRAll = (Dataset) engine.getContext().getAttribute("DS_r_all");
-//
-//        Dataset dsRAllMeasures = (Dataset) engine.getContext().getAttribute("DS_r_all_measures");
+        Dataset dsRAll = (Dataset) engine.getContext().getAttribute("DS_r_all");
+        List<Map<String, Object>> dsRAllWithNull = dsR.getDataAsMap();
+        List<Map<String, Object>> dsRAllWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRAllWithNull) {
+            dsRAllWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        //        assertThat(dsRAllWithoutNull).isEqualTo(List.of(
+//                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+//                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L))
+//        );
+        assertThat(dsRAll.getDataStructure()).containsValues(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("ruleid", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
+        );
+
+        Dataset dsRAllMeasures = (Dataset) engine.getContext().getAttribute("DS_r_all_measures");
+        List<Map<String, Object>> dsRAllMeasuresWithNull = dsR.getDataAsMap();
+        List<Map<String, Object>> dsRAllMeasuresWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRAllMeasuresWithNull) {
+            dsRAllMeasuresWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        //        assertThat(dsRAllMeasuresWithoutNull).isEqualTo(List.of(
+//                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+//                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L))
+//        );
+        assertThat(dsRAllMeasures.getDataStructure()).containsValues(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("ruleid", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
+        );
     }
 
     @Test

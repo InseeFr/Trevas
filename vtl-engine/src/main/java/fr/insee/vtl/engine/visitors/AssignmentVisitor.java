@@ -215,14 +215,20 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+                                bindings.forEach((k, v) -> {
+                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
+                                });
                                 try {
                                     engine.eval("left := " + leftExpressionToEval + ";");
-                                    Object resolvedLeft = engine.getContext().getAttribute("left");
-                                    if (resolvedLeft.getClass().isAssignableFrom(Double.class)) {
-                                        return (Double) resolvedLeft;
+                                    Object left = engine.getContext().getAttribute("left");
+                                    engine.getContext().removeAttribute("left", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> {
+                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
+                                    });
+                                    if (left.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) left;
                                     }
-                                    return ((Long) resolvedLeft).doubleValue();
+                                    return ((Long) left).doubleValue();
                                 } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
@@ -232,14 +238,20 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+                                bindings.forEach((k, v) -> {
+                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
+                                });
                                 try {
                                     engine.eval("right := " + rightExpressionToEval + ";");
-                                    Object resolvedRight = engine.getContext().getAttribute("right");
-                                    if (resolvedRight.getClass().isAssignableFrom(Double.class)) {
-                                        return (Double) resolvedRight;
+                                    Object right = engine.getContext().getAttribute("right");
+                                    engine.getContext().removeAttribute("right", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> {
+                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
+                                    });
+                                    if (right.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) right;
                                     }
-                                    return ((Long) resolvedRight).doubleValue();
+                                    return ((Long) right).doubleValue();
                                 } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
@@ -249,10 +261,17 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+                                bindings.forEach((k, v) -> {
+                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
+                                });
                                 try {
                                     engine.eval(expressionToEval);
-                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                    Boolean boolVar = (Boolean) engine.getContext().getAttribute("bool_var");
+                                    engine.getContext().removeAttribute("bool_var", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> {
+                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
+                                    });
+                                    return boolVar;
                                 } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
