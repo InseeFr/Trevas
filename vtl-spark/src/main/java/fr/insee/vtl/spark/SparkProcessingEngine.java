@@ -697,13 +697,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         (acc, dp) -> acc.put(dp.get(componentID).toString(), dp.get(hr.getVariable())),
                         HashMap::putAll
                 );
+        // Save monomeasure type
+        Class measureType = dsE.getDataStructure().getMeasures().get(0).getType();
         // Iterate on rules to resolve expressions
         Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
-        Map<Object, String> idRuleBindings = new HashMap<>();
+        Map<Object, Double> resolvedLeftRuleExpressions = new HashMap<>();
+        Map<Object, Double> resolvedRightRuleExpressions = new HashMap<>();
         hr.getRules()
                 .forEach(rule -> {
                     String ruleName = rule.getName();
-                    idRuleBindings.put(ruleName, rule.getValueDomainValue());
                     // check that all code items are in bindings
                     boolean allCodeItemInBindings = rule.getCodeItems().stream()
                             .map(bindings::containsKey)
@@ -711,12 +713,19 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             .count() == 0;
                     if (!allCodeItemInBindings) {
                         resolvedRuleExpressions.put(ruleName, null);
-                    } else resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(bindings));
+                        resolvedLeftRuleExpressions.put(ruleName, null);
+                        resolvedRightRuleExpressions.put(ruleName, null);
+                    } else {
+                        resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(bindings));
+                        resolvedLeftRuleExpressions.put(ruleName, (Double) rule.getLeftExpression().resolve(bindings));
+                        resolvedRightRuleExpressions.put(ruleName, (Double) rule.getRightExpression().resolve(bindings));
+                    }
                 });
 
         var roleMap = getRoleMap(ds);
         roleMap.put("ruleid", IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put("imbalance", MEASURE);
         roleMap.put("errorlevel", MEASURE);
         roleMap.put("errorcode", MEASURE);
 
@@ -735,7 +744,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType)
                             .withPosition(pos)
                             .using(context -> {
-                                if (errorCodeExpr == null|| expression == null) return null;
+                                if (errorCodeExpr == null || expression == null) return null;
                                 Map<String, Object> mapContext = (Map<String, Object>) context;
                                 Object erCode = errorCodeExpr.resolve(mapContext);
                                 if (erCode == null) return null;
@@ -757,9 +766,24 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             .withPosition(pos)
                             .using(context -> expression);
 
+                    ResolvableExpression imbalanceExpression = ResolvableExpression.withType(measureType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Double leftExpression = resolvedLeftRuleExpressions.get(ruleName);
+                                Double rightExpression = resolvedRightRuleExpressions.get(ruleName);
+                                if (leftExpression == null || rightExpression == null) {
+                                    return null;
+                                }
+                                if (measureType.isAssignableFrom(Long.class)) {
+                                    return leftExpression.longValue() - rightExpression.longValue();
+                                }
+                                return leftExpression - rightExpression;
+                            });
+
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                     resolvableExpressions.put("ruleid", ruleIdExpression);
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
+                    resolvableExpressions.put("imbalance", imbalanceExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
                     // TODO calc imbalance
@@ -772,7 +796,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         ).collect(Collectors.toList());
         // TODO handle HR options
         // TODO return union datasetsExpression
-        return dsE;
+        return executeUnion(datasetsExpression);
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {

@@ -211,27 +211,35 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             comparisonOperandContext.getText() + " " +
                             rightExpressionToEval + ";";
 
-                    ResolvableExpression leftExpression = ResolvableExpression.withType(Boolean.class)
+                    ResolvableExpression leftExpression = ResolvableExpression.withType(Double.class)
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
                                 engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
                                 try {
-                                    engine.eval(leftExpressionToEval);
-                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                    engine.eval("left := " + leftExpressionToEval + ";");
+                                    Object resolvedLeft = engine.getContext().getAttribute("left");
+                                    if (resolvedLeft.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) resolvedLeft;
+                                    }
+                                    return ((Long) resolvedLeft).doubleValue();
                                 } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
                             });
 
-                    ResolvableExpression rightExpression = ResolvableExpression.withType(Boolean.class)
+                    ResolvableExpression rightExpression = ResolvableExpression.withType(Double.class)
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
                                 engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
                                 try {
-                                    engine.eval(rightExpressionToEval);
-                                    return (Boolean) engine.getContext().getAttribute("bool_var");
+                                    engine.eval("right := " + rightExpressionToEval + ";");
+                                    Object resolvedRight = engine.getContext().getAttribute("right");
+                                    if (resolvedRight.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) resolvedRight;
+                                    }
+                                    return ((Long) resolvedRight).doubleValue();
                                 } catch (ScriptException e) {
                                     throw new RuntimeException(e);
                                 }
