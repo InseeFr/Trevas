@@ -449,6 +449,9 @@ public class ValidationTest {
         engine.eval(hierarchicalRulesetDef +
                 "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"
         );
+
+        Dataset dsR = (Dataset) engine.getContext().getAttribute("DS_r");
+        assertThat(dsR.getDataPoints().size()).isEqualTo(11);
     }
 
     @Test
