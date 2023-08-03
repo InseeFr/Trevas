@@ -126,8 +126,6 @@ public class ValidationTest {
                     new Structured.Component("imbalance_1", Long.class, Dataset.Role.MEASURE)
             )
     );
-    private SparkSession spark;
-    private ScriptEngine engine;
     private final String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
             "R010 : A = J + K + L errorlevel 5;\n" +
             "R020 : B = M + N + O errorlevel 5;\n" +
@@ -141,6 +139,32 @@ public class ValidationTest {
             "R100 : M >= N errorlevel 5;\n" +
             "R110 : M <= G errorlevel 5\n" +
             "end hierarchical ruleset; \n";
+    private final Dataset DS_1_HR = new InMemoryDataset(
+            List.of(
+                    List.of("2010", "A", 5L),
+                    List.of("2010", "B", 11L),
+                    List.of("2010", "C", 0L),
+                    List.of("2010", "G", 19L),
+                    Stream.of("2010", "H", null).collect(Collectors.toList()),
+                    List.of("2010", "I", 14L),
+                    List.of("2010", "M", 2L),
+                    List.of("2010", "N", 5L),
+                    List.of("2010", "O", 4L),
+                    List.of("2010", "P", 7L),
+                    List.of("2010", "Q", -7L),
+                    List.of("2010", "S", 3L),
+                    List.of("2010", "T", 9L),
+                    Stream.of("2010", "U", null).collect(Collectors.toList()),
+                    List.of("2010", "V", 6L)
+            ),
+            List.of(
+                    new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+            )
+    );
+    private SparkSession spark;
+    private ScriptEngine engine;
 
     private static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue) {
 
@@ -418,40 +442,39 @@ public class ValidationTest {
     @Test
     @Disabled
     public void checkHierarchy() throws ScriptException {
-        Dataset DS_1_HR = new InMemoryDataset(
-                List.of(
-                        List.of("2010", "A", 5L),
-                        List.of("2010", "B", 11L),
-                        List.of("2010", "C", 0L),
-                        List.of("2010", "G", 19L),
-                        Stream.of("2010", "H", null).collect(Collectors.toList()),
-                        List.of("2010", "I", 14L),
-                        List.of("2010", "M", 2L),
-                        List.of("2010", "N", 5L),
-                        List.of("2010", "O", 4L),
-                        List.of("2010", "P", 7L),
-                        List.of("2010", "Q", -7L),
-                        List.of("2010", "S", 3L),
-                        List.of("2010", "T", 9L),
-                        Stream.of("2010", "U", null).collect(Collectors.toList()),
-                        List.of("2010", "V", 6L)
-                ),
-                List.of(
-                        new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
-                        new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
-                        new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
-                )
-        );
-
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
 
         engine.eval(hierarchicalRulesetDef +
-                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2); " /*+
+                "DS_r_all := check_hierarchy(DS_1, HR_1 rule Id_2 all); " +
+                "DS_r_all_measures := check_hierarchy(DS_1, HR_1 rule Id_2 all_measures"*/
         );
 
         Dataset dsR = (Dataset) engine.getContext().getAttribute("DS_r");
-        assertThat(dsR.getDataPoints().size()).isEqualTo(11);
+        List<Map<String, Object>> dsRWithNull = dsR.getDataAsMap();
+        List<Map<String, Object>> dsRWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRWithNull) {
+            dsRWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+//        assertThat(dsRWithoutNull).isEqualTo(List.of(
+//                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+//                        "imbalance", -8L, "errorcode", "err", "errorlevel", 1L))
+//        );
+        assertThat(dsR.getDataStructure()).containsValues(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("ruleid", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
+        );
+
+//        Dataset dsRAll = (Dataset) engine.getContext().getAttribute("DS_r_all");
+//
+//        Dataset dsRAllMeasures = (Dataset) engine.getContext().getAttribute("DS_r_all_measures");
     }
 
     @Test
@@ -491,20 +514,29 @@ public class ValidationTest {
         );
 
         ScriptContext context = engine.getContext();
+        context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("DS_2", DS_2_HR, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("DS_3", DS_3_HR, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("DS_4", DS_4_HR, ScriptContext.ENGINE_SCOPE);
 
         assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
-                " DS_r := check_hierarchy(DS_2, HR_1 rule Id_2 partial_null all);"))
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 dataset_priority all);"))
+                .hasMessageContaining("dataset_priority input mode is not supported in check_hierarchy");
+
+        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
+                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"))
+                .hasMessageContaining("partial_null validation mode is not supported in check_hierarchy");
+
+        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
+                "DS_r := check_hierarchy(DS_2, HR_1 rule Id_2 partial_null all);"))
                 .hasMessageContaining("Dataset DS_2 is not monomeasure");
 
         assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
-                " DS_r := check_hierarchy(DS_3, HR_1 rule Id_2 partial_null all);"))
+                "DS_r := check_hierarchy(DS_3, HR_1 rule Id_2 partial_null all);"))
                 .hasMessageContaining("Dataset DS_3 measure Me_1 has to have number type");
 
         assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
-                " DS_r := check_hierarchy(DS_4, HR_1 rule Id_3 partial_null all);"))
+                "DS_r := check_hierarchy(DS_4, HR_1 rule Id_3 partial_null all);"))
                 .hasMessageContaining("ComponentID Id_3 not contained in dataset DS_4");
     }
 }

@@ -202,8 +202,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                                 codeItemExpressionBuilder.append(" +" + rightCodeItem);
                             });
 
-                    // TODO: handle when clause
-                    // TODO: optimize expr calculation? (without eval?)
+                    // TODO: handle when clause (expr ctx)
+                    // TODO: optimize rule expression calculation? (without eval?)
                     String leftExpressionToEval = valueDomainValue;
                     String rightExpressionToEval = codeItemExpressionBuilder.toString();
                     String expressionToEval = "bool_var := " +

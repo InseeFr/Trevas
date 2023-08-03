@@ -172,6 +172,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                             " not contained in dataset " + datasetName, fromContext(ctx))
             );
         }
+        // TODO: how to handle other IDs than componentID?
         String validationMode = getValidationMode(ctx.validationMode());
         String inputMode = getInputMode(ctx.inputMode());
         String validationOutput = getValidationOutput(ctx.validationOutput());

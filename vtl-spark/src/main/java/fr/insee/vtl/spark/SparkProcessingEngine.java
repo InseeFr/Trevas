@@ -688,6 +688,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeHierarchicalValidation(DatasetExpression dsE, HierarchicalRuleset hr,
                                                            String componentID, String validationMode,
                                                            String inputMode, String validationOutput, Positioned pos) {
+        // inputMode: dataset (default) | dataset_priority (not handled)
+        if (inputMode != null && inputMode.equals("dataset_priority")) {
+            throw new UnsupportedOperationException("dataset_priority input mode is not supported in check_hierarchy");
+        }
+        // validationMode: non_null (default) | non_zero | partial_null | partial_zero | always_null | always_zero
+        if (validationMode != null && !validationMode.equals("non_null")) {
+            throw new UnsupportedOperationException(validationMode + " validation mode is not supported in check_hierarchy");
+        }
         // Create "bindings" (componentID column values)
         fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
 
@@ -698,7 +706,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
                         HashMap::putAll
                 );
         // Save monomeasure type
-        Class measureType = dsE.getDataStructure().getMeasures().get(0).getType();
+        Component measure = dsE.getDataStructure().getMeasures().get(0);
+        Class measureType = measure.getType();
         // Iterate on rules to resolve expressions
         Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
         Map<Object, Double> resolvedLeftRuleExpressions = new HashMap<>();
@@ -786,17 +795,29 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("imbalance", imbalanceExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
-                    // TODO calc imbalance
-                    // do we need to use execute executeCalcInterpreted too?
+
                     DatasetExpression filteredDataset = executeFilter(dsE,
                             ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
                             componentID + " = \"" + rule.getValueDomainValue() + "\"");
                     return executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());
-        // TODO handle HR options
-        // TODO return union datasetsExpression
-        return executeUnion(datasetsExpression);
+        // validationOutput invalid (default) | all | all_measures
+        DatasetExpression datasetExpression = executeUnion(datasetsExpression);
+        if (null == validationOutput || validationOutput.equals("invalid")) {
+            DatasetExpression filteredDataset = executeFilter(datasetExpression,
+                    ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
+                    BOOLVAR + " = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
+            return new SparkDatasetExpression(new SparkDataset(result), pos);
+        }
+        if (validationOutput.equals("all")) {
+            String measureName = measure.getName();
+            Dataset<Row> result = asSparkDataset(datasetExpression).getSparkDataset().drop(measureName);
+            return new SparkDatasetExpression(new SparkDataset(result), pos);
+        }
+        // all_measures
+        return datasetExpression;
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
