@@ -742,10 +742,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Class errorLevelType = hr.getErrorLevelType();
 
         List<DatasetExpression> datasetsExpression = hr.getRules().stream().map(rule -> {
+                    DatasetExpression filteredDataset = executeFilter(dsE,
+                            ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
+                            componentID + " = \"" + rule.getValueDomainValue() + "\"");
+
                     String ruleName = rule.getName();
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
                             .withPosition(pos)
                             .using(context -> ruleName);
+
+                    ResolvableExpression valueDomainExpression = ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(context -> rule.getValueDomainValue());
 
                     Boolean expression = resolvedRuleExpressions.get(ruleName);
 
@@ -791,14 +799,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
                     resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(componentID, valueDomainExpression);
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
                     resolvableExpressions.put("imbalance", imbalanceExpression);
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
 
-                    DatasetExpression filteredDataset = executeFilter(dsE,
-                            ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
-                            componentID + " = \"" + rule.getValueDomainValue() + "\"");
                     return executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());

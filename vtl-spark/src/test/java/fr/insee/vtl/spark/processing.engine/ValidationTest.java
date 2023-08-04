@@ -441,7 +441,7 @@ public class ValidationTest {
 
     @Test
     @Disabled
-    public void checkHierarchy() throws ScriptException {
+    public void checkHierarchyOutputMode() throws ScriptException {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
 
