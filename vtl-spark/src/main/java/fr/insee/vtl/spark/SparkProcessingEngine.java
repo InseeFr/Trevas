@@ -741,10 +741,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Class errorCodeType = hr.getErrorCodeType();
         Class errorLevelType = hr.getErrorLevelType();
 
-        List<DatasetExpression> datasetsExpression = hr.getRules().stream().map(rule -> {
-                    DatasetExpression filteredDataset = executeFilter(dsE,
-                            ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
-                            componentID + " = \"" + rule.getValueDomainValue() + "\"");
+        List<DatasetExpression> datasetsExpression = new ArrayList<>();
+        hr.getRules().forEach(rule -> {
+                    DatasetExpression filteredDataset = null;
+                    try {
+                        filteredDataset = executeFilterForHR(dsE,
+                                componentID + " = \"" + rule.getValueDomainValue() + "\"");
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
 
                     String ruleName = rule.getName();
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
@@ -805,9 +810,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put("errorlevel", errorLevelExpression);
                     resolvableExpressions.put("errorcode", errorCodeExpression);
 
-                    return executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of());
+                    datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of()));
                 }
-        ).collect(Collectors.toList());
+        );
         // validationOutput invalid (default) | all | all_measures
         DatasetExpression datasetExpression = executeUnion(datasetsExpression);
         if (null == validationOutput || validationOutput.equals("invalid")) {
@@ -826,6 +831,19 @@ public class SparkProcessingEngine implements ProcessingEngine {
         return datasetExpression;
     }
 
+    private DatasetExpression executeFilterForHR(DatasetExpression expression, String filterText) throws Exception {
+        SparkDataset dataset = asSparkDataset(expression);
+        Dataset<Row> ds = dataset.getSparkDataset();
+        try {
+            Dataset<Row> result = ds.filter(filterText);
+            if (result.isEmpty()) {
+                result = ds.limit(1);
+            }
+            return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)), expression);
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
         return map.entrySet()
                 .stream()
