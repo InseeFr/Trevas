@@ -705,28 +705,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // Save monomeasure type
         Component measure = dsE.getDataStructure().getMeasures().get(0);
         Class measureType = measure.getType();
-        // Iterate on rules to resolve expressions
-        Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
-        Map<Object, Double> resolvedLeftRuleExpressions = new HashMap<>();
-        Map<Object, Double> resolvedRightRuleExpressions = new HashMap<>();
-        hr.getRules()
-                .forEach(rule -> {
-                    String ruleName = rule.getName();
-                    // check that all code items are in bindings
-                    boolean allCodeItemInBindings = rule.getCodeItems().stream()
-                            .map(bindings::containsKey)
-                            .filter(b -> b.equals(false))
-                            .count() == 0;
-                    if (!allCodeItemInBindings) {
-                        resolvedRuleExpressions.put(ruleName, null);
-                        resolvedLeftRuleExpressions.put(ruleName, null);
-                        resolvedRightRuleExpressions.put(ruleName, null);
-                    } else {
-                        resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(bindings));
-                        resolvedLeftRuleExpressions.put(ruleName, (Double) rule.getLeftExpression().resolve(bindings));
-                        resolvedRightRuleExpressions.put(ruleName, (Double) rule.getRightExpression().resolve(bindings));
-                    }
-                });
 
         var roleMap = getRoleMap(ds);
         roleMap.put("ruleid", IDENTIFIER);
@@ -749,6 +727,36 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     }
 
                     String ruleName = rule.getName();
+                    List<String> codeItems = rule.getCodeItems();
+
+                    // handle validationMode
+                    Map<String, Object> ruleBindings = extractHRRuleBindings(bindings, codeItems);
+                    Boolean hasToProduceOutputLine = checkRule(codeItems, ruleBindings, validationMode);
+                    if (!hasToProduceOutputLine) {
+                        // trick to break
+                        return;
+                    }
+                    ruleBindings = buildBindingsWithDefault(ruleBindings, codeItems, validationMode, measureType);
+                    // Iterate on rules to resolve expressions
+                    Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
+                    Map<Object, Double> resolvedLeftRuleExpressions = new HashMap<>();
+                    Map<Object, Double> resolvedRightRuleExpressions = new HashMap<>();
+                    // use try / catch because of scalar expr function resolution issue with null (only handled in ds thanks to column type)
+                    try {
+                        resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedRuleExpressions.put(ruleName, null);
+                    }
+                    try {
+                        resolvedLeftRuleExpressions.put(ruleName, (Double) rule.getLeftExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedLeftRuleExpressions.put(ruleName, null);
+                    }
+                    try {
+                        resolvedRightRuleExpressions.put(ruleName, (Double) rule.getRightExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedRightRuleExpressions.put(ruleName, null);
+                    }
                     ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
                             .withPosition(pos)
                             .using(context -> ruleName);
@@ -841,6 +849,81 @@ public class SparkProcessingEngine implements ProcessingEngine {
             throw new Exception(e);
         }
     }
+
+    private Map<String, Object> extractHRRuleBindings(Map<String, Object> bindings, List<String> items) {
+        Map<String, Object> ruleBindings = new HashMap<>();
+        items.forEach(k -> {
+            if (bindings.containsKey(k)) {
+                Object value = bindings.get(k);
+                ruleBindings.put(k, value);
+            }
+        });
+        return ruleBindings;
+    }
+
+    private Boolean checkRule(List<String> codeItems, Map<String, Object> ruleBindings, String validationMode) {
+        if (validationMode == null || validationMode.equals("non_null")) {
+            if (codeItems.size() != ruleBindings.size()) {
+                return Boolean.FALSE;
+            }
+            if (ruleBindings.values().stream().noneMatch(Objects::isNull)) {
+                return Boolean.TRUE;
+            }
+        }
+        if (validationMode.equals("non_zero")) {
+            if (ruleBindings.values().stream().noneMatch(r -> {
+                if (null == r) {
+                    return Boolean.TRUE;
+                }
+                Double d = null;
+                if (r.getClass().isAssignableFrom(Long.class)) {
+                    d = ((Long) r).doubleValue();
+                }
+                if (r.getClass().isAssignableFrom(Double.class)) {
+                    d = (Double) r;
+                }
+                if (d.equals(0D)) {
+                    return Boolean.FALSE;
+                }
+                return Boolean.TRUE;
+            })) {
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        }
+        if (validationMode.equals("partial_null") || validationMode.equals("partial_zero")) {
+            if (ruleBindings.values().stream().filter(Objects::nonNull).count() > 0) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }
+        if (validationMode.equals("always_null") || validationMode.equals("always_zero")) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    private Map<String, Object> buildBindingsWithDefault(Map<String, Object> bindings, List<String> ruleItems,
+                                                         String validationMode, Class measureType) {
+        Map<String, Object> bindingsWithDefault = new HashMap<>();
+        ruleItems.forEach(i -> {
+            if (bindings.containsKey(i)) {
+                bindingsWithDefault.put(i, bindings.get(i));
+            } else {
+                // don't need to handle non_null, items are always in bindings
+                if (List.of("non_zero", "partial_zero", "always_zero").contains(validationMode)) {
+                    if (measureType.isAssignableFrom(Long.class)) {
+                        bindingsWithDefault.put(i, 0L);
+                    } else bindingsWithDefault.put(i, 0D);
+                }
+                if (List.of("partial_null", "always_null").contains(validationMode)) {
+                    bindingsWithDefault.put(i, null);
+                }
+            }
+        });
+        return bindingsWithDefault;
+    }
+
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {
         return map.entrySet()
                 .stream()
