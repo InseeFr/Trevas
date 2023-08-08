@@ -1,4 +1,4 @@
-name: Trevas CI
+name: Trevas Tests
 
 on:
   pull_request:

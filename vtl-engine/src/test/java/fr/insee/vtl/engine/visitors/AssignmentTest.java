@@ -3,15 +3,12 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.HierarchicalRuleset;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,6 +110,28 @@ public class AssignmentTest {
         assertThatThrownBy(() -> engine.eval("res := ds#baaaddd;"))
                 .isInstanceOf(VtlScriptException.class)
                 .hasMessage("column baaaddd not found in ds");
+    }
+
+    @Test
+    public void checkHierarchy() throws ScriptException {
+
+        String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
+                "R010 : A = J + K + L errorlevel 5;\n" +
+                "R020 : B = M + N + O errorlevel 5;\n" +
+                "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
+                "R040 : D = R + S errorlevel 1;\n" +
+                "R050 : E = T + U + V errorlevel 0;\n" +
+                "R060 : F = Y + W + Z errorlevel 7;\n" +
+                "R070 : G = B + C;\n" +
+                "R080 : H = D + E errorlevel 0;\n" +
+                "R090 : I = D + G errorcode \"YY\" errorlevel 0;\n" +
+                "R100 : M >= N errorlevel 5;\n" +
+                "R110 : M <= G errorlevel 5\n" +
+                "end hierarchical ruleset; \n";
+
+        engine.eval(hierarchicalRulesetDef);
+        HierarchicalRuleset hr1 = (HierarchicalRuleset) engine.getContext().getAttribute("HR_1");
+        assertThat(hr1.getRules().size()).isEqualTo(11);
     }
 
 }

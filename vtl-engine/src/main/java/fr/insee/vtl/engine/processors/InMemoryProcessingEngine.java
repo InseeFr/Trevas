@@ -2,17 +2,7 @@ package fr.insee.vtl.engine.processors;
 
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.Analytics;
-import fr.insee.vtl.model.DataPointRuleset;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.*;
 
 import javax.script.ScriptEngine;
 import java.util.ArrayList;
@@ -310,6 +300,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeValidationSimple(DatasetExpression dsE, ResolvableExpression erCodeE,
                                                      ResolvableExpression erLevelE, DatasetExpression imbalanceE,
                                                      String output, Positioned pos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DatasetExpression executeHierarchicalValidation(DatasetExpression dsE, HierarchicalRuleset hr,
+                                                     String componentID, String validationMode,
+                                                     String inputMode, String validationOutput, Positioned pos) {
         throw new UnsupportedOperationException();
     }
 
