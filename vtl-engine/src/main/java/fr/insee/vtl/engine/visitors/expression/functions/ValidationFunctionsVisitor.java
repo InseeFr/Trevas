@@ -135,6 +135,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         return processingEngine.executeValidationSimple(dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output, pos);
     }
 
+    // TODO: handle other IDs than componentID? build unique ID tuples to calculate
     @Override
     public ResolvableExpression visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
         var pos = fromContext(ctx);
@@ -172,7 +173,6 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                             " not contained in dataset " + datasetName, fromContext(ctx))
             );
         }
-        // TODO: how to handle other IDs than componentID?
         String validationMode = getValidationMode(ctx.validationMode());
         String inputMode = getInputMode(ctx.inputMode());
         String validationOutput = getValidationOutput(ctx.validationOutput());
