@@ -9,7 +9,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -543,18 +542,17 @@ public class ValidationTest {
     }
 
     @Test
-    @Disabled
     public void checkHierarchyValidationMode() throws ScriptException {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", DS_1_HR, ScriptContext.ENGINE_SCOPE);
 
         engine.eval(hierarchicalRulesetDef +
-                "DS_r_non_null := check_hierarchy(DS_1, HR_1 rule Id_2 non_null all); "/* +
+                "DS_r_non_null := check_hierarchy(DS_1, HR_1 rule Id_2 non_null all); " +
                 "DS_r_non_zero := check_hierarchy(DS_1, HR_1 rule Id_2 non_zero all); " +
                 "DS_r_partial_null := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all); " +
                 "DS_r_partial_zero := check_hierarchy(DS_1, HR_1 rule Id_2 partial_zero all); " +
                 "DS_r_always_null := check_hierarchy(DS_1, HR_1 rule Id_2 always_null all); " +
-                "DS_r_always_zero := check_hierarchy(DS_1, HR_1 rule Id_2 always_zero all);"*/
+                "DS_r_always_zero := check_hierarchy(DS_1, HR_1 rule Id_2 always_zero all);"
         );
 
         Dataset dsRNonNull = (Dataset) engine.getContext().getAttribute("DS_r_non_null");
@@ -564,6 +562,144 @@ public class ValidationTest {
             dsRNonNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
         assertThat(dsRNonNullWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                        "bool_var", false, "imbalance", 8L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                        "bool_var", true, "imbalance", -17L,
+                        "errorcode", "null", "errorlevel", "null")
+        ));
+
+        Dataset dsRNonZero = (Dataset) engine.getContext().getAttribute("DS_r_non_zero");
+        List<Map<String, Object>> dsRNonZeroWithNull = dsRNonZero.getDataAsMap();
+        List<Map<String, Object>> dsRNonZeroWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRNonZeroWithNull) {
+            dsRNonZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+        assertThat(dsRNonZeroWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+                        "bool_var", false, "imbalance", 5L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 1L),
+                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                        "bool_var", false, "imbalance", 8L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                        "bool_var", false, "imbalance", -5L,
+                        "errorcode", "YY", "errorlevel", 0L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                        "bool_var", true, "imbalance", -17L,
+                        "errorcode", "null", "errorlevel", "null")
+        ));
+
+        Dataset dsRPartialNull = (Dataset) engine.getContext().getAttribute("DS_r_partial_null");
+        List<Map<String, Object>> dsRPartialNullWithNull = dsRPartialNull.getDataAsMap();
+        List<Map<String, Object>> dsRPartialNullWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRPartialNullWithNull) {
+            dsRPartialNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsRPartialNullWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                        "bool_var", false, "imbalance", 8L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                        "bool_var", true, "imbalance", -17L,
+                        "errorcode", "null", "errorlevel", "null")
+        ));
+
+        Dataset dsRPartialZero = (Dataset) engine.getContext().getAttribute("DS_r_partial_zero");
+        List<Map<String, Object>> dsRPartialZeroWithNull = dsRPartialZero.getDataAsMap();
+        List<Map<String, Object>> dsRPartialZeroWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRPartialZeroWithNull) {
+            dsRPartialZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsRPartialZeroWithoutNull).isEqualTo(List.of(
+                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+                        "bool_var", false, "imbalance", 5L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 1L),
+                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                        "bool_var", false, "imbalance", 8L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                        "bool_var", false, "imbalance", -5L,
+                        "errorcode", "YY", "errorlevel", 0L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                        "bool_var", true, "imbalance", -17L,
+                        "errorcode", "null", "errorlevel", "null")
+        ));
+
+        Dataset dsRAlwaysNull = (Dataset) engine.getContext().getAttribute("DS_r_always_null");
+        List<Map<String, Object>> dsRAlwaysNullWithNull = dsRAlwaysNull.getDataAsMap();
+        List<Map<String, Object>> dsRAlwaysNullWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRAlwaysNullWithNull) {
+            dsRAlwaysNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsRAlwaysNullWithoutNull).isEqualTo(List.of(
                 Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
@@ -598,15 +734,49 @@ public class ValidationTest {
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
-        assertThat(dsRNonNull.getDataStructure()).containsValues(
-                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("ruleid", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
-                new Structured.Component("imbalance", Long.class, Dataset.Role.MEASURE),
-                new Structured.Component("errorcode", String.class, Dataset.Role.MEASURE),
-                new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
-        );
+
+        Dataset dsRAlwaysZero = (Dataset) engine.getContext().getAttribute("DS_r_always_zero");
+        List<Map<String, Object>> dsRAlwaysZeroWithNull = dsRAlwaysZero.getDataAsMap();
+        List<Map<String, Object>> dsRAlwaysZeroWithoutNull = new ArrayList<>();
+        for (Map<String, Object> map : dsRAlwaysZeroWithNull) {
+            dsRAlwaysZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
+        }
+
+        assertThat(dsRAlwaysZeroWithoutNull).isEqualTo(List.of(
+        Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+                "bool_var", false, "imbalance", 5L,
+                "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 1L),
+                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "F", "ruleid", "R060",
+                        "bool_var", true, "imbalance", 0L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                        "bool_var", false, "imbalance", 8L,
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
+                        "bool_var", "null", "imbalance", "null",
+                        "errorcode", "null", "errorlevel", "null"),
+                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                        "bool_var", false, "imbalance", -5L,
+                        "errorcode", "YY", "errorlevel", 0L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                        "bool_var", false, "imbalance", -3L,
+                        "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                        "bool_var", true, "imbalance", -17L,
+                        "errorcode", "null", "errorlevel", "null")
+        ));
     }
 
     @Test
