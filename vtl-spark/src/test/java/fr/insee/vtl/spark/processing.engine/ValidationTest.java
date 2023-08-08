@@ -482,9 +482,6 @@ public class ValidationTest {
             dsRAllWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
         assertThat(dsRAllWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
-                        "bool_var", "null", "imbalance", "null",
-                        "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
@@ -493,12 +490,6 @@ public class ValidationTest {
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
-                        "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
-                        "bool_var", "null", "imbalance", "null",
-                        "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
-                        "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
@@ -524,9 +515,6 @@ public class ValidationTest {
             dsRAllMeasuresWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
         assertThat(dsRAllMeasuresWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
-                        "bool_var", "null", "Me_1", 5L, "imbalance", "null",
-                        "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "Me_1", 11L, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
@@ -535,12 +523,6 @@ public class ValidationTest {
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "Me_1", 19L, "imbalance", 8L,
-                        "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
-                        "bool_var", "null", "Me_1", "null", "imbalance", "null",
-                        "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
-                        "bool_var", "null", "Me_1", 14L, "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
                 Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "Me_1", 2L, "imbalance", -3L,
