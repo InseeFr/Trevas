@@ -692,10 +692,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         if (inputMode != null && inputMode.equals("dataset_priority")) {
             throw new UnsupportedOperationException("dataset_priority input mode is not supported in check_hierarchy");
         }
-        // validationMode: non_null (default) | non_zero | partial_null | partial_zero | always_null | always_zero
-        if (validationMode != null && !validationMode.equals("non_null")) {
-            throw new UnsupportedOperationException(validationMode + " validation mode is not supported in check_hierarchy");
-        }
+
         // Create "bindings" (componentID column values)
         fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
 

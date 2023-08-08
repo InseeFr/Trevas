@@ -675,10 +675,6 @@ public class ValidationTest {
                 .hasMessageContaining("dataset_priority input mode is not supported in check_hierarchy");
 
         assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
-                "DS_r := check_hierarchy(DS_1, HR_1 rule Id_2 partial_null all);"))
-                .hasMessageContaining("partial_null validation mode is not supported in check_hierarchy");
-
-        assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
                 "DS_r := check_hierarchy(DS_2, HR_1 rule Id_2 partial_null all);"))
                 .hasMessageContaining("Dataset DS_2 is not monomeasure");
 
