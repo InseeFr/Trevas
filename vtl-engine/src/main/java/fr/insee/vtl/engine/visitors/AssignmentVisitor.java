@@ -139,13 +139,13 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         return dataPointRuleset;
     }
 
+    // TODO: handle when clause (expr ctx)
     @Override
     public Object visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
         var pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
 
-        // Only support variables, not valuedomain
-        // TODO: handle alias?
+        // Mix variables and valuedomain. Information useless for now, find use case to do so
         String variable = ctx.hierRuleSignature().IDENTIFIER().getText();
 
         Set<Class> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
@@ -174,7 +174,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         }
         Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
 
-        //TODO: handle rules
         AtomicInteger index = new AtomicInteger();
         List<HierarchicalRule> rules = ctx.ruleClauseHierarchical().ruleItemHierarchical()
                 .stream()
@@ -202,8 +201,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                                 codeItemExpressionBuilder.append(" +" + rightCodeItem);
                             });
 
-                    // TODO: handle when clause (expr ctx)
-                    // TODO: optimize rule expression calculation? (without eval?)
                     String leftExpressionToEval = valueDomainValue;
                     String rightExpressionToEval = codeItemExpressionBuilder.toString();
                     String expressionToEval = "bool_var := " +
