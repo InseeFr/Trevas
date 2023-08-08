@@ -37,6 +37,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
     public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
     private static final String BOOLVAR = "bool_var";
+    private static final String ERRORCODE = "errorcode";
+    private static final String ERRORLEVEL = "errorlevel";
+    private static final String RULEID = "ruleid";
+    private static final String IMBALANCE = "imbalance";
+    private static final String NON_NULL = "non_null";
+    private static final String NON_ZERO = "non_zero";
+    private static final String PARTIAL_NULL = "partial_null";
+    private static final String PARTIAL_ZERO = "partial_zero";
+    private static final String ALWAYS_NULL = "always_null";
+    private static final String ALWAYS_ZERO = "always_zero";
     private final SparkSession spark;
 
     /**
@@ -536,10 +546,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Structured.DataStructure dataStructure = sparkDs.getDataStructure();
 
         var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(RULEID, IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
 
         Class errorCodeType = dpr.getErrorCodeType();
         Class errorLevelType = dpr.getErrorLevelType();
@@ -590,10 +600,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             });
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
-                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(RULEID, ruleIdExpression);
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
-                    resolvableExpressions.put("errorlevel", errorLevelExpression);
-                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
+                    resolvableExpressions.put(ERRORCODE, errorCodeExpression);
                     // do we need to use execute executeCalcInterpreted too?
                     return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
@@ -623,7 +633,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
         String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
                 .stream().filter(c -> c.isMeasure()).map(c -> c.getName()).collect(Collectors.toList()).get(0);
-        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, "imbalance"));
+        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, IMBALANCE));
         Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
         var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
         SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap), pos);
@@ -661,12 +671,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 });
 
         var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
 
         Map<String, ResolvableExpression> resolvableExpressions = Map.ofEntries(
-                Map.entry("errorlevel", errorLevelExpression),
-                Map.entry("errorcode", errorCodeExpression)
+                Map.entry(ERRORLEVEL, errorLevelExpression),
+                Map.entry(ERRORCODE, errorCodeExpression)
         );
 
         Dataset<Row> calculatedDataset = executeCalcEvaluated(ds, resolvableExpressions);
@@ -707,18 +717,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Class measureType = measure.getType();
 
         var roleMap = getRoleMap(ds);
-        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(RULEID, IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
-        roleMap.put("imbalance", MEASURE);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
+        roleMap.put(IMBALANCE, MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
 
         Class errorCodeType = hr.getErrorCodeType();
         Class errorLevelType = hr.getErrorLevelType();
 
         List<DatasetExpression> datasetsExpression = new ArrayList<>();
         hr.getRules().forEach(rule -> {
-                    DatasetExpression filteredDataset = null;
+                    DatasetExpression filteredDataset;
                     try {
                         filteredDataset = executeFilterForHR(dsE,
                                 componentID + " = \"" + rule.getValueDomainValue() + "\"");
@@ -732,7 +742,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     // handle validationMode
                     Map<String, Object> ruleBindings = extractHRRuleBindings(bindings, codeItems);
                     Boolean hasToProduceOutputLine = checkRule(codeItems, ruleBindings, validationMode);
-                    if (!hasToProduceOutputLine) {
+                    if (Boolean.FALSE.equals(hasToProduceOutputLine)) {
                         // trick to break
                         return;
                     }
@@ -789,7 +799,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                 return expression.equals(Boolean.FALSE) ? errorLevelType.cast(erLevel) : null;
                             });
 
-                    ResolvableExpression BOOLVARExpression = ResolvableExpression.withType(Boolean.class)
+                    ResolvableExpression BoolvarExpression = ResolvableExpression.withType(Boolean.class)
                             .withPosition(pos)
                             .using(context -> expression);
 
@@ -808,12 +818,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             });
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
-                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(RULEID, ruleIdExpression);
                     resolvableExpressions.put(componentID, valueDomainExpression);
-                    resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
-                    resolvableExpressions.put("imbalance", imbalanceExpression);
-                    resolvableExpressions.put("errorlevel", errorLevelExpression);
-                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    resolvableExpressions.put(BOOLVAR, BoolvarExpression);
+                    resolvableExpressions.put(IMBALANCE, imbalanceExpression);
+                    resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
+                    resolvableExpressions.put(ERRORCODE, errorCodeExpression);
 
                     datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of()));
                 }
@@ -862,15 +872,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     private Boolean checkRule(List<String> codeItems, Map<String, Object> ruleBindings, String validationMode) {
-        if (validationMode == null || validationMode.equals("non_null")) {
+        if (validationMode == null || validationMode.equals(NON_NULL)) {
             if (codeItems.size() != ruleBindings.size()) {
                 return Boolean.FALSE;
             }
             if (ruleBindings.values().stream().noneMatch(Objects::isNull)) {
                 return Boolean.TRUE;
             }
+            return Boolean.FALSE;
         }
-        if (validationMode.equals("non_zero")) {
+        if (validationMode.equals(NON_ZERO)) {
             if (ruleBindings.values().stream().noneMatch(r -> {
                 if (null == r) {
                     return Boolean.TRUE;
@@ -891,32 +902,32 @@ public class SparkProcessingEngine implements ProcessingEngine {
             }
             return Boolean.TRUE;
         }
-        if (validationMode.equals("partial_null") || validationMode.equals("partial_zero")) {
+        if (validationMode.equals(PARTIAL_NULL) || validationMode.equals(PARTIAL_ZERO)) {
             if (ruleBindings.values().stream().filter(Objects::nonNull).count() > 0) {
                 return Boolean.TRUE;
             }
             return Boolean.FALSE;
         }
-        if (validationMode.equals("always_null") || validationMode.equals("always_zero")) {
+        if (validationMode.equals(ALWAYS_NULL) || validationMode.equals(ALWAYS_ZERO)) {
             return Boolean.TRUE;
         }
         return Boolean.FALSE;
     }
 
     private Map<String, Object> buildBindingsWithDefault(Map<String, Object> bindings, List<String> ruleItems,
-                                                         String validationMode, Class measureType) {
+                                                         String validationMode, Class<?> measureType) {
         Map<String, Object> bindingsWithDefault = new HashMap<>();
         ruleItems.forEach(i -> {
             if (bindings.containsKey(i)) {
                 bindingsWithDefault.put(i, bindings.get(i));
             } else {
                 // don't need to handle non_null, items are always in bindings
-                if (List.of("non_zero", "partial_zero", "always_zero").contains(validationMode)) {
+                if (List.of(NON_ZERO, PARTIAL_ZERO, ALWAYS_ZERO).contains(validationMode)) {
                     if (measureType.isAssignableFrom(Long.class)) {
                         bindingsWithDefault.put(i, 0L);
                     } else bindingsWithDefault.put(i, 0D);
                 }
-                if (List.of("partial_null", "always_null").contains(validationMode)) {
+                if (List.of(PARTIAL_NULL, ALWAYS_NULL).contains(validationMode)) {
                     bindingsWithDefault.put(i, null);
                 }
             }

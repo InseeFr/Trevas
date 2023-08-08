@@ -131,7 +131,7 @@ public class AssignmentTest {
 
         engine.eval(hierarchicalRulesetDef);
         HierarchicalRuleset hr1 = (HierarchicalRuleset) engine.getContext().getAttribute("HR_1");
-        assertThat(hr1.getRules().size()).isEqualTo(11);
+        assertThat(hr1.getRules()).hasSize(11);
     }
 
 }

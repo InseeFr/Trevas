@@ -14,8 +14,8 @@ public class HierarchicalRuleset {
 
     private final List<HierarchicalRule> rules;
     private final String variable;
-    private final Class errorCodeType;
-    private final Class errorLevelType;
+    private final Class<?> errorCodeType;
+    private final Class<?> errorLevelType;
 
     /**
      * Constructor.
@@ -26,7 +26,7 @@ public class HierarchicalRuleset {
      * @param errorLevelType Type of errorlevel
      */
     public HierarchicalRuleset(List<HierarchicalRule> rules, String variable,
-                               Class errorCodeType, Class errorLevelType) {
+                               Class<?> errorCodeType, Class<?> errorLevelType) {
         this.rules = rules;
         this.variable = variable;
         this.errorCodeType = errorCodeType;
@@ -41,11 +41,11 @@ public class HierarchicalRuleset {
         return variable;
     }
 
-    public Class getErrorCodeType() {
+    public Class<?> getErrorCodeType() {
         return errorCodeType;
     }
 
-    public Class getErrorLevelType() {
+    public Class<?> getErrorLevelType() {
         return errorLevelType;
     }
 

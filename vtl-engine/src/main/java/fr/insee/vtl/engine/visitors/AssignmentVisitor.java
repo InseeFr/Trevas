@@ -5,6 +5,7 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -148,31 +149,31 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         // Mix variables and valuedomain. Information useless for now, find use case to do so
         String variable = ctx.hierRuleSignature().IDENTIFIER().getText();
 
-        Set<Class> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+        Set<Class<?>> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
             VtlParser.ErCodeContext erCodeContext = c.erCode();
             if (null == erCodeContext) return Object.class;
             return expressionVisitor.visit(c.erCode()).getType();
         }).collect(Collectors.toSet());
-        List<Class> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        List<Class<?>> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErCodeTypes.size() > 1) {
             throw new VtlRuntimeException(
                     new InvalidArgumentException("Error codes of rules have different types", pos)
             );
         }
-        Class erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
+        Class<?> erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
 
-        Set<Class> erLevelTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+        Set<Class<?>> erLevelTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
             VtlParser.ErLevelContext erLevelContext = c.erLevel();
             if (null == erLevelContext) return Object.class;
             return expressionVisitor.visit(c.erLevel()).getType();
         }).collect(Collectors.toSet());
-        List<Class> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        List<Class<?>> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
         if (filteredErLevelTypes.size() > 1) {
             throw new VtlRuntimeException(
                     new InvalidArgumentException("Error levels of rules have different types", pos)
             );
         }
-        Class erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
+        Class<?> erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
 
         AtomicInteger index = new AtomicInteger();
         List<HierarchicalRule> rules = ctx.ruleClauseHierarchical().ruleItemHierarchical()
@@ -196,15 +197,14 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                                 String rightCodeItem = circ.rightCodeItem.getText();
                                 codeItems.add(rightCodeItem);
                                 if (minus != null)
-                                    codeItemExpressionBuilder.append(" -" + rightCodeItem);
+                                    codeItemExpressionBuilder.append(" -").append(rightCodeItem);
                                 // plus value or plus null & minus null mean plus
-                                codeItemExpressionBuilder.append(" +" + rightCodeItem);
+                                codeItemExpressionBuilder.append(" +").append(rightCodeItem);
                             });
 
-                    String leftExpressionToEval = valueDomainValue;
                     String rightExpressionToEval = codeItemExpressionBuilder.toString();
                     String expressionToEval = "bool_var := " +
-                            leftExpressionToEval + " " +
+                            valueDomainValue + " " +
                             comparisonOperandContext.getText() + " " +
                             rightExpressionToEval + ";";
 
@@ -212,22 +212,19 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                bindings.forEach((k, v) -> {
-                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
-                                });
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
                                 try {
-                                    engine.eval("left := " + leftExpressionToEval + ";");
+                                    engine.eval("left := " + valueDomainValue + ";");
                                     Object left = engine.getContext().getAttribute("left");
                                     engine.getContext().removeAttribute("left", ScriptContext.ENGINE_SCOPE);
-                                    bindings.keySet().forEach(k -> {
-                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
-                                    });
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
                                     if (left.getClass().isAssignableFrom(Double.class)) {
                                         return (Double) left;
                                     }
                                     return ((Long) left).doubleValue();
                                 } catch (ScriptException e) {
-                                    throw new RuntimeException(e);
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "right hierarchical rule has to return long or double", pos));
                                 }
                             });
 
@@ -235,22 +232,19 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                bindings.forEach((k, v) -> {
-                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
-                                });
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
                                 try {
                                     engine.eval("right := " + rightExpressionToEval + ";");
                                     Object right = engine.getContext().getAttribute("right");
                                     engine.getContext().removeAttribute("right", ScriptContext.ENGINE_SCOPE);
-                                    bindings.keySet().forEach(k -> {
-                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
-                                    });
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
                                     if (right.getClass().isAssignableFrom(Double.class)) {
                                         return (Double) right;
                                     }
                                     return ((Long) right).doubleValue();
                                 } catch (ScriptException e) {
-                                    throw new RuntimeException(e);
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "right hierarchical rule has to return long or double", pos));
                                 }
                             });
 
@@ -258,19 +252,16 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                             .withPosition(pos)
                             .using(context -> {
                                 Bindings bindings = new SimpleBindings(context);
-                                bindings.forEach((k, v) -> {
-                                    engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE);
-                                });
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
                                 try {
                                     engine.eval(expressionToEval);
                                     Boolean boolVar = (Boolean) engine.getContext().getAttribute("bool_var");
                                     engine.getContext().removeAttribute("bool_var", ScriptContext.ENGINE_SCOPE);
-                                    bindings.keySet().forEach(k -> {
-                                        engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE);
-                                    });
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
                                     return boolVar;
                                 } catch (ScriptException e) {
-                                    throw new RuntimeException(e);
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "hierarchical rule has to return boolean", pos));
                                 }
                             });
 
