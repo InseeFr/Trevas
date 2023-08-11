@@ -5,16 +5,16 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -138,5 +138,140 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         bindings.put(rulesetName, dataPointRuleset);
         return dataPointRuleset;
+    }
+
+    // TODO: handle when clause (expr ctx)
+    @Override
+    public Object visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
+        var pos = fromContext(ctx);
+        String rulesetName = ctx.rulesetID().getText();
+
+        // Mix variables and valuedomain. Information useless for now, find use case to do so
+        String variable = ctx.hierRuleSignature().IDENTIFIER().getText();
+
+        Set<Class<?>> erCodeTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+            VtlParser.ErCodeContext erCodeContext = c.erCode();
+            if (null == erCodeContext) return Object.class;
+            return expressionVisitor.visit(c.erCode()).getType();
+        }).collect(Collectors.toSet());
+        List<Class<?>> filteredErCodeTypes = erCodeTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErCodeTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error codes of rules have different types", pos)
+            );
+        }
+        Class<?> erCodeType = filteredErCodeTypes.isEmpty() ? String.class : filteredErCodeTypes.iterator().next();
+
+        Set<Class<?>> erLevelTypes = ctx.ruleClauseHierarchical().ruleItemHierarchical().stream().map(c -> {
+            VtlParser.ErLevelContext erLevelContext = c.erLevel();
+            if (null == erLevelContext) return Object.class;
+            return expressionVisitor.visit(c.erLevel()).getType();
+        }).collect(Collectors.toSet());
+        List<Class<?>> filteredErLevelTypes = erLevelTypes.stream().filter(t -> !t.equals(Object.class)).collect(Collectors.toList());
+        if (filteredErLevelTypes.size() > 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Error levels of rules have different types", pos)
+            );
+        }
+        Class<?> erLevelType = filteredErLevelTypes.isEmpty() ? Long.class : filteredErLevelTypes.iterator().next();
+
+        AtomicInteger index = new AtomicInteger();
+        List<HierarchicalRule> rules = ctx.ruleClauseHierarchical().ruleItemHierarchical()
+                .stream()
+                .map(r -> {
+                    TerminalNode identifier = r.IDENTIFIER();
+                    int i = index.getAndIncrement() + 1;
+                    String ruleName = null != identifier ? identifier.getText() : rulesetName + "_" + i;
+
+                    List<String> codeItems = new ArrayList<>();
+                    VtlParser.CodeItemRelationContext codeItemRelationContext = r.codeItemRelation();
+                    String valueDomainValue = codeItemRelationContext.valueDomainValue().IDENTIFIER().getText();
+                    codeItems.add(valueDomainValue);
+
+                    VtlParser.ComparisonOperandContext comparisonOperandContext = codeItemRelationContext.comparisonOperand();
+
+                    StringBuilder codeItemExpressionBuilder = new StringBuilder();
+                    codeItemRelationContext.codeItemRelationClause()
+                            .forEach(circ -> {
+                                TerminalNode minus = circ.MINUS();
+                                String rightCodeItem = circ.rightCodeItem.getText();
+                                codeItems.add(rightCodeItem);
+                                if (minus != null)
+                                    codeItemExpressionBuilder.append(" -").append(rightCodeItem);
+                                // plus value or plus null & minus null mean plus
+                                codeItemExpressionBuilder.append(" +").append(rightCodeItem);
+                            });
+
+                    String rightExpressionToEval = codeItemExpressionBuilder.toString();
+                    String expressionToEval = "bool_var := " +
+                            valueDomainValue + " " +
+                            comparisonOperandContext.getText() + " " +
+                            rightExpressionToEval + ";";
+
+                    ResolvableExpression leftExpression = ResolvableExpression.withType(Double.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
+                                try {
+                                    engine.eval("left := " + valueDomainValue + ";");
+                                    Object left = engine.getContext().getAttribute("left");
+                                    engine.getContext().removeAttribute("left", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
+                                    if (left.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) left;
+                                    }
+                                    return ((Long) left).doubleValue();
+                                } catch (ScriptException e) {
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "right hierarchical rule has to return long or double", pos));
+                                }
+                            });
+
+                    ResolvableExpression rightExpression = ResolvableExpression.withType(Double.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
+                                try {
+                                    engine.eval("right := " + rightExpressionToEval + ";");
+                                    Object right = engine.getContext().getAttribute("right");
+                                    engine.getContext().removeAttribute("right", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
+                                    if (right.getClass().isAssignableFrom(Double.class)) {
+                                        return (Double) right;
+                                    }
+                                    return ((Long) right).doubleValue();
+                                } catch (ScriptException e) {
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "right hierarchical rule has to return long or double", pos));
+                                }
+                            });
+
+                    ResolvableExpression expression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Bindings bindings = new SimpleBindings(context);
+                                bindings.forEach((k, v) -> engine.getContext().setAttribute(k, v, ScriptContext.ENGINE_SCOPE));
+                                try {
+                                    engine.eval(expressionToEval);
+                                    Boolean boolVar = (Boolean) engine.getContext().getAttribute("bool_var");
+                                    engine.getContext().removeAttribute("bool_var", ScriptContext.ENGINE_SCOPE);
+                                    bindings.keySet().forEach(k -> engine.getContext().removeAttribute(k, ScriptContext.ENGINE_SCOPE));
+                                    return boolVar;
+                                } catch (ScriptException e) {
+                                    throw new VtlRuntimeException(new VtlScriptException(
+                                            "hierarchical rule has to return boolean", pos));
+                                }
+                            });
+
+                    ResolvableExpression errorCodeExpression = null != r.erCode() ? expressionVisitor.visit(r.erCode()) : null;
+                    ResolvableExpression errorLevelExpression = null != r.erLevel() ? expressionVisitor.visit(r.erLevel()) : null;
+                    return new HierarchicalRule(ruleName, valueDomainValue, expression, leftExpression, rightExpression, codeItems, errorCodeExpression, errorLevelExpression);
+                }).collect(Collectors.toList());
+        HierarchicalRuleset hr = new HierarchicalRuleset(rules, variable, erCodeType, erLevelType);
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindings.put(rulesetName, hr);
+        return hr;
     }
 }
