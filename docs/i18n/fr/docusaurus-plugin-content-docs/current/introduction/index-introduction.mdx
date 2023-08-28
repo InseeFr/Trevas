@@ -7,9 +7,36 @@ custom_edit_url: null
 pagination_prev: null
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import ThemedImage from '@theme/ThemedImage';
+
 [![Maven - Trevas parent](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent)
 
 [Trevas](https://github.com/InseeFr/Trevas) est une librairie Java permettant de transformer et de valider des données statistiques grâce au langage [VTL 2.0](https://sdmx.org/?page_id=5096).
+
+## Qu'est ce que VTL ?
+
+- langage métier, au niveau logique et convivial pour les statisticiens
+- s'appuie sur des métadonnées structurelles de standards
+- interopérable, indépendant de la plateforme
+- langage fonctionnel, permettant le traçage des données pour plus d'informations et de reproductibilité
+
+## Écosystème Trevas
+
+<div style={{ textAlign: 'center' }}>
+	<ThemedImage
+		alt="Docusaurus themed image"
+		sources={{
+			light: useBaseUrl('/img/trevas-ecosystem-light.svg'),
+			dark: useBaseUrl('/img/trevas-ecosystem-dark.svg'),
+		}}
+	/>
+</div>
+
+- [Trevas Jupyter](https://github.com/InseeFrLab/Trevas-Jupyter)
+- [Trevas Lab](https://github.com/InseeFrLab/Trevas-Lab-UI)
+- [Trevas Lab API](https://github.com/InseeFrLab/Trevas-Lab)
+- [Trevas Batch](https://github.com/Making-Sense-Info/Trevas-Batch)
 
 ## Description technique
 
