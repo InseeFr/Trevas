@@ -16,7 +16,7 @@ Les datasets `SparkDataset` permettent de représenter les tables statistiques d
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-spark</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -57,6 +57,11 @@ try {
 
 Bindings outputBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
 SparkDataset result = (SparkDataset) outputBindings.get("res");
+// Ensure direct resolution because of spark lazy mechanism (performance warning!)
+InMemoryDataset imResult = new InMemoryDataset(
+                        result.getDataPoints(),
+                        result.getDataStructure()
+                    );
 ```
 
 ### Exécution distribuée

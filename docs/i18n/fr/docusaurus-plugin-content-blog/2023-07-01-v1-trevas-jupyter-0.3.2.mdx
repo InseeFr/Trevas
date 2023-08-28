@@ -1,0 +1,36 @@
+---
+slug: /trevas-jupyter-0.3.2
+title: Trevas Jupyter 0.3.2
+authors: [nicolas]
+tags: [Trevas Jupyter]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+[Trevas Jupyter](https://github.com/InseeFrLab/Trevas-Jupyter) `0.3.2` utilise la version `1.0.2` de [Trevas](https://github.com/InseeFr/Trevas).
+
+### Nouveautés
+
+En supplément de la <Link label="couverture VTL" href={useBaseUrl('/user-guide/coverage')} /> largement augmentée depuis la publication de Trevas 1.x.x, Trevas Jupyter propose 1 nouveau connecteur :
+- fichiers SAS (via la méthode `loadSas`)
+
+### Lancement
+
+#### Ajout manuel du Kernel Trevas à une instance Jupyter existante
+
+- Compiler Trevas Jupyter
+- Copier le fichier `kernel.json` et les dossiers `bin` et `repo` dans un nouveau dossier de kernel.
+- Editer le fichier `kernel.json`
+- Lancer Jupyter
+
+#### Docker
+
+```bash
+docker pull inseefrlab/trevas-jupyter:0.3.2
+docker run -p 8888:8888 inseefrlab/trevas-jupyter:0.3.2 
+```
+
+#### Helm
+
+L'image docker de Trevas Jupyter peut être instanciée via le contrat Helm `jupyter-pyspark` de [InseeFrLab](https://github.com/InseeFrLab/helm-charts-interactive-services/tree/main).
