@@ -5,12 +5,7 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.DataPointRuleset;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -140,8 +135,62 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         return processingEngine.executeValidationSimple(dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output, pos);
     }
 
+    // TODO: handle other IDs than componentID? build unique ID tuples to calculate
+    @Override
+    public ResolvableExpression visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
+        var pos = fromContext(ctx);
+        DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
+                Dataset.class, ctx.expr());
+        String datasetName = ctx.expr().getText();
+        String hrName = ctx.hrName.getText();
+        Object hrObject = engine.getContext().getAttribute((hrName));
+        if (!(hrObject instanceof HierarchicalRuleset))
+            throw new VtlRuntimeException(new UndefinedVariableException(hrName, pos));
+        HierarchicalRuleset hr = (HierarchicalRuleset) hrObject;
+
+        // Check that dsE is a monomeasure<number> dataset
+        Structured.DataStructure dataStructure = dsExpression.getDataStructure();
+        List<Structured.Component> measures = dataStructure.getMeasures();
+        if (measures.size() != 1) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Dataset " + datasetName +
+                            " is not monomeasure", fromContext(ctx))
+            );
+        }
+        List<Class<?>> supportedClasses = new ArrayList<>(Arrays.asList(Double.class, Long.class));
+        if (!supportedClasses.contains(measures.get(0).getType())) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("Dataset " + datasetName +
+                            " measure " + measures.get(0).getName() + " has to have number type", fromContext(ctx))
+            );
+        }
+
+        // check if hr componentID is in ds structure
+        String componentID = ctx.componentID().getText();
+        if (!dataStructure.containsKey(componentID)) {
+            throw new VtlRuntimeException(
+                    new InvalidArgumentException("ComponentID " + componentID +
+                            " not contained in dataset " + datasetName, fromContext(ctx))
+            );
+        }
+        String validationMode = getValidationMode(ctx.validationMode());
+        String inputMode = getInputMode(ctx.inputMode());
+        String validationOutput = getValidationOutput(ctx.validationOutput());
+        return processingEngine.executeHierarchicalValidation(dsExpression, hr, componentID, validationMode, inputMode, validationOutput, pos);
+    }
+
     private String getValidationOutput(VtlParser.ValidationOutputContext voc) {
         if (null == voc) return null;
         return voc.getText();
+    }
+
+    private String getValidationMode(VtlParser.ValidationModeContext vmc) {
+        if (null == vmc) return null;
+        return vmc.getText();
+    }
+
+    private String getInputMode(VtlParser.InputModeContext imc) {
+        if (null == imc) return null;
+        return imc.getText();
     }
 }

@@ -37,6 +37,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public static final Integer DEFAULT_MEDIAN_ACCURACY = 1000000;
     public static final UnsupportedOperationException UNKNOWN_ANALYTIC_FUNCTION = new UnsupportedOperationException("Unknown analytic function");
     private static final String BOOLVAR = "bool_var";
+    private static final String ERRORCODE = "errorcode";
+    private static final String ERRORLEVEL = "errorlevel";
+    private static final String RULEID = "ruleid";
+    private static final String IMBALANCE = "imbalance";
+    private static final String NON_NULL = "non_null";
+    private static final String NON_ZERO = "non_zero";
+    private static final String PARTIAL_NULL = "partial_null";
+    private static final String PARTIAL_ZERO = "partial_zero";
+    private static final String ALWAYS_NULL = "always_null";
+    private static final String ALWAYS_ZERO = "always_zero";
     private final SparkSession spark;
 
     /**
@@ -225,6 +235,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         for (String name : expressionStrings.keySet()) {
             try {
                 String expression = expressionStrings.get(name);
+                if (expression == null) continue;
                 result = result.withColumn(name, expr(expression));
             } catch (Exception ignored) {
             }
@@ -535,10 +546,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Structured.DataStructure dataStructure = sparkDs.getDataStructure();
 
         var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("ruleid", IDENTIFIER);
+        roleMap.put(RULEID, IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
 
         Class errorCodeType = dpr.getErrorCodeType();
         Class errorLevelType = dpr.getErrorLevelType();
@@ -589,10 +600,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             });
 
                     Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
-                    resolvableExpressions.put("ruleid", ruleIdExpression);
+                    resolvableExpressions.put(RULEID, ruleIdExpression);
                     resolvableExpressions.put(BOOLVAR, BOOLVARExpression);
-                    resolvableExpressions.put("errorlevel", errorLevelExpression);
-                    resolvableExpressions.put("errorcode", errorCodeExpression);
+                    resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
+                    resolvableExpressions.put(ERRORCODE, errorCodeExpression);
                     // do we need to use execute executeCalcInterpreted too?
                     return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
@@ -622,7 +633,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
         String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
                 .stream().filter(c -> c.isMeasure()).map(c -> c.getName()).collect(Collectors.toList()).get(0);
-        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, "imbalance"));
+        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, IMBALANCE));
         Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
         var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
         SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap), pos);
@@ -632,7 +643,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 Map.entry("imbalanceExpr", imbalanceRenamedExpr)
         );
         List<Component> components = dsExpr.getDataStructure().values().stream()
-                .filter(c -> c.isIdentifier())
+                .filter(Component::isIdentifier)
                 .collect(Collectors.toList());
         DatasetExpression datasetExpression = executeLeftJoin(datasetExpressions, components);
         SparkDataset sparkDataset = asSparkDataset(datasetExpression);
@@ -660,12 +671,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 });
 
         var roleMap = getRoleMap(sparkDataset);
-        roleMap.put("errorlevel", MEASURE);
-        roleMap.put("errorcode", MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
 
         Map<String, ResolvableExpression> resolvableExpressions = Map.ofEntries(
-                Map.entry("errorlevel", errorLevelExpression),
-                Map.entry("errorcode", errorCodeExpression)
+                Map.entry(ERRORLEVEL, errorLevelExpression),
+                Map.entry(ERRORCODE, errorCodeExpression)
         );
 
         Dataset<Row> calculatedDataset = executeCalcEvaluated(ds, resolvableExpressions);
@@ -681,6 +692,247 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // VTL issue: drop BOOLVAR in check_datapoint only specified but we apply also here for harmonization
         Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
         return new SparkDatasetExpression(new SparkDataset(result), pos);
+    }
+
+    @Override
+    public DatasetExpression executeHierarchicalValidation(DatasetExpression dsE, HierarchicalRuleset hr,
+                                                           String componentID, String validationMode,
+                                                           String inputMode, String validationOutput, Positioned pos) {
+        // inputMode: dataset (default) | dataset_priority (not handled)
+        if (inputMode != null && inputMode.equals("dataset_priority")) {
+            throw new UnsupportedOperationException("dataset_priority input mode is not supported in check_hierarchy");
+        }
+
+        // Create "bindings" (componentID column values)
+        fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
+
+        Map<String, Object> bindings = ds.getDataAsMap().stream()
+                .collect(
+                        HashMap::new,
+                        (acc, dp) -> acc.put(dp.get(componentID).toString(), dp.get(hr.getVariable())),
+                        HashMap::putAll
+                );
+        // Save monomeasure type
+        Component measure = dsE.getDataStructure().getMeasures().get(0);
+        Class measureType = measure.getType();
+
+        var roleMap = getRoleMap(ds);
+        roleMap.put(RULEID, IDENTIFIER);
+        roleMap.put(BOOLVAR, MEASURE);
+        roleMap.put(IMBALANCE, MEASURE);
+        roleMap.put(ERRORLEVEL, MEASURE);
+        roleMap.put(ERRORCODE, MEASURE);
+
+        Class errorCodeType = hr.getErrorCodeType();
+        Class errorLevelType = hr.getErrorLevelType();
+
+        List<DatasetExpression> datasetsExpression = new ArrayList<>();
+        hr.getRules().forEach(rule -> {
+                    DatasetExpression filteredDataset;
+                    try {
+                        filteredDataset = executeFilterForHR(dsE,
+                                componentID + " = \"" + rule.getValueDomainValue() + "\"");
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    String ruleName = rule.getName();
+                    List<String> codeItems = rule.getCodeItems();
+
+                    // handle validationMode
+                    Map<String, Object> ruleBindings = extractHRRuleBindings(bindings, codeItems);
+                    Boolean hasToProduceOutputLine = checkRule(codeItems, ruleBindings, validationMode);
+                    if (Boolean.FALSE.equals(hasToProduceOutputLine)) {
+                        // trick to break
+                        return;
+                    }
+                    ruleBindings = buildBindingsWithDefault(ruleBindings, codeItems, validationMode, measureType);
+                    // Iterate on rules to resolve expressions
+                    Map<Object, Boolean> resolvedRuleExpressions = new HashMap<>();
+                    Map<Object, Double> resolvedLeftRuleExpressions = new HashMap<>();
+                    Map<Object, Double> resolvedRightRuleExpressions = new HashMap<>();
+                    // use try / catch because of scalar expr function resolution issue with null (only handled in ds thanks to column type)
+                    try {
+                        resolvedRuleExpressions.put(ruleName, (Boolean) rule.getExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedRuleExpressions.put(ruleName, null);
+                    }
+                    try {
+                        resolvedLeftRuleExpressions.put(ruleName, (Double) rule.getLeftExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedLeftRuleExpressions.put(ruleName, null);
+                    }
+                    try {
+                        resolvedRightRuleExpressions.put(ruleName, (Double) rule.getRightExpression().resolve(ruleBindings));
+                    } catch (Exception e) {
+                        resolvedRightRuleExpressions.put(ruleName, null);
+                    }
+                    ResolvableExpression ruleIdExpression = ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(context -> ruleName);
+
+                    ResolvableExpression valueDomainExpression = ResolvableExpression.withType(String.class)
+                            .withPosition(pos)
+                            .using(context -> rule.getValueDomainValue());
+
+                    Boolean expression = resolvedRuleExpressions.get(ruleName);
+
+                    ResolvableExpression errorCodeExpr = rule.getErrorCodeExpression();
+                    ResolvableExpression errorCodeExpression = ResolvableExpression.withType(errorCodeType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                if (errorCodeExpr == null || expression == null) return null;
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erCode = errorCodeExpr.resolve(mapContext);
+                                if (erCode == null) return null;
+                                return expression.equals(Boolean.FALSE) ? errorCodeType.cast(erCode) : null;
+                            });
+
+                    ResolvableExpression errorLevelExpr = rule.getErrorLevelExpression();
+                    ResolvableExpression errorLevelExpression = ResolvableExpression.withType(errorLevelType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                if (errorLevelExpr == null || expression == null) return null;
+                                Map<String, Object> mapContext = (Map<String, Object>) context;
+                                Object erLevel = errorLevelExpr.resolve(mapContext);
+                                if (erLevel == null) return null;
+                                return expression.equals(Boolean.FALSE) ? errorLevelType.cast(erLevel) : null;
+                            });
+
+                    ResolvableExpression BoolvarExpression = ResolvableExpression.withType(Boolean.class)
+                            .withPosition(pos)
+                            .using(context -> expression);
+
+                    ResolvableExpression imbalanceExpression = ResolvableExpression.withType(measureType)
+                            .withPosition(pos)
+                            .using(context -> {
+                                Double leftExpression = resolvedLeftRuleExpressions.get(ruleName);
+                                Double rightExpression = resolvedRightRuleExpressions.get(ruleName);
+                                if (leftExpression == null || rightExpression == null) {
+                                    return null;
+                                }
+                                if (measureType.isAssignableFrom(Long.class)) {
+                                    return leftExpression.longValue() - rightExpression.longValue();
+                                }
+                                return leftExpression - rightExpression;
+                            });
+
+                    Map<String, ResolvableExpression> resolvableExpressions = new HashMap<>();
+                    resolvableExpressions.put(RULEID, ruleIdExpression);
+                    resolvableExpressions.put(componentID, valueDomainExpression);
+                    resolvableExpressions.put(BOOLVAR, BoolvarExpression);
+                    resolvableExpressions.put(IMBALANCE, imbalanceExpression);
+                    resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
+                    resolvableExpressions.put(ERRORCODE, errorCodeExpression);
+
+                    datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of()));
+                }
+        );
+        // validationOutput invalid (default) | all | all_measures
+        DatasetExpression datasetExpression = executeUnion(datasetsExpression);
+        if (null == validationOutput || validationOutput.equals("invalid")) {
+            DatasetExpression filteredDataset = executeFilter(datasetExpression,
+                    ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),
+                    BOOLVAR + " = false");
+            Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
+            return new SparkDatasetExpression(new SparkDataset(result), pos);
+        }
+        if (validationOutput.equals("all")) {
+            String measureName = measure.getName();
+            Dataset<Row> result = asSparkDataset(datasetExpression).getSparkDataset().drop(measureName);
+            return new SparkDatasetExpression(new SparkDataset(result), pos);
+        }
+        // all_measures
+        return datasetExpression;
+    }
+
+    private DatasetExpression executeFilterForHR(DatasetExpression expression, String filterText) throws Exception {
+        SparkDataset dataset = asSparkDataset(expression);
+        Dataset<Row> ds = dataset.getSparkDataset();
+        try {
+            Dataset<Row> result = ds.filter(filterText);
+            if (result.isEmpty()) {
+                result = ds.limit(1);
+            }
+            return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)), expression);
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+    }
+
+    private Map<String, Object> extractHRRuleBindings(Map<String, Object> bindings, List<String> items) {
+        Map<String, Object> ruleBindings = new HashMap<>();
+        items.forEach(k -> {
+            if (bindings.containsKey(k)) {
+                Object value = bindings.get(k);
+                ruleBindings.put(k, value);
+            }
+        });
+        return ruleBindings;
+    }
+
+    private Boolean checkRule(List<String> codeItems, Map<String, Object> ruleBindings, String validationMode) {
+        if (validationMode == null || validationMode.equals(NON_NULL)) {
+            if (codeItems.size() != ruleBindings.size()) {
+                return Boolean.FALSE;
+            }
+            if (ruleBindings.values().stream().noneMatch(Objects::isNull)) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }
+        if (validationMode.equals(NON_ZERO)) {
+            if (ruleBindings.values().stream().noneMatch(r -> {
+                if (null == r) {
+                    return Boolean.TRUE;
+                }
+                Double d = null;
+                if (r.getClass().isAssignableFrom(Long.class)) {
+                    d = ((Long) r).doubleValue();
+                }
+                if (r.getClass().isAssignableFrom(Double.class)) {
+                    d = (Double) r;
+                }
+                if (d.equals(0D)) {
+                    return Boolean.FALSE;
+                }
+                return Boolean.TRUE;
+            })) {
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        }
+        if (validationMode.equals(PARTIAL_NULL) || validationMode.equals(PARTIAL_ZERO)) {
+            if (ruleBindings.values().stream().filter(Objects::nonNull).count() > 0) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }
+        if (validationMode.equals(ALWAYS_NULL) || validationMode.equals(ALWAYS_ZERO)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    private Map<String, Object> buildBindingsWithDefault(Map<String, Object> bindings, List<String> ruleItems,
+                                                         String validationMode, Class<?> measureType) {
+        Map<String, Object> bindingsWithDefault = new HashMap<>();
+        ruleItems.forEach(i -> {
+            if (bindings.containsKey(i)) {
+                bindingsWithDefault.put(i, bindings.get(i));
+            } else {
+                // don't need to handle non_null, items are always in bindings
+                if (List.of(NON_ZERO, PARTIAL_ZERO, ALWAYS_ZERO).contains(validationMode)) {
+                    if (measureType.isAssignableFrom(Long.class)) {
+                        bindingsWithDefault.put(i, 0L);
+                    } else bindingsWithDefault.put(i, 0D);
+                }
+                if (List.of(PARTIAL_NULL, ALWAYS_NULL).contains(validationMode)) {
+                    bindingsWithDefault.put(i, null);
+                }
+            }
+        });
+        return bindingsWithDefault;
     }
 
     private <V, K> Map<V, K> invertMap(Map<K, V> map) {

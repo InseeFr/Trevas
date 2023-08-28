@@ -196,4 +196,7 @@ public interface ProcessingEngine {
                                               ResolvableExpression erLevelExpr, DatasetExpression imbalanceExpr,
                                               String output, Positioned pos);
 
+    ResolvableExpression executeHierarchicalValidation(DatasetExpression dsExpression, HierarchicalRuleset hr,
+                                                       String componentID, String validationMode, String inputMode,
+                                                       String validationOutput, Positioned pos);
 }

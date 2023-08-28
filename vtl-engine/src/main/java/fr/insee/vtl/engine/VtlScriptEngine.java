@@ -110,6 +110,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public static Positioned fromTokens(Token from, Token to) {
+        if (to == null) {
+            to = from;
+        }
         var position = new Positioned.Position(
                 from.getLine() - 1,
                 to.getLine() - 1,
