@@ -42,9 +42,9 @@ define hierarchical ruleset hr (variable rule Me) is
 end hierarchical ruleset;
 
 // Check hierarchy
-ds_all := check_hierarchy(ds1, hr rule Id all);
-ds_all_measures := check_hierarchy(ds1, hr rule Id always_null all_measures);
-ds_invalid := check_hierarchy(ds1, hr rule Id always_zero invalid);
+ds_all := check_hierarchy(ds1, hr rule id all);
+ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);
+ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);
 ```
 
 #### Outputs
