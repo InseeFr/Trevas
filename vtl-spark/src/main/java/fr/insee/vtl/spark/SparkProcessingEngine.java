@@ -771,9 +771,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
                             .withPosition(pos)
                             .using(context -> ruleName);
 
+                    String vd = rule.getValueDomainValue();
                     ResolvableExpression valueDomainExpression = ResolvableExpression.withType(String.class)
                             .withPosition(pos)
-                            .using(context -> rule.getValueDomainValue());
+                            .using(context -> vd);
 
                     Boolean expression = resolvedRuleExpressions.get(ruleName);
 
