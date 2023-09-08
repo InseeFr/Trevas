@@ -858,7 +858,8 @@ public class ValidationTest {
         engine.put("$vtl.spark.session", spark);
 
         engine.eval("// Ensure ds1 metadata definition is good\n" +
-                "ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];\n" +
+                "ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];" +
+                "ds2 := ds1[filter id = \"A\"];\n" +
                 "\n" +
                 "// Define hierarchical ruleset\n" +
                 "define hierarchical ruleset hr (variable rule Me) is\n" +
@@ -866,9 +867,17 @@ public class ValidationTest {
                 "    DEF = D + E + F errorcode \"DEF is not sum of D,E,F\";\n" +
                 "    HIJ : HIJ = H + I - J errorcode \"HIJ is not H + I - J\" errorlevel 10\n" +
                 "end hierarchical ruleset;\n" +
-                "all_m := check_hierarchy(ds1, hr rule id always_null all_measures);");
+                "ds_all := check_hierarchy(ds1, hr rule id all);" +
+                "ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);\n" +
+                "ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);");
 
-        fr.insee.vtl.model.Dataset all_measures = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("all_m");
-        all_measures.getDataPoints();
+        fr.insee.vtl.model.Dataset ds_all = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all");
+        ds_all.getDataPoints();
+
+        fr.insee.vtl.model.Dataset ds_invalid = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_invalid");
+        ds_invalid.getDataPoints();
+
+        fr.insee.vtl.model.Dataset ds_all_measures = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all_measures");
+        ds_all_measures.getDataPoints();
     }
 }
