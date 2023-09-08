@@ -867,12 +867,16 @@ public class ValidationTest {
                 "    DEF = D + E + F errorcode \"DEF is not sum of D,E,F\";\n" +
                 "    HIJ : HIJ = H + I - J errorcode \"HIJ is not H + I - J\" errorlevel 10\n" +
                 "end hierarchical ruleset;\n" +
-                "ds_all := check_hierarchy(ds1, hr rule id all);" +
+                "ds_all := check_hierarchy(ds1, hr rule id all);\n" +
+                "ds_all_empty := check_hierarchy(ds2, hr rule id all);\n" +
                 "ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);\n" +
                 "ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);");
 
         fr.insee.vtl.model.Dataset ds_all = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all");
         ds_all.getDataPoints();
+
+        fr.insee.vtl.model.Dataset ds_all_empty = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all_empty");
+        ds_all_empty.getDataPoints();
 
         fr.insee.vtl.model.Dataset ds_invalid = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_invalid");
         ds_invalid.getDataPoints();
