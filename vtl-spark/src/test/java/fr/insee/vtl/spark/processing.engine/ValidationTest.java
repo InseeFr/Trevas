@@ -9,12 +9,10 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -743,9 +741,9 @@ public class ValidationTest {
         }
 
         assertThat(dsRAlwaysZeroWithoutNull).isEqualTo(List.of(
-        Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
-                "bool_var", false, "imbalance", 5L,
-                "errorcode", "null", "errorlevel", 5L),
+                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+                        "bool_var", false, "imbalance", 5L,
+                        "errorcode", "null", "errorlevel", 5L),
                 Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
@@ -836,5 +834,41 @@ public class ValidationTest {
         assertThatThrownBy(() -> engine.eval(hierarchicalRulesetDef +
                 "DS_r := check_hierarchy(DS_4, HR_1 rule Id_3 partial_null all);"))
                 .hasMessageContaining("ComponentID Id_3 not contained in dataset DS_4");
+    }
+
+    @Disabled
+    @Test
+    void testCH() throws ScriptException {
+        SparkSession.Builder sparkBuilder = SparkSession.builder()
+                .appName("vtl-lab")
+                .master("local");
+        SparkSession spark = sparkBuilder.getOrCreate();
+
+        ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
+        ScriptContext context = engine.getContext();
+        Bindings bindings = new SimpleBindings();
+        org.apache.spark.sql.Dataset<Row> ds1 = spark
+                .read()
+                .option("delimiter", ";")
+                .option("header", "true")
+                .csv("src/main/resources/c_h.csv");
+        bindings.put("ds1", new SparkDataset(ds1));
+        context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+        engine.put("$vtl.engine.processing_engine_names", "spark");
+        engine.put("$vtl.spark.session", spark);
+
+        engine.eval("// Ensure ds1 metadata definition is good\n" +
+                "ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];\n" +
+                "\n" +
+                "// Define hierarchical ruleset\n" +
+                "define hierarchical ruleset hr (variable rule Me) is\n" +
+                "    My_Rule : ABC = A + B + C errorcode \"ABC is not sum of A,B,C\" errorlevel 1;\n" +
+                "    DEF = D + E + F errorcode \"DEF is not sum of D,E,F\";\n" +
+                "    HIJ : HIJ = H + I - J errorcode \"HIJ is not H + I - J\" errorlevel 10\n" +
+                "end hierarchical ruleset;\n" +
+                "all_m := check_hierarchy(ds1, hr rule id always_null all_measures);");
+
+        fr.insee.vtl.model.Dataset all_measures = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("all_m");
+        all_measures.getDataPoints();
     }
 }
