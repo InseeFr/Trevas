@@ -3,7 +3,7 @@ name: Publish Trevas to the Maven Central Repository
 on:
   push:
     tags:
-      - *
+      - 'v*'
 
 jobs:
   publish:
