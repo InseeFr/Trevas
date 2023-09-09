@@ -829,8 +829,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of()));
                 }
         );
+        DatasetExpression datasetExpression;
+        if (datasetsExpression.size() == 0) {
+            InMemoryDataset emptyCHDataset = new InMemoryDataset(
+                    List.of(),
+                    Map.of(measure.getName(), measureType, RULEID, String.class, componentID, String.class, BOOLVAR, Boolean.class, IMBALANCE, Double.class, ERRORLEVEL, errorLevelType, ERRORCODE, errorCodeType),
+                    roleMap
+            );
+            datasetExpression = DatasetExpression.of(emptyCHDataset, pos);
+        } else {
+            datasetExpression = executeUnion(datasetsExpression);
+        }
         // validationOutput invalid (default) | all | all_measures
-        DatasetExpression datasetExpression = executeUnion(datasetsExpression);
         if (null == validationOutput || validationOutput.equals("invalid")) {
             DatasetExpression filteredDataset = executeFilter(datasetExpression,
                     ResolvableExpression.withType(Boolean.class).withPosition(pos).using(c -> null),

@@ -873,15 +873,15 @@ public class ValidationTest {
                 "ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);");
 
         fr.insee.vtl.model.Dataset ds_all = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all");
-        ds_all.getDataPoints();
+        assertThat(ds_all.getDataPoints()).hasSize(1);
 
         fr.insee.vtl.model.Dataset ds_all_empty = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all_empty");
-        ds_all_empty.getDataPoints();
+        assertThat(ds_all_empty.getDataPoints()).isEmpty();
 
         fr.insee.vtl.model.Dataset ds_invalid = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_invalid");
-        ds_invalid.getDataPoints();
+        assertThat(ds_invalid.getDataPoints()).hasSize(1);
 
         fr.insee.vtl.model.Dataset ds_all_measures = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all_measures");
-        ds_all_measures.getDataPoints();
+        assertThat(ds_all_measures.getDataPoints()).hasSize(3);
     }
 }
