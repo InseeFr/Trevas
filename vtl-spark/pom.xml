@@ -7,25 +7,25 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.1.0</version>
+        <version>1.1.1</version>
     </parent>
 
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
     <description>Trevas engine for Apache Spark</description>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
