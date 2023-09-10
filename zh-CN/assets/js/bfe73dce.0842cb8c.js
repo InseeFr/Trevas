@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunktrevas_documentation=self.webpackChunktrevas_documentation||[]).push([[1953],{6930:e=>{e.exports=JSON.parse('{"permalink":"/Trevas/zh-CN/blog/tags/trevas-jupyter","page":1,"postsPerPage":10,"totalPages":1,"totalCount":2,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
