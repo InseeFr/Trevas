@@ -27,6 +27,14 @@ public class BooleanExprTest {
     }
 
     @Test
+    public void testUselessCalculation() throws ScriptException {
+        engine.eval("a := true or cast(\"\", integer) = 1;");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isTrue();
+        engine.eval("b := false and cast(\"\", integer) = 1;");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isFalse();
+    }
+
+    @Test
     public void testBooleans() throws ScriptException {
         ScriptContext context = engine.getContext();
 
