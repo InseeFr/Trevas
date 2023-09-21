@@ -37,6 +37,14 @@ public class ConditionalExprTest {
     }
 
     @Test
+    public void testUselessCalculation() throws ScriptException {
+        engine.eval("a := if true then 1 else cast(\"\", integer);");
+        assertThat((Long) engine.getContext().getAttribute("a")).isEqualTo(1L);
+        engine.eval("b := if false then cast(\"\", integer) else 0;");
+        assertThat((Long) engine.getContext().getAttribute("b")).isEqualTo(0L);
+    }
+
+    @Test
     public void testIfExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("s := if true then \"true\" else \"false\";");
