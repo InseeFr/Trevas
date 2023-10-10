@@ -45,10 +45,6 @@ public class VtlScriptEngineTest {
                 startLine, endLine, startColumn, endColumn);
     }
 
-    private static <T extends Comparable<T>> boolean isEqual(T left, T right) {
-        return left.compareTo(right) == 0;
-    }
-
     public static <T extends Comparable<T>> Boolean test(T left, T right) {
         return true;
     }
@@ -64,6 +60,30 @@ public class VtlScriptEngineTest {
         ProcessingEngine processingEngines = vtlScriptEngine.getProcessingEngine();
         assertThat(processingEngines).isNotNull();
     }
+
+    @Test
+    public void testNonPersitentAssignment() throws ScriptException {
+        // Non persistent
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        ScriptContext context = engine.getContext();
+        context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+        engine.eval("b := a;");
+        assertThat(context.getBindings(ScriptContext.ENGINE_SCOPE)).containsKey("b");
+        assertThat((Long) context.getAttribute("b")).isEqualTo(1L);
+        assertThat(context.getBindings(ScriptContext.GLOBAL_SCOPE)).doesNotContainKey("b");
+    }
+
+    @Test
+    public void testPersistentAssignment() throws ScriptException {
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        ScriptContext context = engine.getContext();
+        context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+        engine.eval("b <- a;");
+        assertThat(context.getBindings(0)).containsKey("b");
+        assertThat((Long) context.getAttribute("b")).isEqualTo(1L);
+        assertThat(context.getBindings(ScriptContext.GLOBAL_SCOPE)).doesNotContainKey("b");
+    }
+
 
     @Test
     public void testFunctionsExpression() throws NoSuchMethodException, ScriptException {

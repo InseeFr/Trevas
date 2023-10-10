@@ -55,6 +55,18 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     }
 
     @Override
+    public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
+        ResolvableExpression resolvableExpression = expressionVisitor.visit(ctx.expr());
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings persitentBindings = engine.getBindings(0);
+        Object assignedObject = resolvableExpression.resolve(bindings);
+        String variableIdentifier = ctx.varID().getText();
+        bindings.put(variableIdentifier, assignedObject);
+        persitentBindings.put(variableIdentifier, assignedObject);
+        return assignedObject;
+    }
+
+    @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
         var pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
