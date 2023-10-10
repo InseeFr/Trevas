@@ -836,7 +836,6 @@ public class ValidationTest {
                 .hasMessageContaining("ComponentID Id_3 not contained in dataset DS_4");
     }
 
-    @Disabled
     @Test
     void testCH() throws ScriptException {
         SparkSession.Builder sparkBuilder = SparkSession.builder()
