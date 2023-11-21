@@ -62,7 +62,7 @@ public class VtlScriptEngineTest {
     }
 
     @Test
-    public void testNonPersitentAssignment() throws ScriptException {
+    public void testNonPersistentAssignment() throws ScriptException {
         // Non persistent
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         ScriptContext context = engine.getContext();
