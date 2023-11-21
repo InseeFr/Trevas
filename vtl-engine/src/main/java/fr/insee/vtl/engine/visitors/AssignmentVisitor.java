@@ -2,9 +2,12 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -44,26 +47,35 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 engine);
     }
 
+    private Object visitAssignment(VtlParser.ExprContext expr) {
+        ResolvableExpression resolvableExpression = expressionVisitor.visit(expr);
+        return resolvableExpression.resolve(
+                engine.getBindings(ScriptContext.ENGINE_SCOPE)
+        );
+    }
+
     @Override
     public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
-        ResolvableExpression resolvableExpression = expressionVisitor.visit(ctx.expr());
+        var result = visitAssignment(ctx.expr());
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        Object assignedObject = resolvableExpression.resolve(bindings);
         String variableIdentifier = ctx.varID().getText();
-        bindings.put(variableIdentifier, assignedObject);
-        return assignedObject;
+        bindings.put(variableIdentifier, result);
+        return result;
     }
 
     @Override
     public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
-        ResolvableExpression resolvableExpression = expressionVisitor.visit(ctx.expr());
-        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        Bindings persitentBindings = engine.getBindings(0);
-        Object assignedObject = resolvableExpression.resolve(bindings);
-        String variableIdentifier = ctx.varID().getText();
-        bindings.put(variableIdentifier, assignedObject);
-        persitentBindings.put(variableIdentifier, assignedObject);
-        return assignedObject;
+        var result = visitAssignment(ctx.expr());
+        if (result instanceof Dataset) {
+            result = new PersistentDataset((Dataset) result);
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            String variableIdentifier = ctx.varID().getText();
+            bindings.put(variableIdentifier, result);
+            return result;
+        }
+        throw new VtlRuntimeException(new InvalidTypeException(
+                Dataset.class, result.getClass(), fromContext(ctx)
+        ));
     }
 
     @Override

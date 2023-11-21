@@ -2,12 +2,11 @@ package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +19,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -74,16 +74,35 @@ public class VtlScriptEngineTest {
     }
 
     @Test
-    public void testPersistentAssignment() throws ScriptException {
+    public void testPersistentAssignmentWithScalar() {
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         ScriptContext context = engine.getContext();
         context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-        engine.eval("b <- a;");
-        assertThat(context.getBindings(0)).containsKey("b");
-        assertThat((Long) context.getAttribute("b")).isEqualTo(1L);
-        assertThat(context.getBindings(ScriptContext.GLOBAL_SCOPE)).doesNotContainKey("b");
+        assertThatThrownBy(() -> engine.eval("b <- a;"))
+                .isInstanceOf(InvalidTypeException.class)
+                .is(atPosition(0, 0, 0, 6))
+                .hasMessage("invalid type Long, expected Dataset");
     }
 
+    @Test
+    public void testPersistentAssignmentWithDs() throws ScriptException {
+        VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+        ScriptContext context = engine.getContext();
+
+        var ds = new InMemoryDataset(List.of(), Map.of());
+        context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+        engine.eval("pds <- ds;");
+
+        assertThat(context.getBindings(ScriptContext.ENGINE_SCOPE))
+                .containsKey("pds");
+        assertThat(context.getBindings(ScriptContext.ENGINE_SCOPE).get("pds"))
+                .isInstanceOf(PersistentDataset.class);
+
+        assertThat(((PersistentDataset) context.getAttribute("pds")).getDataStructure())
+                .isEqualTo(ds.getDataStructure());
+        assertThat(((PersistentDataset) context.getAttribute("pds")).getDelegate()).isSameAs(ds);
+        assertThat(context.getBindings(ScriptContext.GLOBAL_SCOPE)).doesNotContainKey("b");
+    }
 
     @Test
     public void testFunctionsExpression() throws NoSuchMethodException, ScriptException {
