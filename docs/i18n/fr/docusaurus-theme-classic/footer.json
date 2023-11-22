@@ -1,10 +1,10 @@
 {
-	"link.title. ": {
-		"message": " ",
-		"description": "The title of the footer links column with title=  in the footer"
-	},
-	"copyright": {
-		"message": " ",
-		"description": "The footer copyright"
-	}
+  "link.title. ": {
+    "message": " ",
+    "description": "The title of the footer links column with title=  in the footer"
+  },
+  "copyright": {
+    "message": " ",
+    "description": "The footer copyright"
+  }
 }

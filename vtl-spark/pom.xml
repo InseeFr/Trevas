@@ -7,37 +7,37 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.1.1</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
     <description>Trevas engine for Apache Spark</description>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>1.1.1</version>
+            <version>1.2.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>1.1.1</version>
+            <version>1.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.12</artifactId>
-            <version>3.3.1</version>
+            <version>3.5.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.2.220</version>
+            <version>2.2.224</version>
             <scope>test</scope>
         </dependency>
 
@@ -45,6 +45,14 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
