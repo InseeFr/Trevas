@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
@@ -351,6 +352,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
         ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine, engine);
         return clauseVisitor.visit(ctx.clause);
+    }
+
+    @Override
+    public ResolvableExpression visitAnalyticFunctions(VtlParser.AnalyticFunctionsContext ctx) {
+        DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.anFunction());
+        AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, datasetExpression, "toto");
+        return analyticsVisitor.visit(ctx);
+    }
+
+    @Override
+    public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
+        // TODO: typeCheck
+        return (DatasetExpression) visit(ctx.expr());
     }
 
     @Override
