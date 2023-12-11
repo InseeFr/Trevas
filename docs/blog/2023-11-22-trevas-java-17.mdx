@@ -1,0 +1,40 @@
+---
+slug: /trevas-java-17
+title: Trevas - Java 17
+authors: [nicolas]
+tags: [Trevas]
+---
+
+### News
+
+Trevas 1.2.0 enable Java 17 support.
+
+### Java modules handling
+
+Spark does not support Java Module.
+
+Java 17 client apps, embedded Trevas in Spark mode have to configure `UNNAMED` modules for Spark.
+
+#### Maven
+
+Add to your `pom.xml` file, in the `build > plugins` section:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.11.0</version>
+    <configuration>
+        <compilerArgs>
+            <arg>--add-exports</arg>
+            <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+        </compilerArgs>
+    </configuration>
+</plugin>
+```
+
+#### Docker
+
+```shell
+ENTRYPOINT ["java", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED", "mainClass"]
+```
