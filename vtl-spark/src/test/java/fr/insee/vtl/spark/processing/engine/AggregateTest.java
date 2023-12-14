@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark.processing.engine.analytic;
+package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
