@@ -300,7 +300,7 @@ public class AnalyticAvgTest {
         context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*

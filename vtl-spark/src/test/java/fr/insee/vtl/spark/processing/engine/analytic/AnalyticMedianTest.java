@@ -297,7 +297,7 @@ public class AnalyticMedianTest {
         context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");
+        engine.eval("res := median ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -317,6 +317,7 @@ public class AnalyticMedianTest {
             +----+----+----+----+----+-----------+-----------+
 
         * */
+        //todo result wrong, need to recheck the logic with spark
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3.0D),

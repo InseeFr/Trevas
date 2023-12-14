@@ -194,7 +194,7 @@ public class AnalyticFirstTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Year range between -1 and 1) );");
+        engine.eval("res := first_value ( ds2 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -212,6 +212,7 @@ public class AnalyticFirstTest extends AnalyticTest {
         |   A|  YY|1996|   2| 7.0|         7|       5.0|
         +----+----+----+----+----+----------+----------+
         * */
+        //todo result wrong, need to recheck the logic with spark
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L, "Me_2", 1.0D),
