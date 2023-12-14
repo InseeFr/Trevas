@@ -38,7 +38,7 @@ public class AnalyticLastTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2) )");
+        engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
