@@ -30,7 +30,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 ) );");
@@ -84,7 +84,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := var_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
@@ -144,7 +144,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("res := var_samp ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
@@ -200,7 +200,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");

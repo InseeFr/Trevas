@@ -32,7 +32,7 @@ public class AnalyticLagTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := ds2 [ calc lag_Me_1 := lag ( Me_1 , 1 over ( partition by Id_1 , Id_2 order by Year ) )] ;");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
@@ -99,7 +99,7 @@ public class AnalyticLagTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := lag ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");

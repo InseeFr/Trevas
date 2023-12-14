@@ -32,7 +32,7 @@ public class AnalyticLeadTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := ds2 [ calc lead_Me_1 := lead ( Me_1 , 1 over ( partition by Id_1 , Id_2 order by Year ) )] ;");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
@@ -101,7 +101,7 @@ public class AnalyticLeadTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := lead ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");

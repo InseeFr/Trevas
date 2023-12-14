@@ -30,7 +30,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := ds1 [ calc stddev_pop_Me_1:= stddev_pop ( Me_1 over ( partition by Id_1,Id_2 order by Year) )];");
@@ -85,7 +85,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 ) );");
@@ -139,7 +139,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
@@ -193,7 +193,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
@@ -247,7 +247,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Year range between -1 and 1) );");

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public abstract class AnalyticTest {
 
-    public final InMemoryDataset anCountDS1 = new InMemoryDataset(
+    public final InMemoryDataset ds1 = new InMemoryDataset(
             List.of(
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
@@ -32,7 +32,7 @@ public abstract class AnalyticTest {
             Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE, "Me_2", Role.MEASURE)
     );
 
-    public final InMemoryDataset anCountDS2 = new InMemoryDataset(
+    public final InMemoryDataset ds2 = new InMemoryDataset(
             List.of(
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1D),
                     Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9D),

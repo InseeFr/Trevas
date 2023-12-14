@@ -35,7 +35,7 @@ public class AnalyticLastTest extends AnalyticTest {
 
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2) )");
@@ -88,7 +88,7 @@ public class AnalyticLastTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res :=  last_value ( ds2 over ( partition by Id_1, Id_2 order by Year desc) );");
@@ -142,7 +142,7 @@ public class AnalyticLastTest extends AnalyticTest {
 
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := last_value ( ds2 over ( partition by Id_1 order by Id_2 data points between 2 preceding and 2 following) );");
@@ -195,7 +195,7 @@ public class AnalyticLastTest extends AnalyticTest {
         +----+----+----+----+----+
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := last_value ( ds1 over ( partition by Id_1, Id_2 order by Year range between -1 and 1) );");

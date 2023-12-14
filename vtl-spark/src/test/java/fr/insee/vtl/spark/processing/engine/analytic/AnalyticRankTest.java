@@ -37,7 +37,7 @@ public class AnalyticRankTest extends AnalyticTest {
 
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := ds2 [calc toto:= rank ( over ( partition by Id_1, Id_2 order by Year) )];");
@@ -91,7 +91,7 @@ public class AnalyticRankTest extends AnalyticTest {
 
         * */
         ScriptContext context = engine.getContext();
-        context.setAttribute("ds2", anCountDS2, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
         engine.eval("res := ds2 [calc rank_col:= rank ( over ( partition by Id_1, Id_2 order by Year desc) )];");
