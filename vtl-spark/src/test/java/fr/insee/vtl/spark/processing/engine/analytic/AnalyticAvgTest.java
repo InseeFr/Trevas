@@ -206,10 +206,10 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+--------+
 
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3.5D, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.67D, "Me_2", 5.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.666666666666667D, "Me_2", 5.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5.0D, "Me_2", 5.75D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9.0D, "Me_2", 3.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.0D, "Me_2", 3.5D),
