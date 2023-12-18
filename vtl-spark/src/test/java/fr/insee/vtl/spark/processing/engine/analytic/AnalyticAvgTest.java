@@ -3,7 +3,6 @@ package fr.insee.vtl.spark.processing.engine.analytic;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.spark.processing.engine.TestUtilities;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -207,7 +206,7 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+--------+
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
 
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D, "Me_2", 1.0D),
@@ -264,7 +263,7 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+-----------------+
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.67D, "Me_2", 5.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D, "Me_2", 5.75D),

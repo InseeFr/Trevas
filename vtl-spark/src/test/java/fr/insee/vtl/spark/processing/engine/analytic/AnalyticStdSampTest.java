@@ -1,7 +1,6 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.spark.processing.engine.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -116,7 +115,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
             |   A|  YY|2003|   5| 7.0|2.6299556396765835|2.160246899469287|
             +----+----+----+----+----+------------------+-----------------+
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 1.83D, "Me_2", 3.59D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 1.83D, "Me_2", 3.59D),
@@ -234,7 +233,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
 
         * */
 
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
 
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.08D, "Me_2", 4.0D),
@@ -292,7 +291,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
 
         * */
         //todo result wrong, need to recheck the logic with spark
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.63D, "Me_2", 3.40D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.63D, "Me_2", 3.40D),

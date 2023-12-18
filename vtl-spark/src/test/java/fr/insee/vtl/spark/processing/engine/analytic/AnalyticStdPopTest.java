@@ -1,7 +1,6 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.spark.processing.engine.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -108,7 +107,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
             |   A|  YY|2003|   5| 7.0| 2.277608394786075|1.8708286933869707|
             +----+----+----+----+----+------------------+------------------+
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 1.58D, "Me_2", 3.11D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 1.58D, "Me_2", 3.11D),
@@ -162,7 +161,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
         +----+----+----+----+----+------------------+------------------+
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.0D, "Me_2", 0.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.5D, "Me_2", 4.0D),
@@ -218,7 +217,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
         +----+----+----+----+----+------------------+------------------+
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 1.70D, "Me_2", 3.27D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 1.58D, "Me_2", 3.11D),

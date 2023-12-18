@@ -3,7 +3,6 @@ package fr.insee.vtl.spark.processing.engine.analytic;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.spark.processing.engine.TestUtilities;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,8 +12,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
@@ -161,7 +158,7 @@ public class AnalyticVarPopTest {
             |   A|  YY|2003|   5| 7.0|            5.1875|         3.5|
             +----+----+----+----+----+------------------+------------+
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.50D, "Me_2", 9.69D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.50D, "Me_2", 9.69D),
@@ -216,7 +213,7 @@ public class AnalyticVarPopTest {
 
         * */
 
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
 
 
         assertThat(res).contains(
@@ -275,7 +272,7 @@ public class AnalyticVarPopTest {
 
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.89D, "Me_2", 10.67D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.5D, "Me_2", 9.69D),

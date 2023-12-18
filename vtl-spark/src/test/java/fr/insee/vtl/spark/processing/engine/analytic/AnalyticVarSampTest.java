@@ -1,7 +1,6 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.spark.processing.engine.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -54,7 +53,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
             |   A|  YY|2003|   5| 7.0| 6.916666666666667| 4.666666666666667|
             +----+----+----+----+----+------------------+------------------+
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.33D, "Me_2", 12.92D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3.33D, "Me_2", 12.92D),
@@ -171,7 +170,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
 
 
         * */
-        List<Map<String, Object>> res = TestUtilities.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"));
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.33D, "Me_2", 16.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3.33D, "Me_2", 12.92D),

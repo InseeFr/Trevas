@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeAll;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +50,8 @@ public abstract class AnalyticTest {
             Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
     );
 
+    public final static int DEFAULT_PRECISION = 2;
+
     public static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue) {
 
         // Replace the null value
@@ -62,6 +66,28 @@ public abstract class AnalyticTest {
                         Map.Entry::getValue));
 
         return map;
+    }
+
+    /**
+     * This method round the double or float column of the given dataset with the given precision.
+     * This method should be used only for unit test, do not apply it on large dataset, it will have performance issues.
+     *
+     * @param dataset The given dataset which need to be transformed
+     * @param precision The given precision of the decimal value after ,
+     * @return The result dataset in a list of map.
+     * */
+    public static List<Map<String, Object>> roundDecimalInDataset(Dataset dataset, int precision){
+        List<Map<String, Object>> res = dataset.getDataAsMap();
+        for (Map<String, Object> map : res) {
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (entry.getValue() instanceof Double || entry.getValue() instanceof Float) {
+                    double value = ((Number) entry.getValue()).doubleValue();
+                    BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP);
+                    map.put(entry.getKey(), roundedValue.doubleValue());
+                }
+            }
+        }
+        return res;
     }
 
     public final String DEFAULT_NULL_STR = "null";
