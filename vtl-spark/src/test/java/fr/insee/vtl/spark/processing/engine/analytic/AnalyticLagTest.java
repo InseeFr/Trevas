@@ -102,7 +102,7 @@ public class AnalyticLagTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := lag ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");
+        engine.eval("res := lag ( ds2 over ( partition by Id_1 , Id_2 order by Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
