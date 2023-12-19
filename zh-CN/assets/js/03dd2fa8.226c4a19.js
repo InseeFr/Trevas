@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunktrevas_documentation=self.webpackChunktrevas_documentation||[]).push([[7892],{7234:e=>{e.exports=JSON.parse('{"label":"Trevas Jupyter","permalink":"/Trevas/zh-CN/blog/tags/trevas-jupyter","allTagsPath":"/Trevas/zh-CN/blog/tags","count":2}')}}]);
