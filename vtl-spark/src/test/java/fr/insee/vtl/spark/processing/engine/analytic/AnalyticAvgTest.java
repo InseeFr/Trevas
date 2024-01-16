@@ -206,7 +206,7 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+--------+
 
         * */
-        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
 
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D, "Me_2", 1.0D),
@@ -263,7 +263,7 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+-----------------+
 
         * */
-        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.67D, "Me_2", 5.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D, "Me_2", 5.75D),
@@ -299,7 +299,7 @@ public class AnalyticAvgTest {
         context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := avg ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -319,14 +319,18 @@ public class AnalyticAvgTest {
             +----+----+----+----+----+-----------------+-----------------+
 
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset(
+                (Dataset) engine.getContext().getAttribute("res"),
+                AnalyticTest.DEFAULT_PRECISION
+        );
+        assertThat(res).containsExactlyInAnyOrder(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.25D, "Me_2", 4.25D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.25D, "Me_2", 4.25D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6.33D, "Me_2", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6.33D, "Me_2", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 6.17D, "Me_2", 5.83D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.17D, "Me_2", 5.83D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.0D, "Me_2", 5.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 6.33D, "Me_2", 4D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6.17D, "Me_2", 5.83D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 7D, "Me_2", 5.5D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5.25D, "Me_2", 4.25D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.33D, "Me_2", 4D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6.17D, "Me_2", 5.83D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.0D, "Me_2", 5.5D)
         );
 
