@@ -116,7 +116,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
             |   A|  YY|2003|   5| 7.0|2.6299556396765835|2.160246899469287|
             +----+----+----+----+----+------------------+-----------------+
         * */
-        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 1.83D, "Me_2", 3.59D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 1.83D, "Me_2", 3.59D),
@@ -152,7 +152,8 @@ public class AnalyticStdSampTest extends AnalyticTest {
         context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );" +
+                "res := res[calc Me_1 := round(Me_1, 2), Me_2 := round(Me_2, 2)];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -178,7 +179,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.71D, "Me_2", 5.66D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.08D, "Me_2", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 1.82D, "Me_2", 3.59D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 1.83D, "Me_2", 3.59D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 2.83D, "Me_2", 0.71D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 2.65D, "Me_2", 1.0D),
@@ -231,7 +232,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
 
         * */
 
-        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
 
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.08D, "Me_2", 4.0D),
@@ -268,7 +269,7 @@ public class AnalyticStdSampTest extends AnalyticTest {
         context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := stddev_samp ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -288,16 +289,18 @@ public class AnalyticStdSampTest extends AnalyticTest {
         +----+----+----+----+----+------------------+------------------+
 
         * */
-        //todo result wrong, need to recheck the logic with spark
-        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"),AnalyticTest.DEFAULT_PRECISION);
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset(
+                (Dataset) engine.getContext().getAttribute("res"),
+                AnalyticTest.DEFAULT_PRECISION
+        );
         assertThat(res).contains(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.63D, "Me_2", 3.40D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.63D, "Me_2", 3.40D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.80D, "Me_2", 2.83D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.80D, "Me_2", 2.83D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 2.14D, "Me_2", 2.64D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 2.14D, "Me_2", 2.64D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 2.16D, "Me_2", 2.65D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 2.63D, "Me_2", 3.40D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.80D, "Me_2", 2.83D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 2.80D, "Me_2", 2.83D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.14D, "Me_2", 2.64D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 2.14D, "Me_2", 2.64D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.16D, "Me_2", 2.65D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 2.16D, "Me_2", 2.65D)
         );
 
