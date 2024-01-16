@@ -410,7 +410,7 @@ public class AnalyticCountTest {
         context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := count ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -432,12 +432,12 @@ public class AnalyticCountTest {
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 4L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 4L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L, "Me_2", 6L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 6L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 6L, "Me_2", 6L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4L, "Me_2", 4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 6L, "Me_2", 6L),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6L, "Me_2", 6L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4L, "Me_2", 4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L, "Me_2", 6L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 6L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 4L),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 4L, "Me_2", 4L)
         );
 
