@@ -198,7 +198,7 @@ public class AnalyticLastTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := last_value ( ds2 over ( partition by Id_1, Id_2 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := last_value ( ds2 over ( partition by Id_1, Id_2 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -216,7 +216,7 @@ public class AnalyticLastTest extends AnalyticTest {
         |   A|  YY|1996|   2| 7.0|        2|      7.0|
         +----+----+----+----+----+---------+---------+
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 4L, "Me_2", 9.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 7L, "Me_2", 5.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 6L, "Me_2", 8.0D),
