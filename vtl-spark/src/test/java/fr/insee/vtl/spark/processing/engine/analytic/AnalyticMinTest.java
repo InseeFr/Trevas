@@ -58,6 +58,7 @@ public class AnalyticMinTest {
         if (spark != null)
             spark.close();
     }
+
     @Test
     public void testAnMinWithCalcClause() throws ScriptException {
 
@@ -348,7 +349,7 @@ public class AnalyticMinTest {
         context.setAttribute("ds1", anCountDS1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := min ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -368,14 +369,14 @@ public class AnalyticMinTest {
             +----+----+----+----+----+--------+--------+
 
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3L, "Me_2", 1.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 3L, "Me_2", 1.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 3L, "Me_2", 1.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4L, "Me_2", 2.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 4L, "Me_2", 2.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 3L, "Me_2", 1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 2.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4L, "Me_2", 2.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5L, "Me_2", 2.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 2.0D)
         );
 
