@@ -7,6 +7,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,12 +114,15 @@ public class AnalyticVarSampTest extends AnalyticTest {
          *
          * need another way to create data frame
          * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", null, "Me_2", null),
+        var actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().stream()
+                .map(map -> replaceNullValues(map, DEFAULT_NULL_STR))
+                .collect(Collectors.toList());
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.5D, "Me_2", 32.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.33D, "Me_2", 16.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 3.33D, "Me_2", 12.92D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", null, "Me_2", null),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8.0D, "Me_2", 0.5D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.0D, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6.92D, "Me_2", 4.67D)

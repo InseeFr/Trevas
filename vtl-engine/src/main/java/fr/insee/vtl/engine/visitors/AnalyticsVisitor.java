@@ -202,4 +202,15 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 toPartitionBy(ctx.partition)
         );
     }
+
+    @Override
+    public DatasetExpression visitRankAn(VtlParser.RankAnContext ctx) {
+        return processingEngine.executeRankAn(
+                dataset,
+                this.targetColumnName,
+                toFunctionEnum(ctx.op, ctx),
+                toPartitionBy(ctx.partition),
+                toOrderBy(ctx.orderBy)
+        );
+    }
 }

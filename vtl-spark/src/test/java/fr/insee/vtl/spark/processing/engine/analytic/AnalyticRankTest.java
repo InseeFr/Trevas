@@ -40,7 +40,7 @@ public class AnalyticRankTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := ds2 [calc toto:= rank ( over ( partition by Id_1, Id_2 order by Year) )];");
+        engine.eval("res := ds2 [calc rank_col := rank ( over ( partition by Id_1, Id_2 order by Year) )];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*

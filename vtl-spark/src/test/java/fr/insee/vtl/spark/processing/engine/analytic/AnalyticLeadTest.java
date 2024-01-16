@@ -8,6 +8,7 @@ import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -122,15 +123,18 @@ public class AnalyticLeadTest extends AnalyticTest {
         |   A|  YY|1996|   2| 7.0|     null|     null|
         +----+----+----+----+----+---------+---------+
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        var actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().stream()
+                .map(map -> replaceNullValues(map, DEFAULT_NULL_STR))
+                .collect(Collectors.toList());
+        assertThat(actual).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 4L, "Me_2", 9.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 7L, "Me_2", 5.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 6L, "Me_2", 8.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", null, "Me_2", null),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 5L, "Me_2", 4.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 10L, "Me_2", 2.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 2L, "Me_2", 7.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", null, "Me_2", null)
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", "null", "Me_2", "null")
         );
 
     }

@@ -8,6 +8,7 @@ import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -102,7 +103,7 @@ public class AnalyticLagTest extends AnalyticTest {
         context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := lag ( ds2 over ( partition by Id_1 , Id_2 order by Year ) );");
+        engine.eval("res := lag ( ds2 , 1 over ( partition by Id_1 , Id_2 order by Year ) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -120,12 +121,15 @@ public class AnalyticLagTest extends AnalyticTest {
         |   A|  YY|1996|   2| 7.0|       10|      2.0|
         +----+----+----+----+----+---------+---------+
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", null, "Me_2", null),
+        List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
+        var actual = actualWithNull.stream().map(map -> replaceNullValues(map, DEFAULT_NULL_STR)).collect(Collectors.toList());
+
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 4L, "Me_2", 9.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 7L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", null, "Me_2", null),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 9L, "Me_2", 3.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 5L, "Me_2", 4.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 10L, "Me_2", 2.0D)

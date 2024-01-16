@@ -140,16 +140,17 @@ public class AnalyticRatioToReportTest extends AnalyticTest {
         +----+----+----+----+----+----------+----------+----------+----------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 0.15D, "Me_2", 0.1D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 0.2D, "Me_2", 0.3D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 0.35D, "Me_2", 0.5D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 0.3D, "Me_2", 0.1D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 0.3D, "Me_2", 0.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 0.2D, "Me_2", 0.8D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 0.15D, "Me_2", 0.5D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 0.35D, "Me_2", -0.3D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.15D, "Me_2", 0.1D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.3D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 0.35D, "Me_2", 0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 0.3D, "Me_2", 0.1D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 0.3D, "Me_2", 0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.8D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 0.15D, "Me_2", 0.5D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 0.35D, "Me_2", -0.3D)
         );
+
 
     }
 
-}
+    }

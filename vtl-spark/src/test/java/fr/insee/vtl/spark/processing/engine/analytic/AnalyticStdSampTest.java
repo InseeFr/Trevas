@@ -8,6 +8,7 @@ import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -170,18 +171,15 @@ public class AnalyticStdSampTest extends AnalyticTest {
 
         * */
 
-        /*
-         * todo
-         * Map.of can't contain null key or value
-         *
-         * need another way to create data frame
-         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", null, "Me_2", null),
+        var actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().stream()
+                .map(map -> replaceNullValues(map, DEFAULT_NULL_STR))
+                .collect(Collectors.toList());
+        assertThat(actual).containsExactly(
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.71D, "Me_2", 5.66D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.08D, "Me_2", 4.0D),
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 1.82D, "Me_2", 3.59D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", null, "Me_2", null),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", "null", "Me_2", "null"),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 2.83D, "Me_2", 0.71D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 2.65D, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 2.63D, "Me_2", 2.16D)
