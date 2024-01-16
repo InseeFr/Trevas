@@ -212,7 +212,6 @@ public class AnalyticFirstTest extends AnalyticTest {
         |   A|  YY|1996|   2| 7.0|         7|       5.0|
         +----+----+----+----+----+----------+----------+
         * */
-        //todo result wrong, need to recheck the logic with spark
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactlyInAnyOrder(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D),

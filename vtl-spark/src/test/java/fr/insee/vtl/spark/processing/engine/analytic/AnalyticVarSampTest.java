@@ -107,13 +107,6 @@ public class AnalyticVarSampTest extends AnalyticTest {
         |   A|  YY|2003|   5| 7.0| 6.916666666666667| 4.666666666666667|
         +----+----+----+----+----+------------------+------------------+
 
-        * */
-        /*
-         * todo
-         * Map.of can't contain null key or value
-         *
-         * need another way to create data frame
-         * */
         var actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().stream()
                 .map(map -> replaceNullValues(map, DEFAULT_NULL_STR))
                 .collect(Collectors.toList());
