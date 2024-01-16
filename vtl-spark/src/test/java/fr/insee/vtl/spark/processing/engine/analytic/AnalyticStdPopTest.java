@@ -253,7 +253,7 @@ public class AnalyticStdPopTest extends AnalyticTest {
         context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Year range between -1 preceding and 1 following) );");
+        engine.eval("res := stddev_pop ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
@@ -273,14 +273,18 @@ public class AnalyticStdPopTest extends AnalyticTest {
         +----+----+----+----+----+------------------+------------------+
 
         * */
-        assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
+        List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset(
+                (Dataset) engine.getContext().getAttribute("res"),
+                AnalyticTest.DEFAULT_PRECISION
+        );
+        assertThat(res).containsExactly(
                 Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.28D, "Me_2", 2.95D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.28D, "Me_2", 2.95D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.56D, "Me_2", 2.58D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.56D, "Me_2", 2.58D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 1.95D, "Me_2", 2.41D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 1.95D, "Me_2", 2.41D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 1.87D, "Me_2", 2.29D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 2.28D, "Me_2", 2.95D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.56D, "Me_2", 2.58D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 2.56D, "Me_2", 2.58D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 1.95D, "Me_2", 2.41D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 1.95D, "Me_2", 2.41D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 1.87D, "Me_2", 2.29D),
                 Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 1.87D, "Me_2", 2.29D)
         );
 
