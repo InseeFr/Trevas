@@ -13,6 +13,7 @@
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
         <module>vtl-jdbc</module>
+        <module>coverage</module>
     </modules>
 
     <name>Trevas</name>
@@ -68,6 +69,9 @@
         <jdk.version>11</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jacoco.version>0.8.7</jacoco.version>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -151,6 +155,11 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <formats>
+                                <format>XML</format>
+                            </formats>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -278,6 +287,46 @@
                     </plugin>
                 </plugins>
             </reporting>
+        </profile>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <executions>
+                            <!-- Prepare the property pointing to the JaCoCo runtime agent which is
+                                 passed as VM argument when the Maven Surefire plugin is executed. -->
+                            <execution>
+                                <id>pre-unit-test</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Set the name of the property containing the settings for JaCoCo
+                                         runtime agent. -->
+                                    <propertyName>surefireArgLine</propertyName>
+                                    <append>true</append>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>post-unit-test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                                <configuration>
+                                    <formats>
+                                        <format>XML</format>
+                                    </formats>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

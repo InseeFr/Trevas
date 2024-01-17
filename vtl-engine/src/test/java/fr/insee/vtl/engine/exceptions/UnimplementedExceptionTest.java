@@ -31,6 +31,6 @@ public class UnimplementedExceptionTest {
 
         assertThatThrownBy(() -> {
             engine.eval(vtlExpression);
-        }).isInstanceOf(UnimplementedException.class);
+        }).isInstanceOf(UnsupportedOperationException.class);
     }
 }
