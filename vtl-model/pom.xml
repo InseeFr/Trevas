@@ -15,4 +15,10 @@
     <description>Model describing VTL expressions and bindings</description>
     <version>1.3.0-SNAPSHOT</version>
 
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
 </project>
