@@ -13,6 +13,7 @@
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
         <module>vtl-jdbc</module>
+        <module>coverage</module>
     </modules>
 
     <name>Trevas</name>
@@ -68,7 +69,9 @@
         <jdk.version>11</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jacoco.version>0.8.7</jacoco.version>
-        <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/report-aggregate/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -152,21 +155,10 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>merge</id>
-                        <goals>
-                            <goal>merge</goal>
-                        </goals>
                         <configuration>
-                            <fileSets>
-                                <fileSet implementation="org.apache.maven.shared.model.fileset.FileSet">
-                                    <directory>${project.basedir}</directory>
-                                    <includes>
-                                        <include>**/*.exec</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
+                            <formats>
+                                <format>XML</format>
+                            </formats>
                         </configuration>
                     </execution>
                 </executions>
