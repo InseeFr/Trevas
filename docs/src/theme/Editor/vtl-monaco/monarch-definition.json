@@ -1,0 +1,185 @@
+{
+	"defaultToken": "invalid",
+	"tokenPostfix": ".vtl",
+	"keywords": [],
+	"typeKeywords": [],
+	"operators": [],
+	"specials": [],
+	"variables": [],
+	"symbols": "_RGX_/[=><!~?:&|+\\-*\\/\\^%]+/",
+	"escapes": "_RGX_/\\\\(?:[abfnrtv\\\\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/",
+	"digits": "_RGX_/\\d+(_+\\d+)*/",
+	"octaldigits": "_RGX_/[0-7]+(_+[0-7]+)*/",
+	"binarydigits": "_RGX_/[0-1]+(_+[0-1]+)*/",
+	"hexdigits": "_RGX_/[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/",
+	"regexpctl": "_RGX_/[(){}\\[\\]\\$\\^|\\-*+?\\.]/",
+	"regexpesc": "_RGX_/\\\\(?:[bBdDfnrstvwWn0\\\\\\/]|@regexpctl|c[A-Z]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})/",
+	"tokenizer": {
+		"root": [
+			["_RGX_/[{}]/", "delimiter.bracket"],
+			{
+				"include": "common"
+			}
+		],
+		"common": [
+			[
+				"_RGX_/[a-z_$][\\w$]*/",
+				{
+					"cases": {
+						"@typeKeywords": "keyword",
+						"@keywords": "keyword",
+						"@variables": "variable",
+						"@default": "identifier"
+					}
+				}
+			],
+			[
+				"_RGX_/[A-Z][\\w\\$]*/",
+				{
+					"cases": {
+						"@typeKeywords": "keyword",
+						"@keywords": "keyword",
+						"@variables": "variable",
+						"@default": "identifier"
+					}
+				}
+			],
+			{
+				"include": "@whitespace"
+			},
+			[
+				"_RGX_/\\/(?=([^\\\\\\/]|\\\\.)+\\/([gimsuy]*)(\\s*)(\\.|;|\\/|,|\\)|\\]|\\}|$))/",
+				{
+					"token": "regexp",
+					"bracket": "@open",
+					"next": "@regexp"
+				}
+			],
+			["_RGX_/[()\\[\\]]/", "delimiter.bracket"],
+			["_RGX_/[<>](?!@symbols)/", "delimiter.bracket"],
+			[
+				"_RGX_/@symbols/",
+				{
+					"cases": {
+						"@operators": "operator",
+						"@specials": "operator.special",
+						"@default": ""
+					}
+				}
+			],
+			["_RGX_/(@digits)[eE]([\\-+]?(@digits))?/", "number.float"],
+			["_RGX_/(@digits)\\.(@digits)([eE][\\-+]?(@digits))?/", "number.float"],
+			["_RGX_/0[xX](@hexdigits)/", "number.hex"],
+			["_RGX_/0[oO]?(@octaldigits)/", "number.octal"],
+			["_RGX_/0[bB](@binarydigits)/", "number.binary"],
+			["_RGX_/(@digits)/", "number"],
+			["_RGX_/\"([^\"\\\\]|\\\\.)*$/", "string.invalid"],
+			["_RGX_/'([^'\\\\]|\\\\.)*$/", "string.invalid"],
+			["_RGX_/\"/", "string", "@string_double"],
+			["_RGX_/'/", "string", "@string_single"],
+			["_RGX_/`/", "string", "@string_backtick"]
+		],
+		"whitespace": [
+			["_RGX_/[ \\t\\r\\n]+/", ""],
+			["_RGX_/\\/\\*\\*(?!\\/)/", "comment.doc", "@jsdoc"],
+			["_RGX_/\\/\\*/", "comment", "@comment"],
+			["_RGX_/\\/\\/.*$/", "comment"]
+		],
+		"comment": [
+			["_RGX_/[^\\/*]+/", "comment"],
+			["_RGX_/\\*\\//", "comment", "@pop"],
+			["_RGX_/[\\/*]/", "comment"]
+		],
+		"jsdoc": [
+			["_RGX_/[^\\/*]+/", "comment.doc"],
+			["_RGX_/\\*\\//", "comment.doc", "@pop"],
+			["_RGX_/[\\/*]/", "comment.doc"]
+		],
+		"regexp": [
+			[
+				"_RGX_/(\\{)(\\d+(?:,\\d*)?)(\\})/",
+				[
+					"regexp.escape.control",
+					"regexp.escape.control",
+					"regexp.escape.control"
+				]
+			],
+			[
+				"_RGX_/(\\[)(\\^?)(?=(?:[^\\]\\\\\\/]|\\\\.)+)/",
+				[
+					"regexp.escape.control",
+					{
+						"token": "regexp.escape.control",
+						"next": "@regexrange"
+					}
+				]
+			],
+			[
+				"_RGX_/(\\()(\\?:|\\?=|\\?!)/",
+				["regexp.escape.control", "regexp.escape.control"]
+			],
+			["_RGX_/[()]/", "regexp.escape.control"],
+			["_RGX_/@regexpctl/", "regexp.escape.control"],
+			["_RGX_/[^\\\\\\/]/", "regexp"],
+			["_RGX_/@regexpesc/", "regexp.escape"],
+			["_RGX_/\\\\\\./", "regexp.invalid"],
+			[
+				"_RGX_/(\\/)([gimsuy]*)/",
+				[
+					{
+						"token": "regexp",
+						"bracket": "@close",
+						"next": "@pop"
+					},
+					"keyword.other"
+				]
+			]
+		],
+		"regexrange": [
+			["_RGX_/-/", "regexp.escape.control"],
+			["_RGX_/\\^/", "regexp.invalid"],
+			["_RGX_/@regexpesc/", "regexp.escape"],
+			["_RGX_/[^\\]]/", "regexp"],
+			[
+				"_RGX_/\\]/",
+				{
+					"token": "regexp.escape.control",
+					"next": "@pop",
+					"bracket": "@close"
+				}
+			]
+		],
+		"string_double": [
+			["_RGX_/[^\\\\\"]+/", "string"],
+			["_RGX_/@escapes/", "string.escape"],
+			["_RGX_/\\\\./", "string.escape.invalid"],
+			["_RGX_/\"/", "string", "@pop"]
+		],
+		"string_single": [
+			["_RGX_/[^\\\\']+/", "string"],
+			["_RGX_/@escapes/", "string.escape"],
+			["_RGX_/\\\\./", "string.escape.invalid"],
+			["_RGX_/'/", "string", "@pop"]
+		],
+		"string_backtick": [
+			[
+				"_RGX_/\\$\\{/",
+				{
+					"token": "delimiter.bracket",
+					"next": "@bracketCounting"
+				}
+			],
+			["_RGX_/[^\\\\`$]+/", "string"],
+			["_RGX_/@escapes/", "string.escape"],
+			["_RGX_/\\\\./", "string.escape.invalid"],
+			["_RGX_/`/", "string", "@pop"]
+		],
+		"bracketCounting": [
+			["_RGX_/\\{/", "delimiter.bracket", "@bracketCounting"],
+			["_RGX_/\\}/", "delimiter.bracket", "@pop"],
+			{
+				"include": "common"
+			}
+		]
+	}
+}

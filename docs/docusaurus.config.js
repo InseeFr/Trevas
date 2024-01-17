@@ -150,6 +150,7 @@ module.exports = {
 				languages: ['en', 'fr', 'no'],
 			},
 		],
+		'docusaurus-node-polyfills',
 	],
 	// GHA
 	projectName: 'inseefr.github.io',
