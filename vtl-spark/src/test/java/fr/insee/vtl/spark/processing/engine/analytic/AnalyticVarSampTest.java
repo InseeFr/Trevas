@@ -205,7 +205,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
         context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
 
 
-        engine.eval("res := var_pop ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
+        engine.eval("res := var_samp ( ds1 over ( partition by Id_1 order by Year range between 1 preceding and 1 following) );");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
         /*
