@@ -70,7 +70,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jacoco.version>0.8.7</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>
-            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
+            ${project.basedir}/coverage-report/target/site/jacoco-aggregate/jacoco.xml,
+            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml,
+            ${project.basedir}/../../coverage-report/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
