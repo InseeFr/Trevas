@@ -1,11 +1,14 @@
 {
-  // This file is not used in compilation. It is here just for a nice editor experience.
-  "extends": "@tsconfig/docusaurus/tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@site/*": ["./*"],
-      "@theme/*": ["./src/theme/*"]
-    }
-  }
+	// This file is not used in compilation. It is here just for a nice editor experience.
+	"extends": "@tsconfig/docusaurus/tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@site/*": ["./*"],
+			"@theme/*": ["./src/theme/*"],
+		},
+		"resolveJsonModule": true,
+	},
+	"include": ["./src/**/*.ts", "./src/**/*.tsx"],
+	"exclude": ["node_modules", "build", "dist", "src/**/*.js", "src/**/*.jsx"],
 }

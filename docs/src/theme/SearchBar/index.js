@@ -41,14 +41,14 @@ const Search = (props) => {
 		process.env.NODE_ENV === 'production'
 			? fetch(`${baseUrl}${pluginData.fileNames.searchDoc}`).then((content) =>
 					content.json()
-			  )
+				)
 			: Promise.resolve([]);
 
 	const getLunrIndex = () =>
 		process.env.NODE_ENV === 'production'
 			? fetch(`${baseUrl}${pluginData.fileNames.lunrIndex}`).then((content) =>
 					content.json()
-			  )
+				)
 			: Promise.resolve([]);
 
 	const loadAlgolia = () => {
@@ -102,11 +102,11 @@ const Search = (props) => {
 						? translate({
 								message: 'Search',
 								description: 'Search placeholder',
-						  })
+							})
 						: translate({
 								message: 'Loading...',
 								description: 'Loading placeholder',
-						  })
+							})
 				}
 				aria-label="Search"
 				className={classnames(
