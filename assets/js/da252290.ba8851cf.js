@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunktrevas_documentation=self.webpackChunktrevas_documentation||[]).push([[2896],{7079:a=>{a.exports=JSON.parse('{"label":"Trevas","permalink":"/Trevas/blog/tags/trevas","allTagsPath":"/Trevas/blog/tags","count":3}')}}]);
