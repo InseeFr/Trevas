@@ -17,6 +17,7 @@ on:
 
 jobs:
   publish:
+    if: github.repository == 'inseefr/trevas'
     runs-on: ubuntu-latest
     permissions:
       contents: read
