@@ -1,12 +1,7 @@
 package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.visitors.expression.ArithmeticExprOrConcatVisitor;
-import fr.insee.vtl.engine.visitors.expression.ArithmeticVisitor;
-import fr.insee.vtl.engine.visitors.expression.BooleanVisitor;
-import fr.insee.vtl.engine.visitors.expression.ComparisonVisitor;
-import fr.insee.vtl.engine.visitors.expression.ConditionalVisitor;
-import fr.insee.vtl.engine.visitors.expression.UnaryVisitor;
+import fr.insee.vtl.engine.visitors.expression.*;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
@@ -47,6 +42,8 @@ public class VtlNativeMethods {
             Fun.<Boolean, Boolean, Boolean>toMethod(ConditionalVisitor::ifThenElse),
             Fun.<Long, Long>toMethod(ConditionalVisitor::nvl),
             Fun.<Double, Double>toMethod(ConditionalVisitor::nvl),
+            Fun.<Double, Long>toMethod(ConditionalVisitor::nvl),
+            Fun.<Long, Double>toMethod(ConditionalVisitor::nvl),
             Fun.<String, String>toMethod(ConditionalVisitor::nvl),
             Fun.<Boolean, Boolean>toMethod(ConditionalVisitor::nvl),
             // ArithmeticVisitor
