@@ -84,6 +84,26 @@ public class ConditionalExprTest {
     }
 
     @Test
+    public void testNvlImplicitCast() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("s := nvl(0, 1.1);");
+        assertThat(context.getAttribute("s")).isEqualTo(0D);
+        engine.eval("s := nvl(1.1, 0);");
+        assertThat(context.getAttribute("s")).isEqualTo(1.1D);
+
+        engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.eval("res := nvl(ds[keep id, long1], 0.1);");
+        var res = engine.getContext().getAttribute("res");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Map.of("id", "Toto", "long1", 30D),
+                Map.of("id", "Hadrien", "long1", 10D),
+                Map.of("id", "Nico", "long1", 20D),
+                Map.of("id", "Franck", "long1", 100D)
+        );
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+    }
+
+    @Test
     public void testIfTypeExceptions() {
         assertThatThrownBy(() -> {
             engine.eval("s := if \"\" then 1 else 2;");

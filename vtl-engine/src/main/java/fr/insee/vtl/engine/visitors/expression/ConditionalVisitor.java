@@ -70,6 +70,12 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return value == null ? defaultValue : value;
     }
 
+    public static Double nvl(Double value, Long defaultValue) {
+        return value == null ? defaultValue.doubleValue() : value;
+    }
+    public static Double nvl(Long value, Double defaultValue) {
+        return value == null ? defaultValue : value.doubleValue();
+    }
     public static String nvl(String value, String defaultValue) {
         return value == null ? defaultValue : value;
     }
