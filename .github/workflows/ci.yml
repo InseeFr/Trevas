@@ -7,7 +7,9 @@ on:
 
 jobs:
   test:
-    if: github.repository != 'inseefr/trevas'
+    # Fork or Trevas main repo branch with PR coming from fork
+    if: github.repository != 'inseefr/trevas' ||
+        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,7 +23,9 @@ jobs:
       - name: Test
         run: mvn test
   package:
-    if: github.repository != 'inseefr/trevas'
+    # Fork or Trevas main repo branch with PR coming from fork
+    if: github.repository != 'inseefr/trevas' ||
+        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -36,7 +40,9 @@ jobs:
       - name: Test
         run: mvn package
   test-sonar-package:
-    if: github.repository == 'inseefr/trevas'
+    # Trevas main repo branch with PR coming from main repo
+    if: github.repository == 'inseefr/trevas' &&
+        github.event.pull_request.head.repo.full_name == 'inseefr/trevas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -52,3 +58,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  publish-release:
+    if: github.repository == 'inseefr/trevas' &&
+        startsWith(github.event.ref, 'refs/tags/v')
+    needs: test-sonar-package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Publish Trevas
+        run: mvn -B -Prelease deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+  publish-snapshot:
+    if: github.repository == 'inseefr/trevas' && 
+        github.ref == 'refs/heads/develop'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: "adopt"
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel='warn'
