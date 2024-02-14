@@ -33,7 +33,7 @@ class LunrSearchAdapter {
 							value: formattedContent,
 							matchLevel: 'full',
 						},
-				  }
+					}
 				: null,
 			_highlightResult: {
 				hierarchy: {
@@ -45,7 +45,7 @@ class LunrSearchAdapter {
 							? null
 							: {
 									value: formattedTitle || doc.title,
-							  },
+								},
 				},
 			},
 		};
