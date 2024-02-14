@@ -6,6 +6,14 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
   test:
     # Fork or Trevas main repo branch with PR coming from fork
     if: github.repository != 'InseeFr/Trevas' ||
