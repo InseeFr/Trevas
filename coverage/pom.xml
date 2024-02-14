@@ -6,7 +6,7 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
     </parent>
 
     <artifactId>coverage</artifactId>
@@ -22,32 +22,32 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-jackson</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-jdbc</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-spark</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </dependency>
     </dependencies>
     <build>
