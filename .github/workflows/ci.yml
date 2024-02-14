@@ -7,6 +7,7 @@ on:
 
 jobs:
   test:
+    name: Run Trevas tests
     # Fork or Trevas main repo branch with PR coming from fork
     if: github.repository != 'InseeFr/Trevas' ||
         github.event.pull_request.head.repo.full_name != 'InseeFr/Trevas'
@@ -23,6 +24,7 @@ jobs:
       - name: Test
         run: mvn test
   package:
+    name: Package Trevas modules
     # Fork or Trevas main repo branch with PR coming from fork
     if: github.repository != 'InseeFr/Trevas' ||
         github.event.pull_request.head.repo.full_name != 'InseeFr/Trevas'
@@ -40,6 +42,7 @@ jobs:
       - name: Test
         run: mvn package
   test-sonar-package:
+    name: Run Trevas tests with coverage & sonar checks
     # Trevas main repo branch with PR coming from main repo
     if: github.repository == 'InseeFr/Trevas' &&
         github.event.pull_request.head.repo.full_name == 'InseeFr/Trevas'
@@ -59,6 +62,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   publish-release:
+    name: Publish Trevas modules on Maven
     if: github.repository == 'InseeFr/Trevas' &&
         startsWith(github.event.ref, 'refs/tags/v')
     needs: test-sonar-package
@@ -82,6 +86,7 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
   publish-snapshot:
+    name: Publish Trevas modules SNAPSHOT on Github Packages
     if: github.repository == 'InseeFr/Trevas' && 
         github.ref == 'refs/heads/develop'
     needs: package
