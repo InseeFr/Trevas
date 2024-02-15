@@ -52,9 +52,9 @@ jobs:
   test-sonar-package:
     name: Run Trevas tests with coverage & sonar checks
     # Trevas main repo commit branch or merged PR
-    if: github.repository == 'InseeFr/Trevas' ||
-        github.event.pull_request.head.repo.fork == false ||
-        (github.event.pull_request.head.repo.fork == true &&
+    if: github.event.pull_request.head.repo.fork == false ||
+        (github.repository == 'InseeFr/Trevas' &&
+        github.event.pull_request.head.repo.fork == true &&
         github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
