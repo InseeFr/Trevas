@@ -93,7 +93,7 @@ jobs:
     if: (github.repository == 'InseeFr/Trevas' ||
         github.event.pull_request.merged == 'true') && 
         github.ref == 'refs/heads/develop'
-    needs: package
+    needs: test-sonar-package
     runs-on: ubuntu-latest
     permissions:
       contents: read
