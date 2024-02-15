@@ -18,7 +18,7 @@ jobs:
     name: Run Trevas tests
     # Fork or Trevas main repo branch with PR coming from fork
     if: github.repository != 'InseeFr/Trevas' ||
-        github.event.pull_request.head.repo.fork == 'true'
+        github.event.pull_request.head.repo.fork == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
     name: Package Trevas modules
     # Fork or Trevas main repo branch with PR coming from fork
     if: github.repository != 'InseeFr/Trevas' ||
-        github.event.pull_request.head.repo.fork == 'true'
+        github.event.pull_request.head.repo.fork == true
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -53,9 +53,9 @@ jobs:
     name: Run Trevas tests with coverage & sonar checks
     # Trevas main repo commit branch or merged PR
     if: github.repository == 'InseeFr/Trevas' ||
-        github.event.pull_request.head.repo.fork == 'false' ||
-        (github.event.pull_request.head.repo.fork == 'true' &&
-        github.event.pull_request.merged == 'true')
+        github.event.pull_request.head.repo.fork == false ||
+        (github.event.pull_request.head.repo.fork == true &&
+        github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
   publish-release:
     name: Publish Trevas modules on Maven
     if: (github.repository == 'InseeFr/Trevas' ||
-        github.event.pull_request.merged == 'true') &&
+        github.event.pull_request.merged == true) &&
         startsWith(github.event.ref, 'refs/tags/v')
     needs: test-sonar-package
     runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
   publish-snapshot:
     name: Publish Trevas modules SNAPSHOT on Github Packages
     if: (github.repository == 'InseeFr/Trevas' ||
-        github.event.pull_request.merged == 'true') && 
+        github.event.pull_request.merged == true) && 
         github.ref == 'refs/heads/develop'
     needs: test-sonar-package
     runs-on: ubuntu-latest
