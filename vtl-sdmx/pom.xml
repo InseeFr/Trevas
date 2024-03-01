@@ -26,7 +26,7 @@
     <dependencies>
         <dependency>
             <groupId>io.sdmx</groupId>
-            <artifactId>fusion-core-sdmx</artifactId>
+            <artifactId>fusion-sdmx-ml</artifactId>
             <version>1.0.58-SNAPSHOT</version>
         </dependency>
     </dependencies>
