@@ -15,8 +15,11 @@
 
     <repositories>
         <repository>
-            <id>vendor</id>
-            <url>file://${project.basedir}/vendor</url>
+            <id>Github</id>
+            <url>https://maven.pkg.github.com/bis-med-it/sdmx-core</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
@@ -24,12 +27,7 @@
         <dependency>
             <groupId>io.sdmx</groupId>
             <artifactId>fusion-core-sdmx</artifactId>
-            <version>1.0.48</version>
-        </dependency>
-        <dependency>
-            <groupId>io.sdmx</groupId>
-            <artifactId>fusion-sdmx-rest</artifactId>
-            <version>1.0.48</version>
+            <version>1.0.58-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
