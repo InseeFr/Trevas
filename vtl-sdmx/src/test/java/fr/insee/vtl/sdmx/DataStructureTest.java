@@ -66,13 +66,13 @@ class DataStructureTest {
     @Test
     void test() throws IOException {
         var structureID = "BPE_CUBE_2021";
-        ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CUBE_2021.xml");
+        ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_TOWN.xml");
         SdmxBeans sdmxBeans = readerEngine.getSdmxBeans(rdl);
 
         var structures = parseDataStructure(sdmxBeans);
         var structure = structures.get(structureID);
 
-        var dataset = new CSVDataset(structure, new FileReader("src/test/resources/bpe_cube_2021_sample.csv"));
+        var dataset = new CSVDataset(structure, new FileReader("src/test/resources/BPE_TOWN_sample.csv"));
 
         dataset.getDataAsMap().forEach(System.out::println);
     }
