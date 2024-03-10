@@ -15,11 +15,11 @@ import Card from '@theme/Card';
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-engine</artifactId>
-    <version>1.0.2</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
-### Instanciate the Trevas engine
+### Instantiate the Trevas engine
 
 ```java
 // Start engine
@@ -27,18 +27,31 @@ ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
 
 // Add input bindings to engine
 Bindings bindings = new SimpleBindings();
+InMemoryDataset dataset = new InMemoryDataset(
+                List.of(
+                        Map.of("var1", "x", "var2", "y", "var3", 5),
+                        Map.of("var1", "xx", "var2", "yy", "var3", 10)
+                ),
+                Map.of("var1", String.class, "var2", String.class, "var3", Long.class),
+                Map.of("var1", Role.IDENTIFIER, "var2", Role.ATTRIBUTE, "var3", Role.MEASURE)
+);
 bindings.put("a", 1);
+bindings.put("ds", dataset);
 engine.setBindings(b, ScriptContext.ENGINE_SCOPE);
 
 // Execute script
 try {
-        engine.eval("b := a + 1;");
+        engine.eval("b := a + 1; " +
+					"ds1 := ds;" +
+					"ds2 <- ds;");
 } catch (VtlScriptException e) {
 		logger.warn("Eval failed: ", e);
 }
 
 // Get result
 Long result = (Long) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("b");
+Dataset ds1 = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("ds1");
+PersistentDataset result = (PersistentDataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("ds2");
 ```
 
 ### Execution mode

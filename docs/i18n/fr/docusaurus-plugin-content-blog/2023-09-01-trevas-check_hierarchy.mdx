@@ -1,0 +1,70 @@
+---
+slug: /trevas-check_hierarchy
+title: Trevas - check_hierarchy
+authors: [nicolas]
+tags: [Trevas]
+---
+
+### Nouveautés
+
+La validation hiérarchique est implémentée dans Trevas 1.1.0, via les opérateurs `define hierarchical ruleset` et `check_hierarchy`.
+
+### Exemple
+
+#### Données en entrée
+
+`ds1`:
+
+| id  | Me  |
+| :-: | :-: |
+| ABC | 12  |
+|  A  |  1  |
+|  B  | 10  |
+|  C  |  1  |
+| DEF | 100 |
+|  E  | 99  |
+|  F  |  1  |
+| HIJ | 100 |
+|  H  | 99  |
+|  I  |  0  |
+
+#### Script VTL
+
+```
+// Ensure ds1 metadata definition is good
+ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];
+
+// Define hierarchical ruleset
+define hierarchical ruleset hr (variable rule Me) is
+    My_Rule : ABC = A + B + C errorcode "ABC is not sum of A,B,C" errorlevel 1;
+    DEF = D + E + F errorcode "DEF is not sum of D,E,F";
+    HIJ : HIJ = H + I - J errorcode "HIJ is not H + I - J" errorlevel 10
+end hierarchical ruleset;
+
+// Check hierarchy
+ds_all := check_hierarchy(ds1, hr rule id all);
+ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);
+ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);
+```
+
+#### Données en sortie
+
+- `ds_all`
+
+| id  | ruleid  | bool_var | errorcode | errorlevel | imbalance |
+| :-: | :-----: | :------: | :-------: | :--------: | :-------: |
+| ABC | My_Rule |   true   |   null    |    null    |     0     |
+
+- `ds_always_null_all_measures`
+
+| id  | Me  | ruleid  | bool_var | errorcode | errorlevel | imbalance |
+| :-: | :-: | :-----: | :------: | :-------: | :--------: | :-------: |
+| ABC | 12  | My_Rule |   true   |   null    |    null    |     0     |
+| DEF | 100 |  hr_2   |   null   |   null    |    null    |   null    |
+| HIJ | 100 |   HIJ   |   null   |   null    |    null    |   null    |
+
+- `ds_invalid`
+
+| id  | Me  | ruleid |      errorcode       | errorlevel | imbalance |
+| :-: | :-: | :----: | :------------------: | :--------: | :-------: |
+| HIJ | 100 |  HIJ   | HIJ is not H + I - J |     10     |     1     |

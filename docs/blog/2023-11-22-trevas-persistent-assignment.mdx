@@ -1,0 +1,31 @@
+---
+slug: /trevas-persistent-assignments
+title: Trevas - Persistent assignments
+authors: [nicolas]
+tags: [Trevas]
+---
+
+### News
+
+Trevas 1.2.0 includes the persistent assignment support: `ds1 <- ds;`.
+
+In Trevas, persistent datasets are represented as `PersistentDataset`.
+
+### Handle `PersistentDataset`
+
+Trevas datasets are represented as `Dataset`.
+
+After running the Trevas engine, you can use persistent datasets with something like:
+
+```
+Bindings engineBindings = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
+engineBindings.forEach((k, v) -> {
+    if (v instanceof PersistentDataset) {
+        fr.insee.vtl.model.Dataset ds = ((PersistentDataset) v).getDelegate();
+        if (ds instanceof SparkDataset) {
+            Dataset<Row> sparkDs = ((SparkDataset) ds).getSparkDataset();
+            // Do what you want with sparkDs
+        }
+    }
+});
+```

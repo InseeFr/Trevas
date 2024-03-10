@@ -2,20 +2,14 @@ name: Trevas CI
 
 on:
   push:
-    branches:
-      - master
-      - develop
-      - "feature/**"
-    paths-ignore:
-      - "docs/**"
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-      - "master"
-      - "develop"
 
 jobs:
-  build:
+  test:
+    # Fork or Trevas main repo branch with PR coming from fork
+    if: github.repository != 'inseefr/trevas' ||
+        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,17 +20,86 @@ jobs:
         with:
           java-version: 17
           distribution: "adopt"
-      - uses: s4u/maven-settings-action@v3.0.0
+      - name: Test
+        run: mvn test
+  package:
+    # Fork or Trevas main repo branch with PR coming from fork
+    if: github.repository != 'inseefr/trevas' ||
+        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
         with:
-          githubServer: false
-          servers: |
-            [{
-                "id": "Github",
-                "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
-                "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
-            }]
+          fetch-depth: 0
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "adopt"
+      - name: Test
+        run: mvn package
+  test-sonar-package:
+    # Trevas main repo branch with PR coming from main repo
+    if: github.repository == 'inseefr/trevas' &&
+        github.event.pull_request.head.repo.full_name == 'inseefr/trevas'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "adopt"
       - name: Test, package and analyze with maven & SonarCloud
-        run: mvn verify sonar:sonar -Dsonar.projectKey=InseeFr_Trevas -Dsonar.organization=inseefr -Dsonar.host.url=https://sonarcloud.io
+        run: mvn verify sonar:sonar -Pcoverage -Dsonar.projectKey=InseeFr_Trevas -Dsonar.organization=inseefr -Dsonar.host.url=https://sonarcloud.io
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  publish-release:
+    if: github.repository == 'inseefr/trevas' &&
+        startsWith(github.event.ref, 'refs/tags/v')
+    needs: test-sonar-package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Publish Trevas
+        run: mvn -B -Prelease deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+  publish-snapshot:
+    if: github.repository == 'inseefr/trevas' && 
+        github.ref == 'refs/heads/develop'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "adopt"
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel='warn'

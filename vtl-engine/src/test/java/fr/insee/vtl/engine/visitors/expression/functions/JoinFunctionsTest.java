@@ -139,9 +139,9 @@ public class JoinFunctionsTest {
                 Map.of("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
                 Map.of("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
         );
-        assertThat(result.getDataStructure().get("Id_1").getRole().equals(Role.IDENTIFIER));
-        assertThat(result.getDataStructure().get("Id_2").getRole().equals(Role.IDENTIFIER));
-        assertThat(result.getDataStructure().get("Me_1").getRole().equals(Role.MEASURE));
+        assertThat(result.getDataStructure().get("Id_1").getRole()).isEqualTo(Role.IDENTIFIER);
+        assertThat(result.getDataStructure().get("Id_2").getRole()).isEqualTo(Role.IDENTIFIER);
+        assertThat(result.getDataStructure().get("Me_1").getRole()).isEqualTo(Role.MEASURE);
 
         assertThatThrownBy(() -> engine.eval("ds_1 := ds_1[calc measure Id_2 := Id_2];\n" +
                 "result := left_join(ds_1, ds_2 using Id_2);"))
