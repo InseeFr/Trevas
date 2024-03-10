@@ -1,7 +1,7 @@
 package fr.insee.vtl.sdmx;
 
+import fr.insee.vtl.csv.CSVDataset;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.Structured;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.ComponentBean;
@@ -12,13 +12,13 @@ import io.sdmx.format.ml.engine.structure.reader.v3.StaxStructureReaderEngineV3;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.model.Structured.DataStructure;
 
 class DataStructureTest {
 
@@ -72,7 +72,7 @@ class DataStructureTest {
         var structures = parseDataStructure(sdmxBeans);
         var structure = structures.get(structureID);
 
-        var dataset = new CSVDataset(structure, new FileReader("src/test/resources/BPE_TOWN_sample.csv"));
+        var dataset = new CSVDataset(structure, new FileReader("src/test/resources/BPE_TOWN_SAMPLE.csv"));
 
         dataset.getDataAsMap().forEach(System.out::println);
     }

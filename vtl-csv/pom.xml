@@ -10,20 +10,10 @@
         <version>1.4.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vtl-sdmx</artifactId>
-    <name>VTL SDMX</name>
-    <description>Dataset wrapper around SDMX</description>
+    <artifactId>vtl-csv</artifactId>
+    <name>VTL CSV</name>
+    <description>CSV module for the VTL model</description>
     <version>1.4.0-SNAPSHOT</version>
-
-    <repositories>
-        <repository>
-            <id>Github</id>
-            <url>https://maven.pkg.github.com/bis-med-it/sdmx-core</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -33,20 +23,14 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.sdmx</groupId>
-            <artifactId>fusion-sdmx-ml</artifactId>
-            <version>1.0.58-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
             <version>1.4.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-csv</artifactId>
-            <version>1.4.0-SNAPSHOT</version>
-            <scope>test</scope>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
+            <version>2.4.0</version>
         </dependency>
     </dependencies>
 

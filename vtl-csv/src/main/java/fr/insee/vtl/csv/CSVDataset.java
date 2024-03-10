@@ -1,15 +1,15 @@
-package fr.insee.vtl.sdmx;
+package fr.insee.vtl.csv;
 
 import fr.insee.vtl.model.Dataset;
-import org.supercsv.cellprocessor.*;
+import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseBool;
+import org.supercsv.cellprocessor.ParseDouble;
+import org.supercsv.cellprocessor.ParseLong;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.time.Instant;
 import java.time.LocalDate;

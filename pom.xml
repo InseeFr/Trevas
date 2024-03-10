@@ -14,6 +14,7 @@
         <module>vtl-spark</module>
         <module>vtl-jdbc</module>
         <module>vtl-sdmx</module>
+        <module>vtl-csv</module>
     </modules>
 
     <name>Trevas</name>
@@ -332,13 +333,16 @@
 
     <developers>
         <developer>
+            <name>Franck Cotton</name>
+            <email>franck.cotton@insee.fr</email>
+        </developer>
+        <developer>
             <name>Hadrien Kohl</name>
+            <email>hadrien.kohl@gmail.com</email>
         </developer>
         <developer>
             <name>Nicolas Laval</name>
-        </developer>
-        <developer>
-            <name>Franck Cotton</name>
+            <email>nicolas.laval@making-sense.info</email>
         </developer>
     </developers>
 
