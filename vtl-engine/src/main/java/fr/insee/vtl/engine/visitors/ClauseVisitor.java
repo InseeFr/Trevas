@@ -4,24 +4,14 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
@@ -208,13 +198,21 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                         agg -> getSource(agg.aggrOperatorsGrouping())
                 ));
 
-        DatasetExpression normalizedDataset = processingEngine.executeCalc(this.datasetExpression, expressions, roles, expressionStrings);
-
         var dataStructure = datasetExpression.getDataStructure();
         var groupBy = new GroupByVisitor(dataStructure).visit(ctx);
 
+        DatasetExpression normalizedDataset = processingEngine.executeCalc(this.datasetExpression, expressions, roles, expressionStrings);
+
         // TODO: Move to engine
         Structured.DataStructure normalizedStructure = normalizedDataset.getDataStructure();
+
+        // Transform column roles into IDENTIFIER when defined in groupingClause
+        normalizedStructure.forEach((k, v) -> {
+            if (groupBy.contains(k)) {
+                normalizedStructure.put(k, new Structured.Component(k, v.getType(), Dataset.Role.IDENTIFIER));
+            }
+        });
+
         Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
         for (VtlParser.AggrFunctionClauseContext functionCtx : ctx.aggregateClause().aggrFunctionClause()) {
             String alias = getName(functionCtx.componentID());
