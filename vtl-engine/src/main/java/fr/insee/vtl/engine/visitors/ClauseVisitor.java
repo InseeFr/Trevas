@@ -205,6 +205,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         // TODO: Move to engine
         Structured.DataStructure normalizedStructure = normalizedDataset.getDataStructure();
+
+        // Transform column roles into IDENTIFIER when defined in groupingClause
         normalizedStructure.forEach((k, v) -> {
             if (groupBy.contains(k)) {
                 normalizedStructure.put(k, new Structured.Component(k, v.getType(), Dataset.Role.IDENTIFIER));
