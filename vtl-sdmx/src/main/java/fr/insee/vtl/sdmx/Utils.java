@@ -18,7 +18,7 @@ import static fr.insee.vtl.model.Structured.Component;
 
 class Utils {
 
-    private final StaxStructureReaderEngine readerEngine = StaxStructureReaderEngineV3.getInstance();
+    private final StaxStructureReaderEngine readerEngineSDMX3 = StaxStructureReaderEngineV3.getInstance();
 
 
     private Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
@@ -58,9 +58,9 @@ class Utils {
         }
     }
 
-    public Structured.DataStructure buildStructure(String sdmxDSDPath, String structureID) {
+    public Structured.DataStructure buildStructureFromSDMX3(String sdmxDSDPath, String structureID) {
         ReadableDataLocation rdl = new ReadableDataLocationTmp(sdmxDSDPath);
-        SdmxBeans sdmxBeans = readerEngine.getSdmxBeans(rdl);
+        SdmxBeans sdmxBeans = readerEngineSDMX3.getSdmxBeans(rdl);
 
         var structures = parseDataStructure(sdmxBeans);
         return structures.get(structureID);
