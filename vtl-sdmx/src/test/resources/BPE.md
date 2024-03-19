@@ -29,9 +29,9 @@ The input source is the finest available database, where a line describes a spec
 | ID_EQUIPEMENT | Facility identifier | STRING | IDENTIFIER |
 |    TYPEQU     | Type of facility    | STRING | ATTRIBUTE  |
 |    DEPCOM     | Municipality code   | STRING | ATTRIBUTE  |
-|      AN       | Year                | STRING | ATTRIBUTE  |
 |   LAMBERT_X   | Facility longitude  | STRING |  MEASURE   |
 |   LAMBERT_Y   | Facility latitude   | STRING |  MEASURE   |
+|   REF_YEAR    | Year                |       STRING       |  STRING  | ATTRIBUTE  |
 
 ### Step 1: validation of municipality code in input file
 
@@ -53,7 +53,7 @@ VTL script:
 
 ```vtl
 BPE_DETAIL_CLEAN := BPE_DETAIL  [drop LAMBERT_X, LAMBERT_Y]
-                                [calc id := ID_EQUIPEMENT, facility_type := typequ, municipality := DEPCOM, year := AN];
+                                [calc id := ID_EQUIPEMENT, facility_type := typequ, municipality := DEPCOM, year := REF_YEAR];
 ```
 
 `BPE_DETAIL_CLEAN` (temporary dataset):

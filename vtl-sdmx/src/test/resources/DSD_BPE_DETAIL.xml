@@ -38,10 +38,10 @@
                                 <str:Observation />
                             </str:AttributeRelationship>
                         </str:Attribute>
-						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_FICHIER_DETAIL_2021(1.0).TIME_PERIOD" id="TIME_PERIOD" usage="mandatory">
-                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TIME_PERIOD</str:ConceptIdentity>
+						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_FICHIER_DETAIL_2021(1.0).REF_YEAR" id="REF_YEAR" usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
                             <str:LocalRepresentation minOccurs="1" maxOccurs="1">
-                                <str:TextFormat textType="ObservationalTimePeriod" />
+                                <str:TextFormat textType="String" />
                             </str:LocalRepresentation>
                             <str:AttributeRelationship>
                                 <str:Observation />
