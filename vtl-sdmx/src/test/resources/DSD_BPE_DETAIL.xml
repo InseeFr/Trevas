@@ -8,7 +8,7 @@
         <mes:Receiver id="not_supplied" /></mes:Header>
     <mes:Structures>
         <str:DataStructures>
-            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_FICHIER_DETAIL_2021(1.0)" isExternalReference="false" agencyID="FR1" id="BPE_FICHIER_DETAIL_2021" version="1.0">
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_FICHIER_DETAIL_2021(1.0)" isExternalReference="false" agencyID="FR1" id="BPE_DETAIL" version="1.0">
                 <com:Name xml:lang="en">Cube Equipments</com:Name>
                 <str:DataStructureComponents>
                     <str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:BPE_FICHIER_DETAIL_2021(1.0).DimensionDescriptor" id="DimensionDescriptor">
@@ -29,10 +29,10 @@
                                 <str:Observation />
                             </str:AttributeRelationship>
                         </str:Attribute>
-						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_FICHIER_DETAIL_2021(1.0).REF_AREA" id="REF_AREA" usage="mandatory">
-                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA</str:ConceptIdentity>
+						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_FICHIER_DETAIL_2021(1.0).DEPCOM" id="DEPCOM" usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).DEPCOM</str:ConceptIdentity>
                             <str:LocalRepresentation minOccurs="1" maxOccurs="1">
-                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)</str:Enumeration>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                             <str:AttributeRelationship>
                                 <str:Observation />
