@@ -129,6 +129,7 @@ VTL script:
 CENSUS_NUTS3_2021 := CENSUS_NUTS3_2021   
                             [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]
                             [filter year = "2021"]
+                            [calc pop := cast(pop, integer)]
                             [drop year, NB_COM, POP_MUNI];
 ```
 
