@@ -5,32 +5,16 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.DecimalType;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import scala.Predef;
 import scala.collection.JavaConverters;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.apache.spark.sql.types.DataTypes.BooleanType;
-import static org.apache.spark.sql.types.DataTypes.DateType;
-import static org.apache.spark.sql.types.DataTypes.DoubleType;
-import static org.apache.spark.sql.types.DataTypes.FloatType;
-import static org.apache.spark.sql.types.DataTypes.IntegerType;
-import static org.apache.spark.sql.types.DataTypes.LongType;
-import static org.apache.spark.sql.types.DataTypes.StringType;
-import static org.apache.spark.sql.types.DataTypes.TimestampType;
+import static org.apache.spark.sql.types.DataTypes.*;
 import static scala.collection.JavaConverters.mapAsScalaMap;
 
 /**
@@ -53,6 +37,22 @@ public class SparkDataset implements Dataset {
         var dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
         this.sparkDataset = addMetadata(castedSparkDataset, dataStructure);
         this.roles = Objects.requireNonNull(roles);
+    }
+
+    /**
+     * Constructor taking a Spark dataset and a structure.
+     *
+     * @param sparkDataset a Spark dataset.
+     * @param structure    a Data Structure.
+     */
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure structure) {
+        var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        this.sparkDataset = addMetadata(castedSparkDataset, structure);
+        this.roles = Objects.requireNonNull(
+                structure.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().getRole()))
+        );
     }
 
     /**
