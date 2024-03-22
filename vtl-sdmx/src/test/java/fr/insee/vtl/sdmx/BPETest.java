@@ -33,8 +33,8 @@ public class BPETest {
     }
 
     @Test
-    public void buildDataset() throws ScriptException {
-        Utils u = new Utils();
+    public void bpeV1() throws ScriptException {
+        TrevasSDMXUtils u = new TrevasSDMXUtils();
         Structured.DataStructure structure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_DETAIL.xml", "BPE_DETAIL");
 
         SparkDataset bpeDetailDs = new SparkDataset(
