@@ -17,7 +17,7 @@
 			<str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:POP_LEAGLES_CUBE(1.0)"
 			                   isExternalReference="false"
 			                   agencyID="FR1"
-			                   id="POP_LEAGLES_CUBE"
+			                   id="LEGAL_POP"
 			                   version="1.0">
 				<com:Name xml:lang="en">Cube populations légales</com:Name>
 				<str:DataStructureComponents>
@@ -39,9 +39,6 @@
 							</str:LocalRepresentation>
 						</str:TimeDimension>
 					</str:DimensionList>
-					<str:AttributeList urn="urn:sdmx:org.sdmx.infomodel.datastructure.AttributeDescriptor=FR1:POP_LEAGLES_CUBE(1.0).AttributeDescriptor"
-					                   id="AttributeDescriptor">
-                    </str:AttributeList>
 					<str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:POP_LEAGLES_CUBE(1.0).MeasureDescriptor"
 					                 id="MeasureDescriptor">
 						<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:POP_LEAGLES_CUBE(1.0).NB_COM"
