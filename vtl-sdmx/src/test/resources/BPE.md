@@ -168,10 +168,10 @@ BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
 
 `BPE_CENSUS_NUTS3_2021` (persistent dataset):
 
-|            Name             | Description                                |  Type   |    Role    |
-|:---------------------------:|--------------------------------------------|:-------:|:----------:|
-|            nuts3            | NUTS 3 code                                | STRING  | IDENTIFIER |
-| pract_per_10000_inhabitants | Nb of practitioners per 10 000 inhabitants | INTEGER |  MEASURE   |
+|            Name             | Description                                |  Type  |    Role    |
+|:---------------------------:|--------------------------------------------|:------:|:----------:|
+|            nuts3            | NUTS 3 code                                | STRING | IDENTIFIER |
+| pract_per_10000_inhabitants | Nb of practitioners per 10 000 inhabitants | NUMBER |  MEASURE   |
 
 **Compare handwritten DSD ([BPE_CENSUS_NUTS3_2021](./DSD_BPE_TOWN.xml)) to that produced by Trevas.**
 
