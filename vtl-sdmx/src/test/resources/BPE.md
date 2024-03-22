@@ -12,6 +12,7 @@ In order to simplify the first developments of the use case, we assume that:
   dereferenced", thanks to the SDMX
   API for instance)
 - the corresponding datasets are `sdmx-ml` compatible (identifier tuple are unique)
+- refine SDMX / VTL types: only use VTL basic scalar types for now
 
 ## Business use case
 
@@ -24,14 +25,14 @@ The input source is the finest available database, where a line describes a spec
 
 `BPE_DETAIL`:
 
-|     Name      | Description         |  Type  |    Role    |
-|:-------------:|---------------------|:------:|:----------:|
-| ID_EQUIPEMENT | Facility identifier | STRING | IDENTIFIER |
-|    TYPEQU     | Type of facility    | STRING | ATTRIBUTE  |
-|    DEPCOM     | Municipality code   | STRING | ATTRIBUTE  |
-|   LAMBERT_X   | Facility longitude  | STRING |  MEASURE   |
-|   LAMBERT_Y   | Facility latitude   | STRING |  MEASURE   |
+|     Name      | Description         |     SDMX Type      | VTL Type |    Role    |
+|:-------------:|---------------------|:------------------:|:--------:|:----------:|
+| ID_EQUIPEMENT | Facility identifier |       STRING       |  STRING  | IDENTIFIER |
+|    TYPEQU     | Type of facility    | FR1:CL_TYPEQU(1.0) |  STRING  | ATTRIBUTE  |
+|    DEPCOM     | Municipality code   | FR1:CL_DEPCOM(1.0) |  STRING  | ATTRIBUTE  |
 |   REF_YEAR    | Year                |       STRING       |  STRING  | ATTRIBUTE  |
+|   LAMBERT_X   | Facility longitude  |       STRING       |  STRING  |  MEASURE   |
+|   LAMBERT_Y   | Facility latitude   |       STRING       |  STRING  |  MEASURE   |
 
 ### Step 1: validation of municipality code in input file
 
@@ -53,7 +54,7 @@ VTL script:
 
 ```vtl
 BPE_DETAIL_CLEAN := BPE_DETAIL  [drop LAMBERT_X, LAMBERT_Y]
-                                [calc id := ID_EQUIPEMENT, facility_type := typequ, municipality := DEPCOM, year := REF_YEAR];
+                                [rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];
 ```
 
 `BPE_DETAIL_CLEAN` (temporary dataset):
@@ -75,12 +76,12 @@ BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN [aggr nb := count(id) group by municipality
 
 `BPE_MUNICIPALITY` (persistent dataset):
 
-|     Name      | Description          |  Type   |    Role    |
-|:-------------:|----------------------|:-------:|:----------:|
-| municipality  | Municipality code    | STRING  | IDENTIFIER |
-| facility_type | Type of facility     | STRING  | IDENTIFIER |
-|     year      | Year                 | STRING  | IDENTIFIER |
-|      nb       | Number of facilities | INTEGER |  MEASURE   |
+|     Name      | Description          | VTL Type |    Role    |
+|:-------------:|----------------------|:--------:|:----------:|
+| municipality  | Municipality code    |  STRING  | IDENTIFIER |
+| facility_type | Type of facility     |  STRING  | IDENTIFIER |
+|     year      | Year                 |  STRING  | IDENTIFIER |
+|      nb       | Number of facilities | INTEGER  |  MEASURE   |
 
 **Compare handwritten DSD ([DSD_BPE_TOWN](./DSD_BPE_TOWN.xml)) to that produced by Trevas.**
 
@@ -175,4 +176,5 @@ BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
 
 ### Bonus
 
-Instead of using local DSD & data files, consume from [Insee SDMX indicators service](https://www.insee.fr/en/information/2868055) (Warning: SDMX version)
+Instead of using local DSD & data files, consume
+from [Insee SDMX indicators service](https://www.insee.fr/en/information/2868055) (Warning: SDMX version)
