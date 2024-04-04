@@ -20,6 +20,8 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -71,6 +73,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 return Boolean.class;
             case VtlParser.DATE:
                 return Instant.class;
+            case VtlParser.DURATION:
+                return PeriodDuration.class;
+            case VtlParser.TIME_PERIOD:
+                return Interval.class;
             default:
                 throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
         }
