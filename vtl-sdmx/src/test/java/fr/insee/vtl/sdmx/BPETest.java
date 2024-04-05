@@ -35,7 +35,7 @@ public class BPETest {
     @Test
     public void bpeV1() throws ScriptException {
         TrevasSDMXUtils u = new TrevasSDMXUtils();
-        Structured.DataStructure bpeStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_DETAIL.xml", "BPE_DETAIL");
+        Structured.DataStructure bpeStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
 
         SparkDataset bpeDetailDs = new SparkDataset(
                 spark.read()
@@ -138,7 +138,7 @@ public class BPETest {
         assertThat(checkNutsTypes.getDataPoints()).isEmpty();
 
         // Step 6
-        Structured.DataStructure censusStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_LEGAL_POP.xml", "LEGAL_POP");
+        Structured.DataStructure censusStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
         SparkDataset censusNuts = new SparkDataset(
                 spark.read()
