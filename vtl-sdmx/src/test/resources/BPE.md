@@ -48,7 +48,7 @@ CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL, UNIQUE_MUNICIPALITY invalid);
 
 **Check that resulting `CHECK_MUNICIPALITY` contains no observations.**
 
-### Step 2: clean input database
+### Step 2: clean BPE input database
 
 VTL script:
 
@@ -66,7 +66,7 @@ BPE_DETAIL_CLEAN := BPE_DETAIL  [drop LAMBERT_X, LAMBERT_Y]
 | municipality  | Municipality code   | STRING | ATTRIBUTE  |
 |     year      | Year                | STRING | ATTRIBUTE  |
 
-### Step 3: aggregation by municipality, type and year
+### Step 3: BPE aggregation by municipality, type and year
 
 VTL script:
 
@@ -85,7 +85,7 @@ BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN [aggr nb := count(id) group by municipality
 
 **Compare handwritten DSD ([DSD_BPE_TOWN](./DSD_BPE_TOWN.xml)) to that produced by Trevas.**
 
-### Step 4: aggregation by NUTS 3, type and year
+### Step 4: BPE aggregation by NUTS 3, type and year
 
 VTL script:
 
@@ -105,7 +105,7 @@ BPE_NUTS3 <- BPE_MUNICIPALITY   [calc nuts3 := if substr(municipality,1,2) = "97
 
 **Compare handwritten DSD ([DSD_BPE_NUTS3](./DSD_BPE_TOWN.xml)) to that produced by Trevas.**
 
-### Step 5: validation of facility types by NUTS 3
+### Step 5: BPE validation of facility types by NUTS 3
 
 For example, check NUTS 3 with less than 10 bowling alleys (facility_type code `F102`).
 
