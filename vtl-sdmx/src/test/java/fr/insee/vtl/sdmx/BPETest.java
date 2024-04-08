@@ -2,8 +2,11 @@ package fr.insee.vtl.sdmx;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.PersistentDataset;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.spark.SparkDataset;
+import io.sdmx.api.io.ReadableDataLocation;
+import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +15,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,8 +38,7 @@ public class BPETest {
 
     @Test
     public void bpeV1() throws ScriptException {
-        TrevasSDMXUtils u = new TrevasSDMXUtils();
-        Structured.DataStructure bpeStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
+        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
 
         SparkDataset bpeDetailDs = new SparkDataset(
                 spark.read()
@@ -138,7 +141,7 @@ public class BPETest {
         assertThat(checkNutsTypes.getDataPoints()).isEmpty();
 
         // Step 6
-        Structured.DataStructure censusStructure = u.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
         SparkDataset censusNuts = new SparkDataset(
                 spark.read()
@@ -193,5 +196,35 @@ public class BPETest {
 
         assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getType()).isEqualTo(Double.class);
         assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    }
+
+    @Test
+    public void bpeV2() {
+        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
+
+        SparkDataset bpeDetailDs = new SparkDataset(
+                spark.read()
+                        .option("header", "true")
+                        .option("delimiter", ";")
+                        .option("quote", "\"")
+                        .csv("src/test/resources/BPE_DETAIL_SAMPLE.csv"),
+                bpeStructure
+        );
+
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
+
+        SparkDataset censusNuts = new SparkDataset(
+                spark.read()
+                        .option("header", "true")
+                        .option("delimiter", ";")
+                        .option("quote", "\"")
+                        .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
+                censusStructure
+        );
+        Map<String, Dataset> inputs = Map.of("BPE_DETAIL", bpeDetailDs, "LEGAL_POP", censusNuts);
+        ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
+        SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
+        Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
+        assertThat(bindings.size()).isEqualTo(3);
     }
 }
