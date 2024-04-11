@@ -13,6 +13,7 @@ import javax.script.ScriptException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +48,7 @@ public class GenericFunctionsTest {
     }
 
     @Test
-    void testDuration() throws ScriptException {
+    public void testDuration() throws ScriptException {
         // Assuming here that the period follows the ISO_8601 format. The spec is not very clear about it,
         // but examples around line 1507 indicates that this is the case. The threeten-extra classes are used to
         // simplify parsing of duration and intervals.
@@ -65,7 +66,7 @@ public class GenericFunctionsTest {
     }
 
     @Test
-    void testTimePeriod() throws ScriptException {
+    public void testTimePeriod() throws ScriptException {
         // Start/End format
         engine.eval("p1 := cast(\"2015-03-03T09:30:45Z/2018-04-05T12:30:15Z\", time_period);");
         var p1 = engine.getContext().getAttribute("p1");
@@ -86,7 +87,7 @@ public class GenericFunctionsTest {
     }
 
     @Test
-    void testTemporal() throws ScriptException {
+    public void testTemporal() throws ScriptException {
         Period period = Period.of(1, 2, 4);
         ScriptContext context = engine.getContext();
         context.setAttribute("p124", period, ScriptContext.ENGINE_SCOPE);
