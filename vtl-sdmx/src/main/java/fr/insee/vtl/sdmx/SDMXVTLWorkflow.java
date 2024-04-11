@@ -1,7 +1,9 @@
 package fr.insee.vtl.sdmx;
 
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.PersistentDataset;
+import fr.insee.vtl.model.Structured;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
@@ -15,9 +17,7 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SDMXVTLWorkflow {
@@ -35,6 +35,21 @@ public class SDMXVTLWorkflow {
         this.inputs = inputs;
     }
 
+    // Adds semicolon if no present.
+    private static String addSemi(String code) {
+        if (code.endsWith(";")) {
+            return code;
+        }
+        return code + ";";
+    }
+
+    private static String toComment(String comment) {
+        if (comment == null || comment.isBlank()) {
+            return "";
+        }
+        return comment.lines().map(s -> "// " + s).collect(Collectors.joining("\n")) + "\n";
+    }
+
     private Map<String, String> getRulesets() {
         Set<IRulesetSchemeBean> vtlRulesetSchemeBean = sdmxBeans.getVtlRulesetSchemeBean();
         return vtlRulesetSchemeBean.stream().filter(
@@ -42,8 +57,9 @@ public class SDMXVTLWorkflow {
                 )
                 .flatMap(v -> v.getItems().stream())
                 .collect(Collectors.toMap(INamedBean::getId, v -> {
-                                    String rulesetDefinition = v.getRulesetDefinition();
-                                    return rulesetDefinition + (rulesetDefinition.trim().endsWith(";") ? "" : ";");
+                                    var desc = toComment(v.getDescription());
+                                    var definition = addSemi(v.getRulesetDefinition());
+                                    return desc + definition;
                                 },
                                 (u, v) -> {
                                     throw new IllegalStateException(String.format("Duplicate key %s", u));
@@ -52,7 +68,11 @@ public class SDMXVTLWorkflow {
                 );
     }
 
-    private Map<String, String> getTransformations() {
+    public String getRulesetsVTL() {
+        return String.join("\n\n", getRulesets().values());
+    }
+
+    public Map<String, String> getTransformations() {
         Set<ITransformationSchemeBean> vtlTransformationSchemeBean = sdmxBeans.getVtlTransformationSchemeBean();
         return vtlTransformationSchemeBean.stream().filter(
                         v -> v.getVtlVersion().equals(engine.getFactory().getLanguageVersion())
@@ -60,18 +80,36 @@ public class SDMXVTLWorkflow {
                         v -> v.getItems().stream()
                 )
                 .collect(Collectors.toMap(ITransformationBean::getResult, v -> {
-                            String result = v.getResult();
-                            String expression = v.getExpression();
-                            boolean persistent = v.isPersistent();
-                            return result + (persistent ? " <- " : " := ") +
-                                    expression + (expression.trim().endsWith(";") ? "" : ";");
+                            var varName = v.getResult();
+                            var comment = toComment(v.getDescription());
+                            var expression = addSemi(v.getExpression());
+                            var assignment = (v.isPersistent() ? " <- " : " := ");
+                            return comment + varName + assignment + expression;
                         },
                         (u, v) -> {
                             throw new IllegalStateException(String.format("Duplicate key %s", u));
                         },
                         LinkedHashMap::new
                 ));
+    }
 
+    public String getTransformationsVTL() {
+        return String.join("\n\n", getTransformations().values());
+    }
+
+    public Map<String, Dataset> getEmptyDatasets() {
+        return TrevasSDMXUtils.parseDataStructure(sdmxBeans).entrySet().stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                        e.getKey(),
+                        new InMemoryDataset(List.of(), (Map<String, Structured.Component>) e.getValue())
+                )).collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (u, v) -> {
+                            throw new IllegalStateException(String.format("Duplicate key %s", u));
+                        },
+                        LinkedHashMap::new
+                ));
     }
 
     public Map<String, PersistentDataset> run() {

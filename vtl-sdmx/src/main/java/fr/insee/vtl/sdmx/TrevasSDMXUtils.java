@@ -24,7 +24,7 @@ class TrevasSDMXUtils {
     private static final StaxStructureReaderEngine readerEngineSDMX3 = StaxStructureReaderEngineV3.getInstance();
 
 
-    private static Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
+    public static Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
         return sdmxBeans.getDataStructures().stream().collect(Collectors.toMap(
                 INamedBean::getId,
                 TrevasSDMXUtils::convertStructure
@@ -43,6 +43,9 @@ class TrevasSDMXUtils {
 
     private static Class<?> convertType(ComponentBean sdmxComp) {
         TEXT_TYPE textType = sdmxComp.getTextType();
+        if (textType == null) {
+            textType = TEXT_TYPE.STRING;
+        }
         switch (textType) {
             case INTEGER:
             case LONG:
@@ -79,18 +82,22 @@ class TrevasSDMXUtils {
         }
     }
 
-    static private Structured.DataStructure buildStructureFromSDMX3(ReadableDataLocation rdl, String structureID) {
-        SdmxBeans sdmxBeans = readerEngineSDMX3.getSdmxBeans(rdl);
-        var structures = parseDataStructure(sdmxBeans);
+    public static Structured.DataStructure buildStructureFromSDMX3(SdmxBeans beans, String structureID) {
+        var structures = parseDataStructure(beans);
         return structures.get(structureID);
     }
 
-    static public Structured.DataStructure buildStructureFromSDMX3(String sdmxDSDPath, String structureID) {
+    public static Structured.DataStructure buildStructureFromSDMX3(ReadableDataLocation rdl, String structureID) {
+        SdmxBeans sdmxBeans = readerEngineSDMX3.getSdmxBeans(rdl);
+        return buildStructureFromSDMX3(sdmxBeans, structureID);
+    }
+
+    public static Structured.DataStructure buildStructureFromSDMX3(String sdmxDSDPath, String structureID) {
         ReadableDataLocation rdl = new ReadableDataLocationTmp(sdmxDSDPath);
         return buildStructureFromSDMX3(rdl, structureID);
     }
 
-    static public Structured.DataStructure buildStructureFromSDMX3(InputStream sdmxDSD, String structureID) {
+    public static Structured.DataStructure buildStructureFromSDMX3(InputStream sdmxDSD, String structureID) {
         ReadableDataLocation rdl = new InMemoryReadableDataLocation(sdmxDSD);
         return buildStructureFromSDMX3(rdl, structureID);
     }
