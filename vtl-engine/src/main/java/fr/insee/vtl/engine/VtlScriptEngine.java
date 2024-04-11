@@ -231,7 +231,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                         if (offendingSymbol instanceof Token) {
                             errors.add(new VtlSyntaxException(msg, fromToken((Token) offendingSymbol)));
                         } else {
-                            throw new Error("offendingSymbol was not a Token");
+                            var pos = new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
+                            errors.add(new VtlScriptException(msg, () -> pos));
                         }
                     }
                 }
