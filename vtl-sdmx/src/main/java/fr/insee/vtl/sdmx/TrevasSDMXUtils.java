@@ -3,6 +3,7 @@ package fr.insee.vtl.sdmx;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import io.sdmx.api.io.ReadableDataLocation;
+import io.sdmx.api.sdmx.constants.TEXT_TYPE;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.ComponentBean;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
@@ -41,9 +42,27 @@ class TrevasSDMXUtils {
     }
 
     private static Class<?> convertType(ComponentBean sdmxComp) {
-        // TODO: Find the type.
-        //sdmxComp.getConceptRef().getSomething?()
-        return String.class;
+        TEXT_TYPE textType = sdmxComp.getTextType();
+        switch (textType) {
+            case INTEGER:
+            case LONG:
+            case BIG_INTEGER:
+                return Long.class;
+            case FLOAT:
+            case DOUBLE:
+            case DECIMAL:
+            case NUMERIC:
+                return Double.class;
+            case BOOLEAN:
+                return Boolean.class;
+            // TODO: add the right Duration class (PeriodDuration)
+            // case OBSERVATIONAL_TIME_PERIOD:
+            // case REPORTING_TIME_PERIOD:
+            //    return PeriodDuration.class;
+            case STRING:
+            default:
+                return String.class;
+        }
     }
 
     private static Dataset.Role convertTypeToRole(ComponentBean.COMPONENT_TYPE type) {
