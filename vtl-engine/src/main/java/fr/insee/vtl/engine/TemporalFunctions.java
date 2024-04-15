@@ -5,6 +5,10 @@ import org.threeten.extra.PeriodDuration;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.Period;
+import java.time.ZoneOffset;
 
 public class TemporalFunctions {
 
@@ -14,8 +18,11 @@ public class TemporalFunctions {
         return PeriodDuration.between(timePeriod.getStart(), timePeriod.getEnd());
     }
 
-    public static Interval timeshift(Interval time, Integer n) {
-        var dur = time.toDuration().multipliedBy(n);
-        return Interval.of(time.getStart().plus(dur), time.getEnd().plus(dur));
+    public static Interval timeshift(Interval time, Long n) {
+        OffsetDateTime from = time.getStart().atOffset(ZoneOffset.UTC);
+        OffsetDateTime to = time.getEnd().atOffset(ZoneOffset.UTC);
+        var dur = PeriodDuration.between(from, to)
+                .multipliedBy(n.intValue());
+        return Interval.of(from.plus(dur.getPeriod()).toInstant(), to.plus(dur.getPeriod()).toInstant());
     }
 }

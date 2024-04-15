@@ -1,15 +1,19 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.ConstantExpression;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.threeten.extra.Interval;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -20,10 +24,12 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     private final GenericFunctionsVisitor genericFunctionsVisitor;
     private final ExpressionVisitor expressionVisitor;
+    private final ProcessingEngine processingEngine;
 
-    public TimeFunctionsVisitor(GenericFunctionsVisitor genericFunctionsVisitor, ExpressionVisitor expressionVisitor) {
+    public TimeFunctionsVisitor(GenericFunctionsVisitor genericFunctionsVisitor, ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
         this.genericFunctionsVisitor = genericFunctionsVisitor;
         this.expressionVisitor = expressionVisitor;
+        this.processingEngine = processingEngine;
     }
 
     /**
@@ -42,13 +48,31 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
         try {
             // signed integer is a special rule, so we cannot rely on the expression visitor. This means that the
             // second parameter must be a signed integer literal.
+            ResolvableExpression operand = expressionVisitor.visit(ctx.expr());
+            ConstantExpression n = new ConstantExpression(Long.parseLong(ctx.signedInteger().getText()), fromContext(ctx.signedInteger()));
 
-            // TODO: This does not work since this operator changes the identifier value.
+            // Fall through if not dataset.
+            if (!(operand instanceof DatasetExpression)) {
+                return genericFunctionsVisitor.invokeFunction("timeshift", List.of(
+                        operand,
+                        n
+                ), fromContext(ctx));
+            }
 
-            return genericFunctionsVisitor.invokeFunction("timeshift", List.of(
-                    expressionVisitor.visit(ctx.expr()),
-                    new ConstantExpression(Long.parseLong(ctx.signedInteger().getText()), fromContext(ctx.signedInteger()))
-            ), fromContext(ctx));
+            DatasetExpression ds = (DatasetExpression) operand;
+
+            // Find the time column
+            var t = ds.getIdentifiers().stream()
+                    .filter(component -> component.getType().equals(Interval.class))
+                    .findFirst()
+                    .orElseThrow(() -> new InvalidArgumentException("no time column in ", fromContext(ctx.expr())));
+
+            var compExpr = genericFunctionsVisitor.invokeFunction("timeshift", List.of(
+                    new ComponentExpression(t, fromContext(ctx)),
+                    n
+            ), fromContext(ctx));;
+            return processingEngine.executeCalc(ds, Map.of(t.getName(), compExpr), Map.of(t.getName(), t.getRole()), Map.of());
+
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

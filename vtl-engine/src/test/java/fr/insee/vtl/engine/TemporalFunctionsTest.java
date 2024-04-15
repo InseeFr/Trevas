@@ -13,8 +13,10 @@ import javax.script.ScriptException;
 import javax.xml.crypto.Data;
 
 import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.model.Dataset.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TemporalFunctionsTest {
 
@@ -61,8 +63,13 @@ class TemporalFunctionsTest {
 
         engine.eval("d1 := timeshift(ds1, -1);");
         Object d1 = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
-        System.out.println(d1);
-
+        assertThat(d1).isInstanceOf(Dataset.class);
+        assertThat(((Dataset)d1).getDataAsMap()).containsExactly(
+                Map.of("id", "a", "measure", 1L, "time", Interval.parse("2009-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "b", "measure", 2L, "time", Interval.parse("2010-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "c", "measure", 4L, "time", Interval.parse("2011-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "d", "measure", 8L, "time", Interval.parse("2012-01-01T00:00:00Z/P1Y"))
+        );
     }
 
 
