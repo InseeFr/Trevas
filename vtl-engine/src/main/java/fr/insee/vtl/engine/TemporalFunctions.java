@@ -14,5 +14,8 @@ public class TemporalFunctions {
         return PeriodDuration.between(timePeriod.getStart(), timePeriod.getEnd());
     }
 
-
+    public static Interval timeshift(Interval time, Integer n) {
+        var dur = time.toDuration().multipliedBy(n);
+        return Interval.of(time.getStart().plus(dur), time.getEnd().plus(dur));
+    }
 }

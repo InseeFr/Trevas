@@ -89,7 +89,9 @@ public class VtlNativeMethods {
             Fun.toMethod(ComparisonVisitor::isGreaterThanOrEqual),
             Fun.toMethod(ComparisonVisitor::isLessThanOrEqual),
             Fun.toMethod(ComparisonVisitor::in),
-            Fun.toMethod(ComparisonVisitor::notIn)
+            Fun.toMethod(ComparisonVisitor::notIn),
+            // Time functions
+            Fun.toMethod(TemporalFunctions::timeshift)
     );
 
     private VtlNativeMethods() {
