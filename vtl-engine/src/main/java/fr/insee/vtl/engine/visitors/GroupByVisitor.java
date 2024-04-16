@@ -39,8 +39,8 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
     @Override
     public List<String> visitGroupByOrExcept(VtlParser.GroupByOrExceptContext ctx) {
         List<String> componentNames = new ArrayList<>(ctx.componentID().size());
-        for (var component : ctx.componentID()) {
-            var componentName = getName(component);
+        for (VtlParser.ComponentIDContext component : ctx.componentID()) {
+            String componentName = getName(component);
             if (!dataStructure.containsKey(componentName)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
                         String.format("unknown component %s", componentName),

@@ -4,6 +4,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.PersistentDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.spark.SparkDataset;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
@@ -221,7 +222,7 @@ public class BPETest {
                         .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
                 censusStructure
         );
-        Map<String, Dataset> inputs = Map.of("BPE_DETAIL_VTL", bpeDetailDs, "LEGAL_POP", censusNuts);
+        Map<String, Dataset> inputs = Java8Helpers.mapOf("BPE_DETAIL_VTL", bpeDetailDs, "LEGAL_POP", censusNuts);
         ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
         SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
         Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();

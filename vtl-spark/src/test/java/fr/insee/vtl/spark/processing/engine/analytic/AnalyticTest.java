@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Dataset.Role;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -16,38 +17,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
 public abstract class AnalyticTest {
 
     public final InMemoryDataset ds1 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-            Map.of("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE, "Me_2", Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+            Java8Helpers.mapOf("Id_1", Role.IDENTIFIER, "Id_2", Role.IDENTIFIER, "Year", Role.IDENTIFIER, "Me_1", Role.MEASURE, "Me_2", Role.MEASURE)
     );
 
     public final InMemoryDataset ds2 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7D)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7D)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
     );
 
     public final static int DEFAULT_PRECISION = 2;

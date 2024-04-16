@@ -1,9 +1,11 @@
 package fr.insee.vtl.jackson;
 
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,9 +15,9 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
 
     @Test
     public void testDeserializeDataset() throws IOException {
-        var jsonStream = getClass().getResourceAsStream("/dataset.json");
+        InputStream jsonStream = getClass().getResourceAsStream("/dataset.json");
 
-        var dataset = mapper.readValue(jsonStream, Dataset.class);
+        Dataset dataset = mapper.readValue(jsonStream, Dataset.class);
 
         assertThat(dataset.getDataStructure().values()).containsExactly(
                 new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER, false),
@@ -30,9 +32,9 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
         nulls.add(null);
         nulls.add(null);
         assertThat(dataset.getDataAsList()).containsExactly(
-                List.of("Europe", "France", 67063703L, 643.801),
-                List.of("Europe", "Norway", 5372191L, 385.203),
-                List.of("Oceania", "New Zealand", 4917000L, 268.021),
+                Java8Helpers.listOf("Europe", "France", 67063703L, 643.801),
+                Java8Helpers.listOf("Europe", "Norway", 5372191L, 385.203),
+                Java8Helpers.listOf("Oceania", "New Zealand", 4917000L, 268.021),
                 nulls
         );
 
@@ -40,9 +42,9 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
 
     @Test
     public void testDeserializeInvertedDataset() throws IOException {
-        var jsonStream = getClass().getResourceAsStream("/dataset-inverted.json");
+        InputStream jsonStream = getClass().getResourceAsStream("/dataset-inverted.json");
 
-        var dataset = mapper.readValue(jsonStream, Dataset.class);
+        Dataset dataset = mapper.readValue(jsonStream, Dataset.class);
 
         assertThat(dataset.getDataStructure().values()).containsExactly(
                 new Dataset.Component("CONTINENT", String.class, Dataset.Role.IDENTIFIER, false),
@@ -57,9 +59,9 @@ public class DatasetDeserializerTest extends AbstractMapperTest {
         nulls.add(null);
         nulls.add(null);
         assertThat(dataset.getDataAsList()).containsExactly(
-                List.of("Europe", "France", 67063703L, 643.801),
-                List.of("Europe", "Norway", 5372191L, 385.203),
-                List.of("Oceania", "New Zealand", 4917000L, 268.021),
+                Java8Helpers.listOf("Europe", "France", 67063703L, 643.801),
+                Java8Helpers.listOf("Europe", "Norway", 5372191L, 385.203),
+                Java8Helpers.listOf("Oceania", "New Zealand", 4917000L, 268.021),
                 nulls
         );
 

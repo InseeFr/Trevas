@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.apache.spark.sql.SparkSession;
@@ -20,19 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AnalyticMedianTest {
 
     private final InMemoryDataset anCountDS1 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
     );
 
     private static SparkSession spark;
@@ -101,14 +102,14 @@ public class AnalyticMedianTest {
         List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         assertThat(actual).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "median_Me_1", 3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "median_Me_1", 3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "median_Me_1", 4L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "median_Me_1", 4L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "median_Me_1", 9L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "median_Me_1", 5L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "median_Me_1", 9L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "median_Me_1", 5L)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "median_Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "median_Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "median_Me_1", 4L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "median_Me_1", 4L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "median_Me_1", 9L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "median_Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "median_Me_1", 9L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "median_Me_1", 5L)
         );
 
     }
@@ -155,14 +156,14 @@ public class AnalyticMedianTest {
             +----+----+----+----+----+-----------+-----------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D)
         );
 
     }
@@ -208,14 +209,14 @@ public class AnalyticMedianTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3L, "Me_2", 1.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 9L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3L, "Me_2", 1.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 9L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D)
         );
 
     }
@@ -263,14 +264,14 @@ public class AnalyticMedianTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7L, "Me_2", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6L, "Me_2", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 4.0D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7L, "Me_2", 4.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6L, "Me_2", 4.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 4.0D)
         );
 
     }
@@ -318,14 +319,14 @@ public class AnalyticMedianTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D)
         );
 
     }

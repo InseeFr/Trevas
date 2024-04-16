@@ -8,10 +8,7 @@ import fr.insee.vtl.model.VtlMethod;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * An expression that calls a method.
@@ -29,18 +26,18 @@ public class FunctionExpression extends ResolvableExpression {
         this.parameters = Objects.requireNonNull(parameters);
         this.returnType = this.method.getMethod(position).getReturnType();
 
-        var expectedTypes = Arrays.asList(this.method.getMethod(position).getParameterTypes());
+        List<Class<?>> expectedTypes = Arrays.asList(this.method.getMethod(position).getParameterTypes());
         if (expectedTypes.size() < parameters.size()) {
             throw new VtlScriptException("unexpected parameter", parameters.get(expectedTypes.size()));
         } else if (expectedTypes.size() > parameters.size()) {
             throw new VtlScriptException("missing parameter", position);
         }
 
-        var exprIt = parameters.iterator();
-        var typeIt = expectedTypes.iterator();
+        Iterator<ResolvableExpression> exprIt = parameters.iterator();
+        Iterator<Class<?>> typeIt = expectedTypes.iterator();
         while (exprIt.hasNext() && typeIt.hasNext()) {
-            var expression = exprIt.next();
-            var type = typeIt.next();
+            ResolvableExpression expression = exprIt.next();
+            Class<?> type = typeIt.next();
             if (type.equals(Object.class)) {
                 continue;
             }
@@ -57,7 +54,7 @@ public class FunctionExpression extends ResolvableExpression {
         try {
             return method.getMethod(this).invoke(null, evaluatedParameters);
         } catch (InvocationTargetException ite) {
-            var cause = ite.getCause();
+            Throwable cause = ite.getCause();
             if (cause instanceof Exception) {
                 throw new VtlRuntimeException(
                         new VtlScriptException((Exception) ite.getCause(), this));

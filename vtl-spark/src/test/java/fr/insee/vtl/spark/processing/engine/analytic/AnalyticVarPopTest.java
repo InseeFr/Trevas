@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.apache.spark.sql.SparkSession;
@@ -20,19 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AnalyticVarPopTest {
 
     private final InMemoryDataset anCountDS1 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
-                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
+                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
     );
 
     private static SparkSession spark;
@@ -101,14 +102,14 @@ public class AnalyticVarPopTest {
         List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         assertThat(actual).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "var_pop_Me_1", 0.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "var_pop_Me_1", 0.25D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "var_pop_Me_1", 2.888888888888889D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "var_pop_Me_1", 2.4999999999999996D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "var_pop_Me_1", 0.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "var_pop_Me_1", 4.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "var_pop_Me_1", 4.666666666666667D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "var_pop_Me_1", 5.1875D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "var_pop_Me_1", 0.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "var_pop_Me_1", 0.25D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "var_pop_Me_1", 2.888888888888889D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "var_pop_Me_1", 2.4999999999999996D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "var_pop_Me_1", 0.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "var_pop_Me_1", 4.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "var_pop_Me_1", 4.666666666666667D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "var_pop_Me_1", 5.1875D)
         );
 
     }
@@ -160,14 +161,14 @@ public class AnalyticVarPopTest {
         * */
         List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.50D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.50D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.50D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.50D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5.19D, "Me_2", 3.5D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5.19D, "Me_2", 3.5D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5.19D, "Me_2", 3.5D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.19D, "Me_2", 3.5D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.50D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.50D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.50D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.50D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5.19D, "Me_2", 3.5D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5.19D, "Me_2", 3.5D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5.19D, "Me_2", 3.5D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.19D, "Me_2", 3.5D)
         );
 
     }
@@ -217,14 +218,14 @@ public class AnalyticVarPopTest {
 
 
         assertThat(res).contains(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.0D, "Me_2", 0.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.25D, "Me_2", 16.0D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.89D, "Me_2", 10.67D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.50D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 0.0D, "Me_2", 0.0D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 4.0D, "Me_2", 0.25D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4.67D, "Me_2", 0.67D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.19D, "Me_2", 3.5D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.0D, "Me_2", 0.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.25D, "Me_2", 16.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 2.89D, "Me_2", 10.67D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.50D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 0.0D, "Me_2", 0.0D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 4.0D, "Me_2", 0.25D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 4.67D, "Me_2", 0.67D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.19D, "Me_2", 3.5D)
         );
 
     }
@@ -274,14 +275,14 @@ public class AnalyticVarPopTest {
         * */
         List<Map<String, Object>> res = AnalyticTest.roundDecimalInDataset((Dataset) engine.getContext().getAttribute("res"), AnalyticTest.DEFAULT_PRECISION);
         assertThat(res).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.89D, "Me_2", 10.67D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.5D, "Me_2", 9.69D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.56D, "Me_2", 8.96D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.96D, "Me_2", 5.36D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 3.44D, "Me_2", 4.24D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 4.4D, "Me_2", 5.36D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5.19D, "Me_2", 3.5D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.56D, "Me_2", 4.22D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 2.89D, "Me_2", 10.67D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 2.5D, "Me_2", 9.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.56D, "Me_2", 8.96D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 2.96D, "Me_2", 5.36D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 3.44D, "Me_2", 4.24D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 4.4D, "Me_2", 5.36D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5.19D, "Me_2", 3.5D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.56D, "Me_2", 4.22D)
         );
 
     }
@@ -333,14 +334,14 @@ public class AnalyticVarPopTest {
                 AnalyticTest.DEFAULT_PRECISION
         );
         assertThat(res).containsExactlyInAnyOrder(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.19D, "Me_2", 8.69D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5.19D, "Me_2", 8.69D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 6.56D, "Me_2", 6.67D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.56D, "Me_2", 6.67D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 3.81D, "Me_2", 5.81D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 3.81D, "Me_2", 5.81D),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 3.5D, "Me_2", 5.25D),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 3.5D, "Me_2", 5.25D)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.19D, "Me_2", 8.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5.19D, "Me_2", 8.69D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 6.56D, "Me_2", 6.67D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.56D, "Me_2", 6.67D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 3.81D, "Me_2", 5.81D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 3.81D, "Me_2", 5.81D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 3.5D, "Me_2", 5.25D),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 3.5D, "Me_2", 5.25D)
         );
 
     }

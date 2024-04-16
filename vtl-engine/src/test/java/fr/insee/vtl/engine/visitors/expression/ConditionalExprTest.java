@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,11 +49,11 @@ public class ConditionalExprTest {
         engine.eval("ds1 := ds_1[keep id, long1][rename long1 to bool_var]; " +
                 "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; " +
                 "res := if ds1 > ds2 then ds1 else ds2;");
-        var res = engine.getContext().getAttribute("res");
+        Object res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", 150L),
-                Map.of("id", "Nico", "bool_var", 20L),
-                Map.of("id", "Franck", "bool_var", 100L)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", 150L),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", 20L),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", 100L)
         );
         assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Long.class);
     }
@@ -68,12 +68,12 @@ public class ConditionalExprTest {
 
         engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := nvl(ds[keep id, long1], 0);");
-        var res = engine.getContext().getAttribute("res");
+        Object res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "long1", 30L),
-                Map.of("id", "Hadrien", "long1", 10L),
-                Map.of("id", "Nico", "long1", 20L),
-                Map.of("id", "Franck", "long1", 100L)
+                Java8Helpers.mapOf("id", "Toto", "long1", 30L),
+                Java8Helpers.mapOf("id", "Hadrien", "long1", 10L),
+                Java8Helpers.mapOf("id", "Nico", "long1", 20L),
+                Java8Helpers.mapOf("id", "Franck", "long1", 100L)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
@@ -93,12 +93,12 @@ public class ConditionalExprTest {
 
         engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         engine.eval("res := nvl(ds[keep id, long1], 0.1);");
-        var res = engine.getContext().getAttribute("res");
+        Object res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "long1", 30D),
-                Map.of("id", "Hadrien", "long1", 10D),
-                Map.of("id", "Nico", "long1", 20D),
-                Map.of("id", "Franck", "long1", 100D)
+                Java8Helpers.mapOf("id", "Toto", "long1", 30D),
+                Java8Helpers.mapOf("id", "Hadrien", "long1", 10D),
+                Java8Helpers.mapOf("id", "Nico", "long1", 20D),
+                Java8Helpers.mapOf("id", "Franck", "long1", 100D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
     }

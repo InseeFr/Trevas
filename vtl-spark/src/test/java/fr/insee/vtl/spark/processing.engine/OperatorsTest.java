@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.spark.samples.DatasetSamples;
 import org.apache.spark.sql.SparkSession;
@@ -12,7 +13,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,7 +74,7 @@ public class OperatorsTest {
                 "ds_1 := ds1[keep id, string1, string2]; ds_2 := ds2[keep id, string1][calc string2 := string1]; " +
                 "res := ds_1 || ds_2; "
         );
-        var res = engine.getContext().getAttribute("res");
+        Object res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
     }
 
@@ -85,11 +85,11 @@ public class OperatorsTest {
         engine.eval("ds1 := ds_1[keep id, long1][rename long1 to bool_var]; " +
                 "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; " +
                 "res := if ds1 > ds2 then ds1 else ds2;");
-        var res = engine.getContext().getAttribute("res");
+        Object res = engine.getContext().getAttribute("res");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", 150L),
-                Map.of("id", "Nico", "bool_var", 20L),
-                Map.of("id", "Franck", "bool_var", 100L)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", 150L),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", 20L),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", 100L)
         );
         assertThat(((Dataset) res).getDataStructure().get("bool_var").getType()).isEqualTo(Long.class);
     }
