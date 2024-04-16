@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -37,7 +38,7 @@ public class TypeChecking {
      */
     public static <T extends TypedExpression> T assertTypeExpression(T expression, Class<?> type, ParseTree tree) {
         if (isNull(expression)) {
-            var pos = fromContext(tree);
+            Positioned pos = fromContext(tree);
             return (T) ResolvableExpression.withType(type).withPosition(pos).using(c -> null);
         }
         if (!isType(expression, type)) {
@@ -83,7 +84,7 @@ public class TypeChecking {
      * @return A boolean which is <code>true</code> if the expression can be interpreted as the given type, <code>false</code> otherwise.
      */
     public static boolean isNumberOrSameType(TypedExpression expression, Class<?> type) {
-        var expressionType = expression.getType();
+        Class<?> expressionType = expression.getType();
         if (isNumber(expression) && Number.class.isAssignableFrom(type)) return true;
         return type.isAssignableFrom(expressionType);
     }

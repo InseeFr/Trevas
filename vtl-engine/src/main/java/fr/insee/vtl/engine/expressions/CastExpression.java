@@ -23,7 +23,7 @@ public class CastExpression extends ResolvableExpression {
     public CastExpression(Positioned position, ResolvableExpression expr, String mask, Class<?> target) throws VtlScriptException {
         super(position);
         this.target = target;
-        var source = expr.getType();
+        Class<?> source = expr.getType();
         if (source.equals(target)) {
             this.expr = expr;
         } else {
@@ -46,7 +46,7 @@ public class CastExpression extends ResolvableExpression {
     }
 
     public ResolvableExpression castBoolean(ResolvableExpression expr) {
-        var outputClass = getType();
+        Class<?> outputClass = getType();
         if (outputClass.equals(String.class)) {
             return ResolvableExpression.withType(String.class).withPosition(expr).using(context -> {
                 Boolean exprValue = (Boolean) expr.resolve(context);
@@ -70,7 +70,7 @@ public class CastExpression extends ResolvableExpression {
     }
 
     private ResolvableExpression castDouble(ResolvableExpression expr) {
-        var outputClass = getType();
+        Class<?> outputClass = getType();
         if (outputClass.equals(String.class))
             return ResolvableExpression.withType(String.class).withPosition(expr).using(context -> {
                 Double exprValue = (Double) expr.resolve(context);
@@ -99,11 +99,11 @@ public class CastExpression extends ResolvableExpression {
     }
 
     private ResolvableExpression castInstant(ResolvableExpression expr, String mask) {
-        var outputClass = getType();
+        Class<?> outputClass = getType();
         if (outputClass.equals(String.class))
             return ResolvableExpression.withType(String.class).withPosition(expr).using(context -> {
 
-                var value = expr.resolve(context);
+                Object value = expr.resolve(context);
                 Instant exprValue;
                 if (value instanceof LocalDate) {
                     exprValue = ((LocalDate) value).atStartOfDay().toInstant(ZoneOffset.UTC);
@@ -118,7 +118,7 @@ public class CastExpression extends ResolvableExpression {
     }
 
     private ResolvableExpression castLong(ResolvableExpression expr) {
-        var outputClass = getType();
+        Class<?> outputClass = getType();
         if (outputClass.equals(String.class))
             return ResolvableExpression.withType(String.class).withPosition(expr).using(context -> {
                 Long exprValue = (Long) expr.resolve(context);
@@ -141,7 +141,7 @@ public class CastExpression extends ResolvableExpression {
     }
 
     private ResolvableExpression castString(ResolvableExpression expr, String mask) {
-        var outputClass = getType();
+        Class<?> outputClass = getType();
         if (outputClass.equals(Long.class))
             return ResolvableExpression.withType(Long.class).withPosition(expr).using(context -> {
                 String exprValue = (String) expr.resolve(context);

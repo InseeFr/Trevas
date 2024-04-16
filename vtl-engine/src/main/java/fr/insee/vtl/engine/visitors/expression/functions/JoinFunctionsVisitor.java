@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -41,8 +42,8 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     public static Optional<List<Component>> checkSameIdentifiers(Collection<DatasetExpression> datasetExpressions) {
         Set<Set<Component>> identifiers = new LinkedHashSet<>();
         for (DatasetExpression datasetExpression : datasetExpressions) {
-            var structure = datasetExpression.getDataStructure();
-            var ids = new LinkedHashSet<Component>();
+            Structured.DataStructure structure = datasetExpression.getDataStructure();
+            HashSet<Component> ids = new LinkedHashSet<Component>();
             for (Component component : structure.values()) {
                 if (component.getRole().equals(Role.IDENTIFIER)) {
                     ids.add(component);
@@ -75,15 +76,15 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         LinkedHashMap<String, DatasetExpression> datasets = new LinkedHashMap<>();
         List<String> measures = new ArrayList<>();
         for (VtlParser.JoinClauseItemContext joinClauseItem : joinClauseItems) {
-            var datasetExpressionContext = joinClauseItem.expr();
-            var alias = joinClauseItem.alias() != null ? joinClauseItem.alias().IDENTIFIER().getText() : null;
+            VtlParser.ExprContext datasetExpressionContext = joinClauseItem.expr();
+            String alias = joinClauseItem.alias() != null ? joinClauseItem.alias().IDENTIFIER().getText() : null;
             if (alias == null && !(datasetExpressionContext instanceof VtlParser.VarIdExprContext)) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("cannot use expression without alias in join clause", fromContext(datasetExpressionContext))
                 );
             }
 
-            var datasetExpression = (DatasetExpression) assertTypeExpression(
+            DatasetExpression datasetExpression = (DatasetExpression) assertTypeExpression(
                     expressionVisitor.visit(datasetExpressionContext),
                     Dataset.class, datasetExpressionContext);
             List<String> dsMeasures = datasetExpression.getDataStructure().values().stream()
@@ -131,8 +132,8 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Use duplicates to rename columns
         Map<String, DatasetExpression> result = new LinkedHashMap<>();
         for (Map.Entry<String, DatasetExpression> entry : datasets.entrySet()) {
-            var name = entry.getKey();
-            var dataset = entry.getValue();
+            String name = entry.getKey();
+            DatasetExpression dataset = entry.getValue();
             Map<String, String> fromTo = new LinkedHashMap<>();
             for (String columnName : dataset.getColumnNames()) {
                 if (duplicates.contains(columnName)) {
@@ -160,13 +161,13 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         });
         Map<String, String> fromTo = toFrom.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-        var renamed = processingEngine.executeRename(dataset, fromTo);
+        DatasetExpression renamed = processingEngine.executeRename(dataset, fromTo);
         return processingEngine.executeProject(renamed, new ArrayList<>(toKeep));
     }
 
     private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
-        var joinClauseContext = ctx.joinClause();
-        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+        VtlParser.JoinClauseContext joinClauseContext = ctx.joinClause();
+        LinkedHashMap<String, DatasetExpression> datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
         List<Structured.Component> ids = getInnerAndLeftJoinIdentifiers(joinClauseContext, datasets);
 
         DatasetExpression res = processingEngine.executeLeftJoin(renameDuplicates(ids, datasets), ids);
@@ -174,10 +175,10 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression crossJoin(VtlParser.JoinExprContext ctx) {
-        var joinClauseContext = ctx.joinClauseWithoutUsing();
-        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+        VtlParser.JoinClauseWithoutUsingContext joinClauseContext = ctx.joinClauseWithoutUsing();
+        HashMap<String, DatasetExpression> datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
-        Map<String, DatasetExpression> renamedDatasets = renameDuplicates(List.of(), datasets);
+        Map<String, DatasetExpression> renamedDatasets = renameDuplicates(Java8Helpers.listOf(), datasets);
 
         List<Component> identifiers = renamedDatasets.values().stream()
                 .flatMap(dsExpr -> dsExpr.getDataStructure().values().stream())
@@ -188,11 +189,11 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression fullJoin(VtlParser.JoinExprContext ctx) {
-        var joinClauseContext = ctx.joinClauseWithoutUsing();
-        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+        VtlParser.JoinClauseWithoutUsingContext joinClauseContext = ctx.joinClauseWithoutUsing();
+        HashMap<String, DatasetExpression> datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
 
         // Full join require that all the datasets have one or more common identifiers.
-        var commonIdentifiers = checkSameIdentifiers(datasets.values())
+        List<Structured.Component> commonIdentifiers = checkSameIdentifiers(datasets.values())
                 .orElseThrow(() -> new VtlRuntimeException(
                         new InvalidArgumentException(mustHaveCommonIdentifiers, fromContext(joinClauseContext))
                 ));
@@ -202,8 +203,8 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     private DatasetExpression innerJoin(VtlParser.JoinExprContext ctx) {
-        var joinClauseContext = ctx.joinClause();
-        var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
+        VtlParser.JoinClauseContext joinClauseContext = ctx.joinClause();
+        LinkedHashMap<String, DatasetExpression> datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
         List<Structured.Component> ids = getInnerAndLeftJoinIdentifiers(joinClauseContext, datasets);
         DatasetExpression res = processingEngine.executeInnerJoin(renameDuplicates(ids, datasets), ids);
         return removeComponentAlias(res);
@@ -226,7 +227,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
         // Remove the identifiers
         if (joinClauseContext.USING() != null) {
             for (VtlParser.ComponentIDContext usingContext : joinClauseContext.componentID()) {
-                var name = usingContext.getText();
+                String name = usingContext.getText();
                 for (DatasetExpression datasetExpression : datasets.values()) {
                     List<String> names = datasetExpression.getColumnNames();
                     if (!names.contains(name)) {

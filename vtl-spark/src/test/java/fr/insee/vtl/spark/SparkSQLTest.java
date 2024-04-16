@@ -1,23 +1,23 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,8 +32,8 @@ public class SparkSQLTest {
     public void setUp() throws SQLException, IOException {
         databaseFile = File.createTempFile("vtl-test", "h2");
         databaseFile.deleteOnExit();
-        var connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
-        var statement = connection.createStatement();
+        Connection connection = DriverManager.getConnection("jdbc:h2:" + databaseFile);
+        Statement statement = connection.createStatement();
         statement.executeUpdate("create table if not exists ds1 (" +
                 "  id integer," +
                 "  colChar char(7), " +
@@ -70,14 +70,14 @@ public class SparkSQLTest {
     public void testReadSql() throws ScriptException {
 
         // See https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
-        var ds1 = spark.read().format("jdbc")
+        org.apache.spark.sql.Dataset<Row> ds1 = spark.read().format("jdbc")
                 .option("url", "jdbc:h2:" + databaseFile)
                 //.option("dbtable", "DS1")
                 .option("query", "select * from DS1")
                 .load();
 
-        var bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindings.put("ds1", new SparkDataset(ds1, Map.of("id", Dataset.Role.IDENTIFIER)));
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindings.put("ds1", new SparkDataset(ds1, Java8Helpers.mapOf("id", Dataset.Role.IDENTIFIER)));
 
         engine.eval("ds2 := ds1[calc " +
                 "col1 := COLCHAR || \" ok\", " +
@@ -94,7 +94,7 @@ public class SparkSQLTest {
                 "]" +
                 "[keep ID, col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11];");
 
-        var ds2 = (Dataset) bindings.get("ds2");
+        Dataset ds2 = (Dataset) bindings.get("ds2");
         List<List<Object>> roundedDs2 = ds2.getDataAsList().stream().map(line ->
                 line.stream().map(element -> {
                     if (element instanceof Double) {
@@ -107,10 +107,10 @@ public class SparkSQLTest {
         ).collect(Collectors.toList());
 
         assertThat(roundedDs2).containsExactlyInAnyOrder(
-                List.of(1L, "string1 ok", "string1 ok", 2L, 100L, 1.1D, 1.1991D, false, 1.2001D, 10099L, "2001", "2001"),
-                List.of(2L, "string2 ok", "string2 ok", 3L, 200L, 5.1D, 5.1991D, true, 5.2001D, 10199L, "2002", "2002"),
-                List.of(3L, "string3 ok", "string3 ok", 4L, 300L, 3.1D, 3.1991D, false, 3.2001D, 10299L, "2003", "2003"),
-                List.of(4L, "string4 ok", "string4 ok", 5L, 400L, 4.1D, 4.1991D, true, 4.2001D, 10399L, "2004", "2004")
+                Java8Helpers.listOf(1L, "string1 ok", "string1 ok", 2L, 100L, 1.1D, 1.1991D, false, 1.2001D, 10099L, "2001", "2001"),
+                Java8Helpers.listOf(2L, "string2 ok", "string2 ok", 3L, 200L, 5.1D, 5.1991D, true, 5.2001D, 10199L, "2002", "2002"),
+                Java8Helpers.listOf(3L, "string3 ok", "string3 ok", 4L, 300L, 3.1D, 3.1991D, false, 3.2001D, 10299L, "2003", "2003"),
+                Java8Helpers.listOf(4L, "string4 ok", "string4 ok", 5L, 400L, 4.1D, 4.1991D, true, 4.2001D, 10399L, "2004", "2004")
         );
     }
 }

@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -14,46 +15,45 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class JoinTest {
 
     private final InMemoryDataset dataset1 = new InMemoryDataset(
-            List.of(
-                    List.of("a", 1L, 2L),
-                    List.of("b", 3L, 4L),
-                    List.of("c", 5L, 6L),
-                    List.of("d", 7L, 8L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("a", 1L, 2L),
+                    Java8Helpers.listOf("b", 3L, 4L),
+                    Java8Helpers.listOf("c", 5L, 6L),
+                    Java8Helpers.listOf("d", 7L, 8L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
             )
     );
     private final InMemoryDataset dataset2 = new InMemoryDataset(
-            List.of(
-                    List.of(9L, "a", 10L),
-                    List.of(11L, "b", 12L),
-                    List.of(12L, "c", 13L),
-                    List.of(14L, "c", 15L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf(9L, "a", 10L),
+                    Java8Helpers.listOf(11L, "b", 12L),
+                    Java8Helpers.listOf(12L, "c", 13L),
+                    Java8Helpers.listOf(14L, "c", 15L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("age2", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("weight2", Long.class, Dataset.Role.MEASURE)
             )
     );
     private final InMemoryDataset dataset3 = new InMemoryDataset(
-            List.of(
-                    List.of(16L, "a", 17L),
-                    List.of(18L, "b", 19L),
-                    List.of(20L, "c", 21L),
-                    List.of(22L, "c", 23L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf(16L, "a", 17L),
+                    Java8Helpers.listOf(18L, "b", 19L),
+                    Java8Helpers.listOf(20L, "c", 21L),
+                    Java8Helpers.listOf(22L, "c", 23L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("age3", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("weight3", Long.class, Dataset.Role.MEASURE)
@@ -93,7 +93,7 @@ public class JoinTest {
 
         engine.eval("result := left_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
-        var result = (Dataset) context.getAttribute("result");
+        Dataset result = (Dataset) context.getAttribute("result");
         assertThat(result.getDataAsList()).containsExactlyInAnyOrder(
                 Arrays.asList("a", 2L, 16L, 17L, 10L, 1L, 9L),
                 Arrays.asList("b", 4L, 18L, 19L, 12L, 3L, 11L),
@@ -124,7 +124,7 @@ public class JoinTest {
 
         engine.eval("result := inner_join(ds1 as dsOne, ds2, ds3);");
 
-        var resultInner = (Dataset) context.getAttribute("result");
+        Dataset resultInner = (Dataset) context.getAttribute("result");
         assertThat(resultInner.getDataAsList()).containsExactlyInAnyOrder(
                 Arrays.asList("a", 2L, 16L, 17L, 10L, 1L, 9L),
                 Arrays.asList("b", 4L, 18L, 19L, 12L, 3L, 11L),
@@ -149,8 +149,8 @@ public class JoinTest {
     public void testFullJoin() throws ScriptException {
         ScriptContext context = engine.getContext();
 
-        var ds1 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds1 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
                 ),
@@ -159,8 +159,8 @@ public class JoinTest {
                 Arrays.asList("d", 3L)
         );
 
-        var ds2 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds2 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
                 ),
@@ -169,8 +169,8 @@ public class JoinTest {
                 Arrays.asList("c", 6L)
         );
 
-        var ds3 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds3 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
                 ),
@@ -184,7 +184,7 @@ public class JoinTest {
 
         engine.eval("result := full_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
-        var result = (Dataset) context.getAttribute("result");
+        Dataset result = (Dataset) context.getAttribute("result");
 
         assertThat(result.getDataStructure().values()).containsExactlyInAnyOrder(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
@@ -209,7 +209,7 @@ public class JoinTest {
 
         engine.eval("result := cross_join(ds1 as dsOne, ds2, ds3);");
 
-        var resultCross = (Dataset) context.getAttribute("result");
+        Dataset resultCross = (Dataset) context.getAttribute("result");
         assertThat(resultCross.getDataAsList()).containsExactlyInAnyOrder(
                 Arrays.asList("a", 1L, 2L, 9L, "a", 10L, 16L, "a", 17L),
                 Arrays.asList("a", 1L, 2L, 9L, "a", 10L, 18L, "b", 19L),

@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -13,7 +14,6 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
@@ -24,30 +24,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class JoinFunctionsTest {
 
     private final InMemoryDataset ds1 = new InMemoryDataset(
-            List.of(
-                    List.of("a", 1L, 1L),
-                    List.of("a", 2L, 2L),
-                    List.of("b", 1L, 3L),
-                    List.of("b", 2L, 4L),
-                    List.of("c", 1L, 5L),
-                    List.of("c", 2L, 6L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("a", 1L, 1L),
+                    Java8Helpers.listOf("a", 2L, 2L),
+                    Java8Helpers.listOf("b", 1L, 3L),
+                    Java8Helpers.listOf("b", 2L, 4L),
+                    Java8Helpers.listOf("c", 1L, 5L),
+                    Java8Helpers.listOf("c", 2L, 6L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("id1", String.class, Role.IDENTIFIER),
                     new Structured.Component("id2", Long.class, Role.IDENTIFIER),
                     new Structured.Component("m1", Long.class, Role.MEASURE)
             )
     );
     private final InMemoryDataset ds2 = new InMemoryDataset(
-            List.of(
-                    List.of("a", 1L, 7L),
-                    List.of("a", 2L, 8L),
-                    List.of("b", 1L, 9L),
-                    List.of("b", 2L, 10L),
-                    List.of("d", 3L, 11L),
-                    List.of("d", 4L, 12L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("a", 1L, 7L),
+                    Java8Helpers.listOf("a", 2L, 8L),
+                    Java8Helpers.listOf("b", 1L, 9L),
+                    Java8Helpers.listOf("b", 2L, 10L),
+                    Java8Helpers.listOf("d", 3L, 11L),
+                    Java8Helpers.listOf("d", 4L, 12L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("id1", String.class, Role.IDENTIFIER),
                     new Structured.Component("id2", Long.class, Role.IDENTIFIER),
                     new Structured.Component("m2", Long.class, Role.MEASURE)
@@ -86,7 +86,7 @@ public class JoinFunctionsTest {
         engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("result := left_join(ds1, ds2 as aliasDs using id1);");
 
-        var result = (Dataset) engine.getContext().getAttribute("result");
+        Dataset result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
                 "id1", "id2", "m1", "m2"
         );
@@ -107,22 +107,22 @@ public class JoinFunctionsTest {
     @Test
     public void testLeftJoinWithDifferentIdentifiers() throws ScriptException {
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(
-                        List.of(1L, 1L),
-                        List.of(1L, 2L),
-                        List.of(2L, 1L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf(1L, 1L),
+                        Java8Helpers.listOf(1L, 2L),
+                        Java8Helpers.listOf(2L, 1L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
                         new Structured.Component("Id_2", Long.class, Role.IDENTIFIER)
                 )
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(
-                        List.of(1L, "X"),
-                        List.of(2L, "Y")
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf(1L, "X"),
+                        Java8Helpers.listOf(2L, "Y")
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("Id_2", Long.class, Role.IDENTIFIER),
                         new Structured.Component("Me_1", String.class, Role.MEASURE)
                 )
@@ -135,9 +135,9 @@ public class JoinFunctionsTest {
         engine.eval("result := left_join(ds_1, ds_2 using Id_2);");
         Dataset result = ((Dataset) engine.getContext().getAttribute("result"));
         assertThat(result.getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("Id_1", 1L, "Id_2", 1L, "Me_1", "X"),
-                Map.of("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
-                Map.of("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
+                Java8Helpers.mapOf("Id_1", 1L, "Id_2", 1L, "Me_1", "X"),
+                Java8Helpers.mapOf("Id_1", 1L, "Id_2", 2L, "Me_1", "Y"),
+                Java8Helpers.mapOf("Id_1", 2L, "Id_2", 1L, "Me_1", "X")
         );
         assertThat(result.getDataStructure().get("Id_1").getRole()).isEqualTo(Role.IDENTIFIER);
         assertThat(result.getDataStructure().get("Id_2").getRole()).isEqualTo(Role.IDENTIFIER);
@@ -152,21 +152,21 @@ public class JoinFunctionsTest {
     @Test
     public void testLeftJoinWithDouble() throws ScriptException {
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(
-                        List.of("Hadrien", 10L),
-                        List.of("Nico", 11L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("Hadrien", 10L),
+                        Java8Helpers.listOf("Nico", 11L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("name", String.class, Role.IDENTIFIER),
                         new Structured.Component("age", Long.class, Role.MEASURE)
                 )
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(
-                        List.of("Hadrien", 20L),
-                        List.of("Nico", 22L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("Hadrien", 20L),
+                        Java8Helpers.listOf("Nico", 22L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("name", String.class, Role.IDENTIFIER),
                         new Structured.Component("age", Long.class, Role.MEASURE)
                 )
@@ -182,8 +182,8 @@ public class JoinFunctionsTest {
 
         engine.eval("result := left_join(ds_1 as ds1, ds_2 as ds2);");
         assertThat(((Dataset) engine.getContext().getAttribute("result")).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Hadrien", "age", 20L),
-                Map.of("name", "Nico", "age", 22L)
+                Java8Helpers.mapOf("name", "Hadrien", "age", 20L),
+                Java8Helpers.mapOf("name", "Nico", "age", 22L)
         );
 
     }
@@ -192,21 +192,21 @@ public class JoinFunctionsTest {
     public void testLeftJoinMixedStructure() throws ScriptException {
 
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(
-                        Map.of("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
-                        Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue")
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
+                        Java8Helpers.mapOf("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue")
                 ),
-                Map.of("id", String.class, "measure1", Long.class, "measure2", Long.class, "color", String.class),
-                Map.of("id", Role.IDENTIFIER, "measure1", Role.MEASURE, "measure2", Role.MEASURE, "color", Role.MEASURE)
+                Java8Helpers.mapOf("id", String.class, "measure1", Long.class, "measure2", Long.class, "color", String.class),
+                Java8Helpers.mapOf("id", Role.IDENTIFIER, "measure1", Role.MEASURE, "measure2", Role.MEASURE, "color", Role.MEASURE)
         );
 
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(
-                        Map.of("id", "K001", "intermezzo", 0L, "measure2", 11L, "measure1", 19L, "stale", ""),
-                        Map.of("id", "K003", "intermezzo", 0L, "measure2", 7L, "measure1", 3L, "stale", "")
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("id", "K001", "intermezzo", 0L, "measure2", 11L, "measure1", 19L, "stale", ""),
+                        Java8Helpers.mapOf("id", "K003", "intermezzo", 0L, "measure2", 7L, "measure1", 3L, "stale", "")
                 ),
-                Map.of("id", String.class, "intermezzo", Long.class, "measure2", Long.class, "measure1", Long.class, "stale", String.class),
-                Map.of("id", Role.IDENTIFIER, "intermezzo", Role.MEASURE, "measure2", Role.MEASURE, "measure1", Role.MEASURE, "stale", Role.MEASURE)
+                Java8Helpers.mapOf("id", String.class, "intermezzo", Long.class, "measure2", Long.class, "measure1", Long.class, "stale", String.class),
+                Java8Helpers.mapOf("id", Role.IDENTIFIER, "intermezzo", Role.MEASURE, "measure2", Role.MEASURE, "measure1", Role.MEASURE, "stale", Role.MEASURE)
         );
 
         engine.getContext().setAttribute("ds1", dataset1, ScriptContext.ENGINE_SCOPE);
@@ -219,16 +219,15 @@ public class JoinFunctionsTest {
         Dataset joinData = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("joinData");
 
         // Build Map with null value
-        Map<String, Object> thirdLine = new LinkedHashMap<>() {{
-            put("id", "K003");
-            put("measure1", 3L);
-            put("measure2", 7L);
-            put("color", null);
-        }};
+        Map<String, Object> thirdLine = new LinkedHashMap<>();
+        thirdLine.put("id", "K003");
+        thirdLine.put("measure1", 3L);
+        thirdLine.put("measure2", 7L);
+        thirdLine.put("color", null);
 
         assertThat(joinData.getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
-                Map.of("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue"),
+                Java8Helpers.mapOf("id", "K001", "measure1", 1L, "measure2", 9L, "color", "yellow"),
+                Java8Helpers.mapOf("id", "K002", "measure1", 2L, "measure2", 8L, "color", "blue"),
                 thirdLine
         );
     }
@@ -240,7 +239,7 @@ public class JoinFunctionsTest {
         engine.getContext().setAttribute("ds_2", ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("result := inner_join(ds_1[keep id1, id2, m1] as ds1, ds_2 as ds2);");
 
-        var result = (Dataset) engine.getContext().getAttribute("result");
+        Dataset result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactlyInAnyOrder(
                 "id1", "id2", "m1", "m2"
         );
@@ -278,8 +277,8 @@ public class JoinFunctionsTest {
     public void testFullJoin() throws ScriptException {
         ScriptContext context = engine.getContext();
 
-        var ds1 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds1 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
@@ -288,8 +287,8 @@ public class JoinFunctionsTest {
                 Arrays.asList("d", 3L)
         );
 
-        var ds2 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds2 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
@@ -298,8 +297,8 @@ public class JoinFunctionsTest {
                 Arrays.asList("c", 6L)
         );
 
-        var ds3 = new InMemoryDataset(
-                List.of(
+        InMemoryDataset ds3 = new InMemoryDataset(
+                Java8Helpers.listOf(
                         new Structured.Component("id", String.class, Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Role.MEASURE)
                 ),
@@ -313,7 +312,7 @@ public class JoinFunctionsTest {
 
         engine.eval("result := full_join(ds_1 as ds1, ds_2 as ds2, ds_3 as ds3);");
 
-        var result = (Dataset) context.getAttribute("result");
+        Dataset result = (Dataset) context.getAttribute("result");
 
         assertThat(result.getDataStructure().values()).containsExactly(
                 new Structured.Component("id", String.class, Role.IDENTIFIER),
@@ -333,14 +332,14 @@ public class JoinFunctionsTest {
     public void testCrossJoin() throws ScriptException {
 
         InMemoryDataset ds3 = new InMemoryDataset(
-                List.of(
-                        List.of("a", 1L, 1L),
-                        List.of("a", 2L, 2L),
-                        List.of("a", 3L, 3L),
-                        List.of("b", 1L, 3L),
-                        List.of("b", 2L, 4L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("a", 1L, 1L),
+                        Java8Helpers.listOf("a", 2L, 2L),
+                        Java8Helpers.listOf("a", 3L, 3L),
+                        Java8Helpers.listOf("b", 1L, 3L),
+                        Java8Helpers.listOf("b", 2L, 4L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("id1", String.class, Role.IDENTIFIER),
                         new Structured.Component("id2", Long.class, Role.IDENTIFIER),
                         new Structured.Component("m1", Long.class, Role.MEASURE)
@@ -348,11 +347,11 @@ public class JoinFunctionsTest {
         );
 
         InMemoryDataset ds4 = new InMemoryDataset(
-                List.of(
-                        List.of("a", 1L, 7L),
-                        List.of("a", 2L, 8L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("a", 1L, 7L),
+                        Java8Helpers.listOf("a", 2L, 8L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("id1", String.class, Role.IDENTIFIER),
                         new Structured.Component("id2", Long.class, Role.IDENTIFIER),
                         new Structured.Component("m2", Long.class, Role.MEASURE)
@@ -363,7 +362,7 @@ public class JoinFunctionsTest {
         engine.getContext().setAttribute("ds_4", ds4, ScriptContext.ENGINE_SCOPE);
         engine.eval("result := cross_join(ds_3 as ds3, ds_4 as ds4);");
 
-        var result = (Dataset) engine.getContext().getAttribute("result");
+        Dataset result = (Dataset) engine.getContext().getAttribute("result");
         assertThat(result.getColumnNames()).containsExactly(
                 "ds3#id1", "ds3#id2", "ds4#id1", "ds4#id2", "m1", "m2"
         );
