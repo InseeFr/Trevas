@@ -10,7 +10,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.xml.crypto.Data;
 
 import java.util.List;
 import java.util.Map;
@@ -72,8 +71,8 @@ class TemporalFunctionsTest {
         engine.getBindings(ScriptContext.ENGINE_SCOPE).put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
         engine.eval("tt := timeshift(t, 10");
         Object tt = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
-        assertThat(d1).isInstanceOf(Interval.class);
-        assertThat(((Interval)d1)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
+        assertThat(tt).isInstanceOf(Interval.class);
+        assertThat(((Interval)tt)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
     }
 
 
