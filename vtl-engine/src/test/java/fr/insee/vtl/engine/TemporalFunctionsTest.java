@@ -33,7 +33,7 @@ class TemporalFunctionsTest {
         engine.eval("d1 := cast(\"2012Q1\", time_period , \"YYYY\\Qq\");");
         Object d1 = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
         System.out.println(d1);
-
+        throw new UnsupportedOperationException("FIX ME");
         // D Day -
         // W Week -
         // M Month -
@@ -46,7 +46,6 @@ class TemporalFunctionsTest {
 
     @Test
     public void testTimeshift() throws ScriptException {
-
         Dataset ds1 = new InMemoryDataset(
                 new DataStructure(List.of(
                         new Component("id", String.class, Role.IDENTIFIER),
@@ -60,7 +59,6 @@ class TemporalFunctionsTest {
         );
         engine.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
 
-
         engine.eval("d1 := timeshift(ds1, -1);");
         Object d1 = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
         assertThat(d1).isInstanceOf(Dataset.class);
@@ -70,6 +68,12 @@ class TemporalFunctionsTest {
                 Map.of("id", "c", "measure", 4L, "time", Interval.parse("2011-01-01T00:00:00Z/P1Y")),
                 Map.of("id", "d", "measure", 8L, "time", Interval.parse("2012-01-01T00:00:00Z/P1Y"))
         );
+
+        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
+        engine.eval("tt := timeshift(t, 10");
+        Object tt = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
+        assertThat(d1).isInstanceOf(Interval.class);
+        assertThat(((Interval)d1)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
     }
 
 
