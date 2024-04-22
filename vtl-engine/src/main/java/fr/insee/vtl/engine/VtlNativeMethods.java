@@ -91,7 +91,9 @@ public class VtlNativeMethods {
             Fun.toMethod(ComparisonVisitor::in),
             Fun.toMethod(ComparisonVisitor::notIn),
             // Time functions
-            Fun.toMethod(TemporalFunctions::timeshift)
+            Fun.toMethod(TemporalFunctions::timeshift),
+            Fun.toMethod(TemporalFunctions::truncate_time),
+            Fun.toMethod(TemporalFunctions::at_zone)
     );
 
     private VtlNativeMethods() {

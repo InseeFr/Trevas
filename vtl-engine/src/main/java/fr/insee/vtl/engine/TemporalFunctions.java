@@ -5,10 +5,9 @@ import org.threeten.extra.PeriodDuration;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.Period;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 
 public class TemporalFunctions {
 
@@ -24,5 +23,31 @@ public class TemporalFunctions {
         var dur = PeriodDuration.between(from, to)
                 .multipliedBy(n.intValue());
         return Interval.of(from.plus(dur.getPeriod()).toInstant(), to.plus(dur.getPeriod()).toInstant());
+    }
+
+    public static ZonedDateTime at_zone(Instant op, String zone) {
+        var zid = ZoneId.of(zone);
+        return op.atZone(zid);
+    }
+
+    public static ZonedDateTime truncate_time(ZonedDateTime op, String unit) {
+        switch (unit.toLowerCase()) {
+            case "day":
+                return op.truncatedTo(ChronoUnit.DAYS);
+            case "month":
+                return op.withDayOfMonth(1)
+                        .truncatedTo(ChronoUnit.DAYS);
+            case "year":
+                return op.withDayOfYear(1)
+                        .truncatedTo(ChronoUnit.DAYS);
+            case "hour":
+                return op.truncatedTo(ChronoUnit.HOURS);
+            case "minute":
+                return op.truncatedTo(ChronoUnit.MINUTES);
+            case "second":
+                return op.truncatedTo(ChronoUnit.SECONDS);
+            default:
+                throw new IllegalArgumentException("Unsupported unit: " + unit);
+        }
     }
 }
