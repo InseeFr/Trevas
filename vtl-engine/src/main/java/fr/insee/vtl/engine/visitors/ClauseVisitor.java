@@ -199,19 +199,36 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 ));
 
         var dataStructure = datasetExpression.getDataStructure();
-        var groupBy = new GroupByVisitor(dataStructure).visit(ctx);
+
 
         DatasetExpression normalizedDataset = processingEngine.executeCalc(this.datasetExpression, expressions, roles, expressionStrings);
+
+        // Execute the group all as a calc.
+        List<String> groupBy = new ArrayList<>();
+        var groupAll = new GroupAllVisitor(componentExpressionVisitor).visit(ctx);
+        if (groupAll != null) {
+            // TODO, use the name? What if the expression uses multiple columns.
+            normalizedDataset = processingEngine.executeCalc(normalizedDataset,
+                    Map.of("time", groupAll),
+                    Map.of("time", Dataset.Role.IDENTIFIER),
+                    Map.of()
+            );
+            groupBy.add("time");
+        }
 
         // TODO: Move to engine
         Structured.DataStructure normalizedStructure = normalizedDataset.getDataStructure();
 
         // Transform column roles into IDENTIFIER when defined in groupingClause
+        groupBy.addAll(new GroupByVisitor(dataStructure).visit(ctx));
         normalizedStructure.forEach((k, v) -> {
             if (groupBy.contains(k)) {
                 normalizedStructure.put(k, new Structured.Component(k, v.getType(), Dataset.Role.IDENTIFIER));
             }
         });
+
+
+
 
         Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
         for (VtlParser.AggrFunctionClauseContext functionCtx : ctx.aggregateClause().aggrFunctionClause()) {

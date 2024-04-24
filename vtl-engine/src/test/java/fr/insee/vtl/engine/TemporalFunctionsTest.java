@@ -2,20 +2,22 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import java.time.DateTimeException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.temporal.Temporal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +32,54 @@ class TemporalFunctionsTest {
     @BeforeEach
     public void setUp() {
         engine = new ScriptEngineManager().getEngineByName("vtl");
+    }
+
+    @Test
+    public void testAddition() throws ScriptException {
+        var ts = Lists.list(
+                Instant.parse("2023-03-26T00:00:00Z"),
+                ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"), // Day before DST starts
+                ZonedDateTime.parse("2023-10-29T00:00:00+02:00[Europe/Paris]"), // Day before DST ends
+                OffsetDateTime.parse("2023-03-26T00:00:00+01:00"),              // OffsetDateTime for comparison
+                OffsetDateTime.parse("2023-10-29T00:00:00+02:00")               // OffsetDateTime for comparison
+        );
+        var d = PeriodDuration.parse("P1DT1H");
+        engine.put("d", d);
+        for (Temporal t : ts) {
+            engine.put("t", t);
+            engine.eval("r := t + d;");
+            assertThat(engine.get("r")).isEqualTo(t.plus(d));
+            engine.eval("r := t - d;");
+            assertThat(engine.get("r")).isEqualTo(t.minus(d));
+
+        }
+        // TODO: Negative cases (unsupported unit etc).
+    }
+
+    @Test
+    public void testSubtraction() throws ScriptException {
+        // Including different temporal types and specific dates for DST testing
+        var as = List.of(
+                Instant.parse("2023-04-15T00:00:00Z"),                          // Standard Instant
+                ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"), // Day before DST starts
+                OffsetDateTime.parse("2023-04-15T00:00:00Z"),                    // Standard OffsetDateTime
+                ZonedDateTime.parse("2023-10-29T00:00:00+02:00[Europe/Paris]")  // Day before DST ends
+        );
+        var bs = List.of(
+                Instant.parse("2023-04-14T23:00:00Z"),                          // 1 hour before the Instant in 'as'
+                ZonedDateTime.parse("2023-03-26T03:00:00+02:00[Europe/Paris]"), // 3 hours after DST starts, same day
+                OffsetDateTime.parse("2023-04-15T01:00:00Z"),                    // 1 hour after the OffsetDateTime in 'as'
+                ZonedDateTime.parse("2023-10-29T02:00:00+01:00[Europe/Paris]")  // 2 hours after DST ends
+        );
+
+        for (Temporal a : as) {
+            for (Temporal b : bs) {
+                engine.put("a", a);
+                engine.put("b", b);
+                engine.eval("r := a - b;");
+                assertThat(engine.get("r")).isEqualTo(PeriodDuration.between(b, a));
+            }
+        }
     }
 
     @Test
@@ -67,7 +117,7 @@ class TemporalFunctionsTest {
         engine.eval("d1 := timeshift(ds1, -1);");
         Object d1 = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
         assertThat(d1).isInstanceOf(Dataset.class);
-        assertThat(((Dataset)d1).getDataAsMap()).containsExactly(
+        assertThat(((Dataset) d1).getDataAsMap()).containsExactly(
                 Map.of("id", "a", "measure", 1L, "time", Interval.parse("2009-01-01T00:00:00Z/P1Y")),
                 Map.of("id", "b", "measure", 2L, "time", Interval.parse("2010-01-01T00:00:00Z/P1Y")),
                 Map.of("id", "c", "measure", 4L, "time", Interval.parse("2011-01-01T00:00:00Z/P1Y")),
@@ -75,10 +125,10 @@ class TemporalFunctionsTest {
         );
 
         engine.getBindings(ScriptContext.ENGINE_SCOPE).put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
-        engine.eval("tt := timeshift(t, 10");
+        engine.eval("tt := timeshift(t, 10);");
         Object tt = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
         assertThat(tt).isInstanceOf(Interval.class);
-        assertThat(((Interval)tt)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
+        assertThat(((Interval) tt)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
     }
 
     @Test
@@ -91,7 +141,7 @@ class TemporalFunctionsTest {
                 14,
                 30,
                 15,
-                0,
+                1234,
                 utc
         );
         Instant testInstant = zonedDateTime.toInstant();
@@ -141,5 +191,72 @@ class TemporalFunctionsTest {
             assertThat(vsee).hasCauseInstanceOf(DateTimeException.class);
             assertThat(vsee).hasMessage("java.time.zone.ZoneRulesException: Unknown time-zone ID: Invalid/Zone");
         }
+    }
+
+    @Test
+    void testAggregationTODOMOVE() throws ScriptException {
+        var ds1 = new InMemoryDataset(List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("t", Interval.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("me1", Long.class, Dataset.Role.MEASURE)
+        ),
+                Arrays.asList("A", Interval.parse("2010-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("A", Interval.parse("2011-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("A", Interval.parse("2012-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("B", Interval.parse("2013-01-01T00:00:00Z/P4M"), 50L),
+                Arrays.asList("B", Interval.parse("2010-01-01T00:00:00Z/P4M"), 50L),
+                Arrays.asList("C", Interval.parse("2011-01-01T00:00:00Z/P4M"), 10L),
+                Arrays.asList("C", Interval.parse("2012-01-01T00:00:00Z/P4M"), 10L)
+        );
+
+        engine.put("ds1", ds1);
+
+        // TODO: Check how far we are from this aggregation form.
+        //engine.eval("res := sum(ds1) group all time_agg(\"A\",_,me1);");
+
+        // Test with the time_agg syntax.
+        //engine.eval("res := ds1[aggr test := sum(me1) group all time_agg(\"A\",_,me1)];");
+
+        // Test with own function...
+        engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\")];");
+
+        var actual = engine.get("res");
+        ((Dataset) actual).getDataAsMap().forEach(System.out::println);
+    }
+
+    @Test
+    void testAggregationTODOMOVE2() throws ScriptException {
+
+        TemporalFunctions.at_zone2(OffsetDateTime.parse(""));
+        TemporalFunctions.at_zone2(ZonedDateTime.parse(""));
+        TemporalFunctions.at_zone2(Instant.parse(""));
+
+        var ds1 = new InMemoryDataset(List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("t", Interval.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("me1", Long.class, Dataset.Role.MEASURE)
+        ),
+                Arrays.asList("A", Interval.parse("2010-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("A", Interval.parse("2011-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("A", Interval.parse("2012-01-01T00:00:00Z/P4M"), 20L),
+                Arrays.asList("B", Interval.parse("2013-01-01T00:00:00Z/P4M"), 50L),
+                Arrays.asList("B", Interval.parse("2010-01-01T00:00:00Z/P4M"), 50L),
+                Arrays.asList("C", Interval.parse("2011-01-01T00:00:00Z/P4M"), 10L),
+                Arrays.asList("C", Interval.parse("2012-01-01T00:00:00Z/P4M"), 10L)
+        );
+
+        engine.put("ds1", ds1);
+
+        // TODO: Check how far we are from this aggregation form.
+        //engine.eval("res := sum(ds1) group all time_agg(\"A\",_,me1);");
+
+        // Test with the time_agg syntax.
+        //engine.eval("res := ds1[aggr test := sum(me1) group all time_agg(\"A\",_,me1)];");
+
+        // Test with own function...
+        engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\")];");
+
+        var actual = engine.get("res");
+        ((Dataset) actual).getDataAsMap().forEach(System.out::println);
     }
 }
