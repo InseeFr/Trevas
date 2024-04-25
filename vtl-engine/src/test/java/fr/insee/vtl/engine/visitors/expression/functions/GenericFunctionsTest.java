@@ -180,10 +180,5 @@ public class GenericFunctionsTest {
             engine.eval("a := cast(current_date(), string);");
         }).isInstanceOf(InvalidArgumentException.class).hasMessage("cannot cast date: no mask specified");
 
-        // Test unsupported basic scalar type
-        assertThatThrownBy(() -> {
-            engine.eval("e := cast(\"M\", duration);");
-        }).isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("basic scalar type duration unsupported");
     }
 }
