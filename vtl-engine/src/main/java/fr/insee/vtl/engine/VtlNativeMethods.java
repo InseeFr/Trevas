@@ -99,9 +99,16 @@ public class VtlNativeMethods {
             Fun.<Instant, PeriodDuration>toMethod(TemporalFunctions::addition),
             Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctions::addition),
             Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctions::addition),
+
             Fun.<Instant, PeriodDuration>toMethod(TemporalFunctions::subtraction),
             Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctions::subtraction),
             Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
 
             Fun.<Instant, Instant>toMethod(TemporalFunctions::subtraction),
             Fun.<Instant, ZonedDateTime>toMethod(TemporalFunctions::subtraction),

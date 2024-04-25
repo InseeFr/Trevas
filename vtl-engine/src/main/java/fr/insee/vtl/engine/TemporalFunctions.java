@@ -89,11 +89,24 @@ public class TemporalFunctions {
         return op.plus(dur);
     }
 
+    public static Instant addition(PeriodDuration dur, Instant op) {
+        return op.plus(dur);
+    }
+
     public static ZonedDateTime addition(ZonedDateTime op, PeriodDuration dur) {
         return op.plus(dur);
     }
 
+    public static ZonedDateTime addition(PeriodDuration dur, ZonedDateTime op) {
+        return op.plus(dur);
+    }
+
+
     public static OffsetDateTime addition(OffsetDateTime op, PeriodDuration dur) {
+        return op.plus(dur);
+    }
+
+    public static OffsetDateTime addition(PeriodDuration dur, OffsetDateTime op) {
         return op.plus(dur);
     }
 
@@ -108,6 +121,19 @@ public class TemporalFunctions {
     public static OffsetDateTime subtraction(OffsetDateTime op, PeriodDuration amount) {
         return op.minus(amount);
     }
+
+    public static Instant subtraction(PeriodDuration amount, Instant op) {
+        return op.minus(amount);
+    }
+
+    public static ZonedDateTime subtraction(PeriodDuration amount, ZonedDateTime op) {
+        return op.minus(amount);
+    }
+
+    public static OffsetDateTime subtraction(PeriodDuration amount, OffsetDateTime op) {
+        return op.minus(amount);
+    }
+
 
     public static PeriodDuration subtraction(Instant a, Instant b) {
         return PeriodDuration.between(b, a);

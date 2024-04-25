@@ -61,13 +61,13 @@ class TemporalFunctionsTest {
         var as = List.of(
                 Instant.parse("2023-04-15T00:00:00Z"),                          // Standard Instant
                 ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"), // Day before DST starts
-                OffsetDateTime.parse("2023-04-15T00:00:00Z"),                    // Standard OffsetDateTime
+                OffsetDateTime.parse("2023-04-15T00:00:00+01:00"),                    // Standard OffsetDateTime
                 ZonedDateTime.parse("2023-10-29T00:00:00+02:00[Europe/Paris]")  // Day before DST ends
         );
         var bs = List.of(
                 Instant.parse("2023-04-14T23:00:00Z"),                          // 1 hour before the Instant in 'as'
                 ZonedDateTime.parse("2023-03-26T03:00:00+02:00[Europe/Paris]"), // 3 hours after DST starts, same day
-                OffsetDateTime.parse("2023-04-15T01:00:00Z"),                    // 1 hour after the OffsetDateTime in 'as'
+                OffsetDateTime.parse("2023-04-15T01:00:00+01:00"),                    // 1 hour after the OffsetDateTime in 'as'
                 ZonedDateTime.parse("2023-10-29T02:00:00+01:00[Europe/Paris]")  // 2 hours after DST ends
         );
 
@@ -93,6 +93,26 @@ class TemporalFunctionsTest {
             engine.eval("r := d * 2;");
             assertThat(engine.get("r")).isEqualTo(d.multipliedBy(2));
         }
+    }
+
+    @Test
+    public void testComplex() throws ScriptException {
+        // Day before DST starts
+        engine.put("bdst", ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"));
+        // 2 hours after DST ends
+        engine.put("adst", ZonedDateTime.parse("2023-10-29T02:00:00+01:00[Europe/Paris]"));
+        engine.put("inst", OffsetDateTime.parse("2023-04-14T23:00:00+01:30"));
+
+        engine.eval("r := (adst - bdst) * 2 + inst;");
+
+        assertThat(engine.get("r"))
+                .isInstanceOf(OffsetDateTime.class)
+                .isEqualTo(
+                        PeriodDuration.between(
+                                ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"),
+                                ZonedDateTime.parse("2023-10-29T02:00:00+01:00[Europe/Paris]")
+                        ).multipliedBy(2).addTo(OffsetDateTime.parse("2023-04-14T23:00:00+01:30"))
+                );
     }
 
     @Test
