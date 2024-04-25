@@ -17,9 +17,7 @@ import javax.script.ScriptException;
 
 import java.time.*;
 import java.time.temporal.Temporal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static fr.insee.vtl.model.Dataset.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,6 +81,20 @@ class TemporalFunctionsTest {
     }
 
     @Test
+    public void testMultiplication() throws ScriptException {
+        var ds = List.of(
+                PeriodDuration.parse("P1Y"),
+                PeriodDuration.parse("PT1H"),
+                PeriodDuration.parse("P1YT1H")
+        );
+        for (PeriodDuration d : ds) {
+            engine.put("d", d);
+            engine.eval("r := d * 2;");
+            assertThat(engine.get("r")).isEqualTo(d.multipliedBy(2));
+        }
+    }
+
+    @Test
     public void periodIndicator() throws ScriptException {
 
         engine.eval("d1 := cast(\"2012Q1\", time_period , \"YYYY\\Qq\");");
@@ -112,10 +124,10 @@ class TemporalFunctionsTest {
                 List.of("c", Interval.parse("2012-01-01T00:00:00Z/P1Y"), 4L),
                 List.of("d", Interval.parse("2013-01-01T00:00:00Z/P1Y"), 8L)
         );
-        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", ds1);
+        engine.put("ds1", ds1);
 
         engine.eval("d1 := timeshift(ds1, -1);");
-        Object d1 = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
+        Object d1 = engine.get("d1");
         assertThat(d1).isInstanceOf(Dataset.class);
         assertThat(((Dataset) d1).getDataAsMap()).containsExactly(
                 Map.of("id", "a", "measure", 1L, "time", Interval.parse("2009-01-01T00:00:00Z/P1Y")),
@@ -124,44 +136,79 @@ class TemporalFunctionsTest {
                 Map.of("id", "d", "measure", 8L, "time", Interval.parse("2012-01-01T00:00:00Z/P1Y"))
         );
 
-        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
+        engine.put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
         engine.eval("tt := timeshift(t, 10);");
-        Object tt = engine.getBindings(ScriptContext.ENGINE_SCOPE).get("d1");
+        Object tt = engine.get("tt");
         assertThat(tt).isInstanceOf(Interval.class);
-        assertThat(((Interval) tt)).isEqualTo(Interval.parse("2010-01-01T00:00:00Z/P1Y"));
+        assertThat(((Interval) tt)).isEqualTo(Interval.parse("2020-01-01T00:00:00Z/P1Y"));
     }
 
     @Test
     public void testTruncate() throws ScriptException {
-        ZoneId utc = ZoneId.of("UTC");
-        ZonedDateTime zonedDateTime = ZonedDateTime.of(
-                2023,
-                4,
-                15,
-                14,
-                30,
-                15,
-                1234,
-                utc
-        );
-        Instant testInstant = zonedDateTime.toInstant();
-        Map<String, Instant> cases = Map.of(
-                "day", Instant.parse("2023-04-15T00:00:00Z"),
-                "month", Instant.parse("2023-04-01T00:00:00Z"),
-                "year", Instant.parse("2023-01-01T00:00:00Z"),
-                "hour", Instant.parse("2023-04-15T14:00:00Z"),
-                "minute", Instant.parse("2023-04-15T14:30:00Z"),
-                "second", Instant.parse("2023-04-15T14:30:15Z")
+
+        var ts = List.of(
+                Instant.parse("2023-04-15T01:30:30.1234Z"),                          // Standard Instant
+                ZonedDateTime.parse("2023-03-26T01:30:30.1234+01:00[Europe/Paris]"), // Day before DST starts
+                OffsetDateTime.parse("2023-04-15T01:30:30.1234+01:30"),                    // Standard OffsetDateTime
+                ZonedDateTime.parse("2023-10-29T01:30:30.1234+02:00[Europe/Paris]")  // Day before DST ends
         );
 
-        for (Map.Entry<String, Instant> c : cases.entrySet()) {
-            var unit = c.getKey();
-            var expected = c.getValue();
-            engine.put("t", testInstant.atZone(utc));
-            engine.eval("r := truncate_time(t, \"" + unit + "\");");
-            var res = engine.get("r");
-            assertThat(res).isEqualTo(expected.atZone(utc));
+        var us = List.of(
+                "day", "month", "year", "hour", "minute", "second"
+        );
+
+        var r = new ArrayList<Temporal>();
+        var rr = new LinkedHashMap<String, List<Temporal>>();
+        for (Temporal t : ts) {
+            for (String u : us) {
+                engine.put("t", t);
+                engine.put("u", u);
+                engine.eval("r := truncate_time(t, u);");
+                assertThat(engine.get("r")).isInstanceOf(Temporal.class);
+                r.add((Temporal) engine.get("r"));
+                rr.computeIfAbsent((String) engine.get("u"), s -> new ArrayList<>()).add((Temporal) engine.get("r"));
+            }
         }
+        assertThat(rr.get("day")).containsExactly(
+                Instant.parse("2023-04-15T00:00:00Z"),
+                ZonedDateTime.parse("2023-03-26T00:00+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-04-15T00:00+01:30"),
+                ZonedDateTime.parse("2023-10-29T00:00+02:00[Europe/Paris]")
+        );
+        assertThat(rr.get("month")).containsExactly(
+                Instant.parse("2023-04-01T00:00:00Z"),
+                ZonedDateTime.parse("2023-03-01T00:00+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-04-01T00:00+01:30"),
+                ZonedDateTime.parse("2023-10-01T00:00+02:00[Europe/Paris]")
+        );
+        assertThat(rr.get("year")).containsExactly(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                ZonedDateTime.parse("2023-01-01T00:00+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-01-01T00:00+01:30"),
+                ZonedDateTime.parse("2023-01-01T00:00+01:00[Europe/Paris]")
+        );
+
+        assertThat(rr.get("hour")).containsExactly(
+                Instant.parse("2023-04-15T01:00:00Z"),
+                ZonedDateTime.parse("2023-03-26T01:00:00+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-04-15T01:00:00+01:30"),
+                ZonedDateTime.parse("2023-10-29T01:00:00+02:00[Europe/Paris]")
+        );
+
+        assertThat(rr.get("minute")).containsExactly(
+                Instant.parse("2023-04-15T01:30:00Z"),
+                ZonedDateTime.parse("2023-03-26T01:30:00+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-04-15T01:30:00+01:30"),
+                ZonedDateTime.parse("2023-10-29T01:30:00+02:00[Europe/Paris]")
+        );
+
+        assertThat(rr.get("second")).containsExactly(
+                Instant.parse("2023-04-15T01:30:30Z"),
+                ZonedDateTime.parse("2023-03-26T01:30:30+01:00[Europe/Paris]"),
+                OffsetDateTime.parse("2023-04-15T01:30:30+01:30"),
+                ZonedDateTime.parse("2023-10-29T01:30:30+02:00[Europe/Paris]")
+        );
+
     }
 
     @Test
@@ -226,10 +273,6 @@ class TemporalFunctionsTest {
 
     @Test
     void testAggregationTODOMOVE2() throws ScriptException {
-
-        TemporalFunctions.at_zone2(OffsetDateTime.parse(""));
-        TemporalFunctions.at_zone2(ZonedDateTime.parse(""));
-        TemporalFunctions.at_zone2(Instant.parse(""));
 
         var ds1 = new InMemoryDataset(List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),

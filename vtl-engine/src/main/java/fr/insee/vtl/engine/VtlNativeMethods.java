@@ -113,13 +113,17 @@ public class VtlNativeMethods {
             Fun.<OffsetDateTime, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
             Fun.<OffsetDateTime, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
 
+            Fun.<PeriodDuration, Integer>toMethod(TemporalFunctions::multiplication),
+            Fun.<Integer, PeriodDuration>toMethod(TemporalFunctions::multiplication),
+
             Fun.toMethod(TemporalFunctions::timeshift),
 
             Fun.<Instant, String, String>toMethod(TemporalFunctions::truncate_time),
             Fun.<Instant, String>toMethod(TemporalFunctions::truncate_time),
-
-            Fun.<Interval, String, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<ZonedDateTime, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<OffsetDateTime, String>toMethod(TemporalFunctions::truncate_time),
             Fun.<Interval, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<Interval, String, String>toMethod(TemporalFunctions::truncate_time),
 
             Fun.toMethod(TemporalFunctions::at_zone)
     );
