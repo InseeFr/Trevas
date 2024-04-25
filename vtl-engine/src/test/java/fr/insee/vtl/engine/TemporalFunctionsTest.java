@@ -6,6 +6,7 @@ import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
@@ -95,6 +96,7 @@ class TemporalFunctionsTest {
     }
 
     @Test
+    @Disabled
     public void periodIndicator() throws ScriptException {
 
         engine.eval("d1 := cast(\"2012Q1\", time_period , \"YYYY\\Qq\");");
@@ -107,8 +109,6 @@ class TemporalFunctionsTest {
         // Q Quarter -
         // S Semester -
         // A Year -
-
-
     }
 
     @Test

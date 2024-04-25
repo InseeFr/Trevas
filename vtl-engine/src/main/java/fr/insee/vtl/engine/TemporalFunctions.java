@@ -145,12 +145,12 @@ public class TemporalFunctions {
         return PeriodDuration.between(b, a);
     }
 
-    public static PeriodDuration multiplication(PeriodDuration a, Integer b) {
-        return a.multipliedBy(b);
+    public static PeriodDuration multiplication(PeriodDuration a, Long b) {
+        return a.multipliedBy(Math.toIntExact(b));
     }
 
-    public static PeriodDuration multiplication(Integer b, PeriodDuration a) {
-        return a.multipliedBy(b);
+    public static PeriodDuration multiplication(Long b, PeriodDuration a) {
+        return multiplication(a, b);
     }
 
     public static PeriodDuration period_indicator(Interval timePeriod) {

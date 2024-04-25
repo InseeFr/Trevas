@@ -113,8 +113,8 @@ public class VtlNativeMethods {
             Fun.<OffsetDateTime, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
             Fun.<OffsetDateTime, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
 
-            Fun.<PeriodDuration, Integer>toMethod(TemporalFunctions::multiplication),
-            Fun.<Integer, PeriodDuration>toMethod(TemporalFunctions::multiplication),
+            Fun.<PeriodDuration, Long>toMethod(TemporalFunctions::multiplication),
+            Fun.<Long, PeriodDuration>toMethod(TemporalFunctions::multiplication),
 
             Fun.toMethod(TemporalFunctions::timeshift),
 
