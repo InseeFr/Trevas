@@ -93,10 +93,10 @@ public class GenericFunctionsTest {
         context.setAttribute("p124", period, ScriptContext.ENGINE_SCOPE);
 
         // SPEC-4878
-        engine.eval("d1 := cast(“2012Q1”, time_period , ”YYYY\\Qq”);");
+        //engine.eval("d1 := cast(\"2012Q1\", time_period , \"YYYY\\Qq\");");
 
         // SPEC-4879
-        engine.eval("d1 := cast(“2012-12-23”, date, “YYYY-MM-DD”);");
+        engine.eval("d1 := cast(\"2012-12-23\", date, \"YYYY-MM-DD\");");
 
         engine.eval("d1 := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
         assertThat((Instant) context.getAttribute("d1")).isEqualTo("1998-12-01T00:00:00.000Z");
