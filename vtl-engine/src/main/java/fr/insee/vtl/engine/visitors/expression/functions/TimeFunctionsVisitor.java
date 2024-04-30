@@ -8,12 +8,16 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.threeten.extra.Interval;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -44,6 +48,56 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     @Override
+    public ResolvableExpression visitFlowAtom(VtlParser.FlowAtomContext ctx) {
+        if (ctx.FLOW_TO_STOCK() != null) {
+            return flowToStock(ctx);
+        } else if (ctx.STOCK_TO_FLOW() != null) {
+            return stockToFlows(ctx);
+        } else {
+            throw new UnsupportedOperationException("unknown op token " + ctx.op);
+        }
+    }
+
+    private ResolvableExpression stockToFlows(VtlParser.FlowAtomContext ctx) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    private ResolvableExpression flowToStock(VtlParser.FlowAtomContext ctx) {
+        VtlParser.ExprContext expr = ctx.expr();
+        ResolvableExpression operand = expressionVisitor.visit(expr);
+
+        try {
+
+            // Fall through if not dataset.
+            Positioned position = fromContext(ctx);
+            if (!(operand instanceof DatasetExpression)) {
+                throw new InvalidArgumentException("flow to stock only supports datasets", position);
+            }
+
+            DatasetExpression ds = (DatasetExpression) operand;
+            var ids = ds.getIdentifiers().stream()
+                    .collect(Collectors.toMap(
+                            Structured.Component::getName,
+                            c -> Analytics.Order.ASC,
+                            (a, b) -> b,
+                            LinkedHashMap::new
+
+                    ));
+            var time = extractTimeComponent(ctx, ds);
+            var partition = ids.keySet().stream()
+                    .filter(colName -> !time.getName().equals(colName))
+                    .collect(Collectors.toList());
+            for (Structured.Component measure : ds.getMeasures()) {
+                ds = processingEngine.executeSimpleAnalytic(ds, measure.getName(), Analytics.Function.SUM,
+                        measure.getName(), partition, ids, null);
+            }
+            return ds;
+        } catch (VtlScriptException iae) {
+            throw new VtlRuntimeException(iae);
+        }
+    }
+
+    @Override
     public ResolvableExpression visitTimeShiftAtom(VtlParser.TimeShiftAtomContext ctx) {
         try {
             // signed integer is a special rule, so we cannot rely on the expression visitor. This means that the
@@ -61,20 +115,27 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             DatasetExpression ds = (DatasetExpression) operand;
 
-            // Find the time column
-            var t = ds.getIdentifiers().stream()
-                    .filter(component -> component.getType().equals(Interval.class))
-                    .findFirst()
-                    .orElseThrow(() -> new InvalidArgumentException("no time column in ", fromContext(ctx.expr())));
+            var t = extractTimeComponent(ctx, ds);
 
             var compExpr = genericFunctionsVisitor.invokeFunction("timeshift", List.of(
                     new ComponentExpression(t, fromContext(ctx)),
                     n
-            ), fromContext(ctx));;
+            ), fromContext(ctx));
             return processingEngine.executeCalc(ds, Map.of(t.getName(), compExpr), Map.of(t.getName(), t.getRole()), Map.of());
 
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
+    }
+
+    private static Structured.Component extractTimeComponent(ParseTree ctx, DatasetExpression ds) throws InvalidArgumentException {
+        var t = ds.getIdentifiers().stream()
+                .filter(component -> component.getType().equals(Interval.class)
+                        || component.getType().equals(Instant.class)
+                        || component.getType().equals(ZonedDateTime.class)
+                        || component.getType().equals(OffsetDateTime.class))
+                .findFirst()
+                .orElseThrow(() -> new InvalidArgumentException("no time column in " + ctx.getText(), fromContext(ctx)));
+        return t;
     }
 }
