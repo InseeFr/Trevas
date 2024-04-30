@@ -11,75 +11,77 @@ import java.time.*;
 import java.time.temporal.*;
 
 /**
- * The temporal function supported by Trevas.
+ * This comment explains the temporal functionality supported by Trevas, as defined in the VTL 2.0 specification.
  * <p>
- * The VTL 2.0 specification describe the temporal types date & time_period, time and duration. In the opinion of the
- * authors of Trevas, the types as they are described is not satisfactory. The following section explain the implementation
- * choices and differences with the spec.
+ * The specification describes temporal types such as date & time_period, time, and duration. However, Trevas authors find
+ * these descriptions unsatisfactory. This section outlines our implementation choices and how they differ from the spec.
  * <p>
- * We provide support for the following java types:
+ * Supported Java types in Trevas:
  * <ul>
- *     <li>java.time.Instant: a point in time based on the first instant.</li>
- *     <li>java.time.ZonedDateTime: Instant with time zone information</li>
- *     <li>java.time.OffsetDateTime: Instant with offset</li>
- *     <li>org.threeten.extra.PeriodDuration: amount of time that is a combination of Duration, amount of time between two instants and
- *     Period, amount of time represented with calendar units (year, month, etc.).</li>
+ *     <li>java.time.Instant: Represents a specific moment in time.</li>
+ *     <li>java.time.ZonedDateTime: Combines java.time.Instant with time zone information.</li>
+ *     <li>java.time.OffsetDateTime: Combines java.time.Instant with a time-zone offset.</li>
+ *     <li>org.threeten.extra.PeriodDuration: Represents a duration using both calendar units (years, months, etc.)
+ *         and a precise duration between two time points.</li>
  * </ul>
  * <p>
- * The rationale behind this divergence from the specification is that the description is lacking.
- * The types date and time_period are described as a compound-type with a start and an end, making the implementation
- * overly complex.
+ * In the specification, the types date and time_period are presented as compound types with a start and end, which
+ * complicates implementation. By defining a clear algebra between the types, users can combine simple functions to
+ * achieve the desired results.
  * <p>
- * Instead, defining a clear algebra between the types let the user combine simple function to achieve
- * the same result.
- * <p>
+ * Algebraic operations:
  * <ul>
- *      <li>(Instant|ZonedDateTime|OffsetDateTime) + PeriodDuration -> (Instant|ZonedDateTime|OffsetDateTime)</li>
- *      <li>(Instant|ZonedDateTime|OffsetDateTime) - (Instant|ZonedDateTime|OffsetDateTime) -> PeriodDuration</li>
+ *      <li>Add or subtract PeriodDuration to/from Instant, ZonedDateTime, or OffsetDateTime, resulting in the same type.</li>
+ *      <li>Subtract one time point from another (Instant, ZonedDateTime, OffsetDateTime), resulting in PeriodDuration.</li>
  * </ul>
  * <p>
- * Note that when using Instant and PeriodDuration it might be impossible to reliably compute the results without a
- * time zone or offset.
+ * Note: Using Instant with PeriodDuration may yield unreliable results without a time zone or offset.
  * <p>
- * The duration type in VTL is defined as both "regular duration" and "frequency". This definition is ambiguous. The
- * mapping with PeriodDuration allows to express both, but note that when not using Zoned or Offset types some operation
- * might fail.
+ * The VTL's definition of duration as "regular duration" and "frequency" is ambiguous. Mapping this to PeriodDuration
+ * allows expression of both concepts, though operations may fail without Zoned or Offset types.
+ * <p>
+ * Examples of temporal functions re-implemented in Trevas:
+ * <strong>period_indicator</strong>
+ * <p>
+ * Extracts the period of an interval.
  * <p>
  *
  * <strong>flow_to_stock</strong>
  * <p>
- * The flow_to_stock can be replaced by a sum over the time identifiers:
+ * Replaces flow_to_stock with a summation over time identifiers:
  * <pre>
- *     res := flow_to_stock(ds)
- *     res := ds[calc count_Me_1:= count(Me_1 over(partition by Id_1 order by Id_2))];
+ *     result := flow_to_stock(dataset)
+ *     result := sum ( dataset over ( partition by Id_1, Id_Time ) );
  * </pre>
  *
  * <strong>stock_to_flow</strong>
  * <p>
- * Similarly, the stock to flow can be implemented using a lag over the time identifier:
+ * Implements stock_to_flow using a lag function over time identifiers:
  * <pre>
- *     res := stock_to_flow(ds)
- *     res := ds[calc lag_Me_1 := lag(Me_1, 1 over (partition by Id_1, order by Id_2))]
- *               [calc Me_1     := Me_1 - nvl(lag_Me_1, 0)]
- *               [drop lag_Me_1];
+ *     result := stock_to_flow(dataset)
+ *     result := dataset[calc lag_Me_1 := lag(Me_1, 1 over(partition by Id_1, order by Id_2))]
+ *                        [calc Me_1     := Me_1 - nvl(lag_Me_1, 0)]
+ *                        [drop lag_Me_1];
  * </pre>
  *
  * <strong>timeshift</strong>
- * Since arithmetic is implemented on duration, the timeshift can be expressed as a product:
+ * <p>
+ * Expresses timeshift as a multiplication operation on duration:
  * <pre>
- *     res := timeshift(ds, 1);
- *     res := ds[calc id_time := id_time + dur * 1]:
+ *     result := timeshift(dataset, 1);
+ *     result := dataset[calc id_time := id_time + duration * 1];
  * </pre>
  *
  * <strong>time_agg</strong>
- * Instead of using the time_agg, we recommend using the truncate_time function prior to aggregating as usual:
+ * <p>
+ * Recommends using the truncate_time function before aggregation rather than using time_agg:
  * <pre>
- *     res := sum(ds) group all time_agg("A", _ , Me_1)
- *     res := ds[calc id_time := truncate_time(id_time, "year")]
- *              [aggr Me_1 := sum(Me_1) group by id_time]
+ *     result := sum(dataset) group all time_agg("A", _, Me_1)
+ *     result := dataset[calc id_time := truncate_time(id_time, "year")]
+ *                       [aggr Me_1 := sum(Me_1) group by id_time]
  *
- *     // This is also possible
- *     res := ds1[aggr test := sum(me1) group all truncate_time(t, "year")];
+ *     // Alternative method
+ *     result := ds1[aggr test := sum(me1) group all truncate_time(t, "year")];
  * </pre>
  */
 public class TemporalFunctions {
