@@ -13,8 +13,7 @@ public class DataPointRuleset {
 
     private final String name;
     private final List<DataPointRule> rules;
-    private final List<String> variables;
-
+    private List<String> variables;
     private final List<String> valuedomains;
     private final Map<String, String> alias;
     private final Class errorCodeType;
@@ -52,6 +51,10 @@ public class DataPointRuleset {
 
     public List<String> getVariables() {
         return variables;
+    }
+
+    public void setVariables(List<String> variables) {
+        this.variables = variables;
     }
 
     public List<String> getValuedomains() {

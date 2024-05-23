@@ -9,11 +9,9 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
@@ -59,6 +57,28 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         DatasetExpression ds = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.op),
                 Dataset.class, ctx.op);
+
+        // Map valuedomains to variables and update variable alias
+        dpr.getValuedomains().forEach(vd -> {
+            List<String> vars = ds.getDataStructure().getByValuedomain(vd)
+                    .stream().map(Structured.Component::getName)
+                    .collect(Collectors.toList());
+            if (vars.isEmpty()) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Valuedomain " + vd +
+                                " not used in " + ctx.op.getText() + " components", fromContext(ctx))
+                );
+            }
+            if (vars.size() > 1) {
+                throw new VtlRuntimeException(
+                        new InvalidArgumentException("Valuedomain " + vd +
+                                " is used by " + vars.size() + " components in " + ctx.op.getText(), fromContext(ctx))
+                );
+            }
+            List<String> newList = Stream.concat(dpr.getVariables().stream(), vars.stream())
+                    .collect(Collectors.toList());
+            dpr.setVariables(newList);
+        });
 
         // check if dpr variables are in ds structure
         Structured.DataStructure dataStructure = ds.getDataStructure();
