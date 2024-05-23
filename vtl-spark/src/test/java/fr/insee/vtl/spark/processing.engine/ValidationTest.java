@@ -35,8 +35,8 @@ public class ValidationTest {
             List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
-                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
-                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
+                    new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER, null, "vd_id_3"),
+                    new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE, null, "vd_me_1")
             )
     );
     private final InMemoryDataset ds_1_check = new InMemoryDataset(
@@ -278,6 +278,18 @@ public class ValidationTest {
                         "Me_1", 2L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null")
         ).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
+    }
+
+    @Test
+    public void testValidateDPrulesetWithValuedomain() throws ScriptException {
+
+        ScriptContext context = engine.getContext();
+        context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
+
+        engine.eval("define datapoint ruleset dpr1 (valuedomain vd_id_3, vd_me_1 as vd) is " +
+                "ruleA : vd_id_3 = \"AA\" and vd > 0 errorcode \"CREDIT or DEBIT\" " +
+                "end datapoint ruleset; " +
+                "DS_r := check_datapoint(DS_1, dpr1); ");
     }
 
     @Test

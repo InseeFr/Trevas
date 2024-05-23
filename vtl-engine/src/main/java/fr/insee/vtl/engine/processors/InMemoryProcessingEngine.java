@@ -292,7 +292,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos, List<String> toDrop) {
         throw new UnsupportedOperationException();
     }
 

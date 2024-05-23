@@ -58,9 +58,13 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         DatasetExpression ds = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.op),
                 Dataset.class, ctx.op);
 
+        List<String> valuedomaines = new ArrayList<>();
+        Map<String, ResolvableExpression> colsToAdd = new HashMap<>();
+
         // Map valuedomains to variables and update variable alias
+        DatasetExpression finalDs = ds;
         dpr.getValuedomains().forEach(vd -> {
-            List<String> vars = ds.getDataStructure().getByValuedomain(vd)
+            List<String> vars = finalDs.getDataStructure().getByValuedomain(vd)
                     .stream().map(Structured.Component::getName)
                     .collect(Collectors.toList());
             if (vars.isEmpty()) {
@@ -78,7 +82,21 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
             List<String> newList = Stream.concat(dpr.getVariables().stream(), vars.stream())
                     .collect(Collectors.toList());
             dpr.setVariables(newList);
+
+            valuedomaines.add(vd);
+            Class targetClass = finalDs.getDataStructure().get(vars.get(0)).getType();
+            colsToAdd.put(vd,
+                    ResolvableExpression.withType(targetClass)
+                            .withPosition(fromContext(ctx))
+                            .using(c -> {
+                                Map<String, Object> mapContext = (Map<String, Object>) c;
+                                return mapContext.get(vars.get(0));
+                            }));
         });
+
+        // Temp create vd column
+        ds = processingEngine.executeCalc(ds, colsToAdd, Map.of(), Map.of());
+
 
         // check if dpr variables are in ds structure
         Structured.DataStructure dataStructure = ds.getDataStructure();
@@ -106,7 +124,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
         var pos = fromContext(ctx);
 
-        return processingEngine.executeValidateDPruleset(dpr, ds, output, pos);
+        return processingEngine.executeValidateDPruleset(dpr, ds, output, pos, valuedomaines);
     }
 
     /**
