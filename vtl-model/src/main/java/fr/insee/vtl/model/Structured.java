@@ -60,6 +60,8 @@ public interface Structured {
         private final Dataset.Role role;
         private final Boolean nullable;
 
+        private final String valuedomain;
+
         /**
          * Constructor taking the name, type and role of the component.
          *
@@ -72,6 +74,24 @@ public interface Structured {
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
             this.nullable = buildNullable(null, role);
+            this.valuedomain = null;
+        }
+
+        /**
+         * Constructor taking the name, type and role of the component.
+         *
+         * @param name        A string giving the name of the structure component to create
+         * @param type        A <code>Class</code> giving the type of the structure component to create
+         * @param role        A <code>Role</code> giving the role of the structure component to create
+         * @param nullable A <code>Nullable</code> giving the nullable of the structure component to create
+         * @param valuedomain A <code>Valuedomain</code> giving the valuedomain of the structure component to create
+         */
+        public Component(String name, Class<?> type, Dataset.Role role, Boolean nullable, String valuedomain) {
+            this.name = Objects.requireNonNull(name);
+            this.type = Objects.requireNonNull(type);
+            this.role = Objects.requireNonNull(role);
+            this.nullable = buildNullable(nullable, role);
+            this.valuedomain = valuedomain;
         }
 
         /**
@@ -87,6 +107,7 @@ public interface Structured {
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
             this.nullable = buildNullable(nullable, role);
+            this.valuedomain = null;
         }
 
         /**
@@ -99,6 +120,7 @@ public interface Structured {
             this.type = component.getType();
             this.role = component.getRole();
             this.nullable = component.getNullable();
+            this.valuedomain = component.getValuedomain();
         }
 
         /**
@@ -175,6 +197,15 @@ public interface Structured {
          */
         public Boolean getNullable() {
             return nullable;
+        }
+
+        /**
+         * Returns the valuedomain of component.
+         *
+         * @return The valuedomain of the component as a String
+         */
+        public String getValuedomain() {
+            return valuedomain;
         }
 
         @Override
@@ -290,6 +321,10 @@ public interface Structured {
         public Map<String, Dataset.Role> getRoles() {
             return entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().getRole()));
+        }
+
+        public List<Component> getByValuedomain(String valuedomain) {
+            return values().stream().filter(c -> valuedomain.equals(c.getValuedomain())).collect(Collectors.toList());
         }
 
         public Boolean isMonoMeasure() {

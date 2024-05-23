@@ -48,12 +48,24 @@ public class AssignmentTest {
         engine.eval("define datapoint ruleset dpr1 (variable Id_3, Me_1) is " +
                 "ruleA : when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\" errorlevel 2; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
-                "end datapoint ruleset; ");
+                "end datapoint ruleset;");
         DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
         assertThat(dpr1.getRules()).hasSize(2);
         assertThat(dpr1.getVariables()).hasSize(2);
         assertThat(dpr1.getRules().get(0).getName()).isEqualTo("ruleA");
         assertThat(dpr1.getRules().get(1).getName()).isEqualTo("dpr1_2");
+        assertThat(dpr1.getRules().get(0).getErrorLevelExpression().getType()).isEqualTo(Long.class);
+    }
+
+    @Test
+    public void testDataPointRulesetWithValuedomain() throws ScriptException {
+        engine.eval("define datapoint ruleset dpr1 (valuedomain vd as VD) is " +
+                "ruleA : VD = \"CREDIT\" errorcode \"Has to be CREDIT or DEBIT\" errorlevel 1 " +
+                "end datapoint ruleset; ");
+        DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
+        assertThat(dpr1.getRules()).hasSize(1);
+        assertThat(dpr1.getValuedomains()).hasSize(1);
+        assertThat(dpr1.getRules().get(0).getName()).isEqualTo("ruleA");
         assertThat(dpr1.getRules().get(0).getErrorLevelExpression().getType()).isEqualTo(Long.class);
     }
 
