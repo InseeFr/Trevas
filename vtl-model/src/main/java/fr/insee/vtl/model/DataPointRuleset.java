@@ -14,6 +14,8 @@ public class DataPointRuleset {
     private final String name;
     private final List<DataPointRule> rules;
     private final List<String> variables;
+
+    private final List<String> valuedomains;
     private final Map<String, String> alias;
     private final Class errorCodeType;
     private final Class errorLevelType;
@@ -23,16 +25,18 @@ public class DataPointRuleset {
      *
      * @param name           Ruleset name.
      * @param rules          List of rules.
-     * @param variables      List of rules.
+     * @param variables      List of variables.
+     * @param valuedomains   List of valuedomains.
      * @param alias          Map of variable alias.
      * @param errorCodeType  Type of errorcode
      * @param errorLevelType Type of errorlevel
      */
-    public DataPointRuleset(String name, List<DataPointRule> rules, List<String> variables,
+    public DataPointRuleset(String name, List<DataPointRule> rules, List<String> variables, List<String> valuedomains,
                             Map<String, String> alias, Class errorCodeType, Class errorLevelType) {
         this.name = name;
         this.rules = rules;
         this.variables = variables;
+        this.valuedomains = valuedomains;
         this.alias = alias;
         this.errorCodeType = errorCodeType;
         this.errorLevelType = errorLevelType;
@@ -48,6 +52,10 @@ public class DataPointRuleset {
 
     public List<String> getVariables() {
         return variables;
+    }
+
+    public List<String> getValuedomains() {
+        return valuedomains;
     }
 
     public Map<String, String> getAlias() {
