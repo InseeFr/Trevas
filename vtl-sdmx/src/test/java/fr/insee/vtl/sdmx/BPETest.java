@@ -200,7 +200,9 @@ public class BPETest {
 
     @Test
     public void bpeV2() {
-        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
+        // Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
+        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS_ISSUE_344.xml", "BPE_DETAIL_VTL");
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS_ISSUE_344.xml", "LEGAL_POP");
 
         SparkDataset bpeDetailDs = new SparkDataset(
                 spark.read()
@@ -211,7 +213,6 @@ public class BPETest {
                 bpeStructure
         );
 
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
         SparkDataset censusNuts = new SparkDataset(
                 spark.read()

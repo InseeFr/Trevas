@@ -8,14 +8,23 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.ComponentBean;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
+import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
+import io.sdmx.api.sdmx.model.beans.reference.CrossReferenceBean;
+import io.sdmx.api.sdmx.model.beans.transformation.IVtlMappingBean;
+import io.sdmx.api.sdmx.model.beans.transformation.IVtlMappingSchemeBean;
 import io.sdmx.format.ml.api.engine.StaxStructureReaderEngine;
 import io.sdmx.format.ml.engine.structure.reader.v3.StaxStructureReaderEngineV3;
 import io.sdmx.utils.core.io.InMemoryReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 
 import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.model.Structured.Component;
 
@@ -25,9 +34,14 @@ class TrevasSDMXUtils {
 
 
     public static Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
-        return sdmxBeans.getDataStructures().stream().collect(Collectors.toMap(
-                INamedBean::getId,
-                TrevasSDMXUtils::convertStructure
+        Map<String, DataStructureBean> mapping = vtlMapping(sdmxBeans);
+        Map<String, DataStructureBean> dataflows = dataflows(sdmxBeans);
+        return Stream.concat(
+                dataflows.entrySet().stream().filter(e -> !mapping.containsValue(e.getValue())),
+                mapping.entrySet().stream()
+        ).collect(Collectors.toMap(
+                Map.Entry::getKey,
+                e -> convertStructure(e.getValue())
         ));
     }
 
@@ -85,6 +99,41 @@ class TrevasSDMXUtils {
     public static Structured.DataStructure buildStructureFromSDMX3(SdmxBeans beans, String structureID) {
         var structures = parseDataStructure(beans);
         return structures.get(structureID);
+    }
+
+    public static <T> Collector<T, ?, T> toSingleton() {
+        return Collectors.collectingAndThen(
+                Collectors.toList(),
+                list -> {
+                    if (list.size() != 1) {
+                        throw new IllegalStateException();
+                    }
+                    return list.get(0);
+                }
+        );
+    }
+
+    public static Map<String, DataStructureBean> dataflows(SdmxBeans sdmxBeans) {
+        return sdmxBeans.getDataflows().stream().collect(Collectors.toMap(
+                INamedBean::getId,
+                dataflowBean -> sdmxBeans.getDataStructures(dataflowBean.getDataStructureRef())
+                        .stream()
+                        .collect(toSingleton())
+        ));
+    }
+
+    public static Map<String, DataStructureBean> vtlMapping(SdmxBeans sdmxBeans) {
+        // Find the structure using the mapping.
+        // mapping -> dataflow -> structure.
+        List<IVtlMappingBean> mappings = sdmxBeans.getVtlMappingSchemeBean().stream()
+                .flatMap(m -> m.getItems().stream())
+                .collect(Collectors.toList());
+        return mappings.stream().collect(Collectors.toMap(
+                IVtlMappingBean::getAlias,
+                m -> sdmxBeans.getDataflows(m.getMapped()).stream()
+                        .flatMap(flow -> sdmxBeans.getDataStructures(flow.getDataStructureRef()).stream())
+                        .collect(toSingleton())
+        ));
     }
 
     public static Structured.DataStructure buildStructureFromSDMX3(ReadableDataLocation rdl, String structureID) {
