@@ -83,9 +83,10 @@ public interface Structured {
          * @param name        A string giving the name of the structure component to create
          * @param type        A <code>Class</code> giving the type of the structure component to create
          * @param role        A <code>Role</code> giving the role of the structure component to create
+         * @param nullable A <code>Nullable</code> giving the nullable of the structure component to create
          * @param valuedomain A <code>Valuedomain</code> giving the valuedomain of the structure component to create
          */
-        public Component(String name, Class<?> type, Dataset.Role role, String valuedomain, Boolean nullable) {
+        public Component(String name, Class<?> type, Dataset.Role role, Boolean nullable, String valuedomain) {
             this.name = Objects.requireNonNull(name);
             this.type = Objects.requireNonNull(type);
             this.role = Objects.requireNonNull(role);
@@ -320,6 +321,10 @@ public interface Structured {
         public Map<String, Dataset.Role> getRoles() {
             return entrySet().stream()
                     .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().getRole()));
+        }
+
+        public List<Component> getByValuedomain(String valuedomain) {
+            return values().stream().filter(c -> valuedomain.equals(c.getValuedomain())).collect(Collectors.toList());
         }
 
         public Boolean isMonoMeasure() {
