@@ -38,7 +38,7 @@ public class BPETest {
 
     @Test
     public void bpeV1() throws ScriptException {
-        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
+        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
 
         SparkDataset bpeDetailDs = new SparkDataset(
                 spark.read()
@@ -200,9 +200,8 @@ public class BPETest {
 
     @Test
     public void bpeV2() {
-        // Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL");
-        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS_ISSUE_344.xml", "BPE_DETAIL_VTL");
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS_ISSUE_344.xml", "LEGAL_POP");
+        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
         SparkDataset bpeDetailDs = new SparkDataset(
                 spark.read()
@@ -222,7 +221,7 @@ public class BPETest {
                         .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
                 censusStructure
         );
-        Map<String, Dataset> inputs = Map.of("BPE_DETAIL", bpeDetailDs, "LEGAL_POP", censusNuts);
+        Map<String, Dataset> inputs = Map.of("BPE_DETAIL_VTL", bpeDetailDs, "LEGAL_POP", censusNuts);
         ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
         SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
         Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
