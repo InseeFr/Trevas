@@ -9,7 +9,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.*;
@@ -290,6 +289,10 @@ public class ValidationTest {
                 "ruleA : vd_id_3 = \"AA\" and vd > 0 errorcode \"CREDIT or DEBIT\" " +
                 "end datapoint ruleset; " +
                 "DS_r := check_datapoint(DS_1, dpr1); ");
+
+        Dataset DS_r = (Dataset) engine.getContext().getAttribute("DS_r");
+        assertThat(DS_r).isInstanceOf(Dataset.class);
+        assertThat(DS_r.getDataPoints().size()).isEqualTo(4);
     }
 
     @Test

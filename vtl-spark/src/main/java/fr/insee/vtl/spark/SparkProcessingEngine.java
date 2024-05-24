@@ -613,7 +613,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         Dataset<Row> invertRenamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(invertRenamedSparkDs), pos);
-        DatasetExpression cleanedExpression = executeProject(sparkDatasetExpression, toDrop);
+        List<String> toKeep = sparkDatasetExpression.getColumnNames()
+                .stream().filter(v -> !toDrop.contains(v))
+                .collect(Collectors.toList());
+        DatasetExpression cleanedExpression = executeProject(sparkDatasetExpression, toKeep);
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
             ResolvableExpression defaultExpression = ResolvableExpression.withType(Boolean.class)
                     .withPosition(pos).using(c -> null);
