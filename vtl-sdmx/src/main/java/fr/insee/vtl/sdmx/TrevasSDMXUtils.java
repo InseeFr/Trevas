@@ -8,20 +8,15 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.ComponentBean;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
-import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
-import io.sdmx.api.sdmx.model.beans.reference.CrossReferenceBean;
 import io.sdmx.api.sdmx.model.beans.transformation.IVtlMappingBean;
-import io.sdmx.api.sdmx.model.beans.transformation.IVtlMappingSchemeBean;
 import io.sdmx.format.ml.api.engine.StaxStructureReaderEngine;
 import io.sdmx.format.ml.engine.structure.reader.v3.StaxStructureReaderEngineV3;
 import io.sdmx.utils.core.io.InMemoryReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 
 import java.io.InputStream;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,8 +25,7 @@ import static fr.insee.vtl.model.Structured.Component;
 
 class TrevasSDMXUtils {
 
-    private static final StaxStructureReaderEngine readerEngineSDMX3 = StaxStructureReaderEngineV3.getInstance();
-
+    private static final StaxStructureReaderEngine structureReaderSDMX3 = StaxStructureReaderEngineV3.getInstance();
 
     public static Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
         Map<String, DataStructureBean> mapping = vtlMapping(sdmxBeans);
@@ -46,11 +40,13 @@ class TrevasSDMXUtils {
     }
 
     private static Structured.DataStructure convertStructure(DataStructureBean sdmxStructure) {
-        var components = sdmxStructure.getComponents().stream().map(sdmxComp -> {
-            var role = convertTypeToRole(sdmxComp.getType());
-            var name = sdmxComp.getId();
-            var type = convertType(sdmxComp);
-            return new Component(name, type, role);
+        List<Component> components = sdmxStructure.getComponents().stream().map(sdmxComp -> {
+            Dataset.Role role = convertTypeToRole(sdmxComp.getType());
+            String name = sdmxComp.getId();
+            Class<?> type = convertType(sdmxComp);
+            boolean nullable = true;
+            String valuedomain = convertValuedomain(sdmxComp);
+            return new Component(name, type, role, nullable, valuedomain);
         }).collect(Collectors.toList());
         return new Structured.DataStructure(components);
     }
@@ -80,6 +76,13 @@ class TrevasSDMXUtils {
             default:
                 return String.class;
         }
+    }
+
+    private static String convertValuedomain(ComponentBean sdmxComp) {
+        if (null == sdmxComp.getRepresentation() ||
+                null == sdmxComp.getRepresentation().getRepresentation())
+            return null;
+        return sdmxComp.getRepresentation().getRepresentation().getMaintainableId();
     }
 
     private static Dataset.Role convertTypeToRole(ComponentBean.COMPONENT_TYPE type) {
@@ -137,7 +140,7 @@ class TrevasSDMXUtils {
     }
 
     public static Structured.DataStructure buildStructureFromSDMX3(ReadableDataLocation rdl, String structureID) {
-        SdmxBeans sdmxBeans = readerEngineSDMX3.getSdmxBeans(rdl);
+        SdmxBeans sdmxBeans = structureReaderSDMX3.getSdmxBeans(rdl);
         return buildStructureFromSDMX3(sdmxBeans, structureID);
     }
 
