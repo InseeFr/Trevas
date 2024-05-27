@@ -7,6 +7,12 @@
         <mes:Sender id="Unknown" />
         <mes:Receiver id="not_supplied" /></mes:Header>
     <mes:Structures>
+        <str:Dataflows>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_CUBE_2021(1.0)" agencyID="FR1" id="BPE_CUBE_2021" version="1.0">
+                <com:Name xml:lang="en">Dataflow for BPE_CUBE_2021</com:Name>
+                <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_CUBE_2021(1.0)</str:Structure>
+            </str:Dataflow>
+        </str:Dataflows>
         <str:DataStructures>
             <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_CUBE_2021(1.0)" isExternalReference="false" agencyID="FR1" id="BPE_CUBE_2021" version="1.0">
                 <com:Name xml:lang="en">Cube Equipments</com:Name>
