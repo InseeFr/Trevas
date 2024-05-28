@@ -1,0 +1,41 @@
+---
+slug: /trevas-sdmx
+title: Trevas - SDMX
+authors: [nicolas]
+tags: [Trevas, SDMX]
+---
+
+### News
+
+Trevas 1.4.0 introduces VTL SDMX module.
+
+This module enable to consume SDMX metadata sources to instantiate Trevas DataStructures and use them to create Trevas Datasets.
+
+#### Diagram
+
+TODO
+
+#### Import VTL SDMX with Maven
+
+```xml
+<dependency>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>vtl-sdmx</artifactId>
+    <version>1.4.0</version>
+</dependency>
+```
+
+#### Build Trevas Dataset
+
+```java
+Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "ID");
+
+SparkDataset ds = new SparkDataset(
+        spark.read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("path"),
+        structure
+);
+```
