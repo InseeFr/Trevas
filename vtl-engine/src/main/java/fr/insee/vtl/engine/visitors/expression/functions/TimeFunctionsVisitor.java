@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -59,7 +60,66 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private ResolvableExpression stockToFlows(VtlParser.FlowAtomContext ctx) {
-        throw new UnsupportedOperationException("not implemented");
+        VtlParser.ExprContext expr = ctx.expr();
+        ResolvableExpression operand = expressionVisitor.visit(expr);
+
+        try {
+
+            // Fall through if not dataset.
+            Positioned position = fromContext(ctx);
+            if (!(operand instanceof DatasetExpression)) {
+                throw new InvalidArgumentException("flow to stock only supports datasets", position);
+            }
+
+            DatasetExpression ds = (DatasetExpression) operand;
+
+            var ids = ds.getIdentifiers().stream()
+                    .collect(Collectors.toMap(
+                            Structured.Component::getName,
+                            c -> Analytics.Order.ASC,
+                            (a, b) -> b,
+                            LinkedHashMap::new
+
+                    ));
+            var time = extractTimeComponent(ctx, ds);
+            var partition = ids.keySet().stream()
+                    .filter(colName -> !time.getName().equals(colName))
+                    .collect(Collectors.toList());
+            for (Structured.Component measure : ds.getMeasures()) {
+
+                if (!Number.class.isAssignableFrom(measure.getType())) {
+                    continue;
+                }
+
+                var measureName = measure.getName();
+                var lagColumnName = measure.getName() + "_lag";
+
+                var lag = processingEngine.executeLeadOrLagAn(ds, measureName, Analytics.Function.LAG, measureName, 1, partition, ids);
+                lag = processingEngine.executeRename(lag, Map.of(measureName, lagColumnName));
+
+                lag = processingEngine.executeProject(lag,
+                        Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of(lagColumnName)).collect(Collectors.toList())
+                );
+
+                ds = processingEngine.executeLeftJoin(Map.of("left", ds, "lag", lag), ds.getIdentifiers());
+
+                // me - nvl(lag, 0)
+                var measureExpr = new ComponentExpression(ds.getDataStructure().get(measure.getName()), position);
+                var lagExpr = new ComponentExpression(ds.getDataStructure().get(lagColumnName), position);
+                var nvlExpr = genericFunctionsVisitor.invokeFunction("nvl", List.of(
+                        lagExpr, new ConstantExpression(0L, position)), position);
+                var subtractionExpr = genericFunctionsVisitor.invokeFunction("subtraction", List.of(
+                        measureExpr, nvlExpr
+                ), position);
+
+                ds = processingEngine.executeCalc(ds, Map.of(measure.getName(), subtractionExpr), Map.of(), Map.of());
+                ds = processingEngine.executeProject(ds, ds.getColumnNames().stream().filter(s -> !s.equals(lagColumnName)).collect(Collectors.toList()));
+            }
+            return ds;
+        } catch (VtlScriptException iae) {
+            throw new VtlRuntimeException(iae);
+        }
+
     }
 
     private ResolvableExpression flowToStock(VtlParser.FlowAtomContext ctx) {
