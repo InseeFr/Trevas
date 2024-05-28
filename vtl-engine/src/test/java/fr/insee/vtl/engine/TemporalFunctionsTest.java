@@ -15,6 +15,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.xml.crypto.Data;
 
 import java.time.*;
 import java.time.temporal.Temporal;
@@ -261,7 +262,10 @@ class TemporalFunctionsTest {
     }
 
     @Test
-    void testAggregationTODOMOVE() throws ScriptException {
+    void testTimeAggregation() throws ScriptException {
+
+        // This test is an attempt to implement the time aggregate. The stat of the group all
+        // prevents us to finish it. See https://github.com/sdmx-twg/vtl/issues/456
         var ds1 = new InMemoryDataset(List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("t", Interval.class, Dataset.Role.IDENTIFIER),
@@ -278,48 +282,21 @@ class TemporalFunctionsTest {
 
         engine.put("ds1", ds1);
 
-        // TODO: Check how far we are from this aggregation form.
-        //engine.eval("res := sum(ds1) group all time_agg(\"A\",_,me1);");
-
-        // Test with the time_agg syntax.
+        // TODO: Use the time_agg syntax.
         //engine.eval("res := ds1[aggr test := sum(me1) group all time_agg(\"A\",_,me1)];");
 
-        // Test with own function...
+        // Test with own function.
         engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\")];");
-
-        var actual = engine.get("res");
-        ((Dataset) actual).getDataAsMap().forEach(System.out::println);
-    }
-
-    @Test
-    void testAggregationTODOMOVE2() throws ScriptException {
-
-        var ds1 = new InMemoryDataset(List.of(
-                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("t", Interval.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("me1", Long.class, Dataset.Role.MEASURE)
-        ),
-                Arrays.asList("A", Interval.parse("2010-01-01T00:00:00Z/P4M"), 20L),
-                Arrays.asList("A", Interval.parse("2011-01-01T00:00:00Z/P4M"), 20L),
-                Arrays.asList("A", Interval.parse("2012-01-01T00:00:00Z/P4M"), 20L),
-                Arrays.asList("B", Interval.parse("2013-01-01T00:00:00Z/P4M"), 50L),
-                Arrays.asList("B", Interval.parse("2010-01-01T00:00:00Z/P4M"), 50L),
-                Arrays.asList("C", Interval.parse("2011-01-01T00:00:00Z/P4M"), 10L),
-                Arrays.asList("C", Interval.parse("2012-01-01T00:00:00Z/P4M"), 10L)
+        var actual = (Dataset) engine.get("res");
+        actual.getDataAsMap().forEach(System.out::println);
+        assertThat(actual.getDataAsMap()).containsExactly(
+                Map.of("time", Interval.parse("2009-12-31T23:00:00Z/2011-01-01T04:49:12Z"), "test", 70L),
+                Map.of("time", Interval.parse("2012-12-31T23:00:00Z/2014-01-01T04:49:12Z"), "test", 50L),
+                Map.of("time", Interval.parse("2010-12-31T23:00:00Z/2012-01-01T04:49:12Z"), "test", 30L),
+                Map.of("time", Interval.parse("2011-12-31T23:00:00Z/2012-12-31T04:49:12Z"), "test", 30L)
         );
 
-        engine.put("ds1", ds1);
-
-        // TODO: Check how far we are from this aggregation form.
-        //engine.eval("res := sum(ds1) group all time_agg(\"A\",_,me1);");
-
-        // Test with the time_agg syntax.
-        //engine.eval("res := ds1[aggr test := sum(me1) group all time_agg(\"A\",_,me1)];");
-
-        // Test with own function...
-        engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\")];");
-
-        var actual = engine.get("res");
-        ((Dataset) actual).getDataAsMap().forEach(System.out::println);
     }
+
+
 }
