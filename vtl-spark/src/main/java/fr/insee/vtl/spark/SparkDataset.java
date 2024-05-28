@@ -5,32 +5,16 @@ import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.DecimalType;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import scala.Predef;
 import scala.collection.JavaConverters;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.apache.spark.sql.types.DataTypes.BooleanType;
-import static org.apache.spark.sql.types.DataTypes.DateType;
-import static org.apache.spark.sql.types.DataTypes.DoubleType;
-import static org.apache.spark.sql.types.DataTypes.FloatType;
-import static org.apache.spark.sql.types.DataTypes.IntegerType;
-import static org.apache.spark.sql.types.DataTypes.LongType;
-import static org.apache.spark.sql.types.DataTypes.StringType;
-import static org.apache.spark.sql.types.DataTypes.TimestampType;
+import static org.apache.spark.sql.types.DataTypes.*;
 import static scala.collection.JavaConverters.mapAsScalaMap;
 
 /**
@@ -42,6 +26,8 @@ public class SparkDataset implements Dataset {
     private DataStructure dataStructure = null;
     private Map<String, Role> roles = Collections.emptyMap();
 
+    private Map<String, String> valuedomains = Collections.emptyMap();
+
     /**
      * Constructor taking a Spark dataset and a mapping of component names and roles.
      *
@@ -50,9 +36,32 @@ public class SparkDataset implements Dataset {
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
         var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
-        var dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
+        var dataStructure = fromSparkSchema(sparkDataset.schema(), roles, Map.of());
         this.sparkDataset = addMetadata(castedSparkDataset, dataStructure);
         this.roles = Objects.requireNonNull(roles);
+    }
+
+    /**
+     * Constructor taking a Spark dataset and a structure.
+     *
+     * @param sparkDataset a Spark dataset.
+     * @param structure    a Data Structure.
+     */
+    public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure structure) {
+        var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        this.sparkDataset = addMetadata(castedSparkDataset, structure);
+        this.roles = Objects.requireNonNull(
+                structure.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getRole()))
+        );
+        this.valuedomains = Objects.requireNonNull(
+                structure.entrySet()
+                        .stream()
+                        .filter(e -> null != e.getValue().getValuedomain())
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValuedomain()))
+        );
+
     }
 
     /**
@@ -120,9 +129,13 @@ public class SparkDataset implements Dataset {
     public static StructType toSparkSchema(DataStructure structure) {
         List<StructField> schema = new ArrayList<>();
         for (Component component : structure.values()) {
+            Object vd = null == component.getValuedomain() ? null : component.getValuedomain();
             // TODO: refine nullable strategy
-            var md = mapAsScalaMap(Map.of("vtlRole", (Object) component.getRole().name()))
-                    .toMap(Predef.$conforms());
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("vtlRole", component.getRole().name());
+            map.put("vtlValuedomain", vd);
+            var md = mapAsScalaMap(map).toMap(Predef.$conforms());
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
@@ -133,28 +146,47 @@ public class SparkDataset implements Dataset {
         return DataTypes.createStructType(schema);
     }
 
-    public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles) {
+    public static DataStructure fromSparkSchema(StructType schema, Map<String, Role> roles, Map<String, String> valuedomains) {
         List<Component> components = new ArrayList<>();
         for (StructField field : JavaConverters.asJavaCollection(schema)) {
 
-            Role fieldRole;
-            if (roles.containsKey(field.name())) {
-                fieldRole = roles.get(field.name());
-            } else if (field.metadata().contains("vtlRole")) {
-                var roleName = field.metadata().getString("vtlRole");
-                fieldRole = Role.valueOf(roleName);
-            } else {
-                fieldRole = Role.MEASURE;
-            }
+            String valuedomain;
+
 
             components.add(new Component(
                     field.name(),
                     toVtlType(field.dataType()),
-                    fieldRole,
-                    null
+                    handleRole(field, roles),
+                    null,
+                    handleValuedomain(field, valuedomains)
             ));
         }
         return new DataStructure(components);
+    }
+
+    private static Role handleRole(StructField field, Map<String, Role> roles) {
+        Role fieldRole;
+        if (roles.containsKey(field.name())) {
+            fieldRole = roles.get(field.name());
+        } else if (field.metadata().contains("vtlRole")) {
+            var roleName = field.metadata().getString("vtlRole");
+            fieldRole = Role.valueOf(roleName);
+        } else {
+            fieldRole = Role.MEASURE;
+        }
+        return fieldRole;
+    }
+
+    private static String handleValuedomain(StructField field, Map<String, String> valuedomains) {
+        String valuedomain;
+        if (valuedomains.containsKey(field.name())) {
+            valuedomain = valuedomains.get(field.name());
+        } else if (field.metadata().contains("vtlValuedomain")) {
+            valuedomain = field.metadata().getString("vtlValuedomain");
+        } else {
+            valuedomain = null;
+        }
+        return valuedomain;
     }
 
     /**
@@ -231,7 +263,7 @@ public class SparkDataset implements Dataset {
     @Override
     public Structured.DataStructure getDataStructure() {
         if (dataStructure == null) {
-            dataStructure = fromSparkSchema(sparkDataset.schema(), roles);
+            dataStructure = fromSparkSchema(sparkDataset.schema(), roles, valuedomains);
         }
         return dataStructure;
     }

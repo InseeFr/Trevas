@@ -2,9 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.UnsupportedTypeException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -83,9 +81,14 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
         var pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
         List<VtlParser.SignatureContext> signature = ctx.rulesetSignature().signature();
-        List<String> variables = signature.stream()
-                .map(s -> s.varID().getText())
-                .collect(Collectors.toList());
+        List<String> variables = ctx.rulesetSignature().VARIABLE() != null ?
+                signature.stream()
+                        .map(s -> s.varID().getText())
+                        .collect(Collectors.toList()) : List.of();
+        List<String> valuedomains = ctx.rulesetSignature().VALUE_DOMAIN() != null ?
+                signature.stream()
+                        .map(s -> s.varID().getText())
+                        .collect(Collectors.toList()) : List.of();
         Map<String, String> alias = signature.stream()
                 .filter(s -> null != s.alias())
                 .collect(Collectors.toMap(k -> k.varID().getText(), v -> v.alias().getText()));
@@ -156,6 +159,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 rulesetName,
                 rules,
                 variables,
+                valuedomains,
                 alias,
                 erCodeType,
                 erLevelType);
