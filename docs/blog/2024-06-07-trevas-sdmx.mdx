@@ -93,6 +93,10 @@ ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_B
 
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 
+// instead of using TrevasSDMXUtils.buildStructureFromSDMX3 and data sources
+// to build Trevas Datasets, sdmxVtlWorkflow.getEmptyDatasets()
+// will handle SDMX message structures to produce Trevas Datasets
+// with metadata defined in this message, and adding empty data
 Map<String, Dataset> emptyDatasets = sdmxVtlWorkflow.getEmptyDatasets();
 engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(emptyDatasets);
 
