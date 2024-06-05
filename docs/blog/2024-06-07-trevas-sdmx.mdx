@@ -10,11 +10,11 @@ import ThemedImage from '@theme/ThemedImage';
 
 ### News
 
-Trevas 1.4.0 introduces VTL SDMX module.
+Trevas 1.4.0 introduces the VTL SDMX module.
 
-This module enable to consume SDMX metadata sources to instantiate Trevas DataStructures and Datasets.
+This module enables to consume SDMX metadata sources to instantiate Trevas DataStructures and Datasets.
 
-It also allows you to execute the VTL TransformationSchemes to obtain the resulting persistent datasets.
+It also allows to execute the VTL TransformationSchemes to obtain the resulting persistent datasets.
 
 #### Overview
 
@@ -36,7 +36,7 @@ The elements in box 2 are used to generate the VTL code (rulesets & transformati
 
 #### Tools available
 
-#### `buildStructureFromSDMX3` utilitary
+#### `buildStructureFromSDMX3` utility
 
 `TrevasSDMXUtils.buildStructureFromSDMX3` allows to obtain a Trevas DataStructure.
 
@@ -60,7 +60,7 @@ SparkDataset ds = new SparkDataset(
 The `SDMXVTLWorkflow` constructor takes 3 arguments:
 
 - a `ScriptEngine` (Trevas or another)
-- a `ReadableDataLocation` to handle SDMX message
+- a `ReadableDataLocation` to handle an SDMX message
 - a map of names / Datasets
 
 ```java
@@ -82,7 +82,7 @@ This object then allows you to activate the following 3 functions.
 
 #### SDMXVTLWorkflow `run` function - Preview mode
 
-The `run` function can be easily call in a preview mode, without attached data.
+The `run` function can easily be called in a preview mode, without attached data.
 
 ```java
 ScriptEngineManager mgr = new ScriptEngineManager();
@@ -103,11 +103,11 @@ engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(emptyDatasets);
 Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
 ```
 
-You will be able to check the conformity of your file, the metadata of your created datasets.
+The preview mode allows to check the conformity of the SDMX file and the metadata of the output datasets.
 
 #### SDMXVTLWorkflow `run` function
 
-Once you built an `SDMXVTLWorkflow`, you can easily run the VTL validations and transformations defined in your SDMX file.
+Once an `SDMXVTLWorkflow` is built, it is easy to run the VTL validations and transformations defined in the SDMX file.
 
 ```java
 Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "ds1");
@@ -134,11 +134,11 @@ SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
 Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
 ```
 
-As a result, you will receive all the dataset defined as persistent in your `TransformationSchemes` definition.
+As a result, one will receive all the dataset defined as persistent in the `TransformationSchemes` definition.
 
 #### SDMXVTLWorkflow `getTransformationsVTL` function
 
-Get the VTL code corresponding to the SDMX TransformationSchemes definition.
+Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
 ```java
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
@@ -147,7 +147,7 @@ String vtl = sdmxVtlWorkflow.getTransformationsVTL();
 
 #### SDMXVTLWorkflow `getRulesetsVTL` function
 
-Get the VTL code corresponding to the SDMX TransformationSchemes definition.
+Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
 ```java
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
