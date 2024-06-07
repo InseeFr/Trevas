@@ -263,7 +263,7 @@ class TemporalFunctionsTest {
     @Test
     void testTimeAggregation() throws ScriptException {
 
-        // This test is an attempt to implement the time aggregate. The stat of the group all
+        // This test is an attempt to implement the time aggregate. The state of the group all
         // prevents us to finish it. See https://github.com/sdmx-twg/vtl/issues/456
         var ds1 = new InMemoryDataset(List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
@@ -285,7 +285,7 @@ class TemporalFunctionsTest {
         //engine.eval("res := ds1[aggr test := sum(me1) group all time_agg(\"A\",_,me1)];");
 
         // Test with own function.
-        engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\")];");
+        engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\", \"Europe/Oslo\")];");
         var actual = (Dataset) engine.get("res");
         actual.getDataAsMap().forEach(System.out::println);
         assertThat(actual.getDataAsMap()).containsExactly(
