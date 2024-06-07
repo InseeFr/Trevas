@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 /**
- * Produce a normalized group by. Group exept are inverted.
+ * Produce a normalized group by. Group except are inverted.
  */
 public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
 
@@ -29,6 +29,11 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
             text = text.substring(1, text.length() - 1);
         }
         return text;
+    }
+
+    @Override
+    protected List<String> defaultResult() {
+        return List.of();
     }
 
     @Override

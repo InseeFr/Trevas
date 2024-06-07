@@ -2,4 +2,9 @@ nicolas:
   name: 'Nicolas Laval'
   link: 'https://github.com/NicoLaval'
   title: 'Making Sense - Developer'
-  image: 'profile_pic_nicolas_laval.jpg'
+  image: '/img/profile_pic_nicolas_laval.jpg'
+hadrien:
+  name: 'Hadrien Kohl'
+  link: 'https://github.com/hadrienk'
+  title: 'Hadrien Kohl Consulting - Developer'
+  image: '/img/profile_pic_hadrien_kohl.jpg'

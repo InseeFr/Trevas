@@ -1,0 +1,103 @@
+---
+slug: /trevas-temporal-operators
+title: Trevas - Opérateurs temporels
+authors: [hadrien]
+tags: [Trevas]
+---
+
+### Temporal operators in Trevas
+
+The version 1.4.0 of Trevas introduces preliminary support for date and time types
+and operators.
+
+The specification describes temporal types such as date & time_period, time, and duration. However, Trevas authors find
+these descriptions unsatisfactory. This blog post outlines our implementation choices and how they differ from the spec.
+
+In the specification, `time_period` (and the types `date`) is described as a compound type with a start and end (or a
+start and a duration). This complicates the implementation and brings little value to the language as one can simply
+operate on a combination of dates or date and duration directly. For this reason, we defined an algebra between the
+temporal types and did not yet implement the `time_period`.
+
+| result (operators) | date        | duration        | number       |
+|--------------------|-------------|-----------------|--------------|
+| **date**           | n/a         | date (+, -)     | n/a          |
+| **duration**       | date (+, -) | duration (+, -) | duration (*) |
+| **number**         | n/a         | duration (*)    | n/a          |
+
+The `period_indicator` function relies on period-awareness for types that are not defined enough at the moment to
+be implemented.
+
+### Java mapping
+
+The VTL type `date` is represented internally as the
+types [`java.time.Instant`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/Instant.html),
+[`java.time.ZonedDateTime`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/ZonedDateTime.html)
+and  [`java.time.OffsetDateTime`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/OffsetDateTime.html#:~:text=OffsetDateTime%20is%20an%20immutable%20representation,be%20stored%20in%20an%20OffsetDateTime%20.)
+
+Instant represent a specific moment in time. Note that this type does not include timezone information and is therefore
+not usable with all the operators. One can use the types `ZonedDateTime` and `OffsetDateTime` when timezone or time
+saving is required.
+
+The VTL type `duration` is represented internally as the
+type [`org.threeten.extra.PeriodDuration`](https://www.threeten.org/threeten-extra/apidocs/org.threeten.extra/org/threeten/extra/PeriodDuration.html)
+from the [threeten extra](https://www.threeten.org/threeten-extra/) package.
+It represents a duration using both calendar units (years, months, days) and a temporal amount (hours, minutes, seconds
+and nanoseconds).
+
+### Function `flow_to_stock`
+
+The flow_to_stock function converts a data set with flow interpretation into a stock interpretation. This transformation
+is useful when you want to aggregate flow data (e.g., sales or production rates) into cumulative stock data (e.g., total
+inventory).
+
+**Syntax:**
+
+`result := flow_to_stock(op)`
+
+**Parameters:**
+
+* `op` - The input data set with flow interpretation. The data set must have an identifier of type <time>, additional
+identifiers, and at least one measure of type <number>.
+
+**Result:**
+
+The function returns a data set with the same structure as the input, but with the values converted to stock
+interpretation.
+
+### Function `stock_to_flow`
+
+The `stock_to_flow` function converts a data set with stock interpretation into a flow interpretation. This
+transformation is useful when you want to derive flow data from cumulative stock data.
+
+**Syntax:**
+
+`result := stock_to_flow(op)`
+
+**Parameters:**
+
+* `op` - The input data set with stock interpretation. The data set must have an identifier of type <time>, additional
+identifiers, and at least one measure of type <number>.
+
+**Result:**
+
+The function returns a data set with the same structure as the input, but with the values converted to flow
+interpretation.
+
+### Function `stock_to_flow`
+
+The timeshift function shifts the time component of a specified range of time in the data set. This is useful for
+analyzing data at different time offsets, such as comparing current values to past values.
+
+**Syntax:**
+
+`result := timeshift(op, shiftNumber)`
+
+**Parameters:**
+
+* `op` - The operand data set containing time series.
+* `shiftNumber` - An integer representing the number of periods to shift. Positive values shift forward in time, while
+negative values shift backward.
+
+**Result:**
+
+The function returns a data set with the time identifiers shifted by the specified number of periods.
