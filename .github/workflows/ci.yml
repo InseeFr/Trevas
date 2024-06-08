@@ -7,9 +7,12 @@ on:
 
 jobs:
   test:
-    # Fork or Trevas main repo branch with PR coming from fork
-    if: github.repository != 'inseefr/trevas' ||
-        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
+    name: Run Trevas tests
+    if: (github.repository != 'InseeFr/Trevas' &&
+        github.event_name == 'push') ||
+        (github.event.pull_request.head.repo.fork == true ||
+        (github.event.pull_request.head.repo.fork == false &&
+        github.event.pull_request.merged == false))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,9 +35,8 @@ jobs:
       - name: Test
         run: mvn test
   package:
-    # Fork or Trevas main repo branch with PR coming from fork
-    if: github.repository != 'inseefr/trevas' ||
-        github.event.pull_request.head.repo.full_name != 'inseefr/trevas'
+    name: Package Trevas modules
+    # Filter thanks to test job
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -58,9 +60,13 @@ jobs:
       - name: Test
         run: mvn package
   test-sonar-package:
-    # Trevas main repo branch with PR coming from main repo
-    if: github.repository == 'inseefr/trevas' &&
-        github.event.pull_request.head.repo.full_name == 'inseefr/trevas'
+    name: Run Trevas tests with coverage & sonar checks
+    # Trevas main repo commit branch or merged PR
+    if: github.repository == 'InseeFr/Trevas' && 
+        (github.event_name == 'push' ||
+        github.event.pull_request.head.repo.fork == false ||
+        (github.event.pull_request.head.repo.fork == true &&
+        github.event.pull_request.merged == true))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -86,8 +92,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   publish-release:
-    if: github.repository == 'inseefr/trevas' &&
-        startsWith(github.event.ref, 'refs/tags/v')
+    name: Publish Trevas modules on Maven
+    # Pre filter thanks to test-sonar-package job
+    if: startsWith(github.event.ref, 'refs/tags/v')
     needs: test-sonar-package
     runs-on: ubuntu-latest
     steps:
@@ -118,9 +125,10 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
   publish-snapshot:
-    if: github.repository == 'inseefr/trevas' && 
-        github.ref == 'refs/heads/develop'
-    needs: package
+    name: Publish Trevas modules SNAPSHOT on Github Packages
+    # Pre filter thanks to test-sonar-package job
+    if: github.ref == 'refs/heads/develop'
+    needs: test-sonar-package
     runs-on: ubuntu-latest
     permissions:
       contents: read
