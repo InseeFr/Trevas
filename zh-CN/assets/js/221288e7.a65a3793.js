@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunktrevas_documentation=self.webpackChunktrevas_documentation||[]).push([[370],{27243:e=>{e.exports=JSON.parse('{"permalink":"/Trevas/zh-CN/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":8,"blogDescription":"\u535a\u5ba2","blogTitle":"\u535a\u5ba2"}')}}]);

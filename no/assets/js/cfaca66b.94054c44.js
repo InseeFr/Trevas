@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunktrevas_documentation=self.webpackChunktrevas_documentation||[]).push([[8703],{31439:a=>{a.exports=JSON.parse('{"label":"SDMX","permalink":"/Trevas/no/blog/tags/sdmx","allTagsPath":"/Trevas/no/blog/tags","count":1}')}}]);
