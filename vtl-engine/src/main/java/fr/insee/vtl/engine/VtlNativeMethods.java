@@ -6,8 +6,12 @@ import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisi
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 import java.lang.reflect.Method;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 public class VtlNativeMethods {
@@ -89,7 +93,46 @@ public class VtlNativeMethods {
             Fun.toMethod(ComparisonVisitor::isGreaterThanOrEqual),
             Fun.toMethod(ComparisonVisitor::isLessThanOrEqual),
             Fun.toMethod(ComparisonVisitor::in),
-            Fun.toMethod(ComparisonVisitor::notIn)
+            Fun.toMethod(ComparisonVisitor::notIn),
+
+            // Temporal functions
+            Fun.<Instant, PeriodDuration>toMethod(TemporalFunctions::addition),
+            Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctions::addition),
+            Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctions::addition),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctions::addition),
+
+            Fun.<Instant, PeriodDuration>toMethod(TemporalFunctions::subtraction),
+            Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctions::subtraction),
+            Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
+
+            Fun.<Instant, Instant>toMethod(TemporalFunctions::subtraction),
+            Fun.<Instant, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<Instant, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<ZonedDateTime, Instant>toMethod(TemporalFunctions::subtraction),
+            Fun.<ZonedDateTime, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<ZonedDateTime, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<OffsetDateTime, Instant>toMethod(TemporalFunctions::subtraction),
+            Fun.<OffsetDateTime, ZonedDateTime>toMethod(TemporalFunctions::subtraction),
+            Fun.<OffsetDateTime, OffsetDateTime>toMethod(TemporalFunctions::subtraction),
+
+            Fun.<PeriodDuration, Long>toMethod(TemporalFunctions::multiplication),
+            Fun.<Long, PeriodDuration>toMethod(TemporalFunctions::multiplication),
+
+            Fun.toMethod(TemporalFunctions::timeshift),
+
+            Fun.<Instant, String, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<Instant, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<ZonedDateTime, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<OffsetDateTime, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<Interval, String>toMethod(TemporalFunctions::truncate_time),
+            Fun.<Interval, String, String>toMethod(TemporalFunctions::truncate_time),
+
+            Fun.toMethod(TemporalFunctions::at_zone)
     );
 
     private VtlNativeMethods() {

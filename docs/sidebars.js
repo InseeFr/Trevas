@@ -21,6 +21,8 @@ module.exports = {
 						'introduction/modules/model',
 						'introduction/modules/jdbc',
 						'introduction/modules/jackson',
+						'introduction/modules/csv',
+						'introduction/modules/sdmx',
 					],
 				},
 				{

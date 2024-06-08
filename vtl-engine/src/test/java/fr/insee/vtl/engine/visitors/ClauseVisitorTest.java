@@ -254,17 +254,16 @@ public class ClauseVisitorTest {
                         Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
                 Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of("name", Role.IDENTIFIER, "country", Role.MEASURE, "age", Role.MEASURE, "weight", Role.MEASURE),
                 Map.of("name", false, "country", true)
         );
 
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        // test := ds1[aggr sumAge := sum(age) group by country];
-        // test := ds1[aggr sumAge := sum(age group by country)];
-        // test := ds1[aggr sumAge := sum(age group by country), totalWeight := sum(weight group by country)];
-        // test := ds1[aggr sumAge := sum(age), totalWeight := sum(weight) group by country];
+        engine.eval("res := ds1[aggr sumAge := sum(age) group by country];");
+        Dataset res = (Dataset) engine.getContext().getAttribute("res");
+        assertThat(res.getDataStructure().get("country").getRole()).isEqualTo(Role.IDENTIFIER);
 
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age)," +

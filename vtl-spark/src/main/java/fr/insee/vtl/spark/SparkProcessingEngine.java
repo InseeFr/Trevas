@@ -359,7 +359,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         List<Column> groupByColumns = groupBy.stream().map(name -> col(name)).collect(Collectors.toList());
         Dataset<Row> result = sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
                 .agg(columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-        return new SparkDatasetExpression(new SparkDataset(result), dataset);
+        SparkDataset sparkDs = new SparkDataset(result, dataset.getRoles());
+        return new SparkDatasetExpression(sparkDs, dataset);
     }
 
     @Override
@@ -536,7 +537,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     @Override
-    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output, Positioned pos) {
+    public DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression dataset, String output,
+                                                      Positioned pos, List<String> toDrop) {
         SparkDataset sparkDataset = asSparkDataset(dataset);
         Dataset<Row> ds = sparkDataset.getSparkDataset();
         Dataset<Row> renamedDs = rename(ds, dpr.getAlias());
@@ -611,14 +613,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
         Dataset<Row> invertRenamedSparkDs = rename(asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(), invertMap(dpr.getAlias()));
         SparkDatasetExpression sparkDatasetExpression = new SparkDatasetExpression(new SparkDataset(invertRenamedSparkDs), pos);
+        List<String> toKeep = sparkDatasetExpression.getColumnNames()
+                .stream().filter(v -> !toDrop.contains(v))
+                .collect(Collectors.toList());
+        DatasetExpression cleanedExpression = executeProject(sparkDatasetExpression, toKeep);
         if (output == null || output.equals(ValidationOutput.INVALID.value)) {
             ResolvableExpression defaultExpression = ResolvableExpression.withType(Boolean.class)
                     .withPosition(pos).using(c -> null);
-            DatasetExpression filteredDataset = executeFilter(sparkDatasetExpression, defaultExpression, BOOLVAR + " = false");
+            DatasetExpression filteredDataset = executeFilter(cleanedExpression, defaultExpression, BOOLVAR + " = false");
             Dataset<Row> result = asSparkDataset(filteredDataset).getSparkDataset().drop(BOOLVAR);
             return new SparkDatasetExpression(new SparkDataset(result), pos);
         }
-        return sparkDatasetExpression;
+        return cleanedExpression;
     }
 
     @Override
@@ -632,8 +638,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
         SparkDataset sparkImbalanceDataset = asSparkDataset(imbalanceExpr);
         Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
         String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
-                .stream().filter(c -> c.isMeasure()).map(c -> c.getName()).collect(Collectors.toList()).get(0);
-        Map varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, IMBALANCE));
+                .stream().filter(Component::isMeasure).map(Component::getName).collect(Collectors.toList()).get(0);
+        Map<String, String> varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, IMBALANCE));
         Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
         var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
         SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap), pos);

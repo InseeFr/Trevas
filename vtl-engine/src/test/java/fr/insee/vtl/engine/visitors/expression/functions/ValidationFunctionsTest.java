@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -101,12 +100,17 @@ public class ValidationFunctionsTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("DS_1", dataset, ScriptContext.ENGINE_SCOPE);
 
-        assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (variable unvalid_var) is " +
+        assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (variable invalid_var) is " +
                 "when Id_3 = \"CREDIT\" then Me_1 >= 0 errorcode \"Bad credit\"; " +
                 "when Id_3 = \"DEBIT\" then Me_1 >= 0 errorcode \"Bad debit\" " +
                 "end datapoint ruleset; " +
                 "DS_r := check_datapoint(DS_1, dpr1);"))
-                .hasMessageContaining("Variable unvalid_var not contained in DS_1");
+                .hasMessageContaining("Variable invalid_var not contained in DS_1");
+        assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (valuedomain bad_vd) is " +
+                "bad_vd = \"AA\" errorcode \"Bad\" " +
+                "end datapoint ruleset; " +
+                "DS_r := check_datapoint(DS_1, dpr1);"))
+                .hasMessageContaining("Valuedomain bad_vd not used in DS_1 components");
         assertThatThrownBy(() -> engine.eval("DS_r := check_datapoint(DS_1, dpr1111);"))
                 .hasMessageContaining("undefined variable dpr1111");
         assertThatThrownBy(() -> engine.eval("define datapoint ruleset dpr1 (variable Id_3 as Id_1, Me_1) is " +
@@ -118,7 +122,7 @@ public class ValidationFunctionsTest {
     }
 
     @Test
-    public void testValidationSimpleException() throws ScriptException {
+    public void testValidationSimpleException() {
 
         ScriptContext context = engine.getContext();
         context.setAttribute("dsExprOk", dsExprOk, ScriptContext.ENGINE_SCOPE);

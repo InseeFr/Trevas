@@ -177,9 +177,10 @@ public interface ProcessingEngine {
      * @param datasetExpression datasets
      * @param output            validation output
      * @param pos               script error position
+     * @param toDrop            variables to drop
      * @return the result of the validation DP ruleset transformation
      */
-    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output, Positioned pos);
+    DatasetExpression executeValidateDPruleset(DataPointRuleset dpr, DatasetExpression datasetExpression, String output, Positioned pos, List<String> toDrop);
 
     /**
      * Execute a simple validation on dataset expressions.

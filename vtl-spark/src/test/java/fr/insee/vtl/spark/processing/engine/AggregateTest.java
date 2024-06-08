@@ -3,15 +3,18 @@ package fr.insee.vtl.spark.processing.engine;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.threeten.extra.Interval;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -54,12 +57,23 @@ public class AggregateTest {
     }
 
     @Test
+    void testAggregateGroupAll() throws ScriptException {
+        engine.put("ds1", dataset);
+        engine.eval("res := ds1[aggr test := sum(age) group all length(name)];");
+
+        var actual = ((Dataset) engine.get("res"));
+
+        assertThat(actual.getDataAsMap()).containsExactly(
+                Map.of("test", 23L, "time", 7L),
+                Map.of("test", 12L, "time", 6L),
+                Map.of("test", 11L, "time", 4L)
+        );
+    }
+
+    @Test
     public void testAggregateClause() throws ScriptException {
 
-        ScriptContext context = engine.getContext();
-        context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-
+        engine.put("ds1", dataset);
         engine.eval("res := ds1[aggr " +
                 "sumAge := sum(age*2)," +
                 "avgWeight := avg(weight)," +

@@ -1,0 +1,96 @@
+---
+slug: /trevas-temporal-operators
+title: Trevas - Opérateurs temporels
+authors: [hadrien]
+tags: [Trevas]
+---
+
+### Opérateurs temporels de Trevas
+
+La version 1.4.0 de Trevas introduit un support préliminaire pour les types de date et d'heure
+et les opérateurs.
+
+La spécification décrit les types temporels tels que `date`, `time_period`, `time` et `duration`. Cependant, les auteurs de Trevas trouvent
+ces descriptions peu satisfaisantes. Cet article de blog décrit nos choix de mise en œuvre et en quoi ils diffèrent des spécifications.
+
+Dans la spécification, `time_period` (et les types `date`) est décrit comme un type composé avec un début et une fin (ou un
+début et une durée). Cela complique la mise en œuvre et apporte peu de valeur au langage car on peut simplement
+fonctionner directement sur une combinaison de dates ou de date et de durée. Pour cette raison, nous avons défini une algèbre entre les
+types temporels et n'avons pas encore implémenté le type `time_period`.
+
+| résultat (opérateurs) | date        | durée        | nombre     |
+| --------------------- | ----------- | ------------ | ---------- |
+| **date**              | n/a         | date (+, -)  | n/a        |
+| **durée**             | date (+, -) | durée (+, -) | durée (\*) |
+| **numéro**            | n/a         | durée (\*)   | n/a        |
+
+La fonction `period_indicator` s'appuie sur la connaissance des périodes pour les types qui ne sont pas suffisamment définis pour le moment pour
+être implémentés.
+
+#### Représentation Java
+
+Le type VTL `date` est représenté en interne comme le
+type [`java.time.Instant`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/Instant.html),
+[`java.time.ZonedDateTime`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/ZonedDateTime.html)
+et [`java.time.OffsetDateTime`](https://docs.oracle.com/en%2Fjava%2Fjavase%2F11%2Fdocs%2Fapi%2F%2F/java.base/java/time/OffsetDateTime.html#: ~:text=OffsetDateTime%20is%20an%20immutable%20representation,be%20stored%20in%20an%20OffsetDateTime%20.)
+
+Instant représente un moment précis dans le temps. Notez que ce type n'inclut pas les informations de fuseau horaire et est donc
+non utilisable avec tous les opérateurs. On peut utiliser les types `ZonedDateTime` et `OffsetDateTime` lorsque la sauvegarde du fuseau horaire est nécessaire.
+
+Le type de VTL `durée` est représenté en interne comme le
+type [`org.troisten.extra.PeriodDuration`](https://www.troisten.org/troisten-extra/apidocs/org.troisten.extra/org/troisten/extra/PeriodDuration.html)
+du package [threeten extra](https://www.troisten.org/troisten-extra/).
+Il représente une durée utilisant à la fois des unités calendaires (années, mois, jours) et une durée temporelle (heures, minutes, secondes et nanosecondes).
+
+#### Fonction `flow_to_stock`
+
+La fonction `flow_to_stock` convertit un ensemble de données avec interprétation par flux en une interprétation par stock. Cette transformation
+est utile lorsque vous souhaitez agréger des données de flux (par exemple, taux de ventes ou de production) en données de stock cumulées (par exemple, inventaire total).
+
+**Syntaxe:**
+
+`résultat:= flow_to_stock(op)`
+
+**Paramètres:**
+
+- `op` - L'ensemble de données d'entrée avec interprétation du flux. L'ensemble de données doit avoir un identifiant de type `time`, des identifiants additionels, et au moins une mesure de type `number`.
+
+**Résultat:**
+
+La fonction renvoie un ensemble de données avec la même structure que celui en entrée, mais avec les valeurs converties en stock.
+
+#### Fonction `stock_to_flow`
+
+La fonction `stock_to_flow` convertit un ensemble de données avec interprétation de stock en une interprétation de flux. Ce
+La transformation est utile lorsque vous souhaitez dériver des données de flux à partir de données de stock cumulées.
+
+**Syntaxe:**
+
+`résultat:= stock_to_flow(op)`
+
+**Paramètres:**
+
+- `op` - L'ensemble de données d'entrée avec interprétation par stock. L'ensemble de données doit avoir un identifiant de type `time`, des identifiants additionels, et au moins une mesure de type `number`.
+
+**Résultat:**
+
+La fonction renvoie un ensemble de données avec la même structure que celui en entrée, mais avec les valeurs converties en flux.
+
+#### Fonction `timeshift`
+
+La fonction `timeshift` décale la composante temporelle d'une plage de temps spécifiée dans l'ensemble de données. Ceci est utile pour
+analyser des données à différents décalages temporels, par exemple en comparant les valeurs actuelles aux valeurs passées.
+
+**Syntaxe:**
+
+`résultat := timeshift(op, shiftNumber)`
+
+**Paramètres:**
+
+- `op` - Ensemble de données contenant des séries chronologiques.
+- `shiftNumber` - Un entier représentant le nombre de périodes à décaler. Les valeurs positives évoluent dans le temps, tandis que
+  les valeurs négatives reculent.
+
+**Résultat:**
+
+La fonction renvoie un ensemble de données avec les identifiants temporels décalés du nombre de périodes spécifiées.
