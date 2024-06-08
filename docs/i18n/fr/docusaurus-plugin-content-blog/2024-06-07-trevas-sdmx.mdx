@@ -5,10 +5,151 @@ authors: [nicolas]
 tags: [Trevas, SDMX]
 ---
 
-### News
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import ThemedImage from '@theme/ThemedImage';
 
-Trevas 1.4.0 ...
+### Nouveautés
 
-### Diagram
+Trevas 1.4.0 introduit le module VTL SDMX.
 
-#### define func...
+Ce module permet de consommer des sources de métadonnées SDMX pour instancier les structures de données et les ensembles de données Trevas.
+
+Il permet également d'exécuter les VTL TransformationSchemes pour obtenir les ensembles de données persistants résultants.
+
+#### Aperçu
+
+<div style={{ textAlign: 'center' }}>
+	<ThemedImage
+		alt="Diagramme VTL SDMX"
+		sources={{
+			light: useBaseUrl('/img/vtl-sdmx-light.svg'),
+			dark: useBaseUrl('/img/vtl-sdmx-dark.svg'),
+		}}
+	/>
+</div>
+
+Trevas prend en charge les éléments de message SDMX ci-dessus. Seul l'attribut VtlMappingSchemes est facultatif.
+
+Les éléments de la case 1 sont utilisés pour produire des Trevas DataStructures, en valorisant les attributs des composants VTL : name, role, type, nullable et valuedomain.
+
+Les éléments de la case 2 sont utilisés pour générer le code VTL (ensembles de règles et transformations).
+
+#### Outils disponibles
+
+#### Utilitaire `buildStructureFromSDMX3`
+
+`TrevasSDMXUtils.buildStructureFromSDMX3` permet d'obtenir une Trevas DataStructure.
+
+En fournissant les données correspondantes, vous pouvez créer un Trevas Dataset.
+
+```java
+Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "STRUCT_ID");
+
+SparkDataset ds = new SparkDataset(
+        spark.read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("path"),
+        structure
+);
+```
+
+#### Objet `SDMXVTLWorkflow`
+
+Le constructeur `SDMXVTLWorkflow` contient 3 arguments:
+
+- un `ScriptEngine` (Trevas ou autre)
+- un `ReadableDataLocation`pour prendre en charge un message SDMX
+- une correspondance entre noms et Datasets
+
+```java
+SparkSession.builder()
+                .appName("test")
+                .master("local")
+                .getOrCreate();
+
+ScriptEngineManager mgr = new ScriptEngineManager();
+ScriptEngine engine = mgr.getEngineByExtension("vtl");
+engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+
+ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
+
+SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
+```
+
+Cet objet permet alors d'accéder aux 3 fonctions suivantes.
+
+#### Fonction SDMXVTLWorkflow `run` - Mode aperçu
+
+La fonction `run` peut facilement être appelée en mode aperçu, sans données jointes.
+
+```java
+ScriptEngineManager mgr = new ScriptEngineManager();
+ScriptEngine engine = mgr.getEngineByExtension("vtl");
+engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+
+ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
+
+SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
+
+// instead of using TrevasSDMXUtils.buildStructureFromSDMX3 and data sources
+// to build Trevas Datasets, sdmxVtlWorkflow.getEmptyDatasets()
+// will handle SDMX message structures to produce Trevas Datasets
+// with metadata defined in this message, and adding empty data
+Map<String, Dataset> emptyDatasets = sdmxVtlWorkflow.getEmptyDatasets();
+engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(emptyDatasets);
+
+Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
+```
+
+Le mode aperçu permet de vérifier la conformité du fichier SDMX et des métadonnées des jeux de données en sortie.
+
+#### Fonction SDMXVTLWorkflow `run`
+
+Une fois qu'un `SDMXVTLWorkflow` est construit, il est facile d'exécuter les validations et transformations VTL définies dans le fichier SDMX.
+
+```java
+Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "ds1");
+
+SparkDataset ds1 = new SparkDataset(
+        spark.read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("path/data.csv"),
+        structure
+);
+
+ScriptEngineManager mgr = new ScriptEngineManager();
+ScriptEngine engine = mgr.getEngineByExtension("vtl");
+engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+
+Map<String, Dataset> inputs = Map.of("ds1", ds1);
+
+ReadableDataLocation rdl = new ReadableDataLocationTmp("path/sdmx_file.xml");
+
+SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
+
+Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
+```
+
+En conséquence, on recevra l'ensemble des données définies comme persistantes dans la définition `TransformationSchemes`.
+
+#### Fonction SDMXVTLWorkflow `getTransformationsVTL`
+
+Permet d'obtenir le code VTL correspondant à la définition SDMX TransformationSchemes.
+
+```java
+SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
+String vtl = sdmxVtlWorkflow.getTransformationsVTL();
+```
+
+#### Fonction SDMXVTLWorkflow `getRulesetsVTL`
+
+Permet d'obtenir le code VTL correspondant à la définition SDMX TransformationSchemes.
+
+```java
+SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
+String dprs = sdmxVtlWorkflow.getRulesetsVTL();
+```
