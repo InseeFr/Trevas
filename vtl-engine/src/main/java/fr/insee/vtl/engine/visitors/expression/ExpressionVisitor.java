@@ -83,7 +83,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
         joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
         numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
         distanceFunctionsVisitor = new DistanceFunctionsVisitor(this, genericFunctionsVisitor);
-        timeFunctionsVisitor = new TimeFunctionsVisitor();
+        timeFunctionsVisitor = new TimeFunctionsVisitor(genericFunctionsVisitor, this, processingEngine);
         validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine, engine);
         this.processingEngine = Objects.requireNonNull(processingEngine);
         this.engine = Objects.requireNonNull(engine);

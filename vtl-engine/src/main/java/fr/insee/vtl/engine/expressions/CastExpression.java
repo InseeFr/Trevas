@@ -4,11 +4,10 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
@@ -142,25 +141,25 @@ public class CastExpression extends ResolvableExpression {
 
     private ResolvableExpression castString(ResolvableExpression expr, String mask) {
         var outputClass = getType();
-        if (outputClass.equals(Long.class))
+        if (outputClass.equals(Long.class)) {
             return ResolvableExpression.withType(Long.class).withPosition(expr).using(context -> {
                 String exprValue = (String) expr.resolve(context);
                 if (exprValue == null) return null;
                 return Long.valueOf(exprValue);
             });
-        if (outputClass.equals(Double.class))
+        } else if (outputClass.equals(Double.class)) {
             return ResolvableExpression.withType(Double.class).withPosition(expr).using(context -> {
                 String exprValue = (String) expr.resolve(context);
                 if (exprValue == null) return null;
                 return Double.valueOf(exprValue);
             });
-        if (outputClass.equals(Boolean.class))
+        } else if (outputClass.equals(Boolean.class)) {
             return ResolvableExpression.withType(Boolean.class).withPosition(expr).using(context -> {
                 String exprValue = (String) expr.resolve(context);
                 if (exprValue == null) return null;
                 return Boolean.valueOf(exprValue);
             });
-        if (outputClass.equals(Instant.class))
+        } else if (outputClass.equals(Instant.class)) {
             return ResolvableExpression.withType(Instant.class).withPosition(expr).using(context -> {
                 if (mask == null) return null;
                 String exprValue = (String) expr.resolve(context);
@@ -176,7 +175,19 @@ public class CastExpression extends ResolvableExpression {
                 }
 
             });
-        throw new ClassCastException("Cast String to " + outputClass + isNotSupported);
+        } else if (outputClass.equals(PeriodDuration.class)) {
+            return ResolvableExpression.withType(PeriodDuration.class).withPosition(expr).using(context -> {
+                String value = (String) expr.tryCast(String.class).resolve(context);
+                return PeriodDuration.parse(value).normalizedYears().normalizedStandardDays();
+            });
+        } else if (outputClass.equals(Interval.class)) {
+            return ResolvableExpression.withType(Interval.class).withPosition(expr).using(context -> {
+                String value = (String) expr.tryCast(String.class).resolve(context);
+                return Interval.parse(value);
+            });
+        } else {
+            throw new ClassCastException("Cast String to " + outputClass + isNotSupported);
+        }
     }
 
     @Override
