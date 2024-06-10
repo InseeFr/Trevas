@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -33,7 +34,7 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
 
     @Override
     protected List<String> defaultResult() {
-        return List.of();
+        return Java8Helpers.listOf();
     }
 
     @Override

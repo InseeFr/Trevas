@@ -24,12 +24,14 @@ public class Java8Helpers {
         }
     }
 
+    @SafeVarargs // only read access
     public static <T> List<T> listOf(T... items) {
         List<T> tmpList = new ArrayList<>();
         Collections.addAll(tmpList, items);
         return Collections.unmodifiableList(tmpList);
     }
 
+    @SafeVarargs // only read access
     public static <T> Set<T> setOf(T... items) {
         Set<T> tmpSet = new HashSet<>();
         Collections.addAll(tmpSet, items);
@@ -145,6 +147,7 @@ public class Java8Helpers {
         return Collections.unmodifiableMap(tmpMap);
     }
 
+    @SafeVarargs // only read access
     public static <K, V> Map<K, V> mapOfEntries(MapEntry<K, V>... entries) {
         Map<K, V> tmpMap = new HashMap<>();
         Arrays.stream(entries).forEach(entry -> tmpMap.put(entry.key, entry.value));

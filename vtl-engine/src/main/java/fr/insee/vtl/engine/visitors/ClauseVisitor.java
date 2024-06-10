@@ -118,9 +118,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
-        Map<String, ResolvableExpression> expressions = new LinkedHashMap<String, ResolvableExpression>();
-        Map<String, String> expressionStrings = new LinkedHashMap<String, String>();
-        Map<String, Dataset.Role> roles = new LinkedHashMap<String, Dataset.Role>();
+        Map<String, ResolvableExpression> expressions = new LinkedHashMap<>();
+        Map<String, String> expressionStrings = new LinkedHashMap<>();
+        Map<String, Dataset.Role> roles = new LinkedHashMap<>();
         DatasetExpression currentDatasetExpression = datasetExpression;
         // TODO: Refactor so we call the executeCalc for each CalcClauseItemContext the same way we call the
         //  analytics functions.
@@ -207,13 +207,13 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         // Execute the group all as a calc.
         List<String> groupBy = new ArrayList<>();
-        GroupAllVisitor groupAll = new GroupAllVisitor(componentExpressionVisitor).visit(ctx);
+        ResolvableExpression groupAll = new GroupAllVisitor(componentExpressionVisitor).visit(ctx);
         if (groupAll != null) {
             // TODO, use the name? What if the expression uses multiple columns.
             normalizedDataset = processingEngine.executeCalc(normalizedDataset,
                     Java8Helpers.mapOf("time", groupAll),
                     Java8Helpers.mapOf("time", Dataset.Role.IDENTIFIER),
-                    ava8Helpers.mapOf()
+                    Java8Helpers.mapOf()
             );
             groupBy.add("time");
         }
@@ -228,8 +228,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 normalizedStructure.put(k, new Structured.Component(k, v.getType(), Dataset.Role.IDENTIFIER));
             }
         });
-
-
 
 
         Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();

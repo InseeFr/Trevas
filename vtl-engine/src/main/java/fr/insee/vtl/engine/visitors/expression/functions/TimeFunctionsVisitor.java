@@ -6,6 +6,7 @@ import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -16,7 +17,6 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,7 +73,7 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             DatasetExpression ds = (DatasetExpression) operand;
 
-            var ids = ds.getIdentifiers().stream()
+            LinkedHashMap<String, Analytics.Order> ids = ds.getIdentifiers().stream()
                     .collect(Collectors.toMap(
                             Structured.Component::getName,
                             c -> Analytics.Order.ASC,
@@ -81,8 +81,8 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                             LinkedHashMap::new
 
                     ));
-            var time = extractTimeComponent(ctx, ds);
-            var partition = ids.keySet().stream()
+            Structured.Component time = extractTimeComponent(ctx, ds);
+            List<String> partition = ids.keySet().stream()
                     .filter(colName -> !time.getName().equals(colName))
                     .collect(Collectors.toList());
             for (Structured.Component measure : ds.getMeasures()) {
@@ -91,28 +91,28 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     continue;
                 }
 
-                var measureName = measure.getName();
-                var lagColumnName = measure.getName() + "_lag";
+                String measureName = measure.getName();
+                String lagColumnName = measure.getName() + "_lag";
 
-                var lag = processingEngine.executeLeadOrLagAn(ds, measureName, Analytics.Function.LAG, measureName, 1, partition, ids);
-                lag = processingEngine.executeRename(lag, Map.of(measureName, lagColumnName));
+                DatasetExpression lag = processingEngine.executeLeadOrLagAn(ds, measureName, Analytics.Function.LAG, measureName, 1, partition, ids);
+                lag = processingEngine.executeRename(lag, Java8Helpers.mapOf(measureName, lagColumnName));
 
                 lag = processingEngine.executeProject(lag,
                         Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of(lagColumnName)).collect(Collectors.toList())
                 );
 
-                ds = processingEngine.executeLeftJoin(Map.of("left", ds, "lag", lag), ds.getIdentifiers());
+                ds = processingEngine.executeLeftJoin(Java8Helpers.mapOf("left", ds, "lag", lag), ds.getIdentifiers());
 
                 // me - nvl(lag, 0)
-                var measureExpr = new ComponentExpression(ds.getDataStructure().get(measure.getName()), position);
-                var lagExpr = new ComponentExpression(ds.getDataStructure().get(lagColumnName), position);
-                var nvlExpr = genericFunctionsVisitor.invokeFunction("nvl", List.of(
+                ComponentExpression measureExpr = new ComponentExpression(ds.getDataStructure().get(measure.getName()), position);
+                ComponentExpression lagExpr = new ComponentExpression(ds.getDataStructure().get(lagColumnName), position);
+                ResolvableExpression nvlExpr = genericFunctionsVisitor.invokeFunction("nvl", Java8Helpers.listOf(
                         lagExpr, new ConstantExpression(0L, position)), position);
-                var subtractionExpr = genericFunctionsVisitor.invokeFunction("subtraction", List.of(
+                ResolvableExpression subtractionExpr = genericFunctionsVisitor.invokeFunction("subtraction", Java8Helpers.listOf(
                         measureExpr, nvlExpr
                 ), position);
 
-                ds = processingEngine.executeCalc(ds, Map.of(measure.getName(), subtractionExpr), Map.of(), Map.of());
+                ds = processingEngine.executeCalc(ds, Java8Helpers.mapOf(measure.getName(), subtractionExpr), Java8Helpers.mapOf(), Java8Helpers.mapOf());
                 ds = processingEngine.executeProject(ds, ds.getColumnNames().stream().filter(s -> !s.equals(lagColumnName)).collect(Collectors.toList()));
             }
             return ds;
@@ -135,7 +135,7 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
             }
 
             DatasetExpression ds = (DatasetExpression) operand;
-            var ids = ds.getIdentifiers().stream()
+            LinkedHashMap<String, Analytics.Order> ids = ds.getIdentifiers().stream()
                     .collect(Collectors.toMap(
                             Structured.Component::getName,
                             c -> Analytics.Order.ASC,
@@ -143,8 +143,8 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                             LinkedHashMap::new
 
                     ));
-            var time = extractTimeComponent(ctx, ds);
-            var partition = ids.keySet().stream()
+            Structured.Component time = extractTimeComponent(ctx, ds);
+            List<String> partition = ids.keySet().stream()
                     .filter(colName -> !time.getName().equals(colName))
                     .collect(Collectors.toList());
             for (Structured.Component measure : ds.getMeasures()) {
@@ -167,7 +167,7 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             // Fall through if not dataset.
             if (!(operand instanceof DatasetExpression)) {
-                return genericFunctionsVisitor.invokeFunction("timeshift", List.of(
+                return genericFunctionsVisitor.invokeFunction("timeshift", Java8Helpers.listOf(
                         operand,
                         n
                 ), fromContext(ctx));
@@ -175,13 +175,13 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             DatasetExpression ds = (DatasetExpression) operand;
 
-            var t = extractTimeComponent(ctx, ds);
+            Structured.Component t = extractTimeComponent(ctx, ds);
 
-            var compExpr = genericFunctionsVisitor.invokeFunction("timeshift", List.of(
+            ResolvableExpression compExpr = genericFunctionsVisitor.invokeFunction("timeshift", Java8Helpers.listOf(
                     new ComponentExpression(t, fromContext(ctx)),
                     n
             ), fromContext(ctx));
-            return processingEngine.executeCalc(ds, Map.of(t.getName(), compExpr), Map.of(t.getName(), t.getRole()), Map.of());
+            return processingEngine.executeCalc(ds, Java8Helpers.mapOf(t.getName(), compExpr), Java8Helpers.mapOf(t.getName(), t.getRole()), Java8Helpers.mapOf());
 
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
@@ -189,7 +189,7 @@ public class TimeFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     private static Structured.Component extractTimeComponent(ParseTree ctx, DatasetExpression ds) throws InvalidArgumentException {
-        var t = ds.getIdentifiers().stream()
+        Structured.Component t = ds.getIdentifiers().stream()
                 .filter(component -> component.getType().equals(Interval.class)
                         || component.getType().equals(Instant.class)
                         || component.getType().equals(ZonedDateTime.class)
