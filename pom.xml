@@ -249,7 +249,6 @@
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <configuration>
-                                    <keyname>B28A31C8AD9D237A6FFABCBC8C7A5EED3D7D3BCD</keyname>
                                     <gpgArguments>
                                         <arg>--pinentry-mode</arg>
                                         <arg>loopback</arg>
