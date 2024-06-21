@@ -118,6 +118,7 @@ jobs:
                 "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
+          override: false
       - name: Publish Trevas
         run: mvn -B -Prelease deploy --no-transfser-progress
         env:
