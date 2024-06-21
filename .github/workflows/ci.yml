@@ -119,7 +119,7 @@ jobs:
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
       - name: Publish Trevas
-        run: mvn -B -Prelease deploy
+        run: mvn -B -Prelease deploy --no-transfser-progress
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
