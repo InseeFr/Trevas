@@ -111,11 +111,10 @@ jobs:
               },
               {
                   "id": "ossrh",
-                  "username": "${{ secrets.MAVEN_USERNAME }}",
-                  "password": "${{ secrets.MAVEN_PASSWORD }}"
+                  "username": "${{ secrets.OSSRH_USERNAME }}",
+                  "password": "${{ secrets.OSSRH_TOKEN }}"
               }
             ]
-          override: false
       - name: Publish Trevas
         run: mvn -B deploy -Prelease -DskipTests=true --no-transfer-progress
         env:
