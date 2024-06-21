@@ -120,7 +120,7 @@ jobs:
             }]
           override: false
       - name: Publish Trevas
-        run: mvn -B -Prelease deploy --no-transfser-progress
+        run: mvn -B deploy -Prelease -DskipTests=true --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
