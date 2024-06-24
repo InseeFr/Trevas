@@ -189,7 +189,7 @@
             </str:VtlMappingScheme>
         </str:VtlMappingSchemes>
         <str:RulesetSchemes>
-          <str:RulesetScheme vtlVersion="2.0" agencyID="SDMX" id="RS1" version="1.0">
+          <str:RulesetScheme vtlVersion="2.0" agencyID="FR1" id="RS1" version="1.0">
             <com:Name xml:lang="en">Ruleset Scheme #1</com:Name>
             <str:Ruleset id="UNIQUE_MUNICIPALITY" rulesetScope="valuedomain" rulesetType="datapoint">
               <com:Name xml:lang="en">Datapoint Ruleset UNIQUE_MUNICIPALITY</com:Name>
@@ -210,7 +210,7 @@
           </str:RulesetScheme>
         </str:RulesetSchemes>
         <str:TransformationSchemes>
-          <str:TransformationScheme agencyID="SDMX" id="BPE_CENSUS" version="1.0" vtlVersion="2.0">
+          <str:TransformationScheme agencyID="FR1" id="BPE_CENSUS" version="1.0" vtlVersion="2.0">
             <com:Name xml:lang="en">Transformation Scheme for BPE - CENSUS</com:Name>
             <str:Transformation id="STEP_1" isPersistent="false">
               <com:Name xml:lang="en">Step 1</com:Name>
