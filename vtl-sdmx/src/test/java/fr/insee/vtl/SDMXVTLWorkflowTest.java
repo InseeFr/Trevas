@@ -1,9 +1,10 @@
-package fr.insee.vtl.sdmx;
+package fr.insee.vtl;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.PersistentDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.sdmx.SDMXVTLWorkflow;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 import org.apache.spark.sql.SparkSession;
