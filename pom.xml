@@ -5,7 +5,7 @@
     <groupId>fr.insee.trevas</groupId>
     <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <modules>
         <module>vtl-parser</module>
         <module>vtl-model</module>
@@ -15,6 +15,7 @@
         <module>vtl-jdbc</module>
         <module>vtl-sdmx</module>
         <module>vtl-csv</module>
+        <module>coverage</module>
     </modules>
 
     <name>Trevas</name>

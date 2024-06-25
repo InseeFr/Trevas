@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 import static fr.insee.vtl.model.Structured.Component;
 
-class TrevasSDMXUtils {
+public class TrevasSDMXUtils {
 
     private static final StaxStructureReaderEngine structureReaderSDMX3 = StaxStructureReaderEngineV3.getInstance();
 
