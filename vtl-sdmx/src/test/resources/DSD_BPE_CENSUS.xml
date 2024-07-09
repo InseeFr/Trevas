@@ -32,6 +32,18 @@
 					<com:Name xml:lang="fr">L'Abergement-Clémenciat</com:Name>
 				</str:Code>
 			</str:Codelist>
+            <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)"
+                          isExternalReference="false"
+                          agencyID="FR1"
+                          id="CL_REF_AREA"
+                          version="1.0">
+                <com:Name xml:lang="en">Code officiel géographique</com:Name>
+                <com:Description xml:lang="fr">Les objets géographiques contenus dans le COG sont les collectivités territoriales (communes, départements, régions, collectivités territoriales à statut particulier), les découpages administratifs (arrondissements, arrondissements municipaux, pseudo-cantons) et certains découpages électoraux (cantons), ainsi que les pays et territoires étrangers. Ils sont répertoriés au 1er janvier de chaque année. Pour la mise à jour du millésime N, tous les événements intervenus entre le 02/01/N-1 et 01/01/N sont pris en compte.</com:Description>
+                <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=FR1:CL_REF_AREA(1.0).01"
+                          id="01">
+                    <com:Name xml:lang="fr">Ain</com:Name>
+                </str:Code>
+            </str:Codelist>
 		</str:Codelists>
 		<str:ConceptSchemes>
 			<str:ConceptScheme urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=FR1:INSEE_CONCEPTS(1.0)" isExternalReference="false" agencyID="FR1" id="INSEE_CONCEPTS" version="1.0">
@@ -62,6 +74,21 @@
 				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).LAMBERT_Y" id="LAMBERT_Y">
 					<com:Name xml:lang="fr">Ordonnée (Système de coordonnées Lambert 93)</com:Name>
 				</str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA" id="REF_AREA">
+                    <com:Name xml:lang="fr">Code officiel géographique</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TIME_PERIOD" id="TIME_PERIOD">
+                    <com:Name xml:lang="fr">Année</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_COM" id="NB_COM">
+                    <com:Name xml:lang="fr">Nombre de communes</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_MUNI" id="POP_MUNI">
+                    <com:Name xml:lang="fr">Population municipale</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_TOT" id="POP_TOT">
+                    <com:Name xml:lang="fr">Population totale</com:Name>
+                </str:Concept>
 			</str:ConceptScheme>
 		</str:ConceptSchemes>
         <str:DataStructures>
