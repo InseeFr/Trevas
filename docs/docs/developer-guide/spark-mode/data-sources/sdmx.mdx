@@ -106,7 +106,7 @@ SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
 Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
 ```
 
-As a result, one will receive all the dataset defined as persistent in the `TransformationSchemes` definition.
+As a result, one will receive all the datasets defined as persistent in the `TransformationSchemes` definition.
 
 ### SDMXVTLWorkflow `getTransformationsVTL` function
 
@@ -134,7 +134,7 @@ The integration of `vtl-modules` with `hadoop-client` can cause dependency issue
 
 It was noted that `com.fasterxml.woodstox.woodstox-core` is imported by `hadoop-client`, with an incompatible version for a `vtl-sdmx` sub-dependency.
 
-A way to fix is to exclude `com.fasterxml.woodstox.woodstox-core` dependency from `hadoop-client` and import a newest version in your `pom.xml`:
+A way to fix this is to exclude `com.fasterxml.woodstox.woodstox-core` dependency from `hadoop-client` and import a newest version in your `pom.xml`:
 
 ```xml
 <dependency>

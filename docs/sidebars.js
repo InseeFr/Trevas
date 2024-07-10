@@ -126,9 +126,10 @@ module.exports = {
 							label: 'Data sources',
 							items: [
 								'developer-guide/spark-mode/data-sources/index-data-sources',
-								'developer-guide/spark-mode/data-sources/parquet',
 								'developer-guide/spark-mode/data-sources/csv',
 								'developer-guide/spark-mode/data-sources/jdbc',
+								'developer-guide/spark-mode/data-sources/parquet',
+								'developer-guide/spark-mode/data-sources/sdmx',
 								'developer-guide/spark-mode/data-sources/others',
 							],
 						},
