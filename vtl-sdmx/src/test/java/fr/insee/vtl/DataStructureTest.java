@@ -1,6 +1,7 @@
-package fr.insee.vtl.sdmx;
+package fr.insee.vtl;
 
 import fr.insee.vtl.csv.CSVDataset;
+import fr.insee.vtl.sdmx.TrevasSDMXUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileReader;
