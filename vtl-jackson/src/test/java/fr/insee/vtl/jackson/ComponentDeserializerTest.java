@@ -12,13 +12,13 @@ public class ComponentDeserializerTest extends AbstractMapperTest {
     @Test
     public void testCanDeserialize() throws JsonProcessingException {
 
-        var stringComponent = new Dataset.Component("NAME", String.class, Dataset.Role.IDENTIFIER, null);
-        var measureComponent = new Dataset.Component("NAME", String.class, Dataset.Role.MEASURE, false);
-        var attributeComponent = new Dataset.Component("NAME", String.class, Dataset.Role.ATTRIBUTE, true);
+        Structured.Component stringComponent = new Dataset.Component("NAME", String.class, Dataset.Role.IDENTIFIER, null);
+        Structured.Component measureComponent = new Dataset.Component("NAME", String.class, Dataset.Role.MEASURE, false);
+        Structured.Component attributeComponent = new Dataset.Component("NAME", String.class, Dataset.Role.ATTRIBUTE, true);
 
-        var doubleComponent = new Dataset.Component("NAME", Double.class, Dataset.Role.IDENTIFIER, true);
-        var longComponent = new Dataset.Component("NAME", Long.class, Dataset.Role.IDENTIFIER, true);
-        var booleanComponent = new Dataset.Component("NAME", Boolean.class, Dataset.Role.IDENTIFIER, true);
+        Structured.Component doubleComponent = new Dataset.Component("NAME", Double.class, Dataset.Role.IDENTIFIER, true);
+        Structured.Component longComponent = new Dataset.Component("NAME", Long.class, Dataset.Role.IDENTIFIER, true);
+        Structured.Component booleanComponent = new Dataset.Component("NAME", Boolean.class, Dataset.Role.IDENTIFIER, true);
 
         Dataset.Component component;
 

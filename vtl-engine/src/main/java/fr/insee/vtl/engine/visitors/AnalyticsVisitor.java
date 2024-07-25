@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -86,7 +87,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private List<String> toPartitionBy(VtlParser.PartitionByClauseContext partition) {
         if (partition == null) {
-            return List.of();
+            return Java8Helpers.listOf();
         }
         return partition.componentID().stream()
                 .map(ClauseVisitor::getName)
@@ -101,7 +102,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private Map<String, Analytics.Order> toOrderBy(VtlParser.OrderByClauseContext orderByCtx) {
         if (orderByCtx == null) {
-            return Map.of();
+            return Java8Helpers.mapOf();
         }
         Map<String, Analytics.Order> orderBy = new LinkedHashMap<>();
         for (VtlParser.OrderByItemContext item : orderByCtx.orderByItem()) {

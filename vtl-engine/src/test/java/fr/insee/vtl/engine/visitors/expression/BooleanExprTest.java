@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,6 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,24 +95,24 @@ public class BooleanExprTest {
                 "xorDs := ds1 xor ds2; ");
         Dataset and = (Dataset) context.getAttribute("andDs");
         assertThat(and.getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "bool_var", false),
-                Map.of("id", "Hadrien", "bool_var", true),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Toto", "bool_var", false),
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", true),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", false),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
         Dataset or = (Dataset) context.getAttribute("orDs");
         assertThat(or.getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "bool_var", true),
-                Map.of("id", "Hadrien", "bool_var", true),
-                Map.of("id", "Nico", "bool_var", true),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Toto", "bool_var", true),
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", true),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", true),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
         Dataset xor = (Dataset) context.getAttribute("xorDs");
         assertThat(xor.getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "bool_var", true),
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", true),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Toto", "bool_var", true),
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", false),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", true),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
     }
 

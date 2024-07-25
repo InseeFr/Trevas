@@ -2,10 +2,11 @@ package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.Positioned.Position;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.assertj.core.api.Condition;
@@ -17,9 +18,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,8 +35,8 @@ public class VtlScriptEngineTest {
     public static <T extends Throwable> Condition<T> atPosition(Integer startLine, Integer endLine,
                                                                 Integer startColumn, Integer endColumn) {
         return new Condition<>(throwable -> {
-            var scriptException = (VtlScriptException) throwable;
-            var position = scriptException.getPosition();
+            VtlScriptException scriptException = (VtlScriptException) throwable;
+            Position position = scriptException.getPosition();
             return position.startLine.equals(startLine) &&
                     position.endLine.equals(endLine) &&
                     position.startColumn.equals(startColumn) &&
@@ -89,7 +89,7 @@ public class VtlScriptEngineTest {
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         ScriptContext context = engine.getContext();
 
-        var ds = new InMemoryDataset(List.of(), Map.of());
+        InMemoryDataset ds = new InMemoryDataset(Java8Helpers.listOf(), Java8Helpers.mapOf());
         context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
         engine.eval("pds <- ds;");
 
@@ -108,7 +108,7 @@ public class VtlScriptEngineTest {
     public void testFunctionsExpression() throws NoSuchMethodException, ScriptException {
 
         InMemoryDataset ds = new InMemoryDataset(
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
                         new Structured.Component("weight", Double.class, Dataset.Role.MEASURE)
@@ -118,7 +118,7 @@ public class VtlScriptEngineTest {
                 Arrays.asList("Nico", 12.34, 12.34)
         );
 
-        var ceilMethod = MathFunctions.class.getMethod("myCustomCeil", Double.class);
+        Method ceilMethod = MathFunctions.class.getMethod("myCustomCeil", Double.class);
 
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         engine.registerMethod("myCustomCeil", ceilMethod);
@@ -131,7 +131,7 @@ public class VtlScriptEngineTest {
 
     @Test
     void testMultipleParameterFunctionExpressions() throws ScriptException {
-        var ds1 = new InMemoryDataset(List.of(
+        InMemoryDataset ds1 = new InMemoryDataset(Java8Helpers.listOf(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Double.class, Dataset.Role.MEASURE)
         ),
@@ -140,7 +140,7 @@ public class VtlScriptEngineTest {
                 Arrays.asList("Nico", 4.567890123),
                 Arrays.asList("NotHere", 9.87654321)
         );
-        var ds2 = new InMemoryDataset(List.of(
+        InMemoryDataset ds2 = new InMemoryDataset(Java8Helpers.listOf(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
         ),
@@ -154,15 +154,15 @@ public class VtlScriptEngineTest {
         engine.eval("res := round(ds1#m1, ds2#m1);");
 
         assertThat(((Dataset) engine.get("res")).getDataAsList()).containsExactly(
-                List.of("Toto", 1.2346),
-                List.of("Hadrien", 2.35),
-                List.of("Nico", 4.6)
+                Java8Helpers.listOf("Toto", 1.2346),
+                Java8Helpers.listOf("Hadrien", 2.35),
+                Java8Helpers.listOf("Nico", 4.6)
         );
     }
 
     @Test
     void testMultipleParameterFunctionExpressionsAndConstants() throws ScriptException {
-        var ds1 = new InMemoryDataset(List.of(
+        InMemoryDataset ds1 = new InMemoryDataset(Java8Helpers.listOf(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
         ),
@@ -174,15 +174,15 @@ public class VtlScriptEngineTest {
         engine.eval("res := round(0.123456789, ds1#m1);");
 
         assertThat(((Dataset) engine.get("res")).getDataAsList()).containsExactly(
-                List.of("Toto", 0.12),
-                List.of("Hadrien", 0.1235),
-                List.of("Nico", 0.12345679)
+                Java8Helpers.listOf("Toto", 0.12),
+                Java8Helpers.listOf("Hadrien", 0.1235),
+                Java8Helpers.listOf("Nico", 0.12345679)
         );
     }
 
     @Test
     void testFunctionExpressionsWrongType() throws ScriptException {
-        var ds1 = new InMemoryDataset(List.of(
+        InMemoryDataset ds1 = new InMemoryDataset(Java8Helpers.listOf(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("m1", Long.class, Dataset.Role.MEASURE)
         ),
@@ -270,7 +270,7 @@ public class VtlScriptEngineTest {
 //
 //        var bar = ResolvableExpression.withType(String.class).using(c -> "bar");
 //        var baz = ResolvableExpression.withType(String.class).using(c -> "baz");
-//        var exprVisitor = new ExpressionVisitor(Map.of(), new InMemoryProcessingEngine(), engine);
+//        var exprVisitor = new ExpressionVisitor(Java8Helpers.mapOf(), new InMemoryProcessingEngine(), engine);
 //        var comparisonVisitor = new ComparisonVisitor(exprVisitor);
 //        var condition = comparisonVisitor.compareExpressions(bar, baz, VtlScriptEngineTest::isEqual);
 //        var expr = ResolvableExpression.withTypeCasting(String.class, (clazz, ctx) ->
@@ -286,7 +286,7 @@ public class VtlScriptEngineTest {
     public void testRegisterGlobal() throws NoSuchMethodException, ScriptException {
 
         InMemoryDataset ds = new InMemoryDataset(
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("age", Double.class, Dataset.Role.MEASURE),
                         new Structured.Component("weight", Double.class, Dataset.Role.MEASURE)
@@ -296,8 +296,8 @@ public class VtlScriptEngineTest {
                 Arrays.asList("Nico", 12.34, 12.34)
         );
 
-        var doNothingMethod = DoNothingClass.class.getMethod("doNothingMethod");
-        var ceilMethod = MathFunctions.class.getMethod("myCustomCeil", Double.class);
+        Method doNothingMethod = DoNothingClass.class.getMethod("doNothingMethod");
+        Method ceilMethod = MathFunctions.class.getMethod("myCustomCeil", Double.class);
 
         VtlScriptEngine engine = (VtlScriptEngine) this.engine;
         engine.registerGlobalMethod("doNothingMethod", doNothingMethod);

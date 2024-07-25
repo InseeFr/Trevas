@@ -8,8 +8,8 @@ public class IndexedHashMapTest {
 
     @Test
     public void testEquals() {
-        var map1 = new IndexedHashMap<>();
-        var map2 = new IndexedHashMap<>();
+        IndexedHashMap map1 = new IndexedHashMap<>();
+        IndexedHashMap map2 = new IndexedHashMap<>();
 
         map1.put("a", "1");
         map1.put("b", "2");

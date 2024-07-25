@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +12,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,12 +31,12 @@ public class ComparisonExprTest {
         ScriptContext context = engine.getContext();
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
 
-        List<String> operators = List.of("=", "<>", "<", ">", "<=", ">=");
-        List<List<String>> values = List.of(
-                List.of("\"string\"", "string"),
-                List.of("1.1", "number"),
-                List.of("1", "integer"),
-                List.of("cast(null, number)", "number")
+        List<String> operators = Java8Helpers.listOf("=", "<>", "<", ">", "<=", ">=");
+        List<List<String>> values = Java8Helpers.listOf(
+                Java8Helpers.listOf("\"string\"", "string"),
+                Java8Helpers.listOf("1.1", "number"),
+                Java8Helpers.listOf("1", "integer"),
+                Java8Helpers.listOf("cast(null, number)", "number")
         );
 
         for (String operator : operators) {
@@ -68,11 +68,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("equal := ds1[keep id, long1] = ds2[keep id, long1];");
-        var equal = engine.getContext().getAttribute("equal");
+        Object equal = engine.getContext().getAttribute("equal");
         assertThat(((Dataset) equal).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", true),
-                Map.of("id", "Franck", "bool_var", true)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", false),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", true),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", true)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
 
@@ -86,11 +86,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("notEqual := ds1[keep id, long1] <> ds2[keep id, long1];");
-        var notEqual = engine.getContext().getAttribute("notEqual");
+        Object notEqual = engine.getContext().getAttribute("notEqual");
         assertThat(((Dataset) notEqual).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", true),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", true),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", false),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // LT
@@ -103,11 +103,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("lt := ds1[keep id, long1] < ds2[keep id, long1];");
-        var lt = engine.getContext().getAttribute("lt");
+        Object lt = engine.getContext().getAttribute("lt");
         assertThat(((Dataset) lt).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", true),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", true),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", false),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // MT
@@ -120,11 +120,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("mt := ds1[keep id, long1] > ds2[keep id, long1];");
-        var mt = engine.getContext().getAttribute("mt");
+        Object mt = engine.getContext().getAttribute("mt");
         assertThat(((Dataset) mt).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", false),
-                Map.of("id", "Franck", "bool_var", false)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", false),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", false),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", false)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // LE
@@ -137,11 +137,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("le := ds1[keep id, long1] <= ds2[keep id, long1];");
-        var le = engine.getContext().getAttribute("le");
+        Object le = engine.getContext().getAttribute("le");
         assertThat(((Dataset) le).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", true),
-                Map.of("id", "Nico", "bool_var", true),
-                Map.of("id", "Franck", "bool_var", true)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", true),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", true),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", true)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
         // ME
@@ -155,11 +155,11 @@ public class ComparisonExprTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         engine.eval("me := ds1[keep id, long1] >= ds2[keep id, long1];");
-        var me = engine.getContext().getAttribute("me");
+        Object me = engine.getContext().getAttribute("me");
         assertThat(((Dataset) me).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "bool_var", false),
-                Map.of("id", "Nico", "bool_var", true),
-                Map.of("id", "Franck", "bool_var", true)
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", false),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", true),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", true)
         );
         assertThat(((Dataset) equal).getDataStructure().get("bool_var").getType()).isEqualTo(Boolean.class);
     }
@@ -194,12 +194,12 @@ public class ComparisonExprTest {
 
         engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         engine.eval("me := ds[keep id, long1, string1] in {\"toto\", \"franck\"};");
-        var in = engine.getContext().getAttribute("me");
+        Object in = engine.getContext().getAttribute("me");
         assertThat(((Dataset) in).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Toto", "long1", false, "string1", true),
-                Map.of("id", "Hadrien", "long1", false, "string1", false),
-                Map.of("id", "Nico", "long1", false, "string1", false),
-                Map.of("id", "Franck", "long1", false, "string1", true)
+                Java8Helpers.mapOf("id", "Toto", "long1", false, "string1", true),
+                Java8Helpers.mapOf("id", "Hadrien", "long1", false, "string1", false),
+                Java8Helpers.mapOf("id", "Nico", "long1", false, "string1", false),
+                Java8Helpers.mapOf("id", "Franck", "long1", false, "string1", true)
         );
         assertThat(((Dataset) in).getDataStructure().get("string1").getType()).isEqualTo(Boolean.class);
 

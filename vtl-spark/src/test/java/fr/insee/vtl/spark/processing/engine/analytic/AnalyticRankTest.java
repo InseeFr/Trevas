@@ -1,11 +1,11 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,14 +59,14 @@ public class AnalyticRankTest extends AnalyticTest {
         +----+----+----+----+----+--------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "rank_col", 1L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "rank_col", 2L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "rank_col", 3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "rank_col", 4L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "rank_col", 1L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "rank_col", 2L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "rank_col", 3L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "rank_col", 4L)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "rank_col", 1L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "rank_col", 2L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "rank_col", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "rank_col", 4L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "rank_col", 1L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "rank_col", 2L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "rank_col", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "rank_col", 4L)
         );
 
     }
@@ -113,14 +113,14 @@ public class AnalyticRankTest extends AnalyticTest {
         +----+----+----+----+----+--------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "rank_col", 1L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "rank_col", 2L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "rank_col", 3L),
-                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "rank_col", 4L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "rank_col", 1L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "rank_col", 2L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "rank_col", 3L),
-                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "rank_col", 4L)
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "rank_col", 1L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "rank_col", 2L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "rank_col", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "rank_col", 4L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "rank_col", 1L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "rank_col", 2L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "rank_col", 3L),
+                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "rank_col", 4L)
         );
 
     }

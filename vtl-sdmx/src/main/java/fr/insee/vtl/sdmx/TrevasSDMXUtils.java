@@ -100,7 +100,7 @@ public class TrevasSDMXUtils {
     }
 
     public static Structured.DataStructure buildStructureFromSDMX3(SdmxBeans beans, String structureID) {
-        var structures = parseDataStructure(beans);
+        Map<String, Structured.DataStructure> structures = parseDataStructure(beans);
         return structures.get(structureID);
     }
 

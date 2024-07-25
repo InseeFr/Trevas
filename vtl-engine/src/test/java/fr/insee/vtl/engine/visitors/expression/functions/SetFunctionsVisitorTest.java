@@ -1,17 +1,14 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.model.Structured.Component;
@@ -31,24 +28,24 @@ public class SetFunctionsVisitorTest {
     public void testUnionIncompatibleStructure() {
 
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(),
-                List.of(
+                Java8Helpers.listOf(),
+                Java8Helpers.listOf(
                         new Component("name", String.class, Dataset.Role.IDENTIFIER, null),
                         new Component("age", Long.class, Dataset.Role.MEASURE, null),
                         new Component("weight", Long.class, Dataset.Role.MEASURE, null)
                 )
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(),
-                List.of(
+                Java8Helpers.listOf(),
+                Java8Helpers.listOf(
                         new Component("age", Long.class, Dataset.Role.MEASURE),
                         new Component("name", String.class, Dataset.Role.IDENTIFIER),
                         new Component("weight", Long.class, Dataset.Role.MEASURE)
                 )
         );
         InMemoryDataset dataset3 = new InMemoryDataset(
-                List.of(),
-                List.of(
+                Java8Helpers.listOf(),
+                Java8Helpers.listOf(
                         new Component("name2", String.class, Dataset.Role.IDENTIFIER),
                         new Component("age", Long.class, Dataset.Role.MEASURE),
                         new Component("weight", Long.class, Dataset.Role.MEASURE)
@@ -67,13 +64,13 @@ public class SetFunctionsVisitorTest {
     public void testUnionSimple() throws ScriptException {
 
         InMemoryDataset dataset = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
+                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         ScriptContext context = engine.getContext();
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset);
@@ -90,10 +87,10 @@ public class SetFunctionsVisitorTest {
 
     @Test
     public void testUnionDifferentStructure() throws ScriptException {
-        var structure = new Structured.DataStructure(Map.of("id", String.class), Map.of("id", Dataset.Role.IDENTIFIER));
-        InMemoryDataset ds1 = new InMemoryDataset(structure, List.of("1"), List.of("2"), List.of("3"), List.of("4"));
-        InMemoryDataset ds2 = new InMemoryDataset(structure, List.of("3"), List.of("4"), List.of("5"), List.of("6"));
-        var bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        Structured.DataStructure structure = new Structured.DataStructure(Java8Helpers.mapOf("id", String.class), Java8Helpers.mapOf("id", Dataset.Role.IDENTIFIER));
+        InMemoryDataset ds1 = new InMemoryDataset(structure, Java8Helpers.listOf("1"), Java8Helpers.listOf("2"), Java8Helpers.listOf("3"), Java8Helpers.listOf("4"));
+        InMemoryDataset ds2 = new InMemoryDataset(structure, Java8Helpers.listOf("3"), Java8Helpers.listOf("4"), Java8Helpers.listOf("5"), Java8Helpers.listOf("6"));
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         bindings.put("ds1", ds1);
         bindings.put("ds2", ds2);
 
@@ -106,40 +103,40 @@ public class SetFunctionsVisitorTest {
                 "ds3 := union(ds1, ds2);\n" +
                 "ds4 := union(ds2, ds1);");
 
-        var ds3 = (Dataset) bindings.get("ds3");
-        var ds4 = (Dataset) bindings.get("ds4");
+        Dataset ds3 = (Dataset) bindings.get("ds3");
+        Dataset ds4 = (Dataset) bindings.get("ds4");
 
-        var onlyA = ds3.getDataAsMap().stream()
+        List<Object> onlyA = ds3.getDataAsMap().stream()
                 .map(m -> m.get("A"))
                 .distinct()
                 .collect(Collectors.toList());
         assertThat(onlyA).containsExactly("A");
 
-        var onlyB = ds4.getDataAsMap().stream()
+        List<Object> onlyB = ds4.getDataAsMap().stream()
                 .map(m -> m.get("B"))
                 .distinct()
                 .collect(Collectors.toList());
         assertThat(onlyB).containsExactly("B");
 
-        var onlyAList = ds3.getDataAsList().stream()
+        List<Object> onlyAList = ds3.getDataAsList().stream()
                 .map(l -> l.get(ds3.getDataStructure().indexOfKey("A")))
                 .distinct()
                 .collect(Collectors.toList());
         assertThat(onlyAList).containsExactly("A");
 
-        var onlyBList = ds4.getDataAsList().stream()
+        List<Object> onlyBList = ds4.getDataAsList().stream()
                 .map(l -> l.get(ds4.getDataStructure().indexOfKey("B")))
                 .distinct()
                 .collect(Collectors.toList());
         assertThat(onlyBList).containsExactly("B");
 
-        var onlyADatapoint = ds3.getDataPoints().stream()
+        List<Object> onlyADatapoint = ds3.getDataPoints().stream()
                 .map(d -> d.get("A"))
                 .distinct()
                 .collect(Collectors.toList());
         assertThat(onlyADatapoint).containsExactly("A");
 
-        var onlyBDatapoint = ds4.getDataPoints().stream()
+        List<Object> onlyBDatapoint = ds4.getDataPoints().stream()
                 .map(d -> d.get("B"))
                 .distinct()
                 .collect(Collectors.toList());
@@ -151,20 +148,20 @@ public class SetFunctionsVisitorTest {
     public void testUnion() throws ScriptException {
 
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "age", 11L, "weight", 10L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien", "weight", 11L, "age", 10L),
-                        Map.of("name", "Franck", "weight", 9L, "age", 12L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien", "weight", 11L, "age", 10L),
+                        Java8Helpers.mapOf("name", "Franck", "weight", 9L, "age", 12L)
                 ),
-                Map.of("name", String.class, "weight", Long.class, "age", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "weight", Long.class, "age", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         ScriptContext context = engine.getContext();
         context.getBindings(ScriptContext.ENGINE_SCOPE).put("ds1", dataset1);
@@ -174,9 +171,9 @@ public class SetFunctionsVisitorTest {
         Object result = engine.getContext().getAttribute("result");
         assertThat(result).isInstanceOf(Dataset.class);
         assertThat(((Dataset) result).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
+                Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
         );
 
     }
@@ -185,28 +182,28 @@ public class SetFunctionsVisitorTest {
     public void testUnionMultiple() throws ScriptException {
 
         InMemoryDataset dataset1 = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Map.of("name", "Nico", "age", 11L, "weight", 10L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset2 = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien2", "age", 10L, "weight", 11L),
-                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien2", "age", 10L, "weight", 11L),
+                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
         InMemoryDataset dataset3 = new InMemoryDataset(
-                List.of(
-                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Map.of("name", "Franck2", "age", 12L, "weight", 9L)
+                Java8Helpers.listOf(
+                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Java8Helpers.mapOf("name", "Franck2", "age", 12L, "weight", 9L)
                 ),
-                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-                Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+                Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -218,11 +215,11 @@ public class SetFunctionsVisitorTest {
         Object result = engine.getContext().getAttribute("result");
         assertThat(result).isInstanceOf(Dataset.class);
         assertThat(((Dataset) result).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                Map.of("name", "Franck", "age", 12L, "weight", 9L),
-                Map.of("name", "Franck2", "age", 12L, "weight", 9L),
-                Map.of("name", "Hadrien2", "age", 10L, "weight", 11L)
+                Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
+                Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L),
+                Java8Helpers.mapOf("name", "Franck2", "age", 12L, "weight", 9L),
+                Java8Helpers.mapOf("name", "Hadrien2", "age", 10L, "weight", 11L)
         );
 
     }
