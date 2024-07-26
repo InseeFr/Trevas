@@ -45,10 +45,11 @@ public class SDMXVTLWorkflow {
     }
 
     private static String toComment(String comment) {
-        if (comment == null || comment.isBlank()) {
+        if (comment == null || comment.trim().isEmpty()) {
             return "";
         }
-        return comment.lines().map(s -> "// " + s).collect(Collectors.joining("\n")) + "\n";
+        return Arrays.stream(comment.split("\n"))
+                .map(s -> "// " + s).collect(Collectors.joining("\n")) + "\n";
     }
 
     private Map<String, String> getRulesets() {
