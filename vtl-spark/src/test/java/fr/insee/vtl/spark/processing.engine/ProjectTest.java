@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -13,21 +14,19 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProjectTest {
 
     private final InMemoryDataset dataset = new InMemoryDataset(
-            List.of(
-                    Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                    Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                    Map.of("name", "Franck", "age", 12L, "weight", 9L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
+                    Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
+                    Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
             ),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
+            Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
     );
     private SparkSession spark;
     private ScriptEngine engine;
@@ -64,19 +63,19 @@ public class ProjectTest {
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(fr.insee.vtl.model.Dataset.class);
         assertThat(((fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactly(
-                Map.of("name", "Hadrien", "age", 10L),
-                Map.of("name", "Nico", "age", 11L),
-                Map.of("name", "Franck", "age", 12L)
+                Java8Helpers.mapOf("name", "Hadrien", "age", 10L),
+                Java8Helpers.mapOf("name", "Nico", "age", 11L),
+                Java8Helpers.mapOf("name", "Franck", "age", 12L)
         );
 
         engine.eval("ds := ds1[drop weight];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(fr.insee.vtl.model.Dataset.class);
-        var ds = (Dataset) engine.getContext().getAttribute("ds");
+        Dataset ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds.getDataAsMap()).containsExactly(
-                Map.of("name", "Hadrien", "age", 10L),
-                Map.of("name", "Nico", "age", 11L),
-                Map.of("name", "Franck", "age", 12L)
+                Java8Helpers.mapOf("name", "Hadrien", "age", 10L),
+                Java8Helpers.mapOf("name", "Nico", "age", 11L),
+                Java8Helpers.mapOf("name", "Franck", "age", 12L)
         );
         assertThat(ds.getDataStructure()).containsValues(
                 new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),

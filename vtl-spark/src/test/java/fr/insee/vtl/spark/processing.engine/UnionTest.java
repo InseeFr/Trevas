@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -14,65 +15,59 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UnionTest {
 
     private final InMemoryDataset unionDS1 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                    Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                    Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
     );
     private final InMemoryDataset unionDS2 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
-                    Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
 
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
     );
     private final InMemoryDataset unionDS3 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "2012", "Id_2", "L", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                    Map.of("Id_1", "2012", "Id_2", "M", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                    Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "L", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "M", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
     );
     private final InMemoryDataset unionDS4 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                    Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                    Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Id_4", String.class, "Me_1", Long.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Id_4", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
     );
     private final InMemoryDataset unionDS5 = new InMemoryDataset(
-            List.of(
-                    Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Me_1", 5L),
-                    Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Me_1", 2L),
-                    Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Me_1", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Me_1", 5L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Me_1", 2L),
+                    Java8Helpers.mapOf("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Me_1", 3L)
             ),
-            Map.of("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Me_1", Long.class),
-            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
+            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Id_3", String.class, "Me_1", Long.class),
+            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Id_3", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE)
     );
     private final String DEFAULT_NULL_STR = "null";
     private SparkSession spark;
@@ -192,11 +187,11 @@ public class UnionTest {
         for (Map<String, Object> map : actualWithNull) {
             actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        List<Map<String, Object>> expected = List.of(Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
-                Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
-                Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
+        List<Map<String, Object>> expected = Java8Helpers.listOf(Java8Helpers.mapOf("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
         );
         assertEquals(new HashSet<>(actual), new HashSet<>(expected));
     }
@@ -258,15 +253,15 @@ public class UnionTest {
         for (Map<String, Object> map : actualWithNull) {
             actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        List<Map<String, Object>> expected = List.of(
-                Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
-                Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
-                Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
-                Map.of("Id_1", "2012", "Id_2", "M", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                Map.of("Id_1", "2012", "Id_2", "L", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
+        List<Map<String, Object>> expected = Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "M", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "L", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L)
         );
         assertEquals(new HashSet<>(actual), new HashSet<>(expected));
     }
@@ -330,13 +325,13 @@ public class UnionTest {
         for (Map<String, Object> map : actualWithNull) {
             actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        List<Map<String, Object>> expected = List.of(
-                Map.of("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
-                Map.of("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
-                Map.of("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                Map.of("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
-                Map.of("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
-                Map.of("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
+        List<Map<String, Object>> expected = Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "G", "Id_3", "Total", "Id_4", "Total", "Me_1", 2L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "F", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "B", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "S", "Id_3", "Total", "Id_4", "Total", "Me_1", 5L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "N", "Id_3", "Total", "Id_4", "Total", "Me_1", 23L),
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "X", "Id_3", "Total", "Id_4", "Total", "Me_1", 3L)
         );
         assertEquals(new HashSet<>(actual), new HashSet<>(expected));
     }

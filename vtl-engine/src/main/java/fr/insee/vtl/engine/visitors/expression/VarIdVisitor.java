@@ -3,11 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
-import fr.insee.vtl.model.ConstantExpression;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -36,7 +32,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
     @Override
     public ResolvableExpression visitVarID(VtlParser.VarIDContext ctx) {
         final String variableName = ctx.getText();
-        var pos = fromContext(ctx);
+        Positioned pos = fromContext(ctx);
 
         if (!context.containsKey(variableName)) {
             throw new VtlRuntimeException(new UndefinedVariableException(variableName, pos));
@@ -48,7 +44,7 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
         }
 
         if (value instanceof Structured.Component) {
-            var component = (Structured.Component) value;
+            Structured.Component component = (Structured.Component) value;
             return new ComponentExpression(component, pos);
         }
 

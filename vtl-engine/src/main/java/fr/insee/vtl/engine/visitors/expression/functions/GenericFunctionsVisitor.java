@@ -7,14 +7,9 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.TypedExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -24,12 +19,7 @@ import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -114,7 +104,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             List<Class> parameterTypes = parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
             // Only one parameter, and it's a dataset. We can invoke the function on each measure.
             // Or method found in global methods
-            var method = engine.findGlobalMethod(funcName, parameterTypes);
+            VtlMethod method = engine.findGlobalMethod(funcName, parameterTypes);
             if (parameters.stream().noneMatch(DatasetExpression.class::isInstance) || method != null) {
                 // Only scalar types. We can invoke the function directly.
                 if (method == null) {
@@ -144,7 +134,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 List<Structured.Component> measures = ((DatasetExpression) finalRes).getMeasures();
                 if (measures.size() == 1 && measures.get(0).getType().equals(Boolean.class)) {
                     // TODO: refine with constraints matrix
-                    return proc.executeRename((DatasetExpression) finalRes, Map.of(measures.get(0).getName(), "bool_var"));
+                    return proc.executeRename((DatasetExpression) finalRes, Java8Helpers.mapOf(measures.get(0).getName(), "bool_var"));
                 }
             }
             return finalRes;
@@ -160,19 +150,19 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         // 1. Join all the datasets together and build a new expression map.
         Map<String, ResolvableExpression> monoExprs = new HashMap<>();
         Set<String> measureNames = new HashSet<>();
-        var dsExprs = parameters.stream()
+        Map<String, DatasetExpression> dsExprs = parameters.stream()
                 .filter(DatasetExpression.class::isInstance)
                 .map(e -> ((DatasetExpression) e))
                 .map(ds -> {
                     if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
                         throw new VtlRuntimeException(new InvalidArgumentException("mono-measure dataset expected", ds));
                     }
-                    var uniqueName = "arg" + ds.hashCode();
-                    var measure = ds.getMeasures().get(0);
+                    String uniqueName = "arg" + ds.hashCode();
+                    Structured.Component measure = ds.getMeasures().get(0);
                     String measureName = measure.getName();
                     measureNames.add(measureName);
-                    ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
-                    var renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
+                    ds = proc.executeRename(ds, Java8Helpers.mapOf(measureName, uniqueName));
+                    Structured.Component renamedComponent = new Structured.Component(uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
                     monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
                     return ds;
                 })
@@ -185,7 +175,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         DatasetExpression ds = proc.executeInnerJoin(dsExprs);
 
         // Rebuild the function parameters. TODO: All component?
-        var normalizedParams = parameters.stream()
+        List<ResolvableExpression> normalizedParams = parameters.stream()
                 .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
                 .collect(Collectors.toList());
 
@@ -193,11 +183,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         List<Class> parametersTypes = normalizedParams.stream()
                 .map(TypedExpression::getType)
                 .collect(Collectors.toList());
-        var method = engine.findMethod(funcName, parametersTypes);
-        var funcExrp = new FunctionExpression(method, normalizedParams, position);
-        ds = proc.executeCalc(ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
+        VtlMethod method = engine.findMethod(funcName, parametersTypes);
+        FunctionExpression funcExrp = new FunctionExpression(method, normalizedParams, position);
+        ds = proc.executeCalc(ds, Java8Helpers.mapOf(result, funcExrp), Java8Helpers.mapOf(result, Dataset.Role.MEASURE), Java8Helpers.mapOf());
         ds = proc.executeProject(ds, Stream.concat(ds.getIdentifiers().stream().map(Structured.Component::getName), Stream.of(result)).collect(Collectors.toList()));
-        return proc.executeRename(ds, Map.of(result, measureNames.iterator().next()));
+        return proc.executeRename(ds, Java8Helpers.mapOf(result, measureNames.iterator().next()));
     }
 
     @Override

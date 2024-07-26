@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -33,14 +34,14 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
 
     @Override
     protected List<String> defaultResult() {
-        return List.of();
+        return Java8Helpers.listOf();
     }
 
     @Override
     public List<String> visitGroupByOrExcept(VtlParser.GroupByOrExceptContext ctx) {
         List<String> componentNames = new ArrayList<>(ctx.componentID().size());
-        for (var component : ctx.componentID()) {
-            var componentName = getName(component);
+        for (VtlParser.ComponentIDContext component : ctx.componentID()) {
+            String componentName = getName(component);
             if (!dataStructure.containsKey(componentName)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
                         String.format("unknown component %s", componentName),

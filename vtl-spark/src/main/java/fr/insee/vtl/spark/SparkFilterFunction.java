@@ -22,7 +22,7 @@ public class SparkFilterFunction implements FilterFunction<Row> {
 
     @Override
     public boolean call(Row row) {
-        var res = expression.resolve(new SparkRowMap(row));
+        Object res = expression.resolve(new SparkRowMap(row));
         if (res == null) return false;
         return (boolean) res;
     }

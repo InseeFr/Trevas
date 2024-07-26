@@ -1,14 +1,10 @@
 package fr.insee.vtl.engine;
 
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.exceptions.VtlScriptException;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import java.time.*;
-import java.time.temporal.*;
+import java.time.temporal.ChronoUnit;
 
 /**
  * This comment explains the temporal functionality supported by Trevas, as defined in the VTL 2.0 specification.
@@ -188,19 +184,19 @@ public class TemporalFunctions {
     public static Interval timeshift(Interval time, Long n) {
         OffsetDateTime from = time.getStart().atOffset(ZoneOffset.UTC);
         OffsetDateTime to = time.getEnd().atOffset(ZoneOffset.UTC);
-        var dur = PeriodDuration.between(from, to)
+        PeriodDuration dur = PeriodDuration.between(from, to)
                 .multipliedBy(n.intValue());
         return Interval.of(from.plus(dur.getPeriod()).toInstant(), to.plus(dur.getPeriod()).toInstant());
     }
 
     public static ZonedDateTime at_zone(Instant op, String zone) {
-        var zid = ZoneId.of(zone);
+        ZoneId zid = ZoneId.of(zone);
         return op.atZone(zid);
     }
 
 
     private static Interval truncate_time(Interval op, ChronoUnit unit, ZoneId zone) {
-        var start = truncate_time(op.getStart(), unit, zone);
+        Instant start = truncate_time(op.getStart(), unit, zone);
         return Interval.of(start, unit.getDuration());
     }
 
@@ -213,7 +209,7 @@ public class TemporalFunctions {
     }
 
     private static Instant truncate_time(Instant op, ChronoUnit unit, ZoneId zone) {
-        var zonedOp = op.atZone(zone);
+        ZonedDateTime zonedOp = op.atZone(zone);
         switch (unit) {
             case DAYS:
                 return zonedOp.truncatedTo(ChronoUnit.DAYS).toInstant();
@@ -248,7 +244,7 @@ public class TemporalFunctions {
     }
 
     public static OffsetDateTime truncate_time(OffsetDateTime op, String unit) {
-        var zoned = op.toZonedDateTime();
+        ZonedDateTime zoned = op.toZonedDateTime();
         return truncate_time(zoned.toInstant(), toChronoUnit(unit), zoned.getZone()).atOffset(op.getOffset());
     }
 

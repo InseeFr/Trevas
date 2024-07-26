@@ -1,10 +1,6 @@
 package fr.insee.vtl.model;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The <code>DoubleExpression</code> class is a delegated LinkedHashMap that has indexOf methods.

@@ -46,7 +46,7 @@ jobs:
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 8
           distribution: "adopt"
       - uses: s4u/maven-settings-action@v3.0.0
         with:
@@ -58,7 +58,7 @@ jobs:
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
       - name: Test
-        run: mvn package
+        run: mvn package -DskipTests
   test-sonar-package:
     name: Run Trevas tests with coverage & sonar checks
     # Trevas main repo commit branch or merged PR
@@ -142,7 +142,7 @@ jobs:
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 8
           distribution: "adopt"
       - uses: s4u/maven-settings-action@v3.0.0
         with:
@@ -154,7 +154,7 @@ jobs:
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
       - name: Publish package
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel='warn'

@@ -1,11 +1,11 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class TextFunctions {
     public static String testTrim(String str) {
@@ -18,7 +18,7 @@ public class TextFunctions {
 
     public static Dataset loadS3() {
         return new InMemoryDataset(
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
                         new Structured.Component("weight", Long.class, Dataset.Role.MEASURE)
