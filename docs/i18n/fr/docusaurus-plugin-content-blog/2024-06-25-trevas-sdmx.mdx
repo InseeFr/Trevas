@@ -1,0 +1,44 @@
+---
+slug: /trevas-sdmx
+title: Trevas - SDMX
+authors: [nicolas]
+tags: [Trevas, SDMX]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import ThemedImage from '@theme/ThemedImage';
+import Link from '@theme/Link';
+
+### Nouveautés
+
+Trevas 1.4.0 introduit le module VTL SDMX.
+
+Ce module permet de consommer des sources de métadonnées SDMX pour instancier les structures de données et les ensembles de données Trevas.
+
+Il permet également d'exécuter les VTL TransformationSchemes pour obtenir les ensembles de données persistants résultants.
+
+#### Aperçu
+
+<div style={{ textAlign: 'center' }}>
+	<ThemedImage
+		alt="Diagramme VTL SDMX"
+		sources={{
+			light: useBaseUrl('/img/vtl-sdmx-light.svg'),
+			dark: useBaseUrl('/img/vtl-sdmx-dark.svg'),
+		}}
+	/>
+</div>
+
+Trevas prend en charge les éléments de message SDMX ci-dessus. Seul l'élément VtlMappingSchemes est facultatif.
+
+Les éléments de la case 1 sont utilisés pour produire des Trevas DataStructures, en valorisant les attributs des composants VTL : name, role, type, nullable et valuedomain.
+
+Les éléments de la case 2 sont utilisés pour générer le code VTL (ensembles de règles et transformations).
+
+#### Utilitaires disponibles
+
+Les utilitaires de Trevas SDMX sont documentés <Link label={"ici"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx')} />.
+
+#### Dépannage
+
+Voir <Link label={"cette section"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx#dépannage')} />.

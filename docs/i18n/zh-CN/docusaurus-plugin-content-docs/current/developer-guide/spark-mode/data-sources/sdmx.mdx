@@ -1,46 +1,18 @@
 ---
-slug: /trevas-sdmx
-title: Trevas - SDMX
-authors: [nicolas]
-tags: [Trevas, SDMX]
+id: sdmx
+title: Spark mode - SDMX source
+sidebar_label: SDMX
+slug: /developer-guide/spark-mode/data-sources/sdmx
+custom_edit_url: null
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import ThemedImage from '@theme/ThemedImage';
+`vtl-sdmx` module exposes the following utilities.
 
-### Nouveautés
+### `buildStructureFromSDMX3` utility
 
-Trevas 1.4.0 introduit le module VTL SDMX.
+`TrevasSDMXUtils.buildStructureFromSDMX3` allows to obtain a Trevas DataStructure.
 
-Ce module permet de consommer des sources de métadonnées SDMX pour instancier les structures de données et les ensembles de données Trevas.
-
-Il permet également d'exécuter les VTL TransformationSchemes pour obtenir les ensembles de données persistants résultants.
-
-#### Aperçu
-
-<div style={{ textAlign: 'center' }}>
-	<ThemedImage
-		alt="Diagramme VTL SDMX"
-		sources={{
-			light: useBaseUrl('/img/vtl-sdmx-light.svg'),
-			dark: useBaseUrl('/img/vtl-sdmx-dark.svg'),
-		}}
-	/>
-</div>
-
-Trevas prend en charge les éléments de message SDMX ci-dessus. Seul l'attribut VtlMappingSchemes est facultatif.
-
-Les éléments de la case 1 sont utilisés pour produire des Trevas DataStructures, en valorisant les attributs des composants VTL : name, role, type, nullable et valuedomain.
-
-Les éléments de la case 2 sont utilisés pour générer le code VTL (ensembles de règles et transformations).
-
-#### Outils disponibles
-
-#### Utilitaire `buildStructureFromSDMX3`
-
-`TrevasSDMXUtils.buildStructureFromSDMX3` permet d'obtenir une Trevas DataStructure.
-
-En fournissant les données correspondantes, vous pouvez créer un Trevas Dataset.
+Providing corresponding data, you can build a Trevas Dataset.
 
 ```java
 Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "STRUCT_ID");
@@ -55,13 +27,13 @@ SparkDataset ds = new SparkDataset(
 );
 ```
 
-#### Objet `SDMXVTLWorkflow`
+### `SDMXVTLWorkflow` object
 
-Le constructeur `SDMXVTLWorkflow` contient 3 arguments:
+The `SDMXVTLWorkflow` constructor takes 3 arguments:
 
-- un `ScriptEngine` (Trevas ou autre)
-- un `ReadableDataLocation`pour prendre en charge un message SDMX
-- une correspondance entre noms et Datasets
+- a `ScriptEngine` (Trevas or another)
+- a `ReadableDataLocation` to handle an SDMX message
+- a map of names / Datasets
 
 ```java
 SparkSession.builder()
@@ -78,11 +50,11 @@ ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_B
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 ```
 
-Cet objet permet alors d'accéder aux 3 fonctions suivantes.
+This object then allows you to activate the following 3 functions.
 
-#### Fonction SDMXVTLWorkflow `run` - Mode aperçu
+### SDMXVTLWorkflow `run` function - Preview mode
 
-La fonction `run` peut facilement être appelée en mode aperçu, sans données jointes.
+The `run` function can easily be called in a preview mode, without attached data.
 
 ```java
 ScriptEngineManager mgr = new ScriptEngineManager();
@@ -103,11 +75,11 @@ engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(emptyDatasets);
 Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
 ```
 
-Le mode aperçu permet de vérifier la conformité du fichier SDMX et des métadonnées des jeux de données en sortie.
+The preview mode allows to check the conformity of the SDMX file and the metadata of the output datasets.
 
-#### Fonction SDMXVTLWorkflow `run`
+### SDMXVTLWorkflow `run` function
 
-Une fois qu'un `SDMXVTLWorkflow` est construit, il est facile d'exécuter les validations et transformations VTL définies dans le fichier SDMX.
+Once an `SDMXVTLWorkflow` is built, it is easy to run the VTL validations and transformations defined in the SDMX file.
 
 ```java
 Structured.DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("path/sdmx_file.xml", "ds1");
@@ -134,22 +106,51 @@ SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
 Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
 ```
 
-En conséquence, on recevra l'ensemble des données définies comme persistantes dans la définition `TransformationSchemes`.
+As a result, one will receive all the dataset defined as persistent in the `TransformationSchemes` definition.
 
-#### Fonction SDMXVTLWorkflow `getTransformationsVTL`
+### SDMXVTLWorkflow `getTransformationsVTL` function
 
-Permet d'obtenir le code VTL correspondant à la définition SDMX TransformationSchemes.
+Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
 ```java
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 String vtl = sdmxVtlWorkflow.getTransformationsVTL();
 ```
 
-#### Fonction SDMXVTLWorkflow `getRulesetsVTL`
+### SDMXVTLWorkflow `getRulesetsVTL` function
 
-Permet d'obtenir le code VTL correspondant à la définition SDMX TransformationSchemes.
+Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
 ```java
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 String dprs = sdmxVtlWorkflow.getRulesetsVTL();
+```
+
+## Troubleshooting
+
+### Hadoop client
+
+The integration of `vtl-modules` with `hadoop-client` can cause dependency issues.
+
+It was noted that `com.fasterxml.woodstox.woodstox-core` is imported by `hadoop-client`, with an incompatible version for a `vtl-sdmx` sub-dependency.
+
+A way to fix is to exclude `com.fasterxml.woodstox.woodstox-core` dependency from `hadoop-client` and import a newest version in your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.apache.hadoop</groupId>
+    <artifactId>hadoop-client</artifactId>
+    <version>3.3.4</version>
+    <exclusions>
+        <exclusion>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.woodstox</groupId>
+    <artifactId>woodstox-core</artifactId>
+    <version>6.5.1</version>
+</dependency>
 ```

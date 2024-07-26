@@ -1,42 +1,14 @@
 ---
-slug: /trevas-sdmx
-title: Trevas - SDMX
-authors: [nicolas]
-tags: [Trevas, SDMX]
+id: sdmx
+title: Spark mode - SDMX source
+sidebar_label: SDMX
+slug: /developer-guide/spark-mode/data-sources/sdmx
+custom_edit_url: null
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import ThemedImage from '@theme/ThemedImage';
+`vtl-sdmx` module exposes the following utilities.
 
-### News
-
-Trevas 1.4.0 introduces the VTL SDMX module.
-
-This module enables to consume SDMX metadata sources to instantiate Trevas DataStructures and Datasets.
-
-It also allows to execute the VTL TransformationSchemes to obtain the resulting persistent datasets.
-
-#### Overview
-
-<div style={{ textAlign: 'center' }}>
-	<ThemedImage
-		alt="VTL SDMX Diagram"
-		sources={{
-			light: useBaseUrl('/img/vtl-sdmx-light.svg'),
-			dark: useBaseUrl('/img/vtl-sdmx-dark.svg'),
-		}}
-	/>
-</div>
-
-Trevas supports the above SDMX message elements. Only the VtlMappingSchemes attribute is optional.
-
-The elements in box 1 are used to produce Trevas DataStructures, filling VTL components attributes name, role, type, nullable and valuedomain.
-
-The elements in box 2 are used to generate the VTL code (rulesets & transformations).
-
-#### Tools available
-
-#### `buildStructureFromSDMX3` utility
+### `buildStructureFromSDMX3` utility
 
 `TrevasSDMXUtils.buildStructureFromSDMX3` allows to obtain a Trevas DataStructure.
 
@@ -55,7 +27,7 @@ SparkDataset ds = new SparkDataset(
 );
 ```
 
-#### `SDMXVTLWorkflow` object
+### `SDMXVTLWorkflow` object
 
 The `SDMXVTLWorkflow` constructor takes 3 arguments:
 
@@ -80,7 +52,7 @@ SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 
 This object then allows you to activate the following 3 functions.
 
-#### SDMXVTLWorkflow `run` function - Preview mode
+### SDMXVTLWorkflow `run` function - Preview mode
 
 The `run` function can easily be called in a preview mode, without attached data.
 
@@ -105,7 +77,7 @@ Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
 
 The preview mode allows to check the conformity of the SDMX file and the metadata of the output datasets.
 
-#### SDMXVTLWorkflow `run` function
+### SDMXVTLWorkflow `run` function
 
 Once an `SDMXVTLWorkflow` is built, it is easy to run the VTL validations and transformations defined in the SDMX file.
 
@@ -136,7 +108,7 @@ Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
 
 As a result, one will receive all the dataset defined as persistent in the `TransformationSchemes` definition.
 
-#### SDMXVTLWorkflow `getTransformationsVTL` function
+### SDMXVTLWorkflow `getTransformationsVTL` function
 
 Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
@@ -145,11 +117,40 @@ SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 String vtl = sdmxVtlWorkflow.getTransformationsVTL();
 ```
 
-#### SDMXVTLWorkflow `getRulesetsVTL` function
+### SDMXVTLWorkflow `getRulesetsVTL` function
 
 Gets the VTL code corresponding to the SDMX TransformationSchemes definition.
 
 ```java
 SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
 String dprs = sdmxVtlWorkflow.getRulesetsVTL();
+```
+
+## Troubleshooting
+
+### Hadoop client
+
+The integration of `vtl-modules` with `hadoop-client` can cause dependency issues.
+
+It was noted that `com.fasterxml.woodstox.woodstox-core` is imported by `hadoop-client`, with an incompatible version for a `vtl-sdmx` sub-dependency.
+
+A way to fix is to exclude `com.fasterxml.woodstox.woodstox-core` dependency from `hadoop-client` and import a newest version in your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.apache.hadoop</groupId>
+    <artifactId>hadoop-client</artifactId>
+    <version>3.3.4</version>
+    <exclusions>
+        <exclusion>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.woodstox</groupId>
+    <artifactId>woodstox-core</artifactId>
+    <version>6.5.1</version>
+</dependency>
 ```
