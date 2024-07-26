@@ -1,4 +1,4 @@
-package com.github.hervian.reflection.util;
+package fr.insee.vtl.engine.utils.safetymirror.util;
 
 import fr.insee.vtl.engine.utils.safetymirror.Fun;
 
@@ -8,13 +8,13 @@ import java.lang.reflect.Method;
 
 /**
  * Copyright 2016 Anders Granau Høfft
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,13 @@ import java.lang.reflect.Method;
  * END OF NOTICE
  *
  * @author Anders Granau Høfft
- *
+ * <p>
  * Thanks to Holger for this StackOverflow answer: https://stackoverflow.com/a/21879031/6095334
  */
 public class SerializedLambdaToMethod {
 
-    private SerializedLambdaToMethod(){}
+    private SerializedLambdaToMethod() {
+    }
 
     public static Method createMethodFromSuperConsumer(Fun lambda) {
         SerializedLambda serializedLambda = getSerializedLambda(lambda);
@@ -36,7 +37,7 @@ public class SerializedLambdaToMethod {
     }
 
     private static Method getMethod(SerializedLambda serializedLambda) {
-        if (serializedLambda==null) {
+        if (serializedLambda == null) {
             return null;
         } else {
             String className = SignatureUtil.compactClassName(serializedLambda.getImplClass(), false);
@@ -77,39 +78,57 @@ public class SerializedLambdaToMethod {
         String[] params = SignatureUtil.methodSignatureArgumentTypes(signature, false);
 
         Class<?>[] paramTypes = new Class[params.length];
-        for (int i=0; i<params.length; i++) {
+        for (int i = 0; i < params.length; i++) {
             paramTypes[i] = isPrimitive(params[i])
-                ? getPrimitiveClass(params[i])
-                : Class.forName(params[i].contains("[") ? parameters[i] + ";" : params[i]); //Arrays must somewhat surprising be in something resembling the JVM format (fx: [Ljava.lang.String) whereas regular classes must be in the format of class.getName (fx java.lang.String)
+                    ? getPrimitiveClass(params[i])
+                    : Class.forName(params[i].contains("[") ? parameters[i] + ";" : params[i]); //Arrays must somewhat surprising be in something resembling the JVM format (fx: [Ljava.lang.String) whereas regular classes must be in the format of class.getName (fx java.lang.String)
         }
         return paramTypes;
     }
 
     private static boolean isPrimitive(String param) {
-        switch (param){
-            case "byte" : return true;
-            case "short" : return true;
-            case "int" : return true;
-            case "long" : return true;
-            case "double" : return true;
-            case "float" : return true;
-            case "boolean" : return true;
-            case "char" : return true;
-            default: return false;
+        switch (param) {
+            case "byte":
+                return true;
+            case "short":
+                return true;
+            case "int":
+                return true;
+            case "long":
+                return true;
+            case "double":
+                return true;
+            case "float":
+                return true;
+            case "boolean":
+                return true;
+            case "char":
+                return true;
+            default:
+                return false;
         }
     }
 
     private static Class<?> getPrimitiveClass(String param) {
-        switch (param){
-            case "byte" : return byte.class;
-            case "short" : return short.class;
-            case "int" : return int.class;
-            case "long" : return long.class;
-            case "double" : return double.class;
-            case "float" : return float.class;
-            case "boolean" : return boolean.class;
-            case "char" : return char.class;
-            default: throw new UnsupportedOperationException("Unmapped switch case. Have a new primitive data type been added to the Java language?");
+        switch (param) {
+            case "byte":
+                return byte.class;
+            case "short":
+                return short.class;
+            case "int":
+                return int.class;
+            case "long":
+                return long.class;
+            case "double":
+                return double.class;
+            case "float":
+                return float.class;
+            case "boolean":
+                return boolean.class;
+            case "char":
+                return char.class;
+            default:
+                throw new UnsupportedOperationException("Unmapped switch case. Have a new primitive data type been added to the Java language?");
         }
     }
 
