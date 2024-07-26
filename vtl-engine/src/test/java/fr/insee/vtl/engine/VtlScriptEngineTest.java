@@ -1,6 +1,6 @@
 package fr.insee.vtl.engine;
 
-import com.github.hervian.reflection.Fun;
+import fr.insee.vtl.engine.utils.safetymirror.Fun;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;

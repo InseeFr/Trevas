@@ -1,6 +1,6 @@
 package fr.insee.vtl.engine;
 
-import com.github.hervian.reflection.Fun;
+import fr.insee.vtl.engine.utils.safetymirror.Fun;
 import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.*;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
@@ -12,7 +12,6 @@ import org.threeten.extra.PeriodDuration;
 
 import java.lang.reflect.Method;
 import java.time.*;
-import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 public class VtlNativeMethods {
