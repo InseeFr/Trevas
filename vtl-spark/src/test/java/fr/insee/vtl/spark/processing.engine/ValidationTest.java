@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -25,13 +26,13 @@ public class ValidationTest {
 
     private final String DEFAULT_NULL_STR = "null";
     private final InMemoryDataset dataset = new InMemoryDataset(
-            List.of(
-                    List.of("2011", "I", "CREDIT", 10L),
-                    List.of("2011", "I", "DEBIT", -2L),
-                    List.of("2012", "I", "CREDIT", 10L),
-                    List.of("2012", "I", "DEBIT", 2L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2011", "I", "CREDIT", 10L),
+                    Java8Helpers.listOf("2011", "I", "DEBIT", -2L),
+                    Java8Helpers.listOf("2012", "I", "CREDIT", 10L),
+                    Java8Helpers.listOf("2012", "I", "DEBIT", 2L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER, null, "vd_id_3"),
@@ -39,55 +40,55 @@ public class ValidationTest {
             )
     );
     private final InMemoryDataset ds_1_check = new InMemoryDataset(
-            List.of(
-                    List.of("2010", "I", 1L),
-                    List.of("2011", "I", 2L),
-                    List.of("2012", "I", 10L),
-                    List.of("2013", "I", 4L),
-                    List.of("2014", "I", 5L),
-                    List.of("2015", "I", 6L),
-                    List.of("2010", "D", 25L),
-                    List.of("2011", "D", 35L),
-                    List.of("2012", "D", 45L),
-                    List.of("2013", "D", 55L),
-                    List.of("2014", "D", 50L),
-                    List.of("2015", "D", 75L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2010", "I", 1L),
+                    Java8Helpers.listOf("2011", "I", 2L),
+                    Java8Helpers.listOf("2012", "I", 10L),
+                    Java8Helpers.listOf("2013", "I", 4L),
+                    Java8Helpers.listOf("2014", "I", 5L),
+                    Java8Helpers.listOf("2015", "I", 6L),
+                    Java8Helpers.listOf("2010", "D", 25L),
+                    Java8Helpers.listOf("2011", "D", 35L),
+                    Java8Helpers.listOf("2012", "D", 45L),
+                    Java8Helpers.listOf("2013", "D", 55L),
+                    Java8Helpers.listOf("2014", "D", 50L),
+                    Java8Helpers.listOf("2015", "D", 75L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
     private final InMemoryDataset ds_2_check = new InMemoryDataset(
-            List.of(
-                    List.of("2010", "I", 9L),
-                    List.of("2011", "I", 2L),
-                    List.of("2012", "I", 10L),
-                    List.of("2013", "I", 7L),
-                    List.of("2014", "I", 5L),
-                    List.of("2015", "I", 6L),
-                    List.of("2010", "D", 50L),
-                    List.of("2011", "D", 35L),
-                    List.of("2012", "D", 40L),
-                    List.of("2013", "D", 55L),
-                    List.of("2014", "D", 65L),
-                    List.of("2015", "D", 75L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2010", "I", 9L),
+                    Java8Helpers.listOf("2011", "I", 2L),
+                    Java8Helpers.listOf("2012", "I", 10L),
+                    Java8Helpers.listOf("2013", "I", 7L),
+                    Java8Helpers.listOf("2014", "I", 5L),
+                    Java8Helpers.listOf("2015", "I", 6L),
+                    Java8Helpers.listOf("2010", "D", 50L),
+                    Java8Helpers.listOf("2011", "D", 35L),
+                    Java8Helpers.listOf("2012", "D", 40L),
+                    Java8Helpers.listOf("2013", "D", 55L),
+                    Java8Helpers.listOf("2014", "D", 65L),
+                    Java8Helpers.listOf("2015", "D", 75L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
             )
     );
     private final Dataset dsExpr = new InMemoryDataset(
-            List.of(
-                    List.of("2011", "I", "CREDIT", true),
-                    List.of("2011", "I", "DEBIT", false),
-                    List.of("2012", "I", "CREDIT", false),
-                    List.of("2012", "I", "DEBIT", true)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2011", "I", "CREDIT", true),
+                    Java8Helpers.listOf("2011", "I", "DEBIT", false),
+                    Java8Helpers.listOf("2012", "I", "CREDIT", false),
+                    Java8Helpers.listOf("2012", "I", "DEBIT", true)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -95,13 +96,13 @@ public class ValidationTest {
             )
     );
     private final Dataset dsImbalance = new InMemoryDataset(
-            List.of(
-                    List.of("2011", "I", "CREDIT", 1L),
-                    List.of("2011", "I", "DEBIT", 2L),
-                    List.of("2012", "I", "CREDIT", 2L),
-                    List.of("2012", "I", "DEBIT", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2011", "I", "CREDIT", 1L),
+                    Java8Helpers.listOf("2011", "I", "DEBIT", 2L),
+                    Java8Helpers.listOf("2012", "I", "CREDIT", 2L),
+                    Java8Helpers.listOf("2012", "I", "DEBIT", 3L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -109,13 +110,13 @@ public class ValidationTest {
             )
     );
     private final Dataset dsImbalanceToRename = new InMemoryDataset(
-            List.of(
-                    List.of("2011", "I", "CREDIT", 1L),
-                    List.of("2011", "I", "DEBIT", 2L),
-                    List.of("2012", "I", "CREDIT", 2L),
-                    List.of("2012", "I", "DEBIT", 3L)
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2011", "I", "CREDIT", 1L),
+                    Java8Helpers.listOf("2011", "I", "DEBIT", 2L),
+                    Java8Helpers.listOf("2012", "I", "CREDIT", 2L),
+                    Java8Helpers.listOf("2012", "I", "DEBIT", 3L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -136,24 +137,24 @@ public class ValidationTest {
             "R110 : M <= G errorlevel 5\n" +
             "end hierarchical ruleset; \n";
     private final Dataset DS_1_HR = new InMemoryDataset(
-            List.of(
-                    List.of("2010", "A", 5L),
-                    List.of("2010", "B", 11L),
-                    List.of("2010", "C", 0L),
-                    List.of("2010", "G", 19L),
+            Java8Helpers.listOf(
+                    Java8Helpers.listOf("2010", "A", 5L),
+                    Java8Helpers.listOf("2010", "B", 11L),
+                    Java8Helpers.listOf("2010", "C", 0L),
+                    Java8Helpers.listOf("2010", "G", 19L),
                     Stream.of("2010", "H", null).collect(Collectors.toList()),
-                    List.of("2010", "I", 14L),
-                    List.of("2010", "M", 2L),
-                    List.of("2010", "N", 5L),
-                    List.of("2010", "O", 4L),
-                    List.of("2010", "P", 7L),
-                    List.of("2010", "Q", -7L),
-                    List.of("2010", "S", 3L),
-                    List.of("2010", "T", 9L),
+                    Java8Helpers.listOf("2010", "I", 14L),
+                    Java8Helpers.listOf("2010", "M", 2L),
+                    Java8Helpers.listOf("2010", "N", 5L),
+                    Java8Helpers.listOf("2010", "O", 4L),
+                    Java8Helpers.listOf("2010", "P", 7L),
+                    Java8Helpers.listOf("2010", "Q", -7L),
+                    Java8Helpers.listOf("2010", "S", 3L),
+                    Java8Helpers.listOf("2010", "T", 9L),
                     Stream.of("2010", "U", null).collect(Collectors.toList()),
-                    List.of("2010", "V", 6L)
+                    Java8Helpers.listOf("2010", "V", 6L)
             ),
-            List.of(
+            Java8Helpers.listOf(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)
@@ -246,34 +247,34 @@ public class ValidationTest {
         }
 
         assertThat(DS_rWithoutNull).containsExactlyInAnyOrder(
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "dpr1_2",
                         "errorcode", "Bad debit", "errorlevel", 1L)
         ).containsExactlyInAnyOrderElementsOf(DS_r_invalidWithoutNull);
 
         assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrder(
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "dpr1_2", "bool_var", false,
                         "errorcode", "Bad debit", "errorlevel", 1L),
-                Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "I", "Id_3", "CREDIT",
                         "Me_1", 10L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", 2L, "ruleid", "ruleA", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", 2L, "ruleid", "dpr1_2", "bool_var", true,
                         "errorcode", "null", "errorlevel", "null")
         ).containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
@@ -317,7 +318,7 @@ public class ValidationTest {
         }
 
         assertThat(DS_rWithoutNull).containsExactlyInAnyOrder(
-                Map.of("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "Id_3", "DEBIT",
                         "Me_1", -2L, "ruleid", "dpr1_2",
                         "errorcode", "Bad debit", "errorlevel", "null")
         );
@@ -332,7 +333,7 @@ public class ValidationTest {
         engine.eval("ds := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2);" +
                 "ds1 := check(DS1 >= DS2 errorcode \"err\" errorlevel 1 imbalance DS1 - DS2 invalid);");
 
-        var ds = (Dataset) engine.getContext().getAttribute("ds");
+        Dataset ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds).isInstanceOf(Dataset.class);
 
         List<Map<String, Object>> dsWithNull = ds.getDataAsMap();
@@ -341,30 +342,30 @@ public class ValidationTest {
             dsWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(dsWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "I", "bool_var", false,
+        assertThat(dsWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "bool_var", false,
                         "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2011", "Id_2", "I", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "I", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2012", "Id_2", "I", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "I", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2013", "Id_2", "I", "bool_var", false,
+                Java8Helpers.mapOf("Id_1", "2013", "Id_2", "I", "bool_var", false,
                         "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2014", "Id_2", "I", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2014", "Id_2", "I", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2015", "Id_2", "I", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2015", "Id_2", "I", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "bool_var", false,
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "bool_var", false,
                         "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2011", "Id_2", "D", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2011", "Id_2", "D", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2012", "Id_2", "D", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2012", "Id_2", "D", "bool_var", true,
                         "imbalance", 5L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2013", "Id_2", "D", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2013", "Id_2", "D", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2014", "Id_2", "D", "bool_var", false,
+                Java8Helpers.mapOf("Id_1", "2014", "Id_2", "D", "bool_var", false,
                         "imbalance", -15L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2015", "Id_2", "D", "bool_var", true,
+                Java8Helpers.mapOf("Id_1", "2015", "Id_2", "D", "bool_var", true,
                         "imbalance", 0L, "errorcode", "null", "errorlevel", "null")));
         assertThat(ds.getDataStructure()).containsValues(
                 new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
@@ -375,7 +376,7 @@ public class ValidationTest {
                 new Structured.Component("errorlevel", Long.class, Dataset.Role.MEASURE)
         );
 
-        var ds1 = (Dataset) engine.getContext().getAttribute("ds1");
+        Dataset ds1 = (Dataset) engine.getContext().getAttribute("ds1");
         assertThat(ds1).isInstanceOf(Dataset.class);
 
         List<Map<String, Object>> ds1WithNull = ds1.getDataAsMap();
@@ -384,14 +385,14 @@ public class ValidationTest {
             ds1WithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(ds1WithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "I",
+        assertThat(ds1WithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I",
                         "imbalance", -8L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2013", "Id_2", "I",
+                Java8Helpers.mapOf("Id_1", "2013", "Id_2", "I",
                         "imbalance", -3L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2010", "Id_2", "D",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D",
                         "imbalance", -25L, "errorcode", "err", "errorlevel", 1L),
-                Map.of("Id_1", "2014", "Id_2", "D",
+                Java8Helpers.mapOf("Id_1", "2014", "Id_2", "D",
                         "imbalance", -15L, "errorcode", "err", "errorlevel", 1L)));
     }
 
@@ -468,11 +469,11 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRWithNull) {
             dsRWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        assertThat(dsRWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+        assertThat(dsRWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "Me_1", 19L, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "Me_1", 2L, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L)
         ));
@@ -492,20 +493,20 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRAllWithNull) {
             dsRAllWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        assertThat(dsRAllWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+        assertThat(dsRAllWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -525,20 +526,20 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRAllMeasuresWithNull) {
             dsRAllMeasuresWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        assertThat(dsRAllMeasuresWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+        assertThat(dsRAllMeasuresWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "Me_1", 11L, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "Me_1", 0L, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "Me_1", 19L, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "Me_1", 2L, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "Me_1", 2L, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -574,20 +575,20 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRNonNullWithNull) {
             dsRNonNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        assertThat(dsRNonNullWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+        assertThat(dsRNonNullWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -598,35 +599,35 @@ public class ValidationTest {
         for (Map<String, Object> map : dsRNonZeroWithNull) {
             dsRNonZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
-        assertThat(dsRNonZeroWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+        assertThat(dsRNonZeroWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", false, "imbalance", 5L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 1L),
-                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
                         "bool_var", false, "imbalance", -5L,
                         "errorcode", "YY", "errorlevel", 0L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -638,32 +639,32 @@ public class ValidationTest {
             dsRPartialNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(dsRPartialNullWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+        assertThat(dsRPartialNullWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -675,32 +676,32 @@ public class ValidationTest {
             dsRPartialZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(dsRPartialZeroWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+        assertThat(dsRPartialZeroWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", false, "imbalance", 5L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 1L),
-                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
                         "bool_var", false, "imbalance", -5L,
                         "errorcode", "YY", "errorlevel", 0L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -712,38 +713,38 @@ public class ValidationTest {
             dsRAlwaysNullWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(dsRAlwaysNullWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+        assertThat(dsRAlwaysNullWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "F", "ruleid", "R060",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "F", "ruleid", "R060",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -755,38 +756,38 @@ public class ValidationTest {
             dsRAlwaysZeroWithoutNull.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
 
-        assertThat(dsRAlwaysZeroWithoutNull).isEqualTo(List.of(
-                Map.of("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
+        assertThat(dsRAlwaysZeroWithoutNull).isEqualTo(Java8Helpers.listOf(
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "A", "ruleid", "R010",
                         "bool_var", false, "imbalance", 5L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "B", "ruleid", "R020",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "C", "ruleid", "R030",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "D", "ruleid", "R040",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 1L),
-                Map.of("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "E", "ruleid", "R050",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "F", "ruleid", "R060",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "F", "ruleid", "R060",
                         "bool_var", true, "imbalance", 0L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "G", "ruleid", "R070",
                         "bool_var", false, "imbalance", 8L,
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "H", "ruleid", "R080",
                         "bool_var", "null", "imbalance", "null",
                         "errorcode", "null", "errorlevel", "null"),
-                Map.of("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "I", "ruleid", "R090",
                         "bool_var", false, "imbalance", -5L,
                         "errorcode", "YY", "errorlevel", 0L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R100",
                         "bool_var", false, "imbalance", -3L,
                         "errorcode", "null", "errorlevel", 5L),
-                Map.of("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
+                Java8Helpers.mapOf("Id_1", "2010", "Id_2", "M", "ruleid", "R110",
                         "bool_var", true, "imbalance", -17L,
                         "errorcode", "null", "errorlevel", "null")
         ));
@@ -795,10 +796,10 @@ public class ValidationTest {
     @Test
     public void checkHierarchyException() {
         Dataset DS_2_HR = new InMemoryDataset(
-                List.of(
-                        List.of("2010", "A", 5L, 5L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("2010", "A", 5L, 5L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
@@ -807,10 +808,10 @@ public class ValidationTest {
         );
 
         Dataset DS_3_HR = new InMemoryDataset(
-                List.of(
-                        List.of("2010", "A", "5")
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("2010", "A", "5")
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Me_1", String.class, Dataset.Role.MEASURE)
@@ -818,10 +819,10 @@ public class ValidationTest {
         );
 
         Dataset DS_4_HR = new InMemoryDataset(
-                List.of(
-                        List.of("2010", "A", 5L)
+                Java8Helpers.listOf(
+                        Java8Helpers.listOf("2010", "A", 5L)
                 ),
-                List.of(
+                Java8Helpers.listOf(
                         new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)

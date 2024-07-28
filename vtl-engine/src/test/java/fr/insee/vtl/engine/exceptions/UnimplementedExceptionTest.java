@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.exceptions;
 
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -9,7 +10,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
-import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
@@ -19,8 +19,8 @@ public class UnimplementedExceptionTest {
     public void testSimple() {
         String vtlExpression = "a := first_value(ds over());";
         Dataset ds = new InMemoryDataset(
-                List.of(List.of(1L, 31L)),
-                List.of(new Structured.Component("ID", Long.class, Dataset.Role.IDENTIFIER),
+                Java8Helpers.listOf(Java8Helpers.listOf(1L, 31L)),
+                Java8Helpers.listOf(new Structured.Component("ID", Long.class, Dataset.Role.IDENTIFIER),
                         new Structured.Component("FOO", Long.class, Dataset.Role.MEASURE))
         );
         SimpleBindings bindings = new SimpleBindings();

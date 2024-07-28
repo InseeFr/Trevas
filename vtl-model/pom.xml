@@ -7,7 +7,7 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.4.1</version>
+        <version>1.5.0</version>
     </parent>
 
     <dependencies>
@@ -21,7 +21,7 @@
     <artifactId>vtl-model</artifactId>
     <name>VTL Model</name>
     <description>Model describing VTL expressions and bindings</description>
-    <version>1.4.1</version>
+    <version>1.5.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>

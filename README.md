@@ -28,4 +28,4 @@ If you want to contribute, see this [guide](docs/CONTRIBUTING.md).
 
 ## Requirements
 
-Open JDK 11.0.4 + is required.
+Open JDK 8+ is required.

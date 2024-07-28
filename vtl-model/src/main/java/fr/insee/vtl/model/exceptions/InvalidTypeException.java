@@ -1,7 +1,10 @@
 package fr.insee.vtl.model.exceptions;
 
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.utils.Java8Helpers;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,7 +29,7 @@ public class InvalidTypeException extends VtlScriptException {
                 receivedType.getSimpleName(), expectedType.getSimpleName()
         ), position);
         this.expectedType = expectedType;
-        this.expectedTypes = Set.of(expectedType);
+        this.expectedTypes = Java8Helpers.setOf(expectedType);
         this.receivedType = receivedType;
     }
 

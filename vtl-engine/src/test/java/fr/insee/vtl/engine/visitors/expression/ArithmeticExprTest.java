@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.samples.DatasetSamples;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,8 +28,8 @@ public class ArithmeticExprTest {
 
         ScriptContext context = engine.getContext();
 
-        List<String> operators = List.of("+", "-", "/", "*");
-        List<String> values = List.of(
+        List<String> operators = Java8Helpers.listOf("+", "-", "/", "*");
+        List<String> values = Java8Helpers.listOf(
                 "1.1", "1", "cast(null, integer)"
         );
 
@@ -64,9 +64,9 @@ public class ArithmeticExprTest {
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := round(ds1[keep id, long1, double1] * ds2[keep id, long1, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", 1500.0, "double1", 1.0),
-                Map.of("id", "Nico", "long1", 400.0, "double1", 27.0),
-                Map.of("id", "Franck", "long1", 10000.0, "double1", -1.0)
+                Java8Helpers.mapOf("id", "Hadrien", "long1", 1500.0, "double1", 1.0),
+                Java8Helpers.mapOf("id", "Nico", "long1", 400.0, "double1", 27.0),
+                Java8Helpers.mapOf("id", "Franck", "long1", 10000.0, "double1", -1.0)
         );
 //        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
 
@@ -83,9 +83,9 @@ public class ArithmeticExprTest {
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         res = engine.eval("res := round(ds1[keep id, long1, double1] / ds2[keep id, long1, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Map.of("id", "Hadrien", "long1", 0.0, "double1", 1.0),
-                Map.of("id", "Nico", "long1", 1.0, "double1", 6.0),
-                Map.of("id", "Franck", "long1", 1.0, "double1", -1.0)
+                Java8Helpers.mapOf("id", "Hadrien", "long1", 0.0, "double1", 1.0),
+                Java8Helpers.mapOf("id", "Nico", "long1", 1.0, "double1", 6.0),
+                Java8Helpers.mapOf("id", "Franck", "long1", 1.0, "double1", -1.0)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
     }

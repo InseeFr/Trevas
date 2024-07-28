@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -54,7 +55,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     @Override
     public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
-        var result = visitAssignment(ctx.expr());
+        Object result = visitAssignment(ctx.expr());
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
         String variableIdentifier = ctx.varID().getText();
         bindings.put(variableIdentifier, result);
@@ -63,7 +64,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     @Override
     public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
-        var result = visitAssignment(ctx.expr());
+        Object result = visitAssignment(ctx.expr());
         if (result instanceof Dataset) {
             result = new PersistentDataset((Dataset) result);
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -78,17 +79,17 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
     @Override
     public Object visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
-        var pos = fromContext(ctx);
+        Positioned pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
         List<VtlParser.SignatureContext> signature = ctx.rulesetSignature().signature();
         List<String> variables = ctx.rulesetSignature().VARIABLE() != null ?
                 signature.stream()
                         .map(s -> s.varID().getText())
-                        .collect(Collectors.toList()) : List.of();
+                        .collect(Collectors.toList()) : Java8Helpers.listOf();
         List<String> valuedomains = ctx.rulesetSignature().VALUE_DOMAIN() != null ?
                 signature.stream()
                         .map(s -> s.varID().getText())
-                        .collect(Collectors.toList()) : List.of();
+                        .collect(Collectors.toList()) : Java8Helpers.listOf();
         Map<String, String> alias = signature.stream()
                 .filter(s -> null != s.alias())
                 .collect(Collectors.toMap(k -> k.varID().getText(), v -> v.alias().getText()));
@@ -171,7 +172,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     // TODO: handle when clause (expr ctx)
     @Override
     public Object visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
-        var pos = fromContext(ctx);
+        Positioned pos = fromContext(ctx);
         String rulesetName = ctx.rulesetID().getText();
 
         // Mix variables and valuedomain. Information useless for now, find use case to do so

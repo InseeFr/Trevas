@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -58,17 +59,17 @@ public class VtlScriptEngineFactoryTest {
 
         @Override
         public List<String> getExtensions() {
-            return List.of("vtl");
+            return Java8Helpers.listOf("vtl");
         }
 
         @Override
         public List<String> getMimeTypes() {
-            return List.of("text/x-vtl");
+            return Java8Helpers.listOf("text/x-vtl");
         }
 
         @Override
         public List<String> getNames() {
-            return List.of("VTLJava");
+            return Java8Helpers.listOf("VTLJava");
         }
 
         @Override
