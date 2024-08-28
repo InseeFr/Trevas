@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class Provenance extends VtlBaseListener {
+public class ProvenanceListener extends VtlBaseListener {
 
     public LinkedHashMap<String, Node> variables = new LinkedHashMap<>();
     public Node currentNode;

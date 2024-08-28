@@ -12,9 +12,9 @@ import org.junit.jupiter.api.TestInfo;
 import java.util.Collection;
 
 
-public class ProvenanceTest {
+public class ProvenanceListenerTest {
 
-    public static void printTree(Provenance.Node node, String prefix, boolean isLast) {
+    public static void printTree(ProvenanceListener.Node node, String prefix, boolean isLast) {
         if (node == null) {
             return;
         }
@@ -23,12 +23,12 @@ public class ProvenanceTest {
         System.out.println(prefix + (isLast ? "└── " : "├── ") + node.name + "\t[ " + node.expression + " ]");
 
         // Get the list of parent nodes
-        Collection<Provenance.Node> parents = node.parents.values();
+        Collection<ProvenanceListener.Node> parents = node.parents.values();
         int count = parents.size();
         int index = 0;
 
         // Recursively print each parent node
-        for (Provenance.Node parent : parents) {
+        for (ProvenanceListener.Node parent : parents) {
             printTree(parent, prefix + (isLast ? "    " : "│   "), ++index == count);
         }
     }
@@ -61,8 +61,8 @@ public class ProvenanceTest {
         VtlLexer lexer = new VtlLexer(stream);
         VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-        Provenance provenance = new Provenance();
-        ParseTreeWalker.DEFAULT.walk(provenance, parser.start());
+        ProvenanceListener provenanceListener = new ProvenanceListener();
+        ParseTreeWalker.DEFAULT.walk(provenanceListener, parser.start());
 
         // Edge [ { a } { b } ....]
         // Vertices [ [a, b] [a, c]
@@ -71,9 +71,9 @@ public class ProvenanceTest {
 
         // Node { a, parent: [ Node { b :
 
-        System.out.println(provenance.variables.keySet());
+        System.out.println(provenanceListener.variables.keySet());
 
-        printTree(provenance.variables.get("ds8"), "", true);
+        printTree(provenanceListener.variables.get("ds8"), "", true);
 
     }
 }
