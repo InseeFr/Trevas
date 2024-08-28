@@ -1,40 +1,14 @@
 package fr.insee.vtl.provenance;
 
-import fr.insee.vtl.parser.VtlLexer;
-import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 
-import java.util.Collection;
+import java.util.List;
 
 
 public class ProvenanceListenerTest {
 
-    public static void printTree(ProvenanceListener.Node node, String prefix, boolean isLast) {
-        if (node == null) {
-            return;
-        }
-
-        // Print the current node with appropriate formatting
-        System.out.println(prefix + (isLast ? "└── " : "├── ") + node.name + "\t[ " + node.expression + " ]");
-
-        // Get the list of parent nodes
-        Collection<ProvenanceListener.Node> parents = node.parents.values();
-        int count = parents.size();
-        int index = 0;
-
-        // Recursively print each parent node
-        for (ProvenanceListener.Node parent : parents) {
-            printTree(parent, prefix + (isLast ? "    " : "│   "), ++index == count);
-        }
-    }
-
     @Test
-    void testProvenance(TestInfo testInfo) {
+    void testProvenance() {
         String expr;
 
         expr = "" +
@@ -57,23 +31,16 @@ public class ProvenanceListenerTest {
         // entity(ds1, [ prov:type="prov:Entity", prov:label="ds1" ])
         // wasDerivedFrom(ds1, ds2, ds1)
 
-        CodePointCharStream stream = CharStreams.fromString(expr, testInfo.getTestMethod().get().getName());
-        VtlLexer lexer = new VtlLexer(stream);
-        VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
-
-        ProvenanceListener provenanceListener = new ProvenanceListener();
-        ParseTreeWalker.DEFAULT.walk(provenanceListener, parser.start());
 
         // Edge [ { a } { b } ....]
         // Vertices [ [a, b] [a, c]
 
 
-
         // Node { a, parent: [ Node { b :
-
-        System.out.println(provenanceListener.variables.keySet());
-
-        printTree(provenanceListener.variables.get("ds8"), "", true);
+        ProvenanceListener provListener = ProvenanceUtils.getProvenance(expr);
+        System.out.println(provListener.variables.keySet());
+        ProvenanceUtils.toBusinessModel(provListener)
+        ProvenanceUtils.printTree(provListener.variables.get("ds8"), "", true);
 
     }
 }
