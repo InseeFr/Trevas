@@ -33,10 +33,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds8"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds1_0 : ds2_0)", "(ds2_0 : ds3_0)", "(ds3_0 : ds4_0)", "(ds4_0 : ds5_0)"
         );
@@ -52,10 +52,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds5_0"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds1_0 : ds2_0)", "(ds2_0 : ds3_0)", "(ds3_0 : ds4_0)", "(ds4_0 : ds5_0)"
         );
@@ -68,10 +68,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds3_0"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds1_0 : ds2_0)", "(ds2_0 : ds3_0)"
         );
@@ -84,10 +84,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds3_0"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds1_0 : ds2_0)", "(ds2_0 : ds3_0)", "(ds1_0 : ds3_0)"
         );
@@ -100,10 +100,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds3_0", "ds6_0"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds2_0 : ds3_0)", "(ds1_0 : ds3_0)", "(ds5_0 : ds6_0)", "(ds4_0 : ds6_0)"
         );
@@ -116,10 +116,10 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
 
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds5_0", "ds3_0"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds2_0 : ds3_0)", "(ds1_0 : ds3_0)", "(ds4_0 : ds5_0)", "(ds1_0 : ds5_0)"
         );
@@ -135,16 +135,16 @@ public class VariableGraphListenerTest {
                 "ds1 := ds2 * ds1;";
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
-        assertThat(provenanceListener.getVariables()).containsExactly(
+        assertThat(provenanceListener.getVariables()).map(Variable::toString).containsExactlyInAnyOrder(
                 "ds1_2"
         );
-        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        DefaultDirectedGraph<Variable, DefaultEdge> graph = provenanceListener.getGraph();
         assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
                 "(ds0_0 : ds1_0)", "(ds1_0 : ds1_1)", "(ds1_1 : ds1_2)", "(ds2_0 : ds1_2)"
         );
     }
 
-    public static void printTree(Graph<String, DefaultEdge> graph, String currentNode, String prefix, boolean isLast) {
+    public static void printTree(Graph<Variable, DefaultEdge> graph, Variable currentNode, String prefix, boolean isLast) {
         if (currentNode == null || !graph.containsVertex(currentNode)) {
             return;
         }
@@ -159,13 +159,13 @@ public class VariableGraphListenerTest {
 
         // Recursively print each child node
         for (DefaultEdge edge : outgoingEdges) {
-            String targetNode = graph.getEdgeSource(edge);
+            Variable targetNode = graph.getEdgeSource(edge);
             printTree(graph, targetNode, prefix + (isLast ? "    " : "│   "), ++index == count);
         }
     }
 
     private static void printTrees(VariableGraphListener provenanceListener) {
-        for (String variable : provenanceListener.getVariables()) {
+        for (Variable variable : provenanceListener.getVariables()) {
             printTree(provenanceListener.getGraph(), variable, "", false);
         }
     }
