@@ -149,6 +149,10 @@ public class VariableGraphListener extends VtlBaseListener {
     }
 
     public DefaultDirectedGraph<String, DefaultEdge> getGraph() {
+        Set<DefaultEdge> selfLoops = graph.edgeSet().stream()
+                .filter(e -> graph.getEdgeSource(e).equals(graph.getEdgeTarget(e)))
+                .collect(Collectors.toSet());
+        graph.removeAllEdges(selfLoops);
         return graph;
     }
 

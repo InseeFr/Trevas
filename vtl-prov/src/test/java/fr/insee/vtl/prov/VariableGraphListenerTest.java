@@ -18,6 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class VariableGraphListenerTest {
 
     @Test
+    void testComplexGraph() {
+        String expr = "" +
+                "ds1 := ds2#foo * 4;" +
+                "ds3 := ds1#bar + ds3#baz; " +
+                "ds3 := ds2 + ds1; " +
+                "ds4 := inner_join(ds1 as a, ds2 as b);" +
+                "ds5 := union(ds4, ds3);" +
+                "ds6 := (ds5 + ds2) * ds3;" +
+                //"tmp1 := (ds5 + ds2);" +
+                //"ds6 := tmp1 * ds3;" +
+                "ds7 := funcBaz(ds6);" +
+                "ds8 := ds7[calc test := bla * 3];";
+
+        VariableGraphListener provenanceListener = parseAndListen(expr);
+
+        assertThat(provenanceListener.getVariables()).containsExactly(
+                "ds8"
+        );
+        DefaultDirectedGraph<String, DefaultEdge> graph = provenanceListener.getGraph();
+        assertThat(graph.edgeSet()).map(DefaultEdge::toString).containsExactly(
+                "(ds1_0 : ds2_0)", "(ds2_0 : ds3_0)", "(ds3_0 : ds4_0)", "(ds4_0 : ds5_0)"
+        );
+    }
+
+    @Test
     void testSimpleGraph() {
         String expr = "ds2 := ds1;" +
                 "/* test */" +
@@ -107,7 +132,7 @@ public class VariableGraphListenerTest {
         String expr = "" +
                 "ds1 := ds0;" +
                 "ds1 := ds1 + 1;" +
-                "ds1 := ds1 * ds2;";
+                "ds1 := ds2 * ds1;";
 
         VariableGraphListener provenanceListener = parseAndListen(expr);
         assertThat(provenanceListener.getVariables()).containsExactly(
@@ -152,6 +177,7 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = new VariableGraphListener();
         ParseTreeWalker.DEFAULT.walk(provenanceListener, parser.start());
+        System.out.println(provenanceListener.getGraph());
         printTrees(provenanceListener);
         return provenanceListener;
     }
