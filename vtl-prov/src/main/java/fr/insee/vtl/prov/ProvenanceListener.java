@@ -1,4 +1,4 @@
-package fr.insee.vtl.provenance;
+package fr.insee.vtl.prov;
 
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlParser;

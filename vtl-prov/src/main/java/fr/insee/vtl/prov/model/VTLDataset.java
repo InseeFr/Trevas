@@ -1,4 +1,4 @@
-package fr.insee.vtl.provenance.model;
+package fr.insee.vtl.prov.model;
 
 import java.util.List;
 

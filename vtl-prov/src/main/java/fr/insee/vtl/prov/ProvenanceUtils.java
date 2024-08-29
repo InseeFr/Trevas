@@ -1,8 +1,8 @@
-package fr.insee.vtl.provenance;
+package fr.insee.vtl.prov;
 
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.provenance.model.VTLDataset;
+import fr.insee.vtl.prov.model.VTLDataset;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;

@@ -1,8 +1,6 @@
-package fr.insee.vtl.provenance;
+package fr.insee.vtl.prov;
 
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 
 public class ProvenanceListenerTest {
@@ -32,6 +30,12 @@ public class ProvenanceListenerTest {
         // wasDerivedFrom(ds1, ds2, ds1)
 
 
+        // TODO: DFS
+        // TODO: Tarjan / Kosaraju ?
+        // TODO: Non-cyclical.
+        // https://memgraph.com/blog/graph-algorithms-applications
+        // https://chatgpt.com/c/9d76bc9b-35cb-4c9a-a126-180aa1678192
+        // https://chatgpt.com/c/6f306284-8130-4583-bbc3-8ea67b33ac6c
         // Edge [ { a } { b } ....]
         // Vertices [ [a, b] [a, c]
 
@@ -39,7 +43,7 @@ public class ProvenanceListenerTest {
         // Node { a, parent: [ Node { b :
         ProvenanceListener provListener = ProvenanceUtils.getProvenance(expr);
         System.out.println(provListener.variables.keySet());
-        ProvenanceUtils.toBusinessModel(provListener)
+        ProvenanceUtils.toBusinessModel(provListener);
         ProvenanceUtils.printTree(provListener.variables.get("ds8"), "", true);
 
     }

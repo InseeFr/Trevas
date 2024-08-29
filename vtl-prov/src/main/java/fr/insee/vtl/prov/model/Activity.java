@@ -1,4 +1,4 @@
-package fr.insee.vtl.provenance.model;
+package fr.insee.vtl.prov.model;
 
 public class Activity {
 
