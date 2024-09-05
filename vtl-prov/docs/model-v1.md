@@ -2,35 +2,44 @@
 
 ## Description
 
-TODO
+[Data provenance](https://www.nnlm.gov/guides/data-glossary/data-provenance) is key to a good data management. 
+
+his document present how we could extract some provenance from a VTL program in Trevas, using linked open data standards:
+
+- [PROV](https://www.w3.org/TR/prov-o/)
+- SDTH (ref ?)
 
 ## Variables
 
-### Business use case TODO
+### Business use case
 
-A derived variable is obtained via a VTL script involving one or more collected variables.
+Two sources datasets are transformed to produce transient datasets and a final permanent one.
 
 ```mermaid
-graph LR
-  C1[Collected variable]
-  C2[Collected variable]
-  C3[Collected variable]
+flowchart TD
+    OP1{add +}
+    OP2{multiply *}
+    OP3{filter}
+    OP4{create variable}
+    SC3([3])
 
-  V[VTL script]
-
-  D[Derived variable]
-
-  C1-->V
-  C2-->V
-  C3-->V
-
-  V-->D
+   DS1 --> OP1
+   DS2 --> OP1
+   OP1 --> DSSUM
+   SC3 --> OP2
+   DSSUM --> OP2 
+   OP2 --> DSMUL
+   DSMUL --> OP3
+   OP3 --> OP4
+   OP4 --> DSRES
 
 ```
 
 ### Modelisation
 
-Based on `RDFS`, `PROV-O` and `SKOS` ontologies.
+Based on `PROV-O` and `SDTH` ontologies.
+
+__TODO__
 
 ```mermaid
 classDiagram
