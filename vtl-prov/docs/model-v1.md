@@ -80,11 +80,24 @@ classDiagram
 
 ### Example
 
+#### Inputs
+
+`ds1` & `ds2` metadata
+
+|id|var1|var2|
+|:-:|:-:|:-:|
+|STRING|INTEGER|NUMBER|
+|IDENTIFIER|MEASURE|MEASURE|
+
+#### VTL script
+
 ```vtl
 ds_sum := ds1 + ds2;
 ds_mul := ds_sum * 3; 
 ds_res <- ds_mul[filter mod(var1, 2) = 0]
 ```
+
+#### Model target
 
 ```ttl
 @PREFIX org: <http://example.com/>
