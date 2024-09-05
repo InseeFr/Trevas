@@ -94,7 +94,7 @@ classDiagram
 ```vtl
 ds_sum := ds1 + ds2;
 ds_mul := ds_sum * 3; 
-ds_res <- ds_mul[filter mod(var1, 2) = 0]
+ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 ```
 
 #### Model target
@@ -114,20 +114,27 @@ ds_res <- ds_mul[filter mod(var1, 2) = 0]
                                 sdth:consumesDataframe <org/dataset/ds1>, <org/dataset/ds2> ;
                                 sdth:producesDataframe <org/dataset/ds_sum> .
 
+
+<org/dataset/id1> a sdth:VariableInstance .
+<org/dataset/var1> a sdth:VariableInstance .
+<org/dataset/var2> a sdth:VariableInstance .
+
+
 <org/dataset/ds1> a sdth:DataframeInstance ;
                   sdth:hasName "ds1" ;
-                  sdth:hasVariableInstance <constances/vtl/id1> ;
-                  sdth:hasVariableInstance <constances/vtl/var1> .
+                  sdth:hasVariableInstance <org/vtl/id1> ;
+                  sdth:hasVariableInstance <org/vtl/var1> .
                   
 <org/dataset/ds2> a sdth:DataframeInstance ;
                   sdth:hasName "ds1" ;
-                  sdth:hasVariableInstance <constances/vtl/id2> ;
-                  sdth:hasVariableInstance <constances/vtl/var2> .
+                  sdth:hasVariableInstance <org/vtl/id1> ;
+                  sdth:hasVariableInstance <org/vtl/var2> .
                   
-<org/dataset/ds_mul> a sdth:DataframeInstance ;
-                     sdth:hasName "ds1" .
+<org/dataset/ds_sum> a sdth:DataframeInstance ;
+                     sdth:hasName "ds1" ;
+                     sdth:wasDerivedFrom <org/dataset/ds1>, <org/dataset/ds2> . 
 
 <constances/vtl/ds1> a sdth:DataframeInstance ;
-	a prov:entity
-	sdth:hasVarInstance <constances/vtl/var1>
+	a prov:entity ;
+	sdth:hasVarInstance <org/vtl/var1> .
 ```
