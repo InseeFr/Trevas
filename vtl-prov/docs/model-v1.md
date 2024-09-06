@@ -43,48 +43,26 @@ __TODO__
 
 ```mermaid
 classDiagram
-  class Entity {
+  class Agent {
   }
-  class DDIVariable {
-  }
-  class Activity {
-  }
-  class DerivedVariable {
-  }
-  class CalculatedVariable {
+  class Program {
     rdfs:label
-    skos:definition
   }
-  class CleanedVariable {
-    rdfs:label
-    skos:definition
+  class ProgramStep {
   }
-  class ScriptExecution {
-    rdfs:label
-    skos:definition
-    sdmx:expression
+  class VariableInstance {
   }
-  class Variable {
-    rdfs:label
-    skos:definition
-  }
-  class SoftwareAgent {
-    rdfs:label
-    skos:definition
+  class DataframeInstance {
+    sdth:hasName
   }
 
-  Entity <|-- DDIVariable
-  DDIVariable <|-- DerivedVariable
-  DerivedVariable <|-- CalculatedVariable
-  DerivedVariable <|-- CleanedVariable
-  DDIVariable <|-- Variable
+  Agent <|-- Program
+  ProgramStep <-- Program : sdth_hasProgramStep
+  ProgramStep --> VariableInstance : sdth_usesVariable
+  ProgramStep --> DataframeInstance : sdth_consumesDataframe
+  ProgramStep --> DataframeInstance : sdth_producesDataframe
+  DataframeInstance --> VariableInstance : sdth_hasVariableInstance
 
-  Activity <|-- ScriptExecution
-
-  CleanedVariable "*" --> "*" Variable : wasDerivedFrom
-  CleanedVariable "*" --> "1" ScriptExecution : wasGeneratedBy
-
-  ScriptExecution "*" --> "1" SoftwareAgent : wasAssociatedWith
 ```
 
 ### Example
