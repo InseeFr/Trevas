@@ -4,9 +4,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-
 public class RDFUtils {
 
     private static final String SDTH_BASE_URI = "http://rdf-vocabulary.ddialliance.org/sdth";
@@ -18,12 +15,12 @@ public class RDFUtils {
     }
 
     public static void loadModelWithCredentials(Model model,
-                                               String sparlEndpoint,
-                                               String sparlEndpointUser,
-                                               String sparlEndpointPassword) {
-        if (!sparlEndpoint.isEmpty()) {
+                                                String sparqlEndpoint,
+                                                String sparqlEndpointUser,
+                                                String sparqlEndpointPassword) {
+        if (!sparqlEndpoint.isEmpty()) {
             RDFConnection connect = RDFConnection
-                    .connectPW(sparlEndpoint, sparlEndpointUser, sparlEndpointPassword);
+                    .connectPW(sparqlEndpoint, sparqlEndpointUser, sparqlEndpointPassword);
             connect.fetchDataset();
             connect.load(model);
             connect.close();

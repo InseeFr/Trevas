@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class RDFTest {
 
     static Properties conf;
@@ -44,7 +42,6 @@ public class RDFTest {
         Model model = modelClass.add(modelDetail).add(modelLink).add(modelProv);
         // Load model
         RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
-        assertThat(true).isTrue();
     }
 
 }
