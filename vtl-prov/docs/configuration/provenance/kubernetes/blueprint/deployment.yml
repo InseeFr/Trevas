@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blueprint-trevas-provenance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blueprint-trevas-provenance
+  template:
+    metadata:
+      labels:
+        app: blueprint-trevas-provenance
+    spec:
+      containers:
+        - name: blueprint-trevas-provenance
+          image: ghcr.io/zazuko/blueprint:dev-main-20240626132259
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ENDPOINT_URL
+              value: "https://trifid-trevas-provenance.lab.sspcloud.fr/query"
+            - name: SPARQL_CONSOLE_URL
+              value: "https://trifid-trevas-provenance.lab.sspcloud.fr/sparql/#query"
+            - name: GRAPH_EXPLORER_URL
+              value: "https://trifid-trevas-provenance.lab.sspcloud.fr/graph-explorer/?resource"
+            - name: FULL_TEXT_SEARCH_DIALECT
+              value: "fuseki"

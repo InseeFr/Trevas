@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -16,6 +17,17 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class VariableGraphListenerTest {
+
+    @Test
+    public void simpleTest() {
+        String script = "ds_sum := ds1 + ds2;\n" +
+                "ds_mul := ds_sum * 3; \n" +
+                "ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];";
+
+        VariableGraphListener provenanceListener = parseAndListen(script);
+        printTrees(provenanceListener);
+        assertThat(true).isTrue();
+    }
 
     @Test
     void testComplexGraph() {
@@ -181,4 +193,5 @@ public class VariableGraphListenerTest {
         printTrees(provenanceListener);
         return provenanceListener;
     }
+
 }

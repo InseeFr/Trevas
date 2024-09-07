@@ -1,0 +1,55 @@
+PREFIX rdfs:         <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh:           <http://www.w3.org/ns/shacl#>
+PREFIX schema:       <http://schema.org/>
+PREFIX fluxShape:    <https://ld.flux.zazuko.com/shapes/metadata/>
+PREFIX flux:         <https://ld.flux.zazuko.com/>
+PREFIX fluxSchema:   <https://flux.described.at/>
+PREFIX sdth:         <http://rdf-vocabulary.ddialliance.org/sdth#>
+
+sdth:Program a rdfs:Class;
+   rdfs:label "Program" ;
+   rdfs:comment "SDTH Program" .
+
+flux:ProgramFluxClassInstance a fluxShape:ClassMetadataShape ;
+   sh:targetNode sdth:Program ;
+   rdfs:label "Program" ;
+   rdfs:comment "SDTH Program" ;
+   fluxSchema:faIcon "fas fa-screwdriver-wrench" ;
+   fluxSchema:colorIndex 1 ;
+   fluxSchema:searchPrio 1 .
+
+sdth:ProgramStep a rdfs:Class;
+   rdfs:label "Program step" ;
+   rdfs:comment "SDTH Program step" .
+
+flux:ProgramStepFluxClassInstance a fluxShape:ClassMetadataShape ;
+   sh:targetNode sdth:ProgramStep ;
+   rdfs:label "Program step" ;
+   rdfs:comment "SDTH Program step" ;
+   fluxSchema:faIcon "fas fa-calculator" ;
+   fluxSchema:colorIndex 2 ;
+   fluxSchema:searchPrio 2 .
+
+sdth:VariableInstance a rdfs:Class;
+   rdfs:label "Variable instance" ;
+   rdfs:comment "SDTH Variable instance" .
+
+flux:VariableInstanceFluxClassInstance a fluxShape:ClassMetadataShape ;
+   sh:targetNode sdth:VariableInstance ;
+   rdfs:label "Variable instance" ;
+   rdfs:comment "SDTH Variable instance" ;
+   fluxSchema:faIcon "fa-solid fa-subscript" ;
+   fluxSchema:colorIndex 3 ;
+   fluxSchema:searchPrio 3 .
+
+sdth:DataframeInstance a rdfs:Class;
+   rdfs:label "Dataframe instance" ;
+   rdfs:comment "SDTH Dataframe instance" .
+
+flux:DataframeInstanceFluxClassInstance a fluxShape:ClassMetadataShape ;
+   sh:targetNode sdth:DataframeInstance ;
+   rdfs:label "Dataframe instance" ;
+   rdfs:comment "SDTH Dataframe instance" ;
+   fluxSchema:faIcon "fas fa-table" ;
+   fluxSchema:colorIndex 4 ;
+   fluxSchema:searchPrio 4 .

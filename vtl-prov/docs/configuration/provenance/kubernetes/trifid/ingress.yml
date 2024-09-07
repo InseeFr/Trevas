@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trifid-trevas-provenance
+  annotations:
+    spec.ingressClassName: nginx
+spec:
+  tls:
+    - hosts:
+        - trifid-trevas-provenance.lab.sspcloud.fr
+  rules:
+    - host: trifid-trevas-provenance.lab.sspcloud.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: trifid-trevas-provenance
+                port:
+                  number: 8080
