@@ -16,6 +16,12 @@
     <artifactId>vtl-prov</artifactId>
     <version>1.6.0-SNAPSHOT</version>
 
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.jgrapht</groupId>
@@ -29,12 +35,14 @@
             <version>1.6.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- Jena 5 requires Java 17+ -->
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
+            <version>3.17.0</version>
             <type>pom</type>
-            <version>5.0.0</version>
         </dependency>
+
     </dependencies>
 
 </project>

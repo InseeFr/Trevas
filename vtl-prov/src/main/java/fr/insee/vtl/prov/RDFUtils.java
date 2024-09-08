@@ -3,6 +3,9 @@ package fr.insee.vtl.prov;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.rdfconnection.RDFDatasetConnection;
 
 public class RDFUtils {
 
@@ -19,11 +22,11 @@ public class RDFUtils {
                                                 String sparqlEndpointUser,
                                                 String sparqlEndpointPassword) {
         if (!sparqlEndpoint.isEmpty()) {
-            RDFConnection connect = RDFConnection
+            RDFConnection connection = RDFConnectionFactory
                     .connectPW(sparqlEndpoint, sparqlEndpointUser, sparqlEndpointPassword);
-            connect.fetchDataset();
-            connect.load(model);
-            connect.close();
+            connection.fetchDataset();
+            connection.load(model);
+            connection.close();
         }
     }
 }
