@@ -55,16 +55,15 @@ flowchart TD
     OP4{create variable}
     SC3([3])
 
-   DS1 --> OP1
-   DS2 --> OP1
-   OP1 --> DSSUM
+   ds_1 --> OP1
+   ds_2 --> OP1
+   OP1 --> ds_sum
    SC3 --> OP2
-   DSSUM --> OP2 
-   OP2 --> DSMUL
-   DSMUL --> OP3
+   ds_sum --> OP2 
+   OP2 --> ds_mul
+   ds_mul --> OP3
    OP3 --> OP4
-   OP4 --> DSRES
-
+   OP4 --> ds_res
 ```
 
 ### Inputs
