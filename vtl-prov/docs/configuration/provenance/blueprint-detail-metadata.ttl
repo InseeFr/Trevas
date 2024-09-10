@@ -20,4 +20,5 @@ blueprintMetaShapes:SourceCodeDetail a blueprintMetaShapes:ClassDetailShape ;
    sh:path sdth:hasSourceCode ;
    sh:order 1 ;
    blueprint:showAs blueprintMetaShapes:Plain ;
+   sh:targetClass sdth:Program ;
    sh:targetClass sdth:ProgramStep .

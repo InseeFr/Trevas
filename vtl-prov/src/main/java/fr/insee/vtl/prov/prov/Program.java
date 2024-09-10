@@ -5,6 +5,7 @@ import java.util.Set;
 
 public class Program {
 
+    String id;
     String label;
     Set<String> programStepIds = new HashSet<>();
 
@@ -13,8 +14,17 @@ public class Program {
     public Program() {
     }
 
-    public Program(String label) {
+    public Program(String id, String label) {
+        this.id = id;
         this.label = label;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getLabel() {

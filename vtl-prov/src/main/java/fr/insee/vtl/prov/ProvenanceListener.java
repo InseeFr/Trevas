@@ -24,7 +24,8 @@ public class ProvenanceListener extends VtlBaseListener {
 
     private String currentProgramStep;
 
-    public ProvenanceListener(String programName) {
+    public ProvenanceListener(String id, String programName) {
+        program.setId(id);
         program.setLabel(programName);
     }
 
@@ -88,12 +89,12 @@ public class ProvenanceListener extends VtlBaseListener {
         return obj;
     }
 
-    public static List<Object> parseAndListen(String expr) {
+    public static List<Object> parseAndListen(String expr, String id, String programName) {
         CodePointCharStream stream = CharStreams.fromString(expr);
         VtlLexer lexer = new VtlLexer(stream);
         VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
-        ProvenanceListener provenanceListener = new ProvenanceListener("test");
+        ProvenanceListener provenanceListener = new ProvenanceListener(id, programName);
         ParseTreeWalker.DEFAULT.walk(provenanceListener, parser.start());
         return provenanceListener.getObjects();
     }

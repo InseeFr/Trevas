@@ -56,7 +56,7 @@ public class RDFTest {
                 "ds_mul := ds_sum * 3; \n" +
                 "ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];";
 
-        List<Object> obj = ProvenanceListener.parseAndListen(script);
+        List<Object> obj = ProvenanceListener.parseAndListen(script, "trevas-simple-test", "Simple test from Trevas tests");
         Model model = RDFUtils.buildModel(obj);
         RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
         assertThat(obj).hasSize(4);
