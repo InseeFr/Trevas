@@ -94,5 +94,4 @@ public class VariableGraphListener extends VtlBaseListener {
                 .filter(v -> graph.outgoingEdgesOf(v).isEmpty())
                 .collect(Collectors.toSet());
     }
-
 }

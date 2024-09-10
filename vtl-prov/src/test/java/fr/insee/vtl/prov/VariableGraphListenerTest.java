@@ -26,7 +26,6 @@ public class VariableGraphListenerTest {
 
         VariableGraphListener provenanceListener = parseAndListen(script);
         printTrees(provenanceListener);
-        assertThat(true).isTrue();
     }
 
     // TODO: unsupported script, TO FIX
