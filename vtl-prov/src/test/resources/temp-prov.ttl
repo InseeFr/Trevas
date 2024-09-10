@@ -15,25 +15,22 @@ PREFIX sdth: <http://rdf-vocabulary.ddialliance.org/sdth#>
     sdth:hasSourceCode "ds_sum := ds1 + ds2;" ;
     sdth:consumesDataframe  <http://example.com/dataset/ds1>,
                             <http://example.com/dataset/ds2> ;
-    sdth:producesDataframe <http://example.com/dataset/ds_sum> ;
-    sdth:usesVariable   <http://example.com/dataset/var1>,
-                        <http://example.com/dataset/var2> . # Do we need / have to declare it?
+    sdth:producesDataframe <http://example.com/dataset/ds_sum> .
 
 <http://example.com/program1/program-step2> a sdth:ProgramStep ;
     rdfs:label "Program step 2"@en, "Étape 2"@fr ;
     sdth:hasSourceCode "ds_mul := ds_sum * 3;" ;
     sdth:consumesDataframe <http://example.com/dataset/ds_sum> ;
-    sdth:producesDataframe <http://example.com/dataset/ds_mul> ;
-    sdth:usesVariable   <http://example.com/dataset/var1>,
-                        <http://example.com/dataset/var2> . # Do we need / have to declare it?
+    sdth:producesDataframe <http://example.com/dataset/ds_mul> .
 
 <http://example.com/program1/program-step3> a sdth:ProgramStep ;
     rdfs:label "Program step 3"@en, "Étape 3"@fr ;
     sdth:hasSourceCode "ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];" ;
     sdth:consumesDataframe <http://example.com/dataset/ds_mul> ;
     sdth:producesDataframe <http://example.com/dataset/ds_res> ;
-    sdth:usesVariable   <http://example.com/dataset/var1>,
-                        <http://example.com/dataset/var2> . # there i think it's ok
+    sdth:usesVariable   <http://example.com/variable/var1>,
+                        <http://example.com/variable/var2> ;
+    sdth:assignsVariable <http://example.com/variable/var_sum> .
 
 # --- Variables
 # i think here it's not instances but names we refer to...

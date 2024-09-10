@@ -20,20 +20,26 @@ flux:ProgramStepToDataframeInstanceConsumes a sh:PropertyShape, fluxSchema:Link 
 
 flux:ProgramStepToDataframeInstanceProduces a sh:PropertyShape, fluxSchema:Link ;
    sh:name "produces Dataframe" ;
-   sh:path sdth:producesDataframe;
-   sh:class sdth:DataframeInstance  ;
+   sh:path sdth:producesDataframe ;
+   sh:class sdth:DataframeInstance ;
    sh:targetClass sdth:ProgramStep .
 
-flux:ProgramStepToVariableInstance a sh:PropertyShape, fluxSchema:Link ;
+flux:ProgramStepToVariableInstanceUses a sh:PropertyShape, fluxSchema:Link ;
    sh:name "uses variable" ;
-   sh:path sdth:usesVariable;
-   sh:class  sdth:ProgramStep  ;
-   sh:targetClass sdth:VariableInstance .
+   sh:path sdth:usesVariable ;
+   sh:class sdth:VariableInstance ;
+   sh:targetClass sdth:ProgramStep .
+
+flux:ProgramStepToVariableInstanceAssigns a sh:PropertyShape, fluxSchema:Link ;
+   sh:name "assigns variable" ;
+   sh:path sdth:assignsVariable ;
+   sh:class sdth:VariableInstance ;
+   sh:targetClass sdth:ProgramStep .
 
 flux:DataframeInstanceToVariableInstance a sh:PropertyShape, fluxSchema:Link ;
    sh:name "has variable instance" ;
-   sh:path sdth:hasVariableInstance;
-   sh:class  sdth:VariableInstance  ;
+   sh:path sdth:hasVariableInstance ;
+   sh:class  sdth:VariableInstance ;
    sh:targetClass sdth:DataframeInstance .
 
 flux:DataframeInstanceToDataframeInstance a sh:PropertyShape, fluxSchema:Link ;
