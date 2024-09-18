@@ -14,6 +14,6 @@ public class ProvenanceListenerTest {
                 "ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];";
 
         Program program = ProvenanceListener.run(script, "trevas-simple-test", "Simple test from Trevas tests");
-        assertThat(program.getProgramSteps()).hasSize(4);
+        assertThat(program.getProgramSteps()).hasSize(3);
     }
 }
