@@ -43,12 +43,6 @@ public class RDFTest {
     }
 
     @Test
-    public void loadHandmadeRDF() {
-        Model modelProv = RDFUtils.initModel("src/test/resources/temp-prov.ttl");
-        RDFUtils.loadModelWithCredentials(modelProv, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
-    }
-
-    @Test
     public void simpleTest() throws IOException {
 
 
