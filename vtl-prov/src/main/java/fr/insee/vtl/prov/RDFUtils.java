@@ -1,7 +1,9 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
+import fr.insee.vtl.prov.prov.VariableInstance;
 import fr.insee.vtl.prov.utils.PROV;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -12,7 +14,10 @@ import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
-import java.util.List;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Set;
 
 public class RDFUtils {
@@ -20,21 +25,15 @@ public class RDFUtils {
     private static final String TREVAS_BASE_URI = "http://trevas/";
     private static final String SDTH_BASE_URI = "http://rdf-vocabulary.ddialliance.org/sdth#";
 
-    public static Model buildModel(List<Object> objects) {
+    public static Model buildModel(Program program) {
         Model model = ModelFactory.createDefaultModel();
         model.setNsPrefix("prov", PROV.getURI());
-        objects.forEach(o -> {
-            if (o instanceof Program) {
-                handleProgram(model, (Program) o);
-            }
-            if (o instanceof ProgramStep) {
-                handleProgramStep(model, (ProgramStep) o);
-            }
-        });
+        handleProgram(model, program);
         return model;
     }
 
     public static void handleProgram(Model model, Program program) {
+        // Create Program URI, type, label, sourceCode
         Resource SDTH_PROGRAM = model.createResource(SDTH_BASE_URI + "Program");
         String id = program.getId();
         String label = program.getLabel();
@@ -44,29 +43,75 @@ public class RDFUtils {
         String sourceCode = program.getSourceCode();
         Property SDTH_HAS_SOURCE_CODE = model.createProperty(SDTH_BASE_URI + "hasSourceCode");
         programURI.addProperty(SDTH_HAS_SOURCE_CODE, sourceCode);
-        Set<String> stepIds = program.getProgramStepIds();
-        stepIds.forEach(stepId -> {
-            Property SDTH_HAS_PROGRAM_STEP = model.createProperty(SDTH_BASE_URI + "hasProgramStep");
-            Resource SDTH_PROGRAM_STEP = model.createResource(SDTH_BASE_URI + "ProgramStep");
+        // Link and define ProgramSteps
+        Set<ProgramStep> programSteps = program.getProgramSteps();
+        Property SDTH_HAS_PROGRAM_STEP = model.createProperty(SDTH_BASE_URI + "hasProgramStep");
+        programSteps.forEach(step -> {
+            String stepId = step.getId();
             Resource programStepURI = model.createResource(TREVAS_BASE_URI + "program-step/" + stepId);
             programURI.addProperty(SDTH_HAS_PROGRAM_STEP, programStepURI);
-            programStepURI.addProperty(RDF.type, SDTH_PROGRAM_STEP);
-            programStepURI.addProperty(RDFS.label, "Create " + stepId + " dataset");
+            handleProgramStep(model, step);
         });
     }
 
     public static void handleProgramStep(Model model, ProgramStep programStep) {
-        String label = programStep.getLabel();
-        Resource programStepURI = model.createResource(TREVAS_BASE_URI + "program-step/" + label);
+        // Create ProgramStep URI, type, label, sourceCode
+        String id = programStep.getId();
+        Resource programStepURI = model.createResource(TREVAS_BASE_URI + "program-step/" + id);
+        Resource SDTH_PROGRAM_STEP = model.createResource(SDTH_BASE_URI + "ProgramStep");
+        programStepURI.addProperty(RDF.type, SDTH_PROGRAM_STEP);
+        programStepURI.addProperty(RDFS.label, "Create " + id + " dataset");
         String sourceCode = programStep.getSourceCode();
         Property SDTH_HAS_SOURCE_CODE = model.createProperty(SDTH_BASE_URI + "hasSourceCode");
         programStepURI.addProperty(SDTH_HAS_SOURCE_CODE, sourceCode);
-        Resource SDTH_DATAFRAME = model.createResource(SDTH_BASE_URI + "DataframeInstance");
-        Resource dfProducesURI = model.createResource(TREVAS_BASE_URI + "dataset/" + label);
-        dfProducesURI.addProperty(RDF.type, SDTH_DATAFRAME);
-        dfProducesURI.addProperty(RDFS.label, label);
+        // Link and define producedDF
+        DataframeInstance dfProduced = programStep.getProducedDataframe();
+        String dfProducedId = dfProduced.getId();
+        Resource dfProducesURI = model.createResource(TREVAS_BASE_URI + "dataset/" + dfProducedId);
         Property SDTH_PRODUCES_DATAFRAME = model.createProperty(SDTH_BASE_URI + "producesDataframe");
         programStepURI.addProperty(SDTH_PRODUCES_DATAFRAME, dfProducesURI);
+        handleDataframeInstance(model, dfProduced);
+        // Link and define consumedDF
+        Property SDTH_CONSUMES_DATAFRAME = model.createProperty(SDTH_BASE_URI + "consumesDataframe");
+        programStep.getConsumedDataframe().forEach(df -> {
+            Resource dfConsumedURI = model.createResource(TREVAS_BASE_URI + "dataset/" + df.getId());
+            programStepURI.addProperty(SDTH_CONSUMES_DATAFRAME, dfConsumedURI);
+            handleDataframeInstance(model, df);
+        });
+        // Link and define usedVariables
+        Property SDTH_USED_VARIABLE = model.createProperty(SDTH_BASE_URI + "usesVariable");
+        programStep.getUsedVariables().forEach(v -> {
+            Resource varUsedURI = model.createResource(TREVAS_BASE_URI + "variable/" + v.getId());
+            programStepURI.addProperty(SDTH_USED_VARIABLE, varUsedURI);
+            handleVariableInstance(model, v);
+        });
+        // Link and define assignedVariables
+        Property SDTH_ASSIGNED_VARIABLE = model.createProperty(SDTH_BASE_URI + "assignsVariable");
+        programStep.getAssignedVariables().forEach(v -> {
+            Resource varAssignedURI = model.createResource(TREVAS_BASE_URI + "variable/" + v.getId());
+            programStepURI.addProperty(SDTH_ASSIGNED_VARIABLE, varAssignedURI);
+            handleVariableInstance(model, v);
+        });
+    }
+
+    public static void handleDataframeInstance(Model model, DataframeInstance dfInstance) {
+        // Create DataframeInstance URI, type, label
+        String id = dfInstance.getId();
+        Resource dfURI = model.createResource(TREVAS_BASE_URI + "dataset/" + id);
+        Resource SDTH_DATAFRAME = model.createResource(SDTH_BASE_URI + "DataframeInstance");
+        dfURI.addProperty(RDF.type, SDTH_DATAFRAME);
+        String label = dfInstance.getLabel();
+        dfURI.addProperty(RDFS.label, label);
+    }
+
+    public static void handleVariableInstance(Model model, VariableInstance varInstance) {
+        // Create VariableInstance URI, type, label
+        String id = varInstance.getId();
+        Resource varURI = model.createResource(TREVAS_BASE_URI + "variable/" + id);
+        Resource SDTH_VARIABLE = model.createResource(SDTH_BASE_URI + "VariableInstance");
+        varURI.addProperty(RDF.type, SDTH_VARIABLE);
+        String label = varInstance.getLabel();
+        varURI.addProperty(RDFS.label, label);
     }
 
     public static Model initModel(String baseFilePath) {
@@ -86,5 +131,15 @@ public class RDFUtils {
             connection.load(model);
             connection.close();
         }
+    }
+
+    public static void writeJsonLdToFile(Model model, String path) throws IOException {
+        model.write(Files.newOutputStream(Paths.get(path)), "JSON-LD");
+    }
+
+    public static String serialize(Model model, String format) {
+        StringWriter stringWriter = new StringWriter();
+        model.write(stringWriter, format);
+        return stringWriter.toString();
     }
 }

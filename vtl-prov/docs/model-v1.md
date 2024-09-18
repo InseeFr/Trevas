@@ -13,6 +13,8 @@ his document present how we could extract some provenance from a VTL program in 
 
 Based on `PROV-O` and `SDTH` ontologies.
 
+_TODO: add kind of `cdi:RepresentedVariable`_
+
 ```mermaid
 classDiagram
   class Agent {

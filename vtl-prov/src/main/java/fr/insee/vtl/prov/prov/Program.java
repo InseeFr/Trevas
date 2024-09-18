@@ -7,7 +7,7 @@ public class Program {
 
     String id;
     String label;
-    Set<String> programStepIds = new HashSet<>();
+    Set<ProgramStep> programSteps = new HashSet<>();
 
     String sourceCode;
 
@@ -35,12 +35,12 @@ public class Program {
         this.label = label;
     }
 
-    public Set<String> getProgramStepIds() {
-        return programStepIds;
+    public Set<ProgramStep> getProgramSteps() {
+        return programSteps;
     }
 
-    public void setProgramSteps(Set<String> programStepIds) {
-        this.programStepIds = programStepIds;
+    public void setProgramSteps(Set<ProgramStep> programSteps) {
+        this.programSteps = programSteps;
     }
 
     public String getSourceCode() {
@@ -49,5 +49,12 @@ public class Program {
 
     public void setSourceCode(String sourceCode) {
         this.sourceCode = sourceCode;
+    }
+
+    public ProgramStep getProgramStepById(String id) {
+        return programSteps.stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 }
