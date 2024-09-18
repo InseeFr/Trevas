@@ -6,6 +6,7 @@ import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -40,6 +41,15 @@ public class RDFTest {
         Model modelLink = RDFUtils.initModel(BLUEPRINT_LINK_PATH);
         Model model = modelClass.add(modelDetail).add(modelLink);
         RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
+    }
+
+    @BeforeEach
+    void createFolderIfNotExists() {
+        String path = "src/test/resources/output";
+        File folder = new File(path);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
     }
 
     @Test
