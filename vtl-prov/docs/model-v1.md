@@ -7,13 +7,65 @@
 his document present how we could extract some provenance from a VTL program in Trevas, using linked open data standards:
 
 - [PROV](https://www.w3.org/TR/prov-o/)
-- SDTH (ref ?)
+- SDTH:
 
-## Modelisation
+```mermaid
+
+classDiagram
+  
+  class Program["sdth:Program"] {
+    rdfs:label
+  }
+  class ProgramStep["sdth:ProgramStep"] {
+    rdfs:label
+    sdth:hasSourceCode
+    sdth:hasSDTL
+  }
+  class VariableInstance["sdth:VariableInstance"] {
+    rdfs:label
+    sdth:hasName    
+  }
+  class DataframeInstance["sdth:DataframeInstance"] {
+    rdfs:label
+    sdth:hasName
+  }
+
+class FileInstance["sdth:FileInstance"] {
+    rdfs:label
+    sdth:hasName
+  }
+
+  
+  ProgramStep <-- Program : sdthhasProgramStep
+  ProgramStep <-- ProgramStep : sdth_hasProgramStep
+
+  ProgramStep --> VariableInstance : sdth_usesVariable
+  ProgramStep --> VariableInstance : sdth_assignsVariable
+  ProgramStep --> DataframeInstance : sdth_consumesDataframe
+  ProgramStep --> DataframeInstance : sdth_producesDataframe
+
+  ProgramStep --> FileInstance : sdth_loadsFile
+  ProgramStep --> FileInstance : sdth_savesFile
+
+
+  DataframeInstance --> VariableInstance : sdth_hasVariableInstance
+  FileInstance --> VariableInstance : sdth_hasVariableInstance
+
+
+  DataframeInstance --> DataframeInstance : sdth_derivedFrom
+  DataframeInstance --> DataframeInstance : sdth_elaborationOf
+
+  FileInstance --> FileInstance : sdth_derivedFrom
+  FileInstance --> FileInstance : sdth_elaborationOf
+  VariableInstance --> VariableInstance : sdth_derivedFrom
+  VariableInstance --> VariableInstance : sdth_elaborationOf
+```
+
+## Trevas provenance modelisation
 
 Based on `PROV-O` and `SDTH` ontologies.
 
-_TODO: add kind of `cdi:RepresentedVariable`_
+_TODO: add kind of `cdi:RepresentedVariable`?_
 
 ```mermaid
 classDiagram
@@ -41,6 +93,8 @@ classDiagram
   ProgramStep --> DataframeInstance : sdth_consumesDataframe
   ProgramStep --> DataframeInstance : sdth_producesDataframe
   DataframeInstance --> VariableInstance : sdth_hasVariableInstance
+  DataframeInstance --> DataframeInstance : sdth_wasDerivedFrom
+  VariableInstance --> VariableInstance : sdth_wasDerivedFrom
 ```
 
 ## Example
