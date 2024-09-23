@@ -227,3 +227,8 @@ PREFIX sdth: <http://rdf-vocabulary.ddialliance.org/sdth#>
                                 <http://example.com/variable/var2>,
                                 <http://example.com/variable/var_sum> .
 ```
+
+## Questions
+
+- how to extend and precise objects with prov?
+- DDI compatibility
