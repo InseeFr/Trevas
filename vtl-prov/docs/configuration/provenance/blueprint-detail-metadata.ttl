@@ -1,0 +1,24 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX blueprintMetaShapes: <https://ld.flux.zazuko.com/shapes/metadata/>
+PREFIX blueprint: <https://flux.described.at/>
+PREFIX sdth:    <http://rdf-vocabulary.ddialliance.org/sdth#>
+
+blueprintMetaShapes:LabelDetail a blueprintMetaShapes:ClassDetailShape ;
+   rdfs:label "Name" ;
+   sh:path rdfs:label ;
+   sh:order 0 ;
+   blueprint:showAs blueprintMetaShapes:Plain ;
+   sh:targetClass sdth:Program ;
+   sh:targetClass sdth:ProgramStep ;
+   sh:targetClass sdth:VariableInstance ;
+   sh:targetClass sdth:DataframeInstance .
+
+blueprintMetaShapes:SourceCodeDetail a blueprintMetaShapes:ClassDetailShape ;
+   rdfs:label "Source code" ;
+   sh:path sdth:hasSourceCode ;
+   sh:order 1 ;
+   blueprint:showAs blueprintMetaShapes:Plain ;
+   sh:targetClass sdth:Program ;
+   sh:targetClass sdth:ProgramStep .

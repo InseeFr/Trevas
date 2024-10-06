@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trifid-trevas-provenance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trifid-trevas-provenance
+  template:
+    metadata:
+      labels:
+        app: trifid-trevas-provenance
+    spec:
+      containers:
+        - name: trifid
+          image: ghcr.io/zazuko/trifid:v5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPARQL_ENDPOINT_URL
+              value: "https://projet-mekong-882672.user.lab.sspcloud.fr/trevas-provenance/query"
+            - name: DATASET_BASE_URL
+              value: "https://rdf.insee.fr/"
+            - name: SPARQL_USER
+              value: "admin"
+            - name: SPARQL_PASSWORD
+              value: "constances"

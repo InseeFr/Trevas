@@ -178,7 +178,7 @@ public class JoinFunctionsTest {
 
         assertThatThrownBy(() -> engine.eval("result := left_join(ds_1, ds_2);"))
                 .isInstanceOf(InvalidArgumentException.class)
-                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name");
+                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name (age)");
 
         engine.eval("result := left_join(ds_1 as ds1, ds_2 as ds2);");
         assertThat(((Dataset) engine.getContext().getAttribute("result")).getDataAsMap()).containsExactlyInAnyOrder(
@@ -253,7 +253,7 @@ public class JoinFunctionsTest {
         assertThatThrownBy(() -> engine.eval("ds_3 := ds_2[rename m2 to m1];" +
                 "result := inner_join(ds_1, ds_3);"))
                 .isInstanceOf(InvalidArgumentException.class)
-                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name");
+                .hasMessage("It is not allowed that two or more Components in the virtual Data Set have the same name (m1)");
 
         engine.eval("result := inner_join(ds_1 as ds1, ds_2 as ds2 using id1);");
 

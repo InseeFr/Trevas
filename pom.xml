@@ -15,6 +15,7 @@
         <module>vtl-jdbc</module>
         <module>vtl-sdmx</module>
         <module>vtl-csv</module>
+        <module>vtl-prov</module>
         <module>coverage</module>
     </modules>
 
