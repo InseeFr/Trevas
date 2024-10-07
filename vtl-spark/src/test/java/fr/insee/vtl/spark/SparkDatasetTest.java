@@ -1,14 +1,13 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -110,7 +109,6 @@ public class SparkDatasetTest {
         assertTrue(readSparkDataset.getDataStructure().get("student_number").isAttribute());
     }
 
-    @Disabled
     @Test
     public void testParquetMetadataWriting(@TempDir Path tmpDirectory) throws ScriptException {
         SparkDataset datasetWithoutMetadata = new SparkDataset(spark.read().parquet("src/main/resources/input_sample"));
