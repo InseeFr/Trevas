@@ -228,8 +228,8 @@ timeOperators:
     | CURRENT_DATE LPAREN RPAREN                                                                                                        # currentDateAtom
     | DATEDIFF LPAREN dateFrom=expr COMMA dateTo=expr RPAREN                    # dateDiffAtom
     | DATEADD LPAREN op=expr COMMA shiftNumber=expr COMMA periodInd=expr RPAREN # dateAddAtom
-    | YEAR_OP LPAREN expr RPAREN                                                # yearAtom
-    | MONTH_OP LPAREN expr RPAREN                                               # monthAtom
+    | GETYEAR LPAREN expr RPAREN                                                # yearAtom
+    | GETMONTH LPAREN expr RPAREN                                               # monthAtom
     | DAYOFMONTH LPAREN expr RPAREN                                             # dayOfMonthAtom
     | DAYOFYEAR LPAREN expr RPAREN                                              # dayOfYearAtom
     | DAYTOYEAR LPAREN expr RPAREN                                              # dayToYearAtom
@@ -247,8 +247,8 @@ timeOperators:
 //    | CURRENT_DATE LPAREN RPAREN                                                                                                                # currentDateAtomComponent
 //    | DATEDIFF LPAREN dateFrom=expr COMMA dateTo=expr RPAREN                    # dateDiffAtom
 //    | DATEADD LPAREN op=expr COMMA shiftNumber=expr COMMA periodInd=expr RPAREN # dateAddAtom
-//    | YEAR_OP LPAREN expr RPAREN                                                # yearAtom
-//    | MONTH_OP LPAREN expr RPAREN                                               # monthAtom
+//    | GETYEAR LPAREN expr RPAREN                                                # yearAtom
+//    | GETMONTH LPAREN expr RPAREN                                               # monthAtom
 //    | DAYOFMONTH LPAREN expr RPAREN                                             # dayOfMonthAtom
 //    | DAYOFYEAR LPAREN expr RPAREN                                              # datOfYearAtom
 //    | DAYTOYEAR LPAREN expr RPAREN                                              # dayToYearAtom
