@@ -307,6 +307,7 @@ aggrOperatorsGrouping:
         | STDDEV_SAMP
         | VAR_POP
         | VAR_SAMP) LPAREN expr (groupingClause havingClause?)? RPAREN  #aggrDataset
+        | COUNT LPAREN RPAREN               # countAggr
 
 ;
 
@@ -324,8 +325,9 @@ aggrOperatorsGrouping:
         | FIRST_VALUE
         | LAST_VALUE)
         LPAREN expr OVER LPAREN (partition=partitionByClause? orderBy=orderByClause? windowing=windowingClause?)RPAREN RPAREN       #anSimpleFunction
-    | op=(LAG |LEAD)  LPAREN expr (COMMA offet=signedInteger(defaultValue=constant)?)?  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause)   RPAREN RPAREN    # lagOrLeadAn
+    | op=(LAG |LEAD)  LPAREN expr (COMMA offset=signedInteger(defaultValue=constant)?)?  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause)   RPAREN RPAREN    # lagOrLeadAn
     | op=RATIO_TO_REPORT LPAREN expr OVER  LPAREN (partition=partitionByClause) RPAREN RPAREN                                                                           # ratioToReportAn
+    | op=RANK LPAREN OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause )RPAREN RPAREN #rankAn
 ;
 
 // anFunctionComponent:
@@ -342,7 +344,7 @@ aggrOperatorsGrouping:
 //         | FIRST_VALUE
 //         | LAST_VALUE)
 //         LPAREN exprComponent OVER LPAREN (partition=partitionByClause? orderBy=orderByClause? windowing=windowingClause?)RPAREN RPAREN       #anSimpleFunctionComponent
-//    | op=(LAG |LEAD)  LPAREN exprComponent (COMMA offet=signedInteger(defaultValue=constant)?)?  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause)   RPAREN RPAREN   # lagOrLeadAnComponent
+//    | op=(LAG |LEAD)  LPAREN exprComponent (COMMA offset=signedInteger(defaultValue=constant)?)?  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause)   RPAREN RPAREN   # lagOrLeadAnComponent
 //    | op=RANK LPAREN  OVER  LPAREN (partition=partitionByClause? orderBy=orderByClause) RPAREN RPAREN                                                                           # rankAnComponent
 //    | op=RATIO_TO_REPORT LPAREN exprComponent OVER  LPAREN (partition=partitionByClause) RPAREN RPAREN                                                                          # ratioToReportAnComponent
 //;
