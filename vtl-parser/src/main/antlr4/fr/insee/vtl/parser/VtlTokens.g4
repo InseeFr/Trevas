@@ -357,7 +357,7 @@ IDENTIFIER
     | (MONTH MINUS DAY MINUS YEAR)
     ;*/
 
-/*TIME_UNIT
+TIME_UNIT
     :
     'A'
     |'S'
@@ -366,7 +366,7 @@ IDENTIFIER
     |'W'
     |'D'
     |'T'
-    ;*/
+    ;
 
 
  /* old
