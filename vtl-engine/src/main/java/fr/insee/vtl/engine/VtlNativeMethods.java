@@ -28,6 +28,7 @@ public class VtlNativeMethods {
             Fun.toMethod(NumericFunctionsVisitor::trunc),
             Fun.toMethod(NumericFunctionsVisitor::mod),
             Fun.toMethod(NumericFunctionsVisitor::power),
+            Fun.toMethod(NumericFunctionsVisitor::random),
             Fun.toMethod(NumericFunctionsVisitor::log),
             // ArithmeticExprOrConcatVisitor
             Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
