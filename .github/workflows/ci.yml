@@ -126,35 +126,3 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-  publish-snapshot:
-    name: Publish Trevas modules SNAPSHOT on Github Packages
-    # Pre filter thanks to test-sonar-package job
-    if: github.ref == 'refs/heads/develop'
-    needs: test-sonar-package
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Maven Central Repository
-        uses: actions/setup-java@v4
-        with:
-          java-version: 8
-          distribution: "adopt"
-      - uses: s4u/maven-settings-action@v3.0.0
-        with:
-          githubServer: false
-          servers: |
-            [{
-                "id": "Github",
-                "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
-                "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
-            }]
-      - name: Publish package
-        run: mvn --batch-mode deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel='warn'

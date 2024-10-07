@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.insee.trevas</groupId>
+        <artifactId>trevas-parent</artifactId>
+        <version>1.6.0</version>
+    </parent>
+
+    <name>VTL Provenance</name>
+    <description>Provenance static analysis</description>
+
+    <artifactId>vtl-prov</artifactId>
+    <version>1.6.0</version>
+
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-parser</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+
+        <!-- Jena 5 requires Java 17+ -->
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>apache-jena-libs</artifactId>
+            <version>3.17.0</version>
+            <type>pom</type>
+        </dependency>
+
+    </dependencies>
+
+</project>

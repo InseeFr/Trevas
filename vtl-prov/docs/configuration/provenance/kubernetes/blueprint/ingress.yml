@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blueprint-trevas-provenance
+  annotations:
+    spec.ingressClassName: nginx
+spec:
+  tls:
+    - hosts:
+        - blueprint-trevas-provenance.lab.sspcloud.fr
+  rules:
+    - host: blueprint-trevas-provenance.lab.sspcloud.fr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blueprint-trevas-provenance
+                port:
+                  number: 80

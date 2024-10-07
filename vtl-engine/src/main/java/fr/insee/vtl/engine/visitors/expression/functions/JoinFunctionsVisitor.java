@@ -2,12 +2,12 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -95,7 +95,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 dsMeasures.forEach(m -> {
                     if (measures.contains(m)) {
                         throw new VtlRuntimeException(
-                                new InvalidArgumentException("It is not allowed that two or more Components in the virtual Data Set have the same name", fromContext(datasetExpressionContext))
+                                new InvalidArgumentException("It is not allowed that two or more Components in the virtual Data Set have the same name (" + m + ")", fromContext(datasetExpressionContext))
                         );
                     }
                 });
