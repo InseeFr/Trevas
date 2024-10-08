@@ -37,7 +37,7 @@ expr:
     | left=expr op=AND right=expr                                           # booleanExpr
     | left=expr op=(OR|XOR) right=expr							            # booleanExpr
     | IF  conditionalExpr=expr  THEN thenExpr=expr ELSE elseExpr=expr       # ifExpr
-    | CASE WHEN expr THEN expr (WHEN expr THEN expr)* ELSE expr             # caseExpr
+    | CASE WHEN whenExpr=expr THEN thenExpr=expr (WHEN whenExpr=expr THEN thenExpr=expr)* ELSE elseExpr=expr             # caseExpr
     | constant														        # constantExpr
     | varID															        # varIdExpr
 
