@@ -1,18 +1,24 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
+import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
 
 /**
  * <code>IfVisitor</code> is the base visitor for if-then-else expressions.
@@ -62,6 +68,34 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         return condition ? thenExpr : elseExpr;
     }
 
+    public static Long caseFn(Boolean condition, Long thenExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : null;
+    }
+
+    public static Double caseFn(Boolean condition, Double thenExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : null;
+    }
+
+    public static String caseFn(Boolean condition, String thenExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : null;
+    }
+
+    public static Boolean caseFn(Boolean condition, Boolean thenExpr) {
+        if (condition == null) {
+            return null;
+        }
+        return condition ? thenExpr : null;
+    }
+
     public static Long nvl(Long value, Long defaultValue) {
         return value == null ? defaultValue : value;
     }
@@ -73,9 +107,11 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public static Double nvl(Double value, Long defaultValue) {
         return value == null ? defaultValue.doubleValue() : value;
     }
+
     public static Double nvl(Long value, Double defaultValue) {
         return value == null ? defaultValue : value.doubleValue();
     }
+
     public static String nvl(String value, String defaultValue) {
         return value == null ? defaultValue : value;
     }
@@ -103,6 +139,100 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
+    }
+
+    /**
+     * Visits case expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the case resolution depending on the condition resolution.
+     */
+    @Override
+    public ResolvableExpression visitCaseExpr(VtlParser.CaseExprContext ctx) {
+        Positioned pos = fromContext(ctx);
+        List<VtlParser.ExprContext> exprs = ctx.expr();
+        List<VtlParser.ExprContext> whenExprs = new ArrayList<>();
+        List<VtlParser.ExprContext> thenExprs = new ArrayList<>();
+        for (int i = 0; i < exprs.size() - 1; i = i + 2) {
+            whenExprs.add(exprs.get(i));
+            thenExprs.add(exprs.get(i + 1));
+        }
+        List<ResolvableExpression> whenExpressions = whenExprs.stream()
+                .map(e -> assertBoolean(exprVisitor.visit(e), e))
+                .collect(Collectors.toList());
+        List<ResolvableExpression> thenExpressions = thenExprs.stream()
+                .map(exprVisitor::visit)
+                .collect(Collectors.toList());
+        ResolvableExpression elseExpression = exprVisitor.visit(exprs.get(exprs.size() - 1));
+        List<ResolvableExpression> forTypeCheck = (new ArrayList<>(thenExpressions));
+        forTypeCheck.add(elseExpression);
+        // TODO: handle better the default element position
+        if (!hasSameTypeOrNull(forTypeCheck)) {
+            try {
+                throw new InvalidTypeException(
+                        forTypeCheck.get(0).getClass(),
+                        Boolean.class,
+                        fromContext(ctx.expr(0))
+                );
+            } catch (InvalidTypeException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        Class<?> outputType = elseExpression.getType();
+
+        if (outputType.equals(String.class)) {
+            return ResolvableExpression.withType(String.class)
+                    .withPosition(pos)
+                    .using(context -> {
+                        for (int i = 0; i < whenExprs.size(); i++) {
+                            Boolean condition = (Boolean) whenExpressions.get(i).resolve(context);
+                            if (condition) {
+                                return (String) (new CastExpression(pos, thenExpressions.get(i), outputType)).resolve(context);
+                            }
+                        }
+                        return (String) (new CastExpression(pos, elseExpression, outputType)).resolve(context);
+                    });
+        }
+        if (outputType.equals(Double.class)) {
+            return ResolvableExpression.withType(Double.class)
+                    .withPosition(pos)
+                    .using(context -> {
+                        for (int i = 0; i < whenExprs.size(); i++) {
+                            Boolean condition = (Boolean) whenExpressions.get(i).resolve(context);
+                            if (condition) {
+                                return (Double) (new CastExpression(pos, thenExpressions.get(i), outputType)).resolve(context);
+                            }
+                        }
+                        return (Double) (new CastExpression(pos, elseExpression, outputType)).resolve(context);
+                    });
+        }
+        if (outputType.equals(Long.class)) {
+            return ResolvableExpression.withType(Long.class)
+                    .withPosition(pos)
+                    .using(context -> {
+                        for (int i = 0; i < whenExprs.size(); i++) {
+                            Boolean condition = (Boolean) whenExpressions.get(i).resolve(context);
+                            if (condition) {
+                                return (Long) (new CastExpression(pos, thenExpressions.get(i), outputType)).resolve(context);
+                            }
+                        }
+                        return (Long) (new CastExpression(pos, elseExpression, outputType)).resolve(context);
+                    });
+        }
+        if (outputType.equals(Boolean.class)) {
+            return ResolvableExpression.withType(Boolean.class)
+                    .withPosition(pos)
+                    .using(context -> {
+                        for (int i = 0; i < whenExprs.size(); i++) {
+                            Boolean condition = (Boolean) whenExpressions.get(i).resolve(context);
+                            if (condition) {
+                                return (Boolean) (new CastExpression(pos, thenExpressions.get(i), outputType)).resolve(context);
+                            }
+                        }
+                        return (Boolean) (new CastExpression(pos, elseExpression, outputType)).resolve(context);
+                    });
+        } else return null;
     }
 
     /**

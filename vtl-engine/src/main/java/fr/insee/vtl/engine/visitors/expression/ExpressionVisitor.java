@@ -3,13 +3,13 @@ package fr.insee.vtl.engine.visitors.expression;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.*;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -208,6 +208,18 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
      */
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
+        return conditionalVisitor.visit(ctx);
+    }
+
+    /**
+     * Visits case expressions.
+     *
+     * @param ctx The scripting context for the expression.
+     * @return A <code>ResolvableExpression</code> resolving to the case resolution depending on the condition resolution.
+     * @see ConditionalVisitor#visitIfExpr(VtlParser.IfExprContext)
+     */
+    @Override
+    public ResolvableExpression visitCaseExpr(VtlParser.CaseExprContext ctx) {
         return conditionalVisitor.visit(ctx);
     }
 
