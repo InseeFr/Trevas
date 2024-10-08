@@ -1,8 +1,8 @@
 package fr.insee.vtl.spark;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;

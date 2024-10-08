@@ -1,11 +1,11 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
@@ -123,6 +124,18 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         return Math.pow(left.doubleValue(), right.doubleValue());
     }
 
+    public static Double random(Long left, Long right) {
+        if (left == null || right == null) {
+            return null;
+        }
+        Double res = null;
+        Random random = new Random(left);
+        for (int i = 0; i < right; i++) {
+            res = random.nextDouble();
+        }
+        return res;
+    }
+
     public static Double log(Number operand, Number base) {
         if (operand == null || base == null) {
             return null;
@@ -213,6 +226,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     return genericFunctionsVisitor.invokeFunction("mod", parameters, fromContext(ctx));
                 case VtlParser.POWER:
                     return genericFunctionsVisitor.invokeFunction("power", parameters, fromContext(ctx));
+                case VtlParser.RANDOM:
+                    return genericFunctionsVisitor.invokeFunction("random", parameters, fromContext(ctx));
                 case VtlParser.LOG:
                     return genericFunctionsVisitor.invokeFunction("log", parameters, fromContext(ctx));
                 default:
