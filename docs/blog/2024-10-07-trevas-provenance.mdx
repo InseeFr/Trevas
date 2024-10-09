@@ -1,17 +1,24 @@
-# Provenance
+---
+slug: /trevas-provenance
+title: Trevas - Provenance
+authors: [nicolas]
+tags: [Trevas, provenance, SDTH]
+---
 
-## Description
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
 
-[Data provenance](https://www.nnlm.gov/guides/data-glossary/data-provenance) is key to a good data management. 
+### News
 
-his document present how we could extract some provenance from a VTL program in Trevas, using linked open data standards:
+Trevas 1.6.0 introduces the VTL Prov module.
 
-- [PROV](https://www.w3.org/TR/prov-o/)
-- SDTH:
+This module enables to produce lineage metadata from Trevas, based on RDF ontologies: `PROV-O` and `SDTH`.
+
+#### SDTH model overview
 
 ```mermaid
 classDiagram
-  
+
   class Program["sdth:Program"] {
     rdfs:label
   }
@@ -22,7 +29,7 @@ classDiagram
   }
   class VariableInstance["sdth:VariableInstance"] {
     rdfs:label
-    sdth:hasName    
+    sdth:hasName
   }
   class DataframeInstance["sdth:DataframeInstance"] {
     rdfs:label
@@ -34,7 +41,7 @@ class FileInstance["sdth:FileInstance"] {
     sdth:hasName
   }
 
-  
+
   ProgramStep <-- Program : sdthhasProgramStep
   ProgramStep <-- ProgramStep : sdth_hasProgramStep
 
@@ -60,11 +67,9 @@ class FileInstance["sdth:FileInstance"] {
   VariableInstance --> VariableInstance : sdth_elaborationOf
 ```
 
-## Trevas provenance modelisation
+#### Adopted model
 
-Based on `PROV-O` and `SDTH` ontologies.
-
-_TODO: add kind of `cdi:RepresentedVariable`?_
+The `vtl-prov` module, version 1.6.0, uses the following partial model:
 
 ```mermaid
 classDiagram
@@ -96,9 +101,15 @@ classDiagram
   VariableInstance --> VariableInstance : sdth_wasDerivedFrom
 ```
 
-## Example
+Improvements will come in next weeks.
 
-### Business use case
+#### Tools available
+
+Provenance Trevas tools are documented <Link label={"here"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx')} />.
+
+#### Example
+
+##### Business use case
 
 Two sources datasets are transformed to produce transient datasets and a final permanent one.
 
@@ -114,7 +125,7 @@ flowchart TD
    ds_2 --> OP1
    OP1 --> ds_sum
    SC3 --> OP2
-   ds_sum --> OP2 
+   ds_sum --> OP2
    OP2 --> ds_mul
    ds_mul --> OP3
    OP3 --> OP4
@@ -123,18 +134,18 @@ flowchart TD
 
 ### Inputs
 
-`ds1` & `ds2` metadata
+`ds1` & `ds2` metadata:
 
-|id|var1|var2|
-|:-:|:-:|:-:|
-|STRING|INTEGER|NUMBER|
-|IDENTIFIER|MEASURE|MEASURE|
+|     id     |  var1   |  var2   |
+| :--------: | :-----: | :-----: |
+|   STRING   | INTEGER | NUMBER  |
+| IDENTIFIER | MEASURE | MEASURE |
 
 ### VTL script
 
 ```vtl
 ds_sum := ds1 + ds2;
-ds_mul := ds_sum * 3; 
+ds_mul := ds_sum * 3;
 ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 ```
 
@@ -226,8 +237,3 @@ PREFIX sdth: <http://rdf-vocabulary.ddialliance.org/sdth#>
                                 <http://example.com/variable/var2>,
                                 <http://example.com/variable/var_sum> .
 ```
-
-## Questions
-
-- how to extend and precise objects with prov?
-- DDI compatibility
