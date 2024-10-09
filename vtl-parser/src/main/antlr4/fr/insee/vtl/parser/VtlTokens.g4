@@ -28,11 +28,22 @@ lexer grammar VtlTokens;
   MEMBERSHIP		: '#';
   EVAL              : 'eval';
   IF                : 'if';
+  CASE              : 'case';
   THEN              : 'then';
   ELSE              : 'else';
   USING             : 'using';
   WITH              : 'with';
   CURRENT_DATE      : 'current_date';
+  DATEDIFF          : 'datediff';
+  DATEADD           : 'dateadd';
+  GETYEAR           : 'getyear';
+  GETMONTH          : 'getmonth';
+  DAYOFMONTH        : 'dayofmonth';
+  DAYOFYEAR         : 'dayofyear';
+  DAYTOYEAR         : 'daytoyear';
+  DAYTOMONTH        : 'daytomonth';
+  YEARTODAY         : 'yeartoday';
+  MONTHTODAY        : 'monthtoday';
   ON                : 'on';
   DROP              : 'drop';
   KEEP              : 'keep';
@@ -54,6 +65,7 @@ lexer grammar VtlTokens;
   DIFF              : 'diff';
   SYMDIFF           : 'symdiff';
   INTERSECT         : 'intersect';
+  RANDOM            : 'random';
   KEYS              : 'keys';
   INTYEAR           : 'intyear';
   INTMONTH          : 'intmonth';
@@ -107,8 +119,8 @@ lexer grammar VtlTokens;
   TYPE              : 'type';
   NVL               : 'nvl';
   HIERARCHY         : 'hierarchy';
-  OPTIONAL			: '_';
-  INVALID			: 'invalid';
+  OPTIONAL			    : '_';
+  INVALID			      : 'invalid';
   LEVENSHTEIN       : 'levenshtein';
 
   VALUE_DOMAIN			          : 'valuedomain';
@@ -345,7 +357,7 @@ IDENTIFIER
     | (MONTH MINUS DAY MINUS YEAR)
     ;*/
 
-/*TIME_UNIT
+TIME_UNIT
     :
     'A'
     |'S'
@@ -354,7 +366,7 @@ IDENTIFIER
     |'W'
     |'D'
     |'T'
-    ;*/
+    ;
 
 
  /* old

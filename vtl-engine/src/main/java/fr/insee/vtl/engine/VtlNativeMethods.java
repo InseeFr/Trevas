@@ -1,17 +1,19 @@
 package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.utils.safetymirror.Fun;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.*;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
 import java.lang.reflect.Method;
-import java.time.*;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 public class VtlNativeMethods {
@@ -28,6 +30,7 @@ public class VtlNativeMethods {
             Fun.toMethod(NumericFunctionsVisitor::trunc),
             Fun.toMethod(NumericFunctionsVisitor::mod),
             Fun.toMethod(NumericFunctionsVisitor::power),
+            Fun.toMethod(NumericFunctionsVisitor::random),
             Fun.toMethod(NumericFunctionsVisitor::log),
             // ArithmeticExprOrConcatVisitor
             Fun.<Long, Long>toMethod(ArithmeticExprOrConcatVisitor::addition),
@@ -44,6 +47,10 @@ public class VtlNativeMethods {
             Fun.<Boolean, Double, Double>toMethod(ConditionalVisitor::ifThenElse),
             Fun.<Boolean, String, String>toMethod(ConditionalVisitor::ifThenElse),
             Fun.<Boolean, Boolean, Boolean>toMethod(ConditionalVisitor::ifThenElse),
+            Fun.<Boolean, Long>toMethod(ConditionalVisitor::caseFn),
+            Fun.<Boolean, Double>toMethod(ConditionalVisitor::caseFn),
+            Fun.<Boolean, String>toMethod(ConditionalVisitor::caseFn),
+            Fun.<Boolean, Boolean>toMethod(ConditionalVisitor::caseFn),
             Fun.<Long, Long>toMethod(ConditionalVisitor::nvl),
             Fun.<Double, Double>toMethod(ConditionalVisitor::nvl),
             Fun.<Double, Long>toMethod(ConditionalVisitor::nvl),

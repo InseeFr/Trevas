@@ -59,6 +59,42 @@ public class ConditionalExprTest {
     }
 
     @Test
+    public void testCaseExpr() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("s := case when true then \"no\" else \"else\";");
+        assertThat(context.getAttribute("s")).isEqualTo("no");
+        engine.eval("s := case when false then \"no\" else \"else\";");
+        assertThat(context.getAttribute("s")).isEqualTo("else");
+        engine.eval("s := case when false then \"no\" when true then \"yes\" else \"else\";");
+        assertThat(context.getAttribute("s")).isEqualTo("yes");
+        engine.eval("s := case when false then \"no\" when 1=2 then \"yes\" else \"else\";");
+        assertThat(context.getAttribute("s")).isEqualTo("else");
+
+        engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+        engine.eval("ds1 := ds_1[keep id, long1]; " +
+                "res <- ds1[calc c := case when long1 > 30 then \"ok\" else \"ko\"][drop long1];");
+        Object res = engine.getContext().getAttribute("res");
+        assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
+                Java8Helpers.mapOf("id", "Toto", "c", "ko"),
+                Java8Helpers.mapOf("id", "Hadrien", "c", "ko"),
+                Java8Helpers.mapOf("id", "Nico", "c", "ko"),
+                Java8Helpers.mapOf("id", "Franck", "c", "ok")
+        );
+        assertThat(((Dataset) res).getDataStructure().get("c").getType()).isEqualTo(String.class);
+        engine.eval("ds1 := ds_1[keep id, long1]; " +
+                "res1 <- ds1[calc c := case when long1 > 30 then 1 else 0][drop long1];");
+        Object res1 = engine.getContext().getAttribute("res1");
+        assertThat(((Dataset) res1).getDataAsMap()).containsExactlyInAnyOrder(
+                Java8Helpers.mapOf("id", "Toto", "c", 0L),
+                Java8Helpers.mapOf("id", "Hadrien", "c", 0L),
+                Java8Helpers.mapOf("id", "Nico", "c", 0L),
+                Java8Helpers.mapOf("id", "Franck", "c", 1L)
+        );
+        assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
+    }
+
+    @Test
     public void testNvlExpr() throws ScriptException {
         ScriptContext context = engine.getContext();
         engine.eval("s := nvl(\"toto\", \"default\");");

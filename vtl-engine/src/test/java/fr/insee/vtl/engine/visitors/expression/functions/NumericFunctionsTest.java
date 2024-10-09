@@ -63,6 +63,11 @@ public class NumericFunctionsTest {
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
         engine.eval("b := power(10, cast(null, integer));");
         assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+        // Random
+        engine.eval("a := random(cast(null, integer), 10);");
+        assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+        engine.eval("b := random(10, cast(null, integer));");
+        assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
         // Log
         engine.eval("a := log(cast(null, number), 10);");
         assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
@@ -343,6 +348,26 @@ public class NumericFunctionsTest {
             engine.eval("f := power(2, \"ko\");");
         }).isInstanceOf(FunctionNotFoundException.class)
                 .hasMessage("function 'power(Long, String)' not found");
+    }
+
+    @Test
+    public void testRandom() throws ScriptException {
+        ScriptContext context = engine.getContext();
+        engine.eval("a := random(111, 1);");
+        assertThat((Double) context.getAttribute("a")).isCloseTo(0.72D, Percentage.withPercentage(0.2));
+
+        context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+        Object res = engine.eval("res := trunc(random(ds[keep id, long1], 200), 1);");
+        assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+
+        assertThatThrownBy(() -> {
+            engine.eval("f := random(1.2, 2);");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'random(Double, Long)' not found");
+        assertThatThrownBy(() -> {
+            engine.eval("f := power(2.3, \"ko\");");
+        }).isInstanceOf(FunctionNotFoundException.class)
+                .hasMessage("function 'power(Double, String)' not found");
     }
 
     @Test

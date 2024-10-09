@@ -7,6 +7,7 @@ import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -92,11 +93,11 @@ public class TypeChecking {
     /**
      * Checks if expressions have the same type (or null type).
      *
-     * @param expressions Resolvable expressions to check.
+     * @param expressions List of resolvable expressions to check.
      * @return A boolean which is <code>true</code> if the expressions have the same type, <code>false</code> otherwise.
      */
-    public static boolean hasSameTypeOrNull(ResolvableExpression... expressions) {
-        return Stream.of(expressions)
+    public static boolean hasSameTypeOrNull(List<ResolvableExpression> expressions) {
+        return expressions.stream()
                 .map(ResolvableExpression::getType)
                 .filter(clazz -> !Object.class.equals(clazz))
                 .distinct()
