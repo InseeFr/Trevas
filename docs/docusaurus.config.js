@@ -121,7 +121,6 @@ module.exports = {
 				},
 				blog: {
 					showReadingTime: true,
-					onUntruncatedBlogPosts: 'ignore',
 				},
 				theme: {
 					customCss: require.resolve('./src/css/custom.scss'),
