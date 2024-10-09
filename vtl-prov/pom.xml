@@ -7,14 +7,14 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.7.0-SNAPSHOT</version>
+        <version>1.7.0</version>
     </parent>
 
     <name>VTL Provenance</name>
     <description>Provenance static analysis</description>
 
     <artifactId>vtl-prov</artifactId>
-    <version>1.7.0-SNAPSHOT</version>
+    <version>1.7.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
-            <version>1.7.0-SNAPSHOT</version>
+            <version>1.7.0</version>
         </dependency>
 
         <!-- Jena 5 requires Java 17+ -->
