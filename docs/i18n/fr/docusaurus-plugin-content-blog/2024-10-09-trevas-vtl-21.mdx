@@ -1,0 +1,28 @@
+---
+slug: /trevas-vtl-21
+title: Trevas - VTL 2.1
+authors: [nicolas]
+tags: [Trevas, 'VTL 2.1']
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+Trevas 1.7.0 met à niveau VTL en version 2.1.
+
+Cette version introduit deux nouveaux opérateurs :
+
+- `random`
+- `case`
+
+`random` produit un nombre décimal entre 0 et 1.
+
+`case` permet de définir des déclarations multiconditionnelles plus claires, par exemple:
+
+`ds2 := ds1[ calc c := case when r < 0.2 then "Low" when r > 0.8 then "High" else "Medium" ]`
+
+Les deux opérateurs sont déjà disponibles dans Trevas !
+
+La nouvelle grammaire fournit également des opérateurs temporels et inclut des corrections, sans aucun changement radical par rapport à la version 2.0.
+
+Voir la section <Link label={"coverage"} href={useBaseUrl('/user-guide/coverage')} /> pour plus de détails.

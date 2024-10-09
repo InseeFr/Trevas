@@ -8,16 +8,21 @@ tags: [Trevas, 'VTL 2.1']
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Link from '@theme/Link';
 
-### News
-
 Trevas 1.7.0 upgrade to version 2.1 of VTL.
 
-This version introduces new operators: `random`, `case` and time operators.
+This version introduces two new operators:
 
-It also includes corrections, without breaking changes compared to the 2.0 version.
+- `random`
+- `case`
 
-### Implementations
+`random` produces a decimal number between 0 and 1.
 
-`random` and `case`operators are already supported in Trevas 1.7.0
+`case` allows for clearer multi conditional branching, for example:
+
+`ds2 := ds1[ calc c := case when r < 0.2 then "Low" when r > 0.8 then "High" else "Medium" ]`
+
+Both operators are already available in Trevas!
+
+The new grammar also provides time operators and includes corrections, without any breaking changes compared to the 2.0 version.
 
 See the <Link label={"coverage"} href={useBaseUrl('/user-guide/coverage')} /> section for more details.

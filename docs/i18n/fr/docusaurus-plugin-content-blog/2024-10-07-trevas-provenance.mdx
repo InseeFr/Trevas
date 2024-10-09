@@ -8,13 +8,13 @@ tags: [Trevas, provenance, SDTH]
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Link from '@theme/Link';
 
-### News
+### Nouveautés
 
-Trevas 1.6.0 introduces the VTL Prov module.
+Trevas 1.6.0 introduit le module VTL Prov.
 
-This module enables to produce lineage metadata from Trevas, based on RDF ontologies: `PROV-O` and `SDTH`.
+Ce module permet de produire des métadonnées de lineage à partir de Trevas, basées sur les ontologies RDF : `PROV-O` et `SDTH`.
 
-#### SDTH model overview
+#### Aperçu du modèle SDTH
 
 ```mermaid
 classDiagram
@@ -67,9 +67,9 @@ class FileInstance["sdth:FileInstance"] {
   VariableInstance --> VariableInstance : sdth_elaborationOf
 ```
 
-#### Adopted model
+#### Modèle adopté
 
-The `vtl-prov` module, version 1.6.0, uses the following partial model:
+Le module `vtl-prov`, version 1.6.0, utilise le modèle partiel suivant :
 
 ```mermaid
 classDiagram
@@ -101,17 +101,17 @@ classDiagram
   VariableInstance --> VariableInstance : sdth_wasDerivedFrom
 ```
 
-Improvements will come in next weeks.
+Des améliorations arriveront dans les prochaines semaines.
 
-#### Tools available
+#### Outils disponibles
 
-Provenance Trevas tools are documented <Link label={"here"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx')} />.
+Les outils de provenance Trevas sont documentés <Link label={"ici"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx')} />.
 
-#### Example
+#### Exemple
 
-##### Business use case
+##### Cas d'utilisation métier
 
-Two sources datasets are transformed to produce transient datasets and a final permanent one.
+Deux jeux de données sources sont transformés pour produire des jeux de données transitoires et un jeu de données final permanent.
 
 ```mermaid
 flowchart TD
@@ -132,16 +132,16 @@ flowchart TD
    OP4 --> ds_res
 ```
 
-### Inputs
+### Entrées
 
-`ds1` & `ds2` metadata:
+`ds1` & `ds2` métadonnées:
 
 |     id     |  var1   |  var2   |
 | :--------: | :-----: | :-----: |
 |   STRING   | INTEGER | NUMBER  |
 | IDENTIFIER | MEASURE | MEASURE |
 
-### VTL script
+### Script VTL
 
 ```vtl
 ds_sum := ds1 + ds2;
@@ -149,7 +149,7 @@ ds_mul := ds_sum * 3;
 ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 ```
 
-### RDF model target
+### Modèle RDF cible
 
 ```ttl
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
