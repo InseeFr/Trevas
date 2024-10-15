@@ -9,7 +9,7 @@ Transformation engine and validator for statistics.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 
-Trevas is a Java engine for the Validation and Transformation Language (VTL), an [SDMX standard](https://sdmx.org/?page_id=5096) that allows the formal definition of algorithms to validate statistical data and calculate derived data. VTL is user oriented and provides a technology-neutral and standard view of statistical processes at the business level. Trevas supports the latest VTL version (v2.0, July 2020).
+Trevas is a Java engine for the Validation and Transformation Language (VTL), an [SDMX standard](https://sdmx.org/?page_id=5096) that allows the formal definition of algorithms to validate statistical data and calculate derived data. VTL is user oriented and provides a technology-neutral and standard view of statistical processes at the business level. Trevas supports the latest VTL version (v2.1, July 2024).
 
 For actual execution, VTL expressions need to be translated to the target runtime environment. Trevas provides this step for the Java platform, by using the VTL formal grammar and the [Antlr](https://www.antlr.org/) tool. For a given execution, Trevas receives the VTL expression and the data bindings that associate variable names in the expression to actual data sets. The execution results can then be retrieved from the bindings for further treatments.
 
