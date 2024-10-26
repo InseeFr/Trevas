@@ -100,7 +100,8 @@ function Hero() {
 									<Translate description="See more">See more</Translate>
 								</a>
 							</div>
-
+						</div>
+						<div className="boxes">
 							<div className="box">
 								<span className="icon">
 									<SvgDevelop color={svgColor} />

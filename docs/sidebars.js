@@ -23,6 +23,7 @@ module.exports = {
 						'introduction/modules/jackson',
 						'introduction/modules/csv',
 						'introduction/modules/sdmx',
+						'introduction/modules/prov',
 					],
 				},
 				{
@@ -135,6 +136,7 @@ module.exports = {
 						},
 					],
 				},
+				'developer-guide/provenance',
 			],
 		},
 		{
