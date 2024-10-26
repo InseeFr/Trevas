@@ -32,7 +32,7 @@
 		align-items: center;
 
 		.col {
-			margin-top: 20px;
+			margin-top: 10px;
 			margin-bottom: 20px;
 			@include tablet-mobile {
 				&:first-child {
@@ -87,10 +87,11 @@
 
 	img {
 		text-align: center;
-		height: 200px;
+		height: 150px;
 	}
 
 	.boxes {
+		margin-top: 20px;
 		display: flex;
 		@include mobile {
 			flex-direction: column;

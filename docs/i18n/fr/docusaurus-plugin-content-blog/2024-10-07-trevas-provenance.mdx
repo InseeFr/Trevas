@@ -1,17 +1,24 @@
-# Provenance
+---
+slug: /trevas-provenance
+title: Trevas - Provenance
+authors: [nicolas]
+tags: [Trevas, provenance, SDTH]
+---
 
-## Description
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
 
-[Data provenance](https://www.nnlm.gov/guides/data-glossary/data-provenance) is key to a good data management. 
+### Nouveautés
 
-his document present how we could extract some provenance from a VTL program in Trevas, using linked open data standards:
+Trevas 1.6.0 introduit le module VTL Prov.
 
-- [PROV](https://www.w3.org/TR/prov-o/)
-- SDTH:
+Ce module permet de produire des métadonnées de lineage à partir de Trevas, basées sur les ontologies RDF : `PROV-O` et `SDTH`.
+
+#### Aperçu du modèle SDTH
 
 ```mermaid
 classDiagram
-  
+
   class Program["sdth:Program"] {
     rdfs:label
   }
@@ -22,7 +29,7 @@ classDiagram
   }
   class VariableInstance["sdth:VariableInstance"] {
     rdfs:label
-    sdth:hasName    
+    sdth:hasName
   }
   class DataframeInstance["sdth:DataframeInstance"] {
     rdfs:label
@@ -34,7 +41,7 @@ class FileInstance["sdth:FileInstance"] {
     sdth:hasName
   }
 
-  
+
   ProgramStep <-- Program : sdthhasProgramStep
   ProgramStep <-- ProgramStep : sdth_hasProgramStep
 
@@ -60,11 +67,9 @@ class FileInstance["sdth:FileInstance"] {
   VariableInstance --> VariableInstance : sdth_elaborationOf
 ```
 
-## Trevas provenance modelisation
+#### Modèle adopté
 
-Based on `PROV-O` and `SDTH` ontologies.
-
-_TODO: add kind of `cdi:RepresentedVariable`?_
+Le module `vtl-prov`, version 1.6.0, utilise le modèle partiel suivant :
 
 ```mermaid
 classDiagram
@@ -96,11 +101,17 @@ classDiagram
   VariableInstance --> VariableInstance : sdth_wasDerivedFrom
 ```
 
-## Example
+Des améliorations arriveront dans les prochaines semaines.
 
-### Business use case
+#### Outils disponibles
 
-Two sources datasets are transformed to produce transient datasets and a final permanent one.
+Les outils de provenance Trevas sont documentés <Link label={"ici"} href={useBaseUrl('/developer-guide/spark-mode/data-sources/sdmx')} />.
+
+#### Exemple
+
+##### Cas d'utilisation métier
+
+Deux jeux de données sources sont transformés pour produire des jeux de données transitoires et un jeu de données final permanent.
 
 ```mermaid
 flowchart TD
@@ -114,31 +125,31 @@ flowchart TD
    ds_2 --> OP1
    OP1 --> ds_sum
    SC3 --> OP2
-   ds_sum --> OP2 
+   ds_sum --> OP2
    OP2 --> ds_mul
    ds_mul --> OP3
    OP3 --> OP4
    OP4 --> ds_res
 ```
 
-### Inputs
+### Entrées
 
-`ds1` & `ds2` metadata
+`ds1` & `ds2` métadonnées:
 
-|id|var1|var2|
-|:-:|:-:|:-:|
-|STRING|INTEGER|NUMBER|
-|IDENTIFIER|MEASURE|MEASURE|
+|     id     |  var1   |  var2   |
+| :--------: | :-----: | :-----: |
+|   STRING   | INTEGER | NUMBER  |
+| IDENTIFIER | MEASURE | MEASURE |
 
-### VTL script
+### Script VTL
 
 ```vtl
 ds_sum := ds1 + ds2;
-ds_mul := ds_sum * 3; 
+ds_mul := ds_sum * 3;
 ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 ```
 
-### RDF model target
+### Modèle RDF cible
 
 ```ttl
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -226,8 +237,3 @@ PREFIX sdth: <http://rdf-vocabulary.ddialliance.org/sdth#>
                                 <http://example.com/variable/var2>,
                                 <http://example.com/variable/var_sum> .
 ```
-
-## Questions
-
-- how to extend and precise objects with prov?
-- DDI compatibility

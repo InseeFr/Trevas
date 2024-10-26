@@ -1,0 +1,65 @@
+---
+id: provenance
+title: Provenance
+sidebar_label: Provenance
+slug: /developer-guide/provenance
+custom_edit_url: null
+---
+
+### Import Trevas Provenance module
+
+```xml
+<dependency>
+    <groupId>fr.insee.trevas</groupId>
+    <artifactId>vtl-spark</artifactId>
+    <version>1.7.0</version>
+</dependency>
+```
+
+### ProvenanceListener
+
+`vtl-prov` module expose the `ProvenanceListener` static class.
+
+This class give access to the `run` function with the following signature:
+
+```java
+run(String script, String programId, String programeName)
+```
+
+### Program
+
+`run` function returns a `Program` object, containing all provenance information of a script.
+
+```java
+Program program = ProvenanceListener.run(script, "program-id", "program-name");
+```
+
+### RDF
+
+`vtl-prov` embeds `jena` package and expose `RDFUtils` static class.
+
+#### Build RDF model
+
+`RDFUtils` `buildModel` method enables to build easily a RDF model of `Program`:
+
+```java
+Model model = RDFUtils.buildModel(program);
+```
+
+#### RDF serialization
+
+`RDFUtils` `buildModel` enables to obtain easily a RDF serialization of `Model`:
+
+```java
+String jsonLD = RDFUtils.serialize(model, "JSON-LD");
+String ttl = RDFUtils.serialize(model, "TTL");
+...
+```
+
+#### Load in triple store
+
+`RDFUrils` `loadModelWithCredentials` enables to push easily RDF model in a triple store:
+
+```java
+RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
+```

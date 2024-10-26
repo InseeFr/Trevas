@@ -9,7 +9,7 @@ Transformation engine and validator for statistics.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 
-Trevas is a Java engine for the Validation and Transformation Language (VTL), an [SDMX standard](https://sdmx.org/?page_id=5096) that allows the formal definition of algorithms to validate statistical data and calculate derived data. VTL is user oriented and provides a technology-neutral and standard view of statistical processes at the business level. Trevas supports the latest VTL version (v2.0, July 2020).
+Trevas is a Java engine for the Validation and Transformation Language (VTL), an [SDMX standard](https://sdmx.org/?page_id=5096) that allows the formal definition of algorithms to validate statistical data and calculate derived data. VTL is user oriented and provides a technology-neutral and standard view of statistical processes at the business level. Trevas supports the latest VTL version (v2.1, July 2024).
 
 For actual execution, VTL expressions need to be translated to the target runtime environment. Trevas provides this step for the Java platform, by using the VTL formal grammar and the [Antlr](https://www.antlr.org/) tool. For a given execution, Trevas receives the VTL expression and the data bindings that associate variable names in the expression to actual data sets. The execution results can then be retrieved from the bindings for further treatments.
 
@@ -33,6 +33,12 @@ Open JDK 8+ is required.
 ## References
 
 <p align="center">
+  <img width="100px" src="./docs/static/img/sdmx-logo.svg" />
+</p>
+
+Trevas is listed among the [SDMX](https://sdmx.org/?page_id=4500) tools.
+
+<p align="center">
   <img width="100px" src="./docs/static/img/sdmx-io-logo.svg" />
 </p>
 
@@ -42,4 +48,4 @@ Trevas is part of the [sdmx.io](https://www.sdmx.io/) ecosystem.
     <img  src="https://awesome.re/mentioned-badge.svg" />
 </p>
 
-Trevas is referencing by [_Awesome official statistics software_](https://github.com/SNStatComp/awesome-official-statistics-software)
+Trevas is referenced by [_Awesome official statistics software_](https://github.com/SNStatComp/awesome-official-statistics-software)
