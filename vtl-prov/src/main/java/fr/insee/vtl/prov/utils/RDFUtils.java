@@ -12,6 +12,7 @@ import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -101,6 +102,12 @@ public class RDFUtils {
         dfURI.addProperty(RDF.type, SDTH_DATAFRAME);
         String label = dfInstance.getLabel();
         dfURI.addProperty(RDFS.label, label);
+        Property SDTH_USED_VARIABLE = model.createProperty(SDTH_BASE_URI + "hasVariableInstance");
+        dfInstance.getHasVariableInstances().forEach(v -> {
+            Resource varAssignedURI = model.createResource(TREVAS_BASE_URI + "variable/" + v.getId());
+            dfURI.addProperty(SDTH_USED_VARIABLE, varAssignedURI);
+            handleVariableInstance(model, v);
+        });
     }
 
     public static void handleVariableInstance(Model model, VariableInstance varInstance) {
@@ -111,6 +118,18 @@ public class RDFUtils {
         varURI.addProperty(RDF.type, SDTH_VARIABLE);
         String label = varInstance.getLabel();
         varURI.addProperty(RDFS.label, label);
+        if (null != varInstance.getRole()) {
+            String role = varInstance.getRole().toString();
+            // TO EXTRACT
+            Property hasRole = model.createProperty("http://id.making-sense.info/vtl/component/hasRole");
+            varURI.addProperty(hasRole, role);
+        }
+        if (null != varInstance.getType()) {
+            Class<?> type = varInstance.getType();
+            // TO EXTRACT
+            Property hasType = model.createProperty("http://id.making-sense.info/vtl/component/hasType");
+            varURI.addProperty(hasType, VtlTypes.getVtlType(type));
+        }
     }
 
     public static Model initModel(String baseFilePath) {

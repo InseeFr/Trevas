@@ -69,4 +69,11 @@ public class Program {
                 .findFirst()
                 .orElse(null);
     }
+
+    public ProgramStep getProgramStepByIndex(int index) {
+        return programSteps.stream()
+                .filter(p -> p.getIndex() == index)
+                .findFirst()
+                .orElse(null);
+    }
 }

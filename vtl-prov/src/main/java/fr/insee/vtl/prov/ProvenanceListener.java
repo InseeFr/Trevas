@@ -1,5 +1,6 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -12,10 +13,12 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * ANTLR Listener that create provenance objects.
@@ -175,8 +178,38 @@ public class ProvenanceListener extends VtlBaseListener {
         return provenanceListener.getProgram();
     }
 
-    public static Program runWithBindings(String expr, String id, String programName) {
-        return run(expr, id, programName);
+    public static Program runWithBindings(ScriptEngine engine, String expr, String id, String programName) {
+        Program program = run(expr, id, programName);
+        // 0 check if input dataset are empty?
+        // 1 - Handle input dataset
+        ProgramStep initialStep = program.getProgramStepByIndex(1);
+        Set<DataframeInstance> consumedDataframe = initialStep.getConsumedDataframe();
+        consumedDataframe.forEach(d ->{
+            Dataset ds = (Dataset) engine.getContext().getAttribute(d.getLabel());
+            ds.getDataStructure().values().forEach(c -> {
+                VariableInstance variableInstance = new VariableInstance(c.getName());
+                variableInstance.setRole(c.getRole());
+                variableInstance.setType(c.getType());
+                d.getHasVariableInstances().add(variableInstance);
+            });
+        });
+
+        // 2 - Split script to loop over program steps and run them
+        List<String> scripts = Arrays.stream(expr.split(";"))
+                .map(e -> e + ";")
+                .collect(Collectors.toList());
+
+        scripts.forEach(s -> {
+            try {
+                engine.eval(s);
+            } catch (ScriptException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+
+        return program;
     }
 
 }
