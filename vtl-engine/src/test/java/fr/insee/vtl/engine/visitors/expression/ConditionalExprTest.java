@@ -2,8 +2,8 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -92,6 +92,15 @@ public class ConditionalExprTest {
                 Java8Helpers.mapOf("id", "Franck", "c", 1L)
         );
         assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
+        engine.eval("ds1 := ds_1[keep id, long1][rename long1 to bool_var];" +
+                "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; " +
+                "res_ds <- case when ds1 < 30 then ds1 else ds2;");
+        Object res_ds = engine.getContext().getAttribute("res_ds");
+        assertThat(((Dataset) res_ds).getDataAsMap()).containsExactlyInAnyOrder(
+                Java8Helpers.mapOf("id", "Hadrien", "bool_var", 10L),
+                Java8Helpers.mapOf("id", "Nico", "bool_var", 20L),
+                Java8Helpers.mapOf("id", "Franck", "bool_var", 100L)
+        );
     }
 
     @Test

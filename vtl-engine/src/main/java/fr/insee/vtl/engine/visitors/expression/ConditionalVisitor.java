@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertBoolean;
 import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
 
 /**
@@ -63,34 +62,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return null;
         }
         return condition ? thenExpr : elseExpr;
-    }
-
-    public static Long caseFn(Boolean condition, Long thenExpr) {
-        if (condition == null) {
-            return null;
-        }
-        return condition ? thenExpr : null;
-    }
-
-    public static Double caseFn(Boolean condition, Double thenExpr) {
-        if (condition == null) {
-            return null;
-        }
-        return condition ? thenExpr : null;
-    }
-
-    public static String caseFn(Boolean condition, String thenExpr) {
-        if (condition == null) {
-            return null;
-        }
-        return condition ? thenExpr : null;
-    }
-
-    public static Boolean caseFn(Boolean condition, Boolean thenExpr) {
-        if (condition == null) {
-            return null;
-        }
-        return condition ? thenExpr : null;
     }
 
     public static Long nvl(Long value, Long defaultValue) {
@@ -156,7 +127,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 thenExprs.add(exprs.get(i + 1));
             }
             List<ResolvableExpression> whenExpressions = whenExprs.stream()
-                    .map(e -> assertBoolean(exprVisitor.visit(e), e))
+                    .map(exprVisitor::visit)
                     .collect(Collectors.toList());
             List<ResolvableExpression> thenExpressions = thenExprs.stream()
                     .map(exprVisitor::visit)
@@ -189,11 +160,13 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             return elseExpression;
         }
 
+        ResolvableExpression nextWhen = whenExpr.next();
+
         return genericFunctionsVisitor.invokeFunction("ifThenElse", Java8Helpers.listOf(
-                whenExpr.next(),
+                nextWhen,
                 thenExpr.next(),
                 caseToIfIt(whenExpr, thenExpr, elseExpression)
-        ), null);
+        ), nextWhen);
     }
 
 
