@@ -2,26 +2,24 @@ package fr.insee.vtl.prov.prov;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class ProgramStep {
 
     String id;
     String label;
     String sourceCode;
-    Set<VariableInstance> usedVariables = new HashSet<>();;
-    Set<VariableInstance> assignedVariables = new HashSet<>();;
-
-    Set<DataframeInstance> consumedDataframe = new HashSet<>();;
+    int index;
+    Set<VariableInstance> usedVariables = new HashSet<>();
+    Set<VariableInstance> assignedVariables = new HashSet<>();
+    Set<DataframeInstance> consumedDataframe = new HashSet<>();
     DataframeInstance producedDataframe;
 
-
-    public ProgramStep() {
-    }
-
-    public ProgramStep(String id, String label, String sourceCode) {
-        this.id = id;
+    public ProgramStep(String label, String sourceCode, int index) {
+        this.id = UUID.randomUUID().toString();
         this.label = label;
         this.sourceCode = sourceCode;
+        this.index = index;
     }
 
     public String getId() {
@@ -42,6 +40,14 @@ public class ProgramStep {
 
     public String getSourceCode() {
         return sourceCode;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public void setSourceCode(String sourceCode) {

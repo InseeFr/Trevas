@@ -3,11 +3,15 @@ package fr.insee.vtl.prov.prov;
 import java.util.HashSet;
 import java.util.Set;
 
+/* Filled thanks to listener, except for dataframInstances */
 public class Program {
 
     String id;
     String label;
     Set<ProgramStep> programSteps = new HashSet<>();
+
+    /* Provided running preview mode */
+    Set<DataframeInstance> dataframeInstances = new HashSet<>();
 
     String sourceCode;
 
@@ -43,6 +47,14 @@ public class Program {
         this.programSteps = programSteps;
     }
 
+    public Set<DataframeInstance> getDataframeInstances() {
+        return dataframeInstances;
+    }
+
+    public void setDataframeInstances(Set<DataframeInstance> dataframeInstances) {
+        this.dataframeInstances = dataframeInstances;
+    }
+
     public String getSourceCode() {
         return sourceCode;
     }
@@ -51,9 +63,9 @@ public class Program {
         this.sourceCode = sourceCode;
     }
 
-    public ProgramStep getProgramStepById(String id) {
+    public ProgramStep getProgramStepByLabel(String label) {
         return programSteps.stream()
-                .filter(p -> p.getId().equals(id))
+                .filter(p -> p.getLabel().equals(label))
                 .findFirst()
                 .orElse(null);
     }

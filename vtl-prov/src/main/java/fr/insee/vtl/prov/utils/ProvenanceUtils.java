@@ -1,16 +1,16 @@
-package fr.insee.vtl.prov;
+package fr.insee.vtl.prov.utils;
 
-import fr.insee.vtl.parser.VtlLexer;
-import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.prov.model.VTLDataset;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
-
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 public class ProvenanceUtils {
+
+    public static String getOrBuildUUID(Map<String, String> availableDataframeUUID, String label) {
+        if (null != availableDataframeUUID.get(label)) {
+            return availableDataframeUUID.get(label);
+        }
+        return UUID.randomUUID().toString();
+    }
 
     //public static List<Object> toBusinessModel(ProvenanceListener listener) {
     //    // TODO: @nico te graph needs to be refactored. I'll try to fix it before monday.
@@ -25,12 +25,12 @@ public class ProvenanceUtils {
     //    });
     //    return model;
     //}
-//
+    //
     //public static void toJSON(ProvenanceListener.Node node) {
-//
+    //
     //}
-//
+    //
     //public static void toRDF(ProvenanceListener.Node node) {
-//
+    //
     //}
 }

@@ -2,6 +2,7 @@ package fr.insee.vtl.prov;
 
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.utils.PropertiesLoader;
+import fr.insee.vtl.prov.utils.RDFUtils;
 import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,24 @@ public class RDFTest {
         assertThat(content).isNotEmpty();
         RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
         RDFUtils.writeJsonLdToFile(model, "src/test/resources/output/test-simple.json");
+        assertThat(program.getProgramSteps()).hasSize(3);
+    }
+
+    @Test
+    public void simpleTestWithBindings() throws IOException {
+
+
+        String script = "ds1 := ds1 + ds2;\n" +
+                "ds_mul := ds_sum * 3; \n" +
+                "ds_res <- ds_mul   [filter mod(var1, 2) = 0]" +
+                "                   [calc var_sum := var1 + var2];";
+
+        Program program = ProvenanceListener.runWithBindings(script, "trevas-simple-test", "Simple test from Trevas tests");
+        Model model = RDFUtils.buildModel(program);
+        String content = RDFUtils.serialize(model, "JSON-LD");
+        assertThat(content).isNotEmpty();
+        RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
+        RDFUtils.writeJsonLdToFile(model, "src/test/resources/output/test-simple-with-bindings.json");
         assertThat(program.getProgramSteps()).hasSize(3);
     }
 

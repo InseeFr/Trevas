@@ -1,10 +1,9 @@
-package fr.insee.vtl.prov;
+package fr.insee.vtl.prov.utils;
 
 import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
-import fr.insee.vtl.prov.utils.PROV;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -60,7 +59,7 @@ public class RDFUtils {
         Resource programStepURI = model.createResource(TREVAS_BASE_URI + "program-step/" + id);
         Resource SDTH_PROGRAM_STEP = model.createResource(SDTH_BASE_URI + "ProgramStep");
         programStepURI.addProperty(RDF.type, SDTH_PROGRAM_STEP);
-        programStepURI.addProperty(RDFS.label, "Create " + id + " dataset");
+        programStepURI.addProperty(RDFS.label, "Step " + programStep.getIndex());
         String sourceCode = programStep.getSourceCode();
         Property SDTH_HAS_SOURCE_CODE = model.createProperty(SDTH_BASE_URI + "hasSourceCode");
         programStepURI.addProperty(SDTH_HAS_SOURCE_CODE, sourceCode);

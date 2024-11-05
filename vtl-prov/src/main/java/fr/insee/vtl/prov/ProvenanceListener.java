@@ -7,11 +7,15 @@ import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
+import fr.insee.vtl.prov.utils.ProvenanceUtils;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * ANTLR Listener that create provenance objects.
@@ -25,6 +29,14 @@ public class ProvenanceListener extends VtlBaseListener {
     private boolean isInDatasetClause;
 
     private String currentComponentID;
+    private int stepIndex = 1;
+
+    private boolean rootAssignment = true;
+
+    // Map of label/UUID id
+    private final Map<String, String> availableDataframeUUID = new HashMap<>();
+
+    private Map<String, String> currentAvailableDataframeUUID = new HashMap<>();
 
     public ProvenanceListener(String id, String programName) {
         program.setId(id);
@@ -44,11 +56,14 @@ public class ProvenanceListener extends VtlBaseListener {
 
     @Override
     public void enterTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
-        String id = getText(ctx.varID());
+        String label = getText(ctx.varID());
         String sourceCode = getText(ctx);
-        currentProgramStep = id;
-        ProgramStep programStep = new ProgramStep(id, id, sourceCode);
-        DataframeInstance df = new DataframeInstance(id, id);
+        currentProgramStep = label;
+        ProgramStep programStep = new ProgramStep(label, sourceCode, stepIndex);
+        stepIndex++;
+        String dfId = UUID.randomUUID().toString();
+        currentAvailableDataframeUUID.put(label, dfId);
+        DataframeInstance df = new DataframeInstance(dfId, label);
         programStep.setProducedDataframe(df);
         program.getProgramSteps().add(programStep);
     }
@@ -56,15 +71,21 @@ public class ProvenanceListener extends VtlBaseListener {
     @Override
     public void exitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
         currentProgramStep = null;
+        availableDataframeUUID.putAll(currentAvailableDataframeUUID);
+        currentAvailableDataframeUUID = new HashMap<>();
+        rootAssignment = true;
     }
 
     @Override
     public void enterPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
-        String id = getText(ctx.varID());
+        String label = getText(ctx.varID());
         String sourceCode = getText(ctx);
-        currentProgramStep = id;
-        ProgramStep programStep = new ProgramStep(id, id, sourceCode);
-        DataframeInstance df = new DataframeInstance(id, id);
+        currentProgramStep = label;
+        ProgramStep programStep = new ProgramStep(label, sourceCode, stepIndex);
+        stepIndex++;
+        String dfId = UUID.randomUUID().toString();
+        currentAvailableDataframeUUID.put(label, dfId);
+        DataframeInstance df = new DataframeInstance(dfId, label);
         programStep.setProducedDataframe(df);
         program.getProgramSteps().add(programStep);
     }
@@ -72,23 +93,29 @@ public class ProvenanceListener extends VtlBaseListener {
     @Override
     public void exitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
         currentProgramStep = null;
+        availableDataframeUUID.putAll(currentAvailableDataframeUUID);
+        currentAvailableDataframeUUID = new HashMap<>();
+        rootAssignment = true;
     }
 
     @Override
     public void enterVarID(VtlParser.VarIDContext ctx) {
-        String id = ctx.IDENTIFIER().getText();
-        if (!id.equals(currentProgramStep)) {
-            ProgramStep programStep = program.getProgramStepById(currentProgramStep);
+        String label = ctx.IDENTIFIER().getText();
+        if (!rootAssignment) {
+            ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
             if (!isInDatasetClause) {
                 Set<DataframeInstance> consumedDataframe = programStep.getConsumedDataframe();
-                DataframeInstance df = new DataframeInstance(id, id);
+                String dfId = ProvenanceUtils.getOrBuildUUID(availableDataframeUUID, label);
+                DataframeInstance df = new DataframeInstance(dfId, label);
                 consumedDataframe.add(df);
             }
             if (isInDatasetClause && null != currentComponentID) {
                 Set<VariableInstance> usedVariables = programStep.getUsedVariables();
-                VariableInstance v = new VariableInstance(id, id);
+                VariableInstance v = new VariableInstance(label);
                 usedVariables.add(v);
             }
+        } else {
+            rootAssignment = false;
         }
     }
 
@@ -104,10 +131,10 @@ public class ProvenanceListener extends VtlBaseListener {
 
     @Override
     public void enterComponentID(VtlParser.ComponentIDContext ctx) {
-        String id = ctx.getText();
-        ProgramStep programStep = program.getProgramStepById(currentProgramStep);
+        String label = ctx.getText();
+        ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
         Set<VariableInstance> assignedVariables = programStep.getAssignedVariables();
-        VariableInstance v = new VariableInstance(id, id);
+        VariableInstance v = new VariableInstance(label);
         assignedVariables.add(v);
     }
 
@@ -146,6 +173,10 @@ public class ProvenanceListener extends VtlBaseListener {
         ProvenanceListener provenanceListener = new ProvenanceListener(id, programName);
         ParseTreeWalker.DEFAULT.walk(provenanceListener, parser.start());
         return provenanceListener.getProgram();
+    }
+
+    public static Program runWithBindings(String expr, String id, String programName) {
+        return run(expr, id, programName);
     }
 
 }
