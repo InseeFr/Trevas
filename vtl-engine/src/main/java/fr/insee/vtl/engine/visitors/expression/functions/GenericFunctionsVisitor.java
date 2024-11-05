@@ -7,10 +7,10 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.Token;
@@ -169,7 +169,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
         if (measureNames.size() != 1) {
             throw new VtlRuntimeException(
-                    new InvalidArgumentException("mono-measure datasets don't contain same measures (number or names)", position)
+                    new InvalidArgumentException("Variables in the mono-measure datasets are not named the same: " +
+                            measureNames + " found", position)
             );
         }
         DatasetExpression ds = proc.executeInnerJoin(dsExprs);
