@@ -34,6 +34,21 @@
             <artifactId>vtl-parser</artifactId>
             <version>1.8.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-engine</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-spark</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-model</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
 
         <!-- Jena 5 requires Java 17+ -->
         <dependency>
@@ -44,5 +59,18 @@
         </dependency>
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
