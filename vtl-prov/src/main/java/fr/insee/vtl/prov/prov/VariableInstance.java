@@ -8,6 +8,7 @@ public class VariableInstance {
     String id;
     String label;
     Dataset.Role role;
+    String parentDataframe;
     Class<?> type;
 
     public VariableInstance(String label) {
@@ -50,5 +51,14 @@ public class VariableInstance {
 
     public void setType(Class<?> type) {
         this.type = type;
+    }
+
+
+    public String getParentDataframe() {
+        return parentDataframe;
+    }
+
+    public void setParentDataframe(String parentDataframe) {
+        this.parentDataframe = parentDataframe;
     }
 }

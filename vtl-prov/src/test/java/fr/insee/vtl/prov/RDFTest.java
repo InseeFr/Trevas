@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
@@ -82,9 +81,9 @@ public class RDFTest {
     @Test
     public void simpleTestWithBindings() throws IOException {
         SparkSession spark = SparkSession.builder()
-            .appName("test")
-            .master("local")
-            .getOrCreate();
+                .appName("test")
+                .master("local")
+                .getOrCreate();
 
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByExtension("vtl");
@@ -92,30 +91,31 @@ public class RDFTest {
 
         InMemoryDataset ds1 = new InMemoryDataset(
                 Java8Helpers.listOf(
-                        Java8Helpers.mapOf("id", "A", "var1", 0L, "var2", 0.1D),
-                        Java8Helpers.mapOf("id", "B", "var1", 1L, "var2", 0.2D),
-                        Java8Helpers.mapOf("id", "C", "var1", 2L, "var2", 0.3D)
+                        Java8Helpers.mapOf("id1", "A", "var1", 0L, "var2", 100L),
+                        Java8Helpers.mapOf("id1", "B", "var1", 1L, "var2", 200L),
+                        Java8Helpers.mapOf("id1", "C", "var1", 2L, "var2", 300L)
                 ),
-                Java8Helpers.mapOf("id", String.class, "var1", Long.class, "var2", Double.class),
-                Java8Helpers.mapOf("id", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("id1", String.class, "var1", Long.class, "var2", Long.class),
+                Java8Helpers.mapOf("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
         );
         InMemoryDataset ds2 = new InMemoryDataset(
                 Java8Helpers.listOf(
-                        Java8Helpers.mapOf("id", "A", "var1", 10L, "var2", 1.1D),
-                        Java8Helpers.mapOf("id", "B", "var1", 11L, "var2", 1.2D),
-                        Java8Helpers.mapOf("id", "D", "var1", 12L, "var2", 1.3D)
+                        Java8Helpers.mapOf("id1", "A", "var1", 10L, "var2", 1L),
+                        Java8Helpers.mapOf("id1", "B", "var1", 11L, "var2", 2L),
+                        Java8Helpers.mapOf("id1", "D", "var1", 12L, "var2", 3L)
                 ),
-                Java8Helpers.mapOf("id", String.class, "var1", Long.class, "var2", Double.class),
-                Java8Helpers.mapOf("id", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
+                Java8Helpers.mapOf("id1", String.class, "var1", Long.class, "var2", Long.class),
+                Java8Helpers.mapOf("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
         );
 
         engine.put("ds1", ds1);
         engine.put("ds2", ds2);
 
-        String script = "ds_sum := ds1 + ds2;\n" +
+        String script = "ds1 := ds1[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];\n" +
+                "ds2 := ds2[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];\n" +
+                "ds_sum := ds1 + ds2;\n" +
                 "ds_mul := ds_sum * 3; \n" +
-                "ds_res <- ds_mul   [filter mod(var1, 2) = 0]" +
-                "                   [calc var_sum := var1 + var2];";
+                "ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];";
 
         Program program = ProvenanceListener.runWithBindings(engine, script, "trevas-simple-test", "Simple test from Trevas tests");
         Model model = RDFUtils.buildModel(program);
@@ -123,7 +123,7 @@ public class RDFTest {
         assertThat(content).isNotEmpty();
         RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
         RDFUtils.writeJsonLdToFile(model, "src/test/resources/output/test-simple-with-bindings.json");
-        assertThat(program.getProgramSteps()).hasSize(3);
+        assertThat(program.getProgramSteps()).hasSize(5);
     }
 
     @Test

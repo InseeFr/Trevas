@@ -5,9 +5,9 @@ import java.util.UUID;
 
 public class ProvenanceUtils {
 
-    public static String getOrBuildUUID(Map<String, String> availableDataframeUUID, String label) {
-        if (null != availableDataframeUUID.get(label)) {
-            return availableDataframeUUID.get(label);
+    public static String getOrBuildUUID(Map<String, String> availableUUID, String label) {
+        if (null != availableUUID.get(label)) {
+            return availableUUID.get(label);
         }
         return UUID.randomUUID().toString();
     }
