@@ -31,6 +31,26 @@ public class SDMXVTLWorkflowTest {
     }
 
     @Test
+    void testRefFromRepo() {
+        // Works partially, the transformation does not pull in the ruleset. Maybe the transformation is wrong and does not
+        // reference ruleset?
+        String url = "https://registry.sdmx.io/sdmx/v2/structure/transformationscheme/FR1/BPE_CENSUS/+/?format=sdmx-3.0&references=all";
+        ReadableDataLocation rdl = new ReadableDataLocationTmp(url);
+        SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Java8Helpers.mapOf());
+        System.out.println(sdmxVtlWorkflow.getEmptyDatasets());
+
+        System.out.println(sdmxVtlWorkflow.getTransformationsVTL());
+
+        // Invalid step definition for:CHECK_MUNICIPALITY
+        // - Caused by: fr.insee.vtl.engine.exceptions.UndefinedVariableException: undefined variable UNIQUE_MUNICIPALITY
+        engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(sdmxVtlWorkflow.getEmptyDatasets());
+        Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
+        assertThat(result).containsKeys(
+                "BPE_CENSUS_NUTS3_2021", "BPE_MUNICIPALITY", "BPE_NUTS3"
+        );
+    }
+
+    @Test
     void testGetEmptyDataset() {
 
         SparkSession.builder()
