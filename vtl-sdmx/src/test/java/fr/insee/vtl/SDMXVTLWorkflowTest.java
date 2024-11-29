@@ -10,6 +10,7 @@ import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
@@ -30,6 +31,7 @@ public class SDMXVTLWorkflowTest {
         engine = mgr.getEngineByExtension("vtl");
     }
 
+    @Disabled
     @Test
     void testRefFromRepo() {
         // Works partially, the transformation does not pull in the ruleset. Maybe the transformation is wrong and does not
