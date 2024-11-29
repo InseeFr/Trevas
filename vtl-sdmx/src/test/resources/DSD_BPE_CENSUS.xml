@@ -371,6 +371,7 @@
         <str:TransformationSchemes>
           <str:TransformationScheme agencyID="FR1" id="BPE_CENSUS" version="1.0" vtlVersion="2.0">
             <com:Name xml:lang="en">Transformation Scheme for BPE - CENSUS</com:Name>
+            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
             <str:Transformation id="STEP_1" isPersistent="false">
               <com:Name xml:lang="en">Step 1</com:Name>
               <com:Description xml:lang="en">Validation of municipality code in input file</com:Description>
