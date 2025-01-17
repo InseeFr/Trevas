@@ -15,6 +15,7 @@ import io.sdmx.utils.core.io.InMemoryReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
@@ -117,12 +118,13 @@ public class TrevasSDMXUtils {
     }
 
     public static Map<String, DataStructureBean> dataflows(SdmxBeans sdmxBeans) {
-        return sdmxBeans.getDataflows().stream().collect(Collectors.toMap(
-                INamedBean::getId,
-                dataflowBean -> sdmxBeans.getDataStructures(dataflowBean.getDataStructureRef())
-                        .stream()
-                        .collect(toSingleton())
-        ));
+        return sdmxBeans.getDataflows().stream()
+                .map(df -> sdmxBeans.getDataStructures(df.getDataStructureRef()))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(
+                        dataStructureBean -> dataStructureBean.getId(),
+                        dataStructureBean -> dataStructureBean
+                ));
     }
 
     public static Map<String, DataStructureBean> vtlMapping(SdmxBeans sdmxBeans) {
