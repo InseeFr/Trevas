@@ -218,13 +218,6 @@
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
-                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_MUNICIPALITY(1.0).year"
-                                           id="year">
-                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
-                            <str:LocalRepresentation>
-                                <str:TextFormat textType="ObservationalTimePeriod"/>
-                            </str:LocalRepresentation>
-                        </str:TimeDimension>
                         <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_MUNICIPALITY(1.0).facility_type"
                                        id="facility_type"
                                        position="1">
@@ -233,6 +226,13 @@
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_MUNICIPALITY(1.0).year"
+                                           id="TIME_PERIOD">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:TextFormat textType="ObservationalTimePeriod"/>
+                            </str:LocalRepresentation>
+                        </str:TimeDimension>
                     </str:DimensionList>
                     <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_MUNICIPALITY(1.0).MeasureDescriptor"
                                      id="MeasureDescriptor">
@@ -261,13 +261,6 @@
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
-                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_NUTS3(1.0).year"
-                                           id="year">
-                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
-                            <str:LocalRepresentation>
-                                <str:TextFormat textType="ObservationalTimePeriod"/>
-                            </str:LocalRepresentation>
-                        </str:TimeDimension>
                         <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_NUTS3(1.0).facility_type"
                                        id="facility_type"
                                        position="1">
@@ -276,6 +269,13 @@
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_NUTS3(1.0).year"
+                                           id="TIME_PERIOD">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:TextFormat textType="ObservationalTimePeriod"/>
+                            </str:LocalRepresentation>
+                        </str:TimeDimension>
                     </str:DimensionList>
                     <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_NUTS3(1.0).MeasureDescriptor"
                                      id="MeasureDescriptor">
