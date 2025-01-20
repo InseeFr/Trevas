@@ -220,13 +220,13 @@
                         </str:Dimension>
                         <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_MUNICIPALITY(1.0).facility_type"
                                        id="facility_type"
-                                       position="1">
+                                       position="2">
                             <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT</str:ConceptIdentity>
                             <str:LocalRepresentation>
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
-                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_MUNICIPALITY(1.0).year"
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_MUNICIPALITY(1.0).TIME_PERIOD"
                                            id="TIME_PERIOD">
                             <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
                             <str:LocalRepresentation>
@@ -263,13 +263,13 @@
                         </str:Dimension>
                         <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_NUTS3(1.0).facility_type"
                                        id="facility_type"
-                                       position="1">
+                                       position="2">
                             <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT</str:ConceptIdentity>
                             <str:LocalRepresentation>
                                 <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
                             </str:LocalRepresentation>
                         </str:Dimension>
-                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_NUTS3(1.0).year"
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_NUTS3(1.0).TIME_PERIOD"
                                            id="TIME_PERIOD">
                             <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
                             <str:LocalRepresentation>
@@ -394,7 +394,7 @@
               <com:Name xml:lang="en">Step 3</com:Name>
               <com:Description xml:lang="en">BPE aggregation by municipality, type and year</com:Description>
               <str:Expression>
-                BPE_DETAIL_CLEAN    [aggr nb := count(id) group by municipality, year, facility_type]
+                BPE_DETAIL_CLEAN    [aggr nb := count(id) group by municipality, year, facility_type] [rename year to TIME_PERIOD]
               </str:Expression>
               <str:Result>BPE_MUNICIPALITY</str:Result>
             </str:Transformation>
@@ -403,7 +403,7 @@
               <com:Description xml:lang="en">BPE aggregation by NUTS 3, type and year</com:Description>
               <str:Expression>
                 BPE_MUNICIPALITY    [calc nuts3 := if substr(municipality,1,2) = "97" then substr(municipality,1,3) else substr(municipality,1,2)]
-                                    [aggr nb := count(nb) group by year, nuts3, facility_type]
+                                    [aggr nb := count(nb) group by TIME_PERIOD, nuts3, facility_type]
                </str:Expression>
               <str:Result>BPE_NUTS3</str:Result>
             </str:Transformation>
@@ -417,10 +417,10 @@
               <com:Name xml:lang="en">Step 6</com:Name>
               <com:Description xml:lang="en">Prepare 2021 census dataset by NUTS 3</com:Description>
               <str:Expression>
-                LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]
-                                    [filter year = "2021"]
+                LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD, POP_TOT to pop]
+                                    [filter TIME_PERIOD = "2021"]
                                     [calc pop := cast(pop, integer)]
-                                    [drop year, NB_COM, POP_MUNI]
+                                    [drop TIME_PERIOD, NB_COM, POP_MUNI]
               </str:Expression>
               <str:Result>CENSUS_NUTS3_2021</str:Result>
             </str:Transformation>
@@ -428,8 +428,8 @@
               <com:Name xml:lang="en">Step 7</com:Name>
               <com:Description xml:lang="en">Extract dataset on general practitioners from BPE by NUTS 3 in 2021</com:Description>
               <str:Expression>
-                BPE_NUTS3   [filter facility_type = "D201" and year = "2021"]
-                            [drop facility_type, year]
+                BPE_NUTS3   [filter facility_type = "D201" and TIME_PERIOD = "2021"]
+                            [drop facility_type, TIME_PERIOD]
               </str:Expression>
               <str:Result>GENERAL_PRACT_NUTS3_2021</str:Result>
             </str:Transformation>
