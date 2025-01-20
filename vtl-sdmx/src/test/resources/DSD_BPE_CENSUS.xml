@@ -443,8 +443,8 @@
               </str:Expression>
               <str:Result>BPE_CENSUS_NUTS3_2021</str:Result>
             </str:Transformation>
-            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
             <str:VtlMappingScheme>urn:sdmx:org.sdmx.infomodel.transformation.VtlMappingScheme=FR1:VTLMS1(1.0)</str:VtlMappingScheme>
+            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
           </str:TransformationScheme>
     </str:TransformationSchemes>
     </mes:Structures>
