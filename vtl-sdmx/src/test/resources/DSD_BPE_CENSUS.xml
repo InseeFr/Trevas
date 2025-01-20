@@ -339,15 +339,15 @@
             </str:Dataflow>
         </str:Dataflows>
         <str:VtlMappingSchemes>
-            <str:VtlMappingScheme agencyID="FR1" id="BPE_DETAIL" version="1.0">
+            <str:VtlMappingScheme agencyID="FR1" id="VTLMS1" version="1.0">
               <com:Name xml:lang="en">VTL Mapping Scheme #1</com:Name>
               <str:VtlMapping alias="BPE_DETAIL_VTL" id="VTLM1">
                 <com:Name xml:lang="en">VTL Mapping #1</com:Name>
                 <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)</str:Dataflow>
               </str:VtlMapping>
-              <str:VtlMapping alias="BPE_DETAIL_VTL" id="VTLM1">
-                <com:Name xml:lang="en">VTL Mapping #1</com:Name>
-                <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)</str:Dataflow>
+              <str:VtlMapping alias="LEGAL_POP" id="VTLM2">
+                <com:Name xml:lang="en">VTL Mapping #2</com:Name>
+                <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:LEGAL_POP_CUBE(1.0)</str:Dataflow>
               </str:VtlMapping>
             </str:VtlMappingScheme>
         </str:VtlMappingSchemes>
@@ -444,6 +444,7 @@
               <str:Result>BPE_CENSUS_NUTS3_2021</str:Result>
             </str:Transformation>
             <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
+            <str:VtlMappingScheme>urn:sdmx:org.sdmx.infomodel.transformation.VtlMappingScheme=FR1:VTLMS1(1.0)</str:VtlMappingScheme>
           </str:TransformationScheme>
     </str:TransformationSchemes>
     </mes:Structures>
