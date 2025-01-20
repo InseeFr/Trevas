@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message https://raw.githubusercontent.com/sdmx-twg/sdmx-ml-v2_1/master/schemas/SDMXMessage.xsd">
+<mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message https://raw.githubusercontent.com/sdmx-twg/sdmx-ml/refs/heads/master/schemas/SDMXMessage.xsd">
     <mes:Header>
         <mes:ID>DSD_BPE_DETAIL_1049</mes:ID>
         <mes:Test>false</mes:Test>
@@ -345,6 +345,10 @@
                 <com:Name xml:lang="en">VTL Mapping #1</com:Name>
                 <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)</str:Dataflow>
               </str:VtlMapping>
+              <str:VtlMapping alias="BPE_DETAIL_VTL" id="VTLM1">
+                <com:Name xml:lang="en">VTL Mapping #1</com:Name>
+                <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)</str:Dataflow>
+              </str:VtlMapping>
             </str:VtlMappingScheme>
         </str:VtlMappingSchemes>
         <str:RulesetSchemes>
@@ -371,7 +375,6 @@
         <str:TransformationSchemes>
           <str:TransformationScheme agencyID="FR1" id="BPE_CENSUS" version="1.0" vtlVersion="2.0">
             <com:Name xml:lang="en">Transformation Scheme for BPE - CENSUS</com:Name>
-            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
             <str:Transformation id="STEP_1" isPersistent="false">
               <com:Name xml:lang="en">Step 1</com:Name>
               <com:Description xml:lang="en">Validation of municipality code in input file</com:Description>
@@ -440,6 +443,7 @@
               </str:Expression>
               <str:Result>BPE_CENSUS_NUTS3_2021</str:Result>
             </str:Transformation>
+            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
           </str:TransformationScheme>
     </str:TransformationSchemes>
     </mes:Structures>
