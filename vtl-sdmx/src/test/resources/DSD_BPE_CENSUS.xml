@@ -339,7 +339,7 @@
             </str:Dataflow>
         </str:Dataflows>
         <str:VtlMappingSchemes>
-            <str:VtlMappingScheme agencyID="FR1" id="VTLMS1" version="1.0">
+            <str:VtlMappingScheme urn="urn:sdmx:org.sdmx.infomodel.transformation.VtlMappingScheme=FR1:VTLMS1(1.0)" agencyID="FR1" id="VTLMS1" version="1.0">
               <com:Name xml:lang="en">VTL Mapping Scheme #1</com:Name>
               <str:VtlMapping alias="BPE_DETAIL_VTL" id="VTLM1">
                 <com:Name xml:lang="en">VTL Mapping #1</com:Name>
