@@ -159,7 +159,7 @@
             <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:LEGAL_POP_CUBE(1.0)"
 			                   isExternalReference="false"
 			                   agencyID="FR1"
-			                   id="LEGAL_POP"
+			                   id="LEGAL_POP_CUBE"
 			                   version="1.0">
 				<com:Name xml:lang="en">Cube populations légales</com:Name>
 				<str:DataStructureComponents>
@@ -321,7 +321,7 @@
               <com:Name xml:lang="en">Dataflow for BPE_DETAIL</com:Name>
               <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_DETAIL(1.0)</str:Structure>
             </str:Dataflow>
-            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:LEGAL_POP_CUBE(1.0)" agencyID="FR1" id="LEGAL_POP" version="1.0">
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:LEGAL_POP_CUBE(1.0)" agencyID="FR1" id="LEGAL_POP_CUBE" version="1.0">
               <com:Name xml:lang="en">Dataflow for BPE_CENSUS</com:Name>
               <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:LEGAL_POP(1.0)</str:Structure>
             </str:Dataflow>

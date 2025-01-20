@@ -144,7 +144,7 @@ public class BPETest {
         assertThat(checkNutsTypes.getDataPoints()).isEmpty();
 
         // Step 6
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP_CUBE");
 
         SparkDataset censusNuts = new SparkDataset(
                 spark.read()
