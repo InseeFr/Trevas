@@ -417,7 +417,7 @@
               <com:Name xml:lang="en">Step 6</com:Name>
               <com:Description xml:lang="en">Prepare 2021 census dataset by NUTS 3</com:Description>
               <str:Expression>
-                LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD, POP_TOT to pop]
+                LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]
                                     [filter TIME_PERIOD = "2021"]
                                     [calc pop := cast(pop, integer)]
                                     [drop TIME_PERIOD, NB_COM, POP_MUNI]
