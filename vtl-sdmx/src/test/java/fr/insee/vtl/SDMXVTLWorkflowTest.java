@@ -26,9 +26,15 @@ public class SDMXVTLWorkflowTest {
 
     @BeforeEach
     public void setUp() {
+        SparkSession.builder()
+                .appName("test")
+                .master("local")
+                .getOrCreate();
 
         ScriptEngineManager mgr = new ScriptEngineManager();
         engine = mgr.getEngineByExtension("vtl");
+
+        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
     }
 
     @Disabled
@@ -54,16 +60,6 @@ public class SDMXVTLWorkflowTest {
 
     @Test
     void testGetEmptyDataset() {
-
-        SparkSession.builder()
-                .appName("test")
-                .master("local")
-                .getOrCreate();
-
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        ScriptEngine engine = mgr.getEngineByExtension("vtl");
-        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
-
         ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
         SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Java8Helpers.mapOf());
         Map<String, Dataset> emptyDatasets = sdmxVtlWorkflow.getEmptyDatasets();
