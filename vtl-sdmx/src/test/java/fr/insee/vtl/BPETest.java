@@ -70,9 +70,8 @@ public class BPETest {
         assertThat(checkMunicipality.getDataPoints()).isEmpty();
 
         // Step 2
-        engine.eval("BPE_DETAIL_CLEAN := BPE_DETAIL" +
-                "   [drop LAMBERT_X, LAMBERT_Y]\n" +
-                "   [rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];");
+        engine.eval("BPE_DETAIL_CLEAN := BPE_DETAIL_VTL[drop LAMBERT_X, LAMBERT_Y]\n" +
+                "[rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];");
 
         Dataset bpeDetailClean = (Dataset) engine.getContext().getAttribute("BPE_DETAIL_CLEAN");
         Structured.DataStructure bpeDetailCleanStructure = bpeDetailClean.getDataStructure();
@@ -90,8 +89,8 @@ public class BPETest {
         assertThat(bpeDetailCleanStructure.get("year").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
 
         // Step 3
-        engine.eval("BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN" +
-                "   [aggr nb := count(id) group by municipality, year, facility_type];");
+        engine.eval("BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN[aggr nb := count(id) group by municipality, year, facility_type]" +
+                "[rename year to TIME_PERIOD];");
 
         Dataset bpeMunicipality = (Dataset) engine.getContext().getAttribute("BPE_MUNICIPALITY");
         Structured.DataStructure bpeMunicipalityStructure = bpeMunicipality.getDataStructure();
@@ -110,9 +109,8 @@ public class BPETest {
         assertThat(bpeMunicipalityStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
         // Step 4
-        engine.eval("BPE_NUTS3 <- BPE_MUNICIPALITY" +
-                "   [calc nuts3 := if substr(municipality,1,2) = \"97\" then substr(municipality,1,3) else substr(municipality,1,2)]    \n" +
-                "   [aggr nb := count(nb) group by year, nuts3, facility_type];");
+        engine.eval("BPE_NUTS3 <- BPE_MUNICIPALITY[calc nuts3 := if substr(municipality,1,2) = \"97\" then substr(municipality,1,3) else substr(municipality,1,2)]\n" +
+                "[aggr nb := count(nb) group by TIME_PERIOD, nuts3, facility_type];");
 
         Dataset bpeNuts = (Dataset) engine.getContext().getAttribute("BPE_NUTS3");
         Structured.DataStructure bpeNutsStructure = bpeNuts.getDataStructure();
@@ -157,11 +155,10 @@ public class BPETest {
 
         context.setAttribute("CENSUS_NUTS3_2021", censusNuts, ScriptContext.ENGINE_SCOPE);
 
-        engine.eval("CENSUS_NUTS3_2021 := CENSUS_NUTS3_2021   \n" +
-                "   [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]\n" +
-                "   [filter year = \"2021\"]\n" +
-                "   [calc pop := cast(pop, integer)]" +
-                "   [drop year, NB_COM, POP_MUNI];");
+        engine.eval("CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]\n" +
+                "[filter TIME_PERIOD = \"2021\"]\n" +
+                "[calc pop := cast(pop, integer)]\n" +
+                "[drop TIME_PERIOD, NB_COM, POP_MUNI];");
 
         Dataset censusNuts2021 = (Dataset) engine.getContext().getAttribute("CENSUS_NUTS3_2021");
         Structured.DataStructure censusNuts2021Structure = censusNuts2021.getDataStructure();
@@ -173,9 +170,8 @@ public class BPETest {
         assertThat(censusNuts2021Structure.get("pop").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
         // Step 7
-        engine.eval("GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3" +
-                "   [filter facility_type = \"D201\" and year = \"2021\"]\n" +
-                "   [drop facility_type, year];");
+        engine.eval("GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3[filter facility_type = \"D201\" and TIME_PERIOD = \"2021\"]\n" +
+                "[drop facility_type, TIME_PERIOD];");
 
         Dataset generalNuts = (Dataset) engine.getContext().getAttribute("GENERAL_PRACT_NUTS3_2021");
         Structured.DataStructure generalNutsStructure = generalNuts.getDataStructure();
@@ -188,8 +184,8 @@ public class BPETest {
 
         // Step 8
         engine.eval("BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)\n" +
-                "   [calc pract_per_10000_inhabitants := nb / pop * 10000]\n" +
-                "   [drop nb, pop];");
+                "[calc pract_per_10000_inhabitants := nb / pop * 10000]\n" +
+                "[drop nb, pop];");
 
         Dataset bpeCensus = (Dataset) engine.getContext().getAttribute("BPE_CENSUS_NUTS3_2021");
         Structured.DataStructure bpeCensusStructure = bpeCensus.getDataStructure();
