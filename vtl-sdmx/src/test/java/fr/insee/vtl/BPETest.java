@@ -55,7 +55,7 @@ public class BPETest {
         assertThat(bpeDetailDs.getDataStructure().size()).isEqualTo(6);
 
         ScriptContext context = engine.getContext();
-        context.setAttribute("BPE_DETAIL", bpeDetailDs, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("BPE_DETAIL_VTL", bpeDetailDs, ScriptContext.ENGINE_SCOPE);
 
         // Step 1
         engine.eval("" +
@@ -63,7 +63,7 @@ public class BPETest {
                 "    MUNICIPALITY_FORMAT_RULE : match_characters(DEPCOM, \"[0-9]{5}|2[A-B][0-9]{3}\") errorcode \"Municipality code is not in the correct format\"\n" +
                 "end datapoint ruleset;\n" +
                 "\n" +
-                "CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL, UNIQUE_MUNICIPALITY invalid);");
+                "CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid);");
 
         Dataset checkMunicipality = (Dataset) engine.getContext().getAttribute("CHECK_MUNICIPALITY");
 
@@ -101,8 +101,8 @@ public class BPETest {
         assertThat(bpeMunicipalityStructure.get("facility_type").getType()).isEqualTo(String.class);
         assertThat(bpeMunicipalityStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeMunicipalityStructure.get("year").getType()).isEqualTo(String.class);
-        assertThat(bpeMunicipalityStructure.get("year").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+        assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
+        assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
 
         assertThat(bpeMunicipalityStructure.get("nb").getType()).isEqualTo(Long.class);
@@ -121,8 +121,8 @@ public class BPETest {
         assertThat(bpeNutsStructure.get("facility_type").getType()).isEqualTo(String.class);
         assertThat(bpeNutsStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeNutsStructure.get("year").getType()).isEqualTo(String.class);
-        assertThat(bpeNutsStructure.get("year").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+        assertThat(bpeNutsStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
+        assertThat(bpeNutsStructure.get("TIME_PERIOD").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
 
         assertThat(bpeNutsStructure.get("nb").getType()).isEqualTo(Long.class);
@@ -142,9 +142,9 @@ public class BPETest {
         assertThat(checkNutsTypes.getDataPoints()).isEmpty();
 
         // Step 6
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP_CUBE");
+        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
-        SparkDataset censusNuts = new SparkDataset(
+        SparkDataset legalPop = new SparkDataset(
                 spark.read()
                         .option("header", "true")
                         .option("delimiter", ";")
@@ -153,7 +153,7 @@ public class BPETest {
                 censusStructure
         );
 
-        context.setAttribute("CENSUS_NUTS3_2021", censusNuts, ScriptContext.ENGINE_SCOPE);
+        context.setAttribute("LEGAL_POP", legalPop, ScriptContext.ENGINE_SCOPE);
 
         engine.eval("CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]\n" +
                 "[filter TIME_PERIOD = \"2021\"]\n" +

@@ -123,7 +123,7 @@ public class TrevasSDMXUtils {
                 .distinct()
                 .flatMap(Collection::stream)
                 .collect(Collectors.toMap(
-                        dataStructureBean -> dataStructureBean.getId(),
+                        INamedBean::getId,
                         dataStructureBean -> dataStructureBean
                 ));
     }

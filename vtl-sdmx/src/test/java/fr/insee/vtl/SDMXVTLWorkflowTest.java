@@ -99,8 +99,8 @@ public class SDMXVTLWorkflowTest {
         ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
         SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Java8Helpers.mapOf());
         assertThat(sdmxVtlWorkflow.getRulesetsVTL()).isEqualTo(
-                "define datapoint ruleset UNIQUE_MUNICIPALITY (valuedomain CL_DEPCOM) is\n" +
-                        "                    MUNICIPALITY_FORMAT_RULE : match_characters(CL_DEPCOM, \"[0-9]{5}|2[A-B][0-9]{3}\") errorcode \"Municipality code is not in the correct format\"\n" +
+                "define datapoint ruleset UNIQUE_MUNICIPALITY (variable DEPCOM) is\n" +
+                        "                    MUNICIPALITY_FORMAT_RULE : match_characters(DEPCOM, \"[0-9]{5}|2[A-B][0-9]{3}\") errorcode \"Municipality code is not in the correct format\"\n" +
                         "                end datapoint ruleset;\n" +
                         "\n" +
                         "define datapoint ruleset NUTS3_TYPES (variable facility_type, nb) is\n" +
