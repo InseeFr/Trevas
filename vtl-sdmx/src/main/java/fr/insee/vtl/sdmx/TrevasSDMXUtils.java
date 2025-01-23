@@ -120,6 +120,7 @@ public class TrevasSDMXUtils {
     public static Map<String, DataStructureBean> dataflows(SdmxBeans sdmxBeans) {
         return sdmxBeans.getDataflows().stream()
                 .map(df -> sdmxBeans.getDataStructures(df.getDataStructureRef()))
+                .distinct()
                 .flatMap(Collection::stream)
                 .collect(Collectors.toMap(
                         dataStructureBean -> dataStructureBean.getId(),
