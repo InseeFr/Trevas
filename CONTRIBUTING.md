@@ -6,8 +6,8 @@ Thank you for your interest in contributing to Trevas! Your help is invaluable i
 
 ### 📌 Roles & Responsibilities
 
-- **AAA** is responsible for the overall **project governance**. They guide the vision of the project, make final decisions, and ensure the project aligns with its long-term goals.
-- **BBB and CCC** are responsible for reviewing **Pull Requests (PRs)**, merging them into the main branch, adjusting the **GitHub project board**, and tagging issues to ensure proper tracking. They ensure the code meets the project's standards before merging and help prioritize tasks.
+- **[Making Sense](https://making-sense.info/)** is responsible for the overall **project governance**. They guide the vision of the project, make final decisions, and ensure the project aligns with its long-term goals.
+- **[Making Sense](https://making-sense.info/)** are responsible for reviewing **Pull Requests (PRs)**, merging them into the main branch, adjusting the **GitHub project board**, and tagging issues to ensure proper tracking. They ensure the code meets the project's standards before merging and help prioritize tasks.
 - **Maintainers** (which can include anyone who is granted this role) help with day-to-day management of the project, such as reviewing code, merging PRs, and managing the project's direction. If you're interested in becoming a maintainer, please see the section below.
 
 ### 📌 Issues & Pull Requests
