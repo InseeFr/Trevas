@@ -2,7 +2,6 @@ package fr.insee.vtl.jackson;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +13,7 @@ public class ComponentSerializerTest extends AbstractMapperTest {
     @Test
     public void testSerializeComponents() throws JsonProcessingException {
 
-        List<Dataset.Component> cases = Java8Helpers.listOf(
+        List<Dataset.Component> cases = List.of(
                 new Dataset.Component("name", Long.class, Dataset.Role.IDENTIFIER),
                 new Dataset.Component("name", Long.class, Dataset.Role.MEASURE),
                 new Dataset.Component("name", Long.class, Dataset.Role.ATTRIBUTE),

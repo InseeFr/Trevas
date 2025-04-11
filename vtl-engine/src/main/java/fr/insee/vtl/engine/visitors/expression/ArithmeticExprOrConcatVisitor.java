@@ -1,9 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -102,8 +100,8 @@ public class ArithmeticExprOrConcatVisitor extends VtlBaseVisitor<ResolvableExpr
     @Override
     public ResolvableExpression visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right));
+            var pos = fromContext(ctx);
+            var parameters = List.of(exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right));
             switch (ctx.op.getType()) {
                 case VtlParser.PLUS:
                     return genericFunctionsVisitor.invokeFunction("addition", parameters, pos);

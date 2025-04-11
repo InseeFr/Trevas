@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.*;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -116,13 +115,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
                                               Map<String, Analytics.Order> orderBy,
                                               Analytics.WindowSpec window) {
         if (partitionBy == null) {
-            partitionBy = Java8Helpers.listOf();
+            partitionBy = List.of();
         }
 
         WindowSpec windowSpec = Window.partitionBy(colNameToCol(partitionBy));
 
         if (orderBy == null) {
-            orderBy = Java8Helpers.mapOf();
+            orderBy = Map.of();
         }
         windowSpec = windowSpec.orderBy(buildOrderCol(orderBy));
 
@@ -165,9 +164,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     private SparkDataset asSparkDataset(DatasetExpression expression) {
         if (expression instanceof SparkDatasetExpression) {
-            return ((SparkDatasetExpression) expression).resolve(Java8Helpers.mapOf());
+            return ((SparkDatasetExpression) expression).resolve(Map.of());
         } else {
-            fr.insee.vtl.model.Dataset dataset = expression.resolve(Java8Helpers.mapOf());
+            var dataset = expression.resolve(Map.of());
             if (dataset instanceof SparkDataset) {
                 return (SparkDataset) dataset;
             } else {
@@ -186,7 +185,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Map<String, String> aliasesToName = new HashMap<>();
         Map<String, ResolvableExpression> renamedExpressions = new LinkedHashMap<>();
         Map<String, String> renamedExpressionString = new LinkedHashMap<>();
-        for (String name : expressions.keySet()) {
+        for (var name : expressions.keySet()) {
             String alias = name + "_" + aliasesToName.size();
             renamedExpressions.put(alias, expressions.get(name));
             renamedExpressionString.put(alias, expressionStrings.get(name));
@@ -203,16 +202,16 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> renamed = rename(evaluated, aliasesToName);
 
         // Create the new role map.
-        Map<String, Role> roleMap = getRoleMap(dataset);
+        var roleMap = getRoleMap(dataset);
         roleMap.putAll(roles);
 
         return new SparkDatasetExpression(new SparkDataset(renamed, roleMap), expression);
     }
 
     private Dataset<Row> executeCalcEvaluated(Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions) {
-        Set<String> columnNames = Java8Helpers.setOf(interpreted.columns());
+        var columnNames = Set.of(interpreted.columns());
         Column structColumns = struct(columnNames.stream().map(colName -> col(colName)).toArray(Column[]::new));
-        for (String name : expressions.keySet()) {
+        for (var name : expressions.keySet()) {
             // Ignore the columns that already exist.
             if (columnNames.contains(name)) {
                 continue;
@@ -263,10 +262,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeRename(DatasetExpression expression, Map<String, String> fromTo) {
         SparkDataset dataset = asSparkDataset(expression);
 
-        Dataset<Row> result = rename(dataset.getSparkDataset(), fromTo);
+        var result = rename(dataset.getSparkDataset(), fromTo);
 
-        Map<String, Role> originalRoles = getRoleMap(dataset);
-        Map<String, Role> renamedRoles = new LinkedHashMap<>(originalRoles);
+        var originalRoles = getRoleMap(dataset);
+        var renamedRoles = new LinkedHashMap<>(originalRoles);
         for (Map.Entry<String, String> fromToEntry : fromTo.entrySet()) {
             renamedRoles.put(fromToEntry.getValue(), originalRoles.get(fromToEntry.getKey()));
         }
@@ -425,7 +424,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 throw UNKNOWN_ANALYTIC_FUNCTION;
 
         }
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
+        var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result), dataset);
     }
 
@@ -455,7 +454,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             default:
                 throw UNKNOWN_ANALYTIC_FUNCTION;
         }
-        Dataset<Row> result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
+        var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result), dataset);
     }
 
@@ -506,7 +505,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets, List<Component> components) {
         List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
         List<String> identifiers = identifierNames(components);
-        Dataset<Row> innerJoin = executeJoin(sparkDatasets, identifiers, "inner");
+        var innerJoin = executeJoin(sparkDatasets, identifiers, "inner");
         DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
         return new SparkDatasetExpression(new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
     }
@@ -515,7 +514,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeLeftJoin(Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
         List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
         List<String> identifiers = identifierNames(components);
-        Dataset<Row> innerJoin = executeJoin(sparkDatasets, identifiers, "left");
+        var innerJoin = executeJoin(sparkDatasets, identifiers, "left");
         DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
         return new SparkDatasetExpression(new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
     }
@@ -523,7 +522,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     @Override
     public DatasetExpression executeCrossJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
         List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-        Dataset<Row> crossJoin = executeJoin(sparkDatasets, Java8Helpers.listOf(), "cross");
+        var crossJoin = executeJoin(sparkDatasets, List.of(), "cross");
         DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
     }
@@ -532,7 +531,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     public DatasetExpression executeFullJoin(Map<String, DatasetExpression> datasets, List<Component> identifiers) {
         List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
         List<String> identifierNames = identifierNames(identifiers);
-        Dataset<Row> crossJoin = executeJoin(sparkDatasets, identifierNames, "outer");
+        var crossJoin = executeJoin(sparkDatasets, identifierNames, "outer");
         DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
         return new SparkDatasetExpression(new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
     }
@@ -548,7 +547,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         DatasetExpression sparkDsExpr = new SparkDatasetExpression(sparkDs, pos);
         Structured.DataStructure dataStructure = sparkDs.getDataStructure();
 
-        Map<String, Role> roleMap = getRoleMap(sparkDataset);
+        var roleMap = getRoleMap(sparkDataset);
         roleMap.put(RULEID, IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
         roleMap.put(ERRORLEVEL, MEASURE);
@@ -608,7 +607,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
                     resolvableExpressions.put(ERRORCODE, errorCodeExpression);
                     // do we need to use execute executeCalcInterpreted too?
-                    return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Java8Helpers.mapOf());
+                    return executeCalc(sparkDsExpr, resolvableExpressions, roleMap, Map.of());
                 }
         ).collect(Collectors.toList());
 
@@ -640,14 +639,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Dataset<Row> sparkImbalanceDatasetRow = sparkImbalanceDataset.getSparkDataset();
         String imbalanceMonomeasureName = imbalanceExpr.getDataStructure().values()
                 .stream().filter(Component::isMeasure).map(Component::getName).collect(Collectors.toList()).get(0);
-        Map<String, String> varsToRename = Java8Helpers.mapOfEntries(Java8Helpers.MapEntry.of(imbalanceMonomeasureName, IMBALANCE));
+        Map<String, String> varsToRename = Map.ofEntries(Map.entry(imbalanceMonomeasureName, IMBALANCE));
         Dataset<Row> renamed = rename(sparkImbalanceDatasetRow, varsToRename);
-        Map<String, Role> imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
+        var imbalanceRoleMap = getRoleMap(sparkImbalanceDataset);
         SparkDatasetExpression imbalanceRenamedExpr = new SparkDatasetExpression(new SparkDataset(renamed, imbalanceRoleMap), pos);
         // Join expr ds & imbalance ds
-        Map<String, DatasetExpression> datasetExpressions = Java8Helpers.mapOfEntries(
-                Java8Helpers.MapEntry.of("dsExpr", dsExpr),
-                Java8Helpers.MapEntry.of("imbalanceExpr", imbalanceRenamedExpr)
+        Map<String, DatasetExpression> datasetExpressions = Map.ofEntries(
+                Map.entry("dsExpr", dsExpr),
+                Map.entry("imbalanceExpr", imbalanceRenamedExpr)
         );
         List<Component> components = dsExpr.getDataStructure().values().stream()
                 .filter(Component::isIdentifier)
@@ -677,13 +676,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     return boolVar ? null : errorLevelType.cast(erLevel);
                 });
 
-        Map<String, Role> roleMap = getRoleMap(sparkDataset);
+        var roleMap = getRoleMap(sparkDataset);
         roleMap.put(ERRORLEVEL, MEASURE);
         roleMap.put(ERRORCODE, MEASURE);
 
-        Map<String, ResolvableExpression> resolvableExpressions = Java8Helpers.mapOfEntries(
-                Java8Helpers.MapEntry.of(ERRORLEVEL, errorLevelExpression),
-                Java8Helpers.MapEntry.of(ERRORCODE, errorCodeExpression)
+        Map<String, ResolvableExpression> resolvableExpressions = Map.ofEntries(
+                Map.entry(ERRORLEVEL, errorLevelExpression),
+                Map.entry(ERRORCODE, errorCodeExpression)
         );
 
         Dataset<Row> calculatedDataset = executeCalcEvaluated(ds, resolvableExpressions);
@@ -711,7 +710,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         }
 
         // Create "bindings" (componentID column values)
-        fr.insee.vtl.model.Dataset ds = dsE.resolve(Java8Helpers.mapOf());
+        fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
 
         Map<String, Object> bindings = ds.getDataAsMap().stream()
                 .collect(
@@ -723,7 +722,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         Component measure = dsE.getDataStructure().getMeasures().get(0);
         Class measureType = measure.getType();
 
-        Map<String, Role> roleMap = getRoleMap(ds);
+        var roleMap = getRoleMap(ds);
         roleMap.put(RULEID, IDENTIFIER);
         roleMap.put(BOOLVAR, MEASURE);
         roleMap.put(IMBALANCE, MEASURE);
@@ -833,14 +832,14 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     resolvableExpressions.put(ERRORLEVEL, errorLevelExpression);
                     resolvableExpressions.put(ERRORCODE, errorCodeExpression);
 
-                    datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Java8Helpers.mapOf()));
+                    datasetsExpression.add(executeCalc(filteredDataset, resolvableExpressions, roleMap, Map.of()));
                 }
         );
         DatasetExpression datasetExpression;
         if (datasetsExpression.size() == 0) {
             InMemoryDataset emptyCHDataset = new InMemoryDataset(
-                    Java8Helpers.listOf(),
-                    Java8Helpers.mapOf(measure.getName(), measureType, RULEID, String.class, componentID, String.class, BOOLVAR, Boolean.class, IMBALANCE, Double.class, ERRORLEVEL, errorLevelType, ERRORCODE, errorCodeType),
+                    List.of(),
+                    Map.of(measure.getName(), measureType, RULEID, String.class, componentID, String.class, BOOLVAR, Boolean.class, IMBALANCE, Double.class, ERRORLEVEL, errorLevelType, ERRORCODE, errorCodeType),
                     roleMap
             );
             datasetExpression = DatasetExpression.of(emptyCHDataset, pos);
@@ -940,12 +939,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 bindingsWithDefault.put(i, bindings.get(i));
             } else {
                 // don't need to handle non_null, items are always in bindings
-                if (Java8Helpers.listOf(NON_ZERO, PARTIAL_ZERO, ALWAYS_ZERO).contains(validationMode)) {
+                if (List.of(NON_ZERO, PARTIAL_ZERO, ALWAYS_ZERO).contains(validationMode)) {
                     if (measureType.isAssignableFrom(Long.class)) {
                         bindingsWithDefault.put(i, 0L);
                     } else bindingsWithDefault.put(i, 0D);
                 }
-                if (Java8Helpers.listOf(PARTIAL_NULL, ALWAYS_NULL).contains(validationMode)) {
+                if (List.of(PARTIAL_NULL, ALWAYS_NULL).contains(validationMode)) {
                     bindingsWithDefault.put(i, null);
                 }
             }
@@ -962,7 +961,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     private List<Dataset<Row>> toAliasedDatasets(Map<String, DatasetExpression> datasets) {
         List<Dataset<Row>> sparkDatasets = new ArrayList<>();
         for (Map.Entry<String, DatasetExpression> dataset : datasets.entrySet()) {
-            Dataset<Row> sparkDataset = asSparkDataset(dataset.getValue())
+            var sparkDataset = asSparkDataset(dataset.getValue())
                     .getSparkDataset()
                     .as(dataset.getKey());
             sparkDatasets.add(sparkDataset);
@@ -979,8 +978,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
      * @return The dataset resulting from the join operation.
      */
     public Dataset<Row> executeJoin(List<Dataset<Row>> sparkDatasets, List<String> identifiers, String type) {
-        Iterator<Dataset<Row>> iterator = sparkDatasets.iterator();
-        Dataset<Row> result = iterator.next();
+        var iterator = sparkDatasets.iterator();
+        var result = iterator.next();
         while (iterator.hasNext()) {
             if (type.equals("cross")) result = result.crossJoin(iterator.next());
             else result = result.join(
@@ -1007,7 +1006,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         @Override
         public ProcessingEngine getProcessingEngine(ScriptEngine engine) {
             // Try to find the session in the script engine.
-            Object session = engine.get(SPARK_SESSION);
+            var session = engine.get(SPARK_SESSION);
             if (session != null) {
                 if (session instanceof SparkSession) {
                     return new SparkProcessingEngine((SparkSession) session);
@@ -1015,7 +1014,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
                     throw new IllegalArgumentException(SPARK_SESSION + " was not a spark session");
                 }
             } else {
-                SparkSession activeSession = SparkSession.active();
+                var activeSession = SparkSession.active();
                 if (activeSession != null) {
                     return new SparkProcessingEngine(activeSession);
                 } else {

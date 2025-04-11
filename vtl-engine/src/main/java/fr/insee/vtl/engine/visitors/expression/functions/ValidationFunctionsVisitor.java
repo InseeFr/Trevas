@@ -4,7 +4,6 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -96,7 +95,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         });
 
         // Temp create vd column
-        ds = processingEngine.executeCalc(ds, colsToAdd, Java8Helpers.mapOf(), Java8Helpers.mapOf());
+        ds = processingEngine.executeCalc(ds, colsToAdd, Map.of(), Map.of());
 
 
         // check if dpr variables are in ds structure
@@ -123,7 +122,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 }
         );
 
-        Positioned pos = fromContext(ctx);
+        var pos = fromContext(ctx);
 
         return processingEngine.executeValidateDPruleset(dpr, ds, output, pos, valuedomaines);
     }
@@ -136,7 +135,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
      */
     @Override
     public ResolvableExpression visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
-        Positioned pos = fromContext(ctx);
+        var pos = fromContext(ctx);
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
         List<Structured.Component> exprMeasures = dsExpression.getDataStructure().values().stream()
@@ -177,7 +176,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     // TODO: handle other IDs than componentID? build unique ID tuples to calculate
     @Override
     public ResolvableExpression visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
-        Positioned pos = fromContext(ctx);
+        var pos = fromContext(ctx);
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
         String datasetName = ctx.expr().getText();

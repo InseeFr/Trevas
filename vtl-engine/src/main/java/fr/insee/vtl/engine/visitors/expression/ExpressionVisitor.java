@@ -5,15 +5,30 @@ import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
-import fr.insee.vtl.engine.visitors.expression.functions.*;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.JoinFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -356,10 +371,10 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
-        DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.expr());
-        String dsName = ctx.expr().getText();
-        Structured.DataStructure structure = datasetExpression.getDataStructure();
-        List<Structured.Component> ids = structure.getIdentifiers();
+        var datasetExpression = (DatasetExpression) visit(ctx.expr());
+        var dsName = ctx.expr().getText();
+        var structure = datasetExpression.getDataStructure();
+        var ids = structure.getIdentifiers();
 
         Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
         for (Structured.Component measure : structure.getMeasures()) {
@@ -373,19 +388,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             // Filter out measure we don't need and rename the measure to the name of
             // the dataset.
-            DatasetExpression tempDs = processingEngine.executeProject(datasetExpression,
+            var tempDs = processingEngine.executeProject(datasetExpression,
                     colNames);
             tempDs = processingEngine.executeRename(tempDs,
-                    Java8Helpers.mapOf(measure.getName(), dsName));
+                    Map.of(measure.getName(), dsName));
 
             // Execute the calc.
             String targetColumnName = ctx.op.getText() + "_" + measure.getName();
             AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, tempDs,
                     targetColumnName);
-            DatasetExpression result = analyticsVisitor.visit(ctx);
+            var result = analyticsVisitor.visit(ctx);
 
             // Rename back to the original name.
-            result = processingEngine.executeRename(result, Java8Helpers.mapOf(targetColumnName, measure.getName()));
+            result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
 
             // Drop the ds1 column.
             result = processingEngine.executeProject(result,
@@ -399,10 +414,10 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public ResolvableExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
-        DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.expr());
-        String dsName = ctx.expr().getText();
-        Structured.DataStructure structure = datasetExpression.getDataStructure();
-        List<Structured.Component> ids = structure.getIdentifiers();
+        var datasetExpression = (DatasetExpression) visit(ctx.expr());
+        var dsName = ctx.expr().getText();
+        var structure = datasetExpression.getDataStructure();
+        var ids = structure.getIdentifiers();
 
         Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
         for (Structured.Component measure : structure.getMeasures()) {
@@ -416,19 +431,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             // Filter out measure we don't need and rename the measure to the name of
             // the dataset.
-            DatasetExpression tempDs = processingEngine.executeProject(datasetExpression,
+            var tempDs = processingEngine.executeProject(datasetExpression,
                     colNames);
             tempDs = processingEngine.executeRename(tempDs,
-                    Java8Helpers.mapOf(measure.getName(), dsName));
+                    Map.of(measure.getName(), dsName));
 
             // Execute the calc.
             String targetColumnName = ctx.op.getText() + "_" + measure.getName();
             AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, tempDs,
                     targetColumnName);
-            DatasetExpression result = analyticsVisitor.visit(ctx);
+            var result = analyticsVisitor.visit(ctx);
 
             // Rename back to the original name.
-            result = processingEngine.executeRename(result, Java8Helpers.mapOf(targetColumnName, measure.getName()));
+            result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
 
             // Drop the ds1 column.
             result = processingEngine.executeProject(result,
@@ -442,10 +457,10 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
     @Override
     public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
-        DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.expr());
-        String dsName = ctx.expr().getText();
-        Structured.DataStructure structure = datasetExpression.getDataStructure();
-        List<Structured.Component> ids = structure.getIdentifiers();
+        var datasetExpression = (DatasetExpression) visit(ctx.expr());
+        var dsName = ctx.expr().getText();
+        var structure = datasetExpression.getDataStructure();
+        var ids = structure.getIdentifiers();
 
         Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
         for (Structured.Component measure : structure.getMeasures()) {
@@ -459,19 +474,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
             // Filter out measure we don't need and rename the measure to the name of
             // the dataset.
-            DatasetExpression tempDs = processingEngine.executeProject(datasetExpression,
+            var tempDs = processingEngine.executeProject(datasetExpression,
                     colNames);
             tempDs = processingEngine.executeRename(tempDs,
-                    Java8Helpers.mapOf(measure.getName(), dsName));
+                    Map.of(measure.getName(), dsName));
 
             // Execute the calc.
             String targetColumnName = ctx.op.getText() + "_" + measure.getName();
             AnalyticsVisitor analyticsVisitor = new AnalyticsVisitor(processingEngine, tempDs,
                     targetColumnName);
-            DatasetExpression result = analyticsVisitor.visit(ctx);
+            var result = analyticsVisitor.visit(ctx);
 
             // Rename back to the original name.
-            result = processingEngine.executeRename(result, Java8Helpers.mapOf(targetColumnName, measure.getName()));
+            result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
 
             // Drop the ds1 column.
             result = processingEngine.executeProject(result,

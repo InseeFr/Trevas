@@ -3,7 +3,6 @@ package fr.insee.vtl.prov;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.utils.PropertiesLoader;
 import fr.insee.vtl.prov.utils.RDFUtils;
@@ -16,6 +15,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,22 +91,22 @@ public class RDFTest {
         engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
 
         InMemoryDataset ds1 = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("id1", "A", "var1", 0L, "var2", 100L),
-                        Java8Helpers.mapOf("id1", "B", "var1", 1L, "var2", 200L),
-                        Java8Helpers.mapOf("id1", "C", "var1", 2L, "var2", 300L)
+                List.of(
+                        Map.of("id1", "A", "var1", 0L, "var2", 100L),
+                        Map.of("id1", "B", "var1", 1L, "var2", 200L),
+                        Map.of("id1", "C", "var1", 2L, "var2", 300L)
                 ),
-                Java8Helpers.mapOf("id1", String.class, "var1", Long.class, "var2", Long.class),
-                Java8Helpers.mapOf("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
+                Map.of("id1", String.class, "var1", Long.class, "var2", Long.class),
+                Map.of("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
         );
         InMemoryDataset ds2 = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("id1", "A", "var1", 10L, "var2", 1L),
-                        Java8Helpers.mapOf("id1", "B", "var1", 11L, "var2", 2L),
-                        Java8Helpers.mapOf("id1", "D", "var1", 12L, "var2", 3L)
+                List.of(
+                        Map.of("id1", "A", "var1", 10L, "var2", 1L),
+                        Map.of("id1", "B", "var1", 11L, "var2", 2L),
+                        Map.of("id1", "D", "var1", 12L, "var2", 3L)
                 ),
-                Java8Helpers.mapOf("id1", String.class, "var1", Long.class, "var2", Long.class),
-                Java8Helpers.mapOf("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
+                Map.of("id1", String.class, "var1", Long.class, "var2", Long.class),
+                Map.of("id1", Dataset.Role.IDENTIFIER, "var1", Dataset.Role.MEASURE, "var2", Dataset.Role.MEASURE)
         );
 
         engine.put("ds1", ds1);

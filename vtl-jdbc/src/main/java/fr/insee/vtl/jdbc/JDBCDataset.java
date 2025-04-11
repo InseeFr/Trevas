@@ -73,7 +73,7 @@ public class JDBCDataset implements Dataset {
     public static DataStructure toDataStructure(ResultSetMetaData metaData) throws SQLException {
         List<Component> components = new ArrayList<>();
         for (int columnIdx = 1; columnIdx <= metaData.getColumnCount(); columnIdx++) {
-            String name = metaData.getColumnName(columnIdx);
+            var name = metaData.getColumnName(columnIdx);
             Class<?> type = toVtlType(metaData.getColumnType(columnIdx));
             // TODO: refine nullable strategy
             components.add(new Component(name, type, Role.MEASURE, true));
@@ -83,8 +83,8 @@ public class JDBCDataset implements Dataset {
 
     @Override
     public List<DataPoint> getDataPoints() {
-        try (ResultSet resultSet = this.resultSetSupplier.get()) {
-            List<DataPoint> result = new ArrayList<>();
+        try (var resultSet = this.resultSetSupplier.get()) {
+            var result = new ArrayList<DataPoint>();
             while (resultSet.next()) {
                 result.add(toDataPoint(resultSet));
             }
@@ -125,7 +125,7 @@ public class JDBCDataset implements Dataset {
 
     @Override
     public DataStructure getDataStructure() {
-        try (ResultSet resultSet = this.resultSetSupplier.get()) {
+        try (var resultSet = this.resultSetSupplier.get()) {
             return getDataStructure(resultSet);
         } catch (SQLException se) {
             throw new RuntimeException(se);

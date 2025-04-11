@@ -1,7 +1,6 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.apache.spark.sql.SparkSession;
@@ -21,19 +20,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AnalyticSumTest {
 
     private final InMemoryDataset anCountDS1 = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
-                    Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
+            List.of(
+                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9D),
+                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                    Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8D),
+                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3D),
+                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4D),
+                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2D),
+                    Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7D)
 
             ),
-            Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-            Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+            Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+            Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
     );
 
     private static SparkSession spark;
@@ -102,14 +101,14 @@ public class AnalyticSumTest {
         List<Map<String, Object>> actual = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
 
         assertThat(actual).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "sum_Me_1", 3L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "sum_Me_1", 7L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "sum_Me_1", 14L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "sum_Me_1", 20L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "sum_Me_1", 9L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "sum_Me_1", 14L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "sum_Me_1", 24L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "sum_Me_1", 29L)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "sum_Me_1", 3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "sum_Me_1", 7L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "sum_Me_1", 14L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 8.0D, "sum_Me_1", 20L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "sum_Me_1", 9L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 4.0D, "sum_Me_1", 14L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 10L, "Me_2", 2.0D, "sum_Me_1", 24L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 7.0D, "sum_Me_1", 29L)
         );
 
     }
@@ -156,14 +155,14 @@ public class AnalyticSumTest {
             +----+----+----+----+----+--------+--------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 16.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 29L, "Me_2", 16.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 29L, "Me_2", 16.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 16.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 29L, "Me_2", 16.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 29L, "Me_2", 16.0D)
         );
 
     }
@@ -211,14 +210,14 @@ public class AnalyticSumTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 49L, "Me_2", 39.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 49L, "Me_2", 39.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 49L, "Me_2", 39.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 49L, "Me_2", 39.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 49L, "Me_2", 39.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 49L, "Me_2", 39.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D)
         );
 
     }
@@ -266,14 +265,14 @@ public class AnalyticSumTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7L, "Me_2", 10.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 14L, "Me_2", 15.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 26.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 34L, "Me_2", 30.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 44L, "Me_2", 32.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7L, "Me_2", 10.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 14L, "Me_2", 15.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 26.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 34L, "Me_2", 30.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 44L, "Me_2", 32.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D)
         );
 
     }
@@ -321,14 +320,14 @@ public class AnalyticSumTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 14L, "Me_2", 15.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 29L, "Me_2", 26.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 31L, "Me_2", 29.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 37L, "Me_2", 22.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 35L, "Me_2", 24.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 20L, "Me_2", 13.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 14L, "Me_2", 15.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 29L, "Me_2", 26.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 31L, "Me_2", 29.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 37L, "Me_2", 22.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 35L, "Me_2", 24.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 20L, "Me_2", 13.0D)
         );
 
     }
@@ -376,14 +375,14 @@ public class AnalyticSumTest {
 
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D)
         );
 
     }

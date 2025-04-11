@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -10,19 +9,20 @@ import org.junit.jupiter.api.Test;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ValidationFunctionsTest {
 
     private final Dataset dataset = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.listOf("2011", "I", "CREDIT", 10L),
-                    Java8Helpers.listOf("2011", "I", "DEBIT", -2L),
-                    Java8Helpers.listOf("2012", "I", "CREDIT", 10L),
-                    Java8Helpers.listOf("2012", "I", "DEBIT", 2L)
+            List.of(
+                    List.of("2011", "I", "CREDIT", 10L),
+                    List.of("2011", "I", "DEBIT", -2L),
+                    List.of("2012", "I", "CREDIT", 10L),
+                    List.of("2012", "I", "DEBIT", 2L)
             ),
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -31,13 +31,13 @@ public class ValidationFunctionsTest {
     );
 
     private final Dataset dsExprOk = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.listOf("2011", "I", "CREDIT", true),
-                    Java8Helpers.listOf("2011", "I", "DEBIT", false),
-                    Java8Helpers.listOf("2012", "I", "CREDIT", false),
-                    Java8Helpers.listOf("2012", "I", "DEBIT", true)
+            List.of(
+                    List.of("2011", "I", "CREDIT", true),
+                    List.of("2011", "I", "DEBIT", false),
+                    List.of("2012", "I", "CREDIT", false),
+                    List.of("2012", "I", "DEBIT", true)
             ),
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -45,13 +45,13 @@ public class ValidationFunctionsTest {
             )
     );
     private final Dataset dsExprKo1 = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.listOf("2011", "I", "CREDIT", true, true),
-                    Java8Helpers.listOf("2011", "I", "DEBIT", false, true),
-                    Java8Helpers.listOf("2012", "I", "CREDIT", false, true),
-                    Java8Helpers.listOf("2012", "I", "DEBIT", true, true)
+            List.of(
+                    List.of("2011", "I", "CREDIT", true, true),
+                    List.of("2011", "I", "DEBIT", false, true),
+                    List.of("2012", "I", "CREDIT", false, true),
+                    List.of("2012", "I", "DEBIT", true, true)
             ),
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -60,13 +60,13 @@ public class ValidationFunctionsTest {
             )
     );
     private final Dataset dsExprKo2 = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.listOf("2011", "I", "CREDIT", 1L),
-                    Java8Helpers.listOf("2011", "I", "DEBIT", 1L),
-                    Java8Helpers.listOf("2012", "I", "CREDIT", 1L),
-                    Java8Helpers.listOf("2012", "I", "DEBIT", 1L)
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L),
+                    List.of("2011", "I", "DEBIT", 1L),
+                    List.of("2012", "I", "CREDIT", 1L),
+                    List.of("2012", "I", "DEBIT", 1L)
             ),
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),
@@ -74,13 +74,13 @@ public class ValidationFunctionsTest {
             )
     );
     private final Dataset dsImbalanceKo = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.listOf("2011", "I", "CREDIT", 1L, 1L),
-                    Java8Helpers.listOf("2011", "I", "DEBIT", 2L, 1L),
-                    Java8Helpers.listOf("2012", "I", "CREDIT", 2L, 1L),
-                    Java8Helpers.listOf("2012", "I", "DEBIT", 3L, 1L)
+            List.of(
+                    List.of("2011", "I", "CREDIT", 1L, 1L),
+                    List.of("2011", "I", "DEBIT", 2L, 1L),
+                    List.of("2012", "I", "CREDIT", 2L, 1L),
+                    List.of("2012", "I", "DEBIT", 3L, 1L)
             ),
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("Id_3", String.class, Dataset.Role.IDENTIFIER),

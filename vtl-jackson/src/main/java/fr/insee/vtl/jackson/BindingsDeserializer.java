@@ -33,15 +33,15 @@ public class BindingsDeserializer extends StdDeserializer<Bindings> {
     @Override
     public Bindings deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
-        SimpleBindings bindings = new SimpleBindings();
-        JsonToken token = p.currentToken();
+        var bindings = new SimpleBindings();
+        var token = p.currentToken();
         if (!token.isStructStart()) {
             ctxt.handleUnexpectedToken(Bindings.class, p);
         }
 
         while (p.nextToken() == JsonToken.FIELD_NAME) {
-            String name = p.currentName();
-            JsonToken value = p.nextValue();
+            var name = p.currentName();
+            var value = p.nextValue();
             if (value.isStructStart()) {
                 // Dataset
                 bindings.put(name, ctxt.readValue(p, Dataset.class));

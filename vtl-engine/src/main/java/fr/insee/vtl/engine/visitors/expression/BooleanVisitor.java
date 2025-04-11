@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -68,7 +67,7 @@ public class BooleanVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );

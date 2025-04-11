@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.Test;
 
@@ -61,14 +60,14 @@ public class AnalyticLagTest extends AnalyticTest {
             actual.add(replaceNullValues(map, DEFAULT_NULL_STR));
         }
         assertThat(actual).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "lag_Me_1", "null"),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "lag_Me_1", 3L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "lag_Me_1", 4L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "lag_Me_1", 7L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "lag_Me_1", "null"),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "lag_Me_1", 9L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "lag_Me_1", 5L),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "lag_Me_1", 10L)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", 3L, "Me_2", 1.0D, "lag_Me_1", "null"),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 4L, "Me_2", 9.0D, "lag_Me_1", 3L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 7L, "Me_2", 5.0D, "lag_Me_1", 4L),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 6L, "Me_2", 8.0D, "lag_Me_1", 7L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", 9L, "Me_2", 3.0D, "lag_Me_1", "null"),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 5L, "Me_2", 4.0D, "lag_Me_1", 9L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 10L, "Me_2", 2.0D, "lag_Me_1", 5L),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 2L, "Me_2", 7.0D, "lag_Me_1", 10L)
         );
 
     }
@@ -123,17 +122,17 @@ public class AnalyticLagTest extends AnalyticTest {
         +----+----+----+----+----+---------+---------+
         * */
         List<Map<String, Object>> actualWithNull = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap();
-        List<Map<String, Object>> actual = actualWithNull.stream().map(map -> replaceNullValues(map, DEFAULT_NULL_STR)).collect(Collectors.toList());
+        var actual = actualWithNull.stream().map(map -> replaceNullValues(map, DEFAULT_NULL_STR)).collect(Collectors.toList());
 
         assertThat(actual).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L, "Me_2", 1.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 4L, "Me_2", 9.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 7L, "Me_2", 5.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 9L, "Me_2", 3.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 5L, "Me_2", 4.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 10L, "Me_2", 2.0D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1994L, "Me_1", 3L, "Me_2", 1.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1995L, "Me_1", 4L, "Me_2", 9.0D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 1996L, "Me_1", 7L, "Me_2", 5.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1993L, "Me_1", "null", "Me_2", "null"),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1994L, "Me_1", 9L, "Me_2", 3.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1995L, "Me_1", 5L, "Me_2", 4.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 1996L, "Me_1", 10L, "Me_2", 2.0D)
         );
 
     }

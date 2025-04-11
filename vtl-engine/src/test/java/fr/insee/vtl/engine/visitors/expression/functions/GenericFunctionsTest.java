@@ -10,8 +10,10 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,15 +53,15 @@ public class GenericFunctionsTest {
         // but examples around line 1507 indicates that this is the case. The threeten-extra classes are used to
         // simplify parsing of duration and intervals.
         engine.eval("d1 := cast(\"P1Y2M10DT2H30M\", duration);");
-        Object d1 = engine.getContext().getAttribute("d1");
+        var d1 = engine.getContext().getAttribute("d1");
         assertThat(d1).isInstanceOf(PeriodDuration.class);
-        assertThat((PeriodDuration) d1).isEqualTo(PeriodDuration.parse("P1Y2M10DT2H30M"));
+        assertThat((PeriodDuration)d1).isEqualTo(PeriodDuration.parse("P1Y2M10DT2H30M"));
 
         // Normalization
         engine.eval("d2 := cast(\"P1Y15M2DT086401S\", duration);");
-        Object d2 = engine.getContext().getAttribute("d2");
+        var d2 = engine.getContext().getAttribute("d2");
         assertThat(d2).isInstanceOf(PeriodDuration.class);
-        assertThat((PeriodDuration) d2).isEqualTo(PeriodDuration.parse("P2Y3M3DT1S"));
+        assertThat((PeriodDuration)d2).isEqualTo(PeriodDuration.parse("P2Y3M3DT1S"));
 
     }
 
@@ -67,21 +69,21 @@ public class GenericFunctionsTest {
     public void testTimePeriod() throws ScriptException {
         // Start/End format
         engine.eval("p1 := cast(\"2015-03-03T09:30:45Z/2018-04-05T12:30:15Z\", time_period);");
-        Object p1 = engine.getContext().getAttribute("p1");
+        var p1 = engine.getContext().getAttribute("p1");
         assertThat(p1).isInstanceOf(Interval.class);
-        assertThat((Interval) p1).isEqualTo(Interval.parse("2015-03-03T09:30:45Z/2018-04-05T12:30:15Z"));
+        assertThat((Interval)p1).isEqualTo(Interval.parse("2015-03-03T09:30:45Z/2018-04-05T12:30:15Z"));
 
         // Start/Duration format
         engine.eval("p2 := cast(\"2007-03-01T13:00:00Z/P1Y2M10DT2H30M\", time_period);");
-        Object p2 = engine.getContext().getAttribute("p2");
+        var p2 = engine.getContext().getAttribute("p2");
         assertThat(p2).isInstanceOf(Interval.class);
-        assertThat((Interval) p2).isEqualTo(Interval.parse("2007-03-01T13:00:00Z/2008-05-11T15:30:00Z"));
+        assertThat((Interval)p2).isEqualTo(Interval.parse("2007-03-01T13:00:00Z/2008-05-11T15:30:00Z"));
 
         // Duration/End format
         engine.eval("p3 := cast(\"P1Y2M10DT2H30M/2008-05-11T15:30:00Z\", time_period);");
-        Object p3 = engine.getContext().getAttribute("p3");
+        var p3 = engine.getContext().getAttribute("p3");
         assertThat(p3).isInstanceOf(Interval.class);
-        assertThat((Interval) p3).isEqualTo(Interval.parse("2007-03-01T13:00:00Z/2008-05-11T15:30:00Z"));
+        assertThat((Interval)p3).isEqualTo(Interval.parse("2007-03-01T13:00:00Z/2008-05-11T15:30:00Z"));
     }
 
     @Test

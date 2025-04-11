@@ -2,7 +2,6 @@ package fr.insee.vtl.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +19,7 @@ public class DatasetSerializerTest extends AbstractMapperTest {
     @BeforeEach
     public void setUp() throws IOException {
         super.setUp();
-        original = Java8Helpers.readAllBytes(getClass().getResourceAsStream("/dataset-std.json"));
+        original = getClass().getResourceAsStream("/dataset-std.json").readAllBytes();
         dataset = mapper.readValue(original, Dataset.class);
     }
 

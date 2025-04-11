@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
@@ -16,6 +15,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -136,8 +136,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         try {
             Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
-            ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            var leftExpression = exprVisitor.visit(ctx.left);
+            List<ResolvableExpression> parameters = List.of(
                     leftExpression,
                     exprVisitor.visit(ctx.right));
             // If a parameter is the null token
@@ -177,7 +177,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     visit(ctx.lists()));
             Positioned pos = fromContext(ctx);
@@ -213,7 +213,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
 
-        Positioned pos = fromContext(ctx);
+        var pos = fromContext(ctx);
 
         if (types.size() > 1) {
             throw new VtlRuntimeException(
@@ -228,7 +228,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         // Since all expression are constant we don't need any context.
         List<Object> values = listExpressions
                 .stream()
-                .map(expression -> expression.resolve(Java8Helpers.mapOf()))
+                .map(expression -> expression.resolve(Map.of()))
                 .collect(Collectors.toList());
 
         return ListExpression.withContainedType(values, type, pos);

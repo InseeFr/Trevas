@@ -2,10 +2,8 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -158,7 +156,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     public ResolvableExpression visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
         try {
             VtlParser.ExprContext expr = ctx.expr();
-            List<ResolvableExpression> parameter = Java8Helpers.listOf(exprVisitor.visit(expr));
+            List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
             switch (ctx.op.getType()) {
                 case VtlParser.CEIL:
                     return genericFunctionsVisitor.invokeFunction("ceil", parameter, fromContext(ctx));
@@ -189,8 +187,8 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     @Override
     public ResolvableExpression visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            var pos = fromContext(ctx);
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.expr()),
                     ctx.optionalExpr() == null ?
                             ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L) :
@@ -217,7 +215,7 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     @Override
     public ResolvableExpression visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );

@@ -1,9 +1,13 @@
 package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.utils.Java8Helpers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -21,10 +25,10 @@ public class KeyExtractor implements Function<Structured.DataPoint, Map<String, 
 
     @Override
     public Map<String, Object> apply(Structured.DataPoint objects) {
-        List<Java8Helpers.MapEntry<String, Object>> entries = new ArrayList<>(objects.size());
+        List<Map.Entry<String, Object>> entries = new ArrayList<>(objects.size());
         for (String column : columns) {
-            entries.add(Java8Helpers.MapEntry.of(column, objects.get(column)));
+            entries.add(Map.entry(column, objects.get(column)));
         }
-        return Java8Helpers.mapOfEntries(entries.toArray(new Java8Helpers.MapEntry[0]));
+        return Map.ofEntries(entries.toArray(Map.Entry[]::new));
     }
 }

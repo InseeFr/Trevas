@@ -1,9 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -96,7 +94,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
             start = start - 1;
         }
 
-        Long end = start + len;
+        var end = start + len;
         if (end > value.length()) {
             return value.substring(Math.toIntExact(start));
         }
@@ -135,8 +133,8 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(exprVisitor.visit(ctx.expr()));
+            var pos = fromContext(ctx);
+            var parameters = List.of(exprVisitor.visit(ctx.expr()));
             switch (ctx.op.getType()) {
                 case VtlParser.TRIM:
                     return genericFunctionsVisitor.invokeFunction("trim", parameters, pos);
@@ -168,7 +166,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
+            var pos = fromContext(ctx);
             ResolvableExpression expr = ctx.expr() == null ?
                     ResolvableExpression.withType(String.class)
                             .withPosition(pos)
@@ -181,7 +179,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
                     ResolvableExpression.withType(Long.class)
                             .withPosition(pos)
                             .using(c -> null) : exprVisitor.visit(ctx.endParameter);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(expr, start, len);
+            List<ResolvableExpression> parameters = List.of(expr, start, len);
             return genericFunctionsVisitor.invokeFunction("substr", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
@@ -197,7 +195,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
+            var pos = fromContext(ctx);
             ResolvableExpression expr = ctx.expr(0) == null ?
                     ResolvableExpression.withType(String.class)
                             .withPosition(pos)
@@ -210,7 +208,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
                     ResolvableExpression.withType(String.class)
                             .withPosition(pos)
                             .using(c -> null) : exprVisitor.visit(ctx.optionalExpr());
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(expr, param, optionalExpr);
+            List<ResolvableExpression> parameters = List.of(expr, param, optionalExpr);
 
             return genericFunctionsVisitor.invokeFunction("replace", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
@@ -227,7 +225,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     @Override
     public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
+            var pos = fromContext(ctx);
             ResolvableExpression expr = ctx.expr(0) == null ?
                     ResolvableExpression.withType(String.class)
                             .withPosition(pos)
@@ -244,7 +242,7 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
                     ResolvableExpression.withType(Long.class)
                             .withPosition(pos)
                             .using(c -> null) : exprVisitor.visit(ctx.occurrenceParameter);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(expr, pattern, start, occurence);
+            List<ResolvableExpression> parameters = List.of(expr, pattern, start, occurence);
 
             return genericFunctionsVisitor.invokeFunction("instr", parameters, fromContext(ctx));
         } catch (VtlScriptException e) {
