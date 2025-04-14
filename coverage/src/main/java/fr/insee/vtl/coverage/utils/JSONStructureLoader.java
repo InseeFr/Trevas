@@ -84,7 +84,6 @@ public class JSONStructureLoader {
 
                 File csvFile = new File(parentDir, datasetName + ".csv");
 
-                System.out.println(csvFile);
                 if (!csvFile.exists()) {
                     throw new FileNotFoundException("Missing CSV file for dataset: " + datasetName);
                 }

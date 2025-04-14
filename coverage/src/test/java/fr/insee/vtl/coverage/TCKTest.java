@@ -1,25 +1,15 @@
 package fr.insee.vtl.coverage;
 
+import fr.insee.vtl.coverage.model.Folder;
 import org.junit.jupiter.api.Test;
 
-import java.util.stream.Stream;
-
+import java.util.List;
 
 
 class TCKTest {
     @Test
     void runTCK() {
-        TCK.runTCK();
+        List<Folder> folders = TCK.runTCK();
 //        assertThat(githubContent.getSubFolders().size()).isEqualTo(10);
-    }
-
-    @ParameterizedTest
-    @MethodSource("testArgs")
-    void checkExplicitMethodSource(String word) {
-
-    }
-
-    static Stream<String> testArgs() {
-        return Stream.of("a1", "b2");
     }
 }
