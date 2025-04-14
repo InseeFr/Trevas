@@ -75,13 +75,20 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <jupiter-version>5.13.0-M2</jupiter-version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.11.0-M2</version>
+            <version>${jupiter-version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${jupiter-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
