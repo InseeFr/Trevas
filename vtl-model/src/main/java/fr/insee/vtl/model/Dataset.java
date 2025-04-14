@@ -60,6 +60,10 @@ public interface Dataset extends Structured {
         /**
          * The component is an attribute in the data structure
          */
-        ATTRIBUTE
+        ATTRIBUTE,
+        /**
+         * The component is a viral attribute in the data structure
+         */
+        VIRALATTRIBUTE
     }
 }
