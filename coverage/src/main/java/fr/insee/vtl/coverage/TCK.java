@@ -70,7 +70,7 @@ public class TCK {
         dir.delete();
     }
 
-    private static List<Folder> loadInput(File path) throws Exception {
+    public static List<Folder> loadInput(File path) throws Exception {
         List<Folder> folders = new ArrayList<>();
         File[] files = path.listFiles();
         if (files != null) {
