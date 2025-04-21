@@ -2,7 +2,9 @@ package fr.insee.vtl.coverage;
 
 import fr.insee.vtl.coverage.model.Folder;
 import fr.insee.vtl.coverage.model.Test;
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
+import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.*;
 
 import javax.script.*;
@@ -20,7 +22,15 @@ class TCKTest {
 
     @BeforeEach
     public void setUp() {
-        engine = new ScriptEngineManager().getEngineByName("vtl");
+        SparkSession spark = SparkSession.builder()
+                .appName("test")
+                .master("local")
+                .getOrCreate();
+
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        engine = mgr.getEngineByExtension("vtl");
+        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+        engine.put("$vtl.spark.session", spark);
     }
 
     @TestFactory
