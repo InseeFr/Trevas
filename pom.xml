@@ -92,37 +92,10 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>openrewrite</id>
-            <url>https://repo.openrewrite.org/repository/maven-releases/</url>
-        </repository>
-    </repositories>
-
     <build>
         <!-- Restore the default maven final artifact name. -->
         <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
-
-            <plugin>
-                <groupId>org.openrewrite.maven</groupId>
-                <artifactId>rewrite-maven-plugin</artifactId>
-                <version>6.6.1</version>
-                <configuration>
-                    <activeRecipes>
-                        <recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>
-                    </activeRecipes>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.openrewrite.recipe</groupId>
-                        <artifactId>rewrite-migrate-java</artifactId>
-                        <version>3.4.0</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-
             <plugin>
                 <!-- Require minimum Java and Maven versions. -->
                 <groupId>org.apache.maven.plugins</groupId>
@@ -206,7 +179,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.0</version>
                     <configuration>
-                        <release>17</release>
+                        <release>${jdk.version}</release>
                         <testRelease>${jdk.version}</testRelease>
                     </configuration>
                 </plugin>

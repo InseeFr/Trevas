@@ -45,20 +45,20 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (left == null || right == null) {
             return null;
         }
-        if (left instanceof Number number && right instanceof Number number1) {
-            if (left instanceof Long long1 && right instanceof Long long2) {
-                return Long.compare(long1.longValue(), long2.longValue());
+        if (left instanceof Number leftNumber && right instanceof Number rightNumber) {
+            if (left instanceof Long leftLong && right instanceof Long rightLong) {
+                return Long.compare(leftLong, rightLong);
             }
-            return Double.compare(number.doubleValue(), number1.doubleValue());
+            return Double.compare(leftNumber.doubleValue(), rightNumber.doubleValue());
         }
-        if (left instanceof Boolean boolean1 && right instanceof Boolean boolean2) {
-            return Boolean.compare(boolean1, boolean2);
+        if (left instanceof Boolean leftBoolean && right instanceof Boolean rightBoolean) {
+            return Boolean.compare(leftBoolean, rightBoolean);
         }
-        if (left instanceof String string && right instanceof String string1) {
-            return string.compareTo(string1);
+        if (left instanceof String leftString && right instanceof String rightString) {
+            return leftString.compareTo(rightString);
         }
-        if (left instanceof Date date && right instanceof Date date1) {
-            return date.compareTo(date1);
+        if (left instanceof Date leftDate && right instanceof Date rightDate) {
+            return leftDate.compareTo(rightDate);
         } else {
             throw new Exception("Comparisons require Comparable params");
         }

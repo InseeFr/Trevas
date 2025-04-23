@@ -102,8 +102,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         if (tree instanceof ParserRuleContext parserRuleContext) {
             return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
         }
-        if (tree instanceof TerminalNode node) {
-            return fromToken(node.getSymbol());
+        if (tree instanceof TerminalNode treeNode) {
+            return fromToken(treeNode.getSymbol());
         }
         throw new IllegalStateException();
     }
@@ -182,8 +182,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private String getProcessingEngineName() {
         Object engineName = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
-        if (engineName instanceof String string) {
-            return string;
+        if (engineName instanceof String engineNameString) {
+            return engineNameString;
         } else {
             throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES + " must be a string");
         }
@@ -223,8 +223,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                     if (e != null && e.getCtx() != null) {
                         errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
                     } else {
-                        if (offendingSymbol instanceof Token token) {
-                            errors.add(new VtlSyntaxException(msg, fromToken(token)));
+                        if (offendingSymbol instanceof Token offendingSymbolToken) {
+                            errors.add(new VtlSyntaxException(msg, fromToken(offendingSymbolToken)));
                         } else {
                             var pos = new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
                             errors.add(new VtlScriptException(msg, () -> pos));
