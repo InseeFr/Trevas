@@ -206,8 +206,10 @@ public class VtlScriptEngineTest {
                 .hasMessage("undefined variable undefinedVariable");
 
         assertThatThrownBy(() -> {
-            engine.eval("var := true and (10 +\n" +
-                    "10);");
+            engine.eval("""
+                    var := true and (10 +
+                    10);\
+                    """);
         }).isInstanceOf(FunctionNotFoundException.class)
                 .is(atPosition(0, 1, 17, 2))
                 .hasMessage("function 'and(Boolean, Long)' not found");
@@ -219,8 +221,10 @@ public class VtlScriptEngineTest {
         engine.registerMethod("testTrim", Fun.toMethod(TextFunctions::testTrim));
         engine.registerMethod("testUpper", Fun.toMethod(TextFunctions::testUpper));
 
-        engine.eval("res := testUpper(\"  foo bar \");\n" +
-                "res := testTrim(res);");
+        engine.eval("""
+                res := testUpper("  foo bar ");
+                res := testTrim(res);\
+                """);
         assertThat(engine.get("res")).isEqualTo("FOO BAR");
     }
 

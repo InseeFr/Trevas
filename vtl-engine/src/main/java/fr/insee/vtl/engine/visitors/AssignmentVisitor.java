@@ -64,8 +64,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
     @Override
     public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
         var result = visitAssignment(ctx.expr());
-        if (result instanceof Dataset) {
-            result = new PersistentDataset((Dataset) result);
+        if (result instanceof Dataset dataset) {
+            result = new PersistentDataset(dataset);
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
             String variableIdentifier = ctx.varID().getText();
             bindings.put(variableIdentifier, result);

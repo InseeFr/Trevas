@@ -99,12 +99,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public static Positioned fromContext(ParseTree tree) {
-        if (tree instanceof ParserRuleContext) {
-            ParserRuleContext parserRuleContext = (ParserRuleContext) tree;
+        if (tree instanceof ParserRuleContext parserRuleContext) {
             return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
         }
-        if (tree instanceof TerminalNode) {
-            return fromToken(((TerminalNode) tree).getSymbol());
+        if (tree instanceof TerminalNode node) {
+            return fromToken(node.getSymbol());
         }
         throw new IllegalStateException();
     }
@@ -143,8 +142,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
     static boolean isAssignableTo(Class<?> clazz, Class<?> target, Type genericTarget, Map<TypeVariable<?>, Class<?>> typeArguments) {
         if (target.isAssignableFrom(clazz)) {
-            if (genericTarget instanceof TypeVariable) {
-                TypeVariable<?> typeVariable = (TypeVariable<?>) genericTarget;
+            if (genericTarget instanceof TypeVariable<?> typeVariable) {
                 Class<?> existingTypeArgument = typeArguments.get(typeVariable);
                 if (existingTypeArgument == null) {
                     typeArguments.put(typeVariable, clazz);
@@ -153,8 +151,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return true;
         }
 
-        if (genericTarget instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) genericTarget;
+        if (genericTarget instanceof ParameterizedType parameterizedType) {
             Type[] typeArgumentsArray = parameterizedType.getActualTypeArguments();
 
             if (typeArgumentsArray.length != 1) {
@@ -163,15 +160,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
             Type typeArgument = typeArgumentsArray[0];
 
-            if (typeArgument instanceof TypeVariable) {
-                TypeVariable<?> typeVariable = (TypeVariable<?>) typeArgument;
+            if (typeArgument instanceof TypeVariable<?> typeVariable) {
                 Class<?> existingTypeArgument = typeArguments.get(typeVariable);
                 if (existingTypeArgument == null) {
                     typeArguments.put(typeVariable, clazz);
                 } else return existingTypeArgument.equals(clazz);
                 return true;
-            } else if (typeArgument instanceof Class) {
-                Class<?> classArgument = (Class<?>) typeArgument;
+            } else if (typeArgument instanceof Class<?> classArgument) {
                 return classArgument.isAssignableFrom(clazz);
             }
         }
@@ -187,8 +182,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private String getProcessingEngineName() {
         Object engineName = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
-        if (engineName instanceof String) {
-            return (String) engineName;
+        if (engineName instanceof String string) {
+            return string;
         } else {
             throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES + " must be a string");
         }
@@ -228,8 +223,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                     if (e != null && e.getCtx() != null) {
                         errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
                     } else {
-                        if (offendingSymbol instanceof Token) {
-                            errors.add(new VtlSyntaxException(msg, fromToken((Token) offendingSymbol)));
+                        if (offendingSymbol instanceof Token token) {
+                            errors.add(new VtlSyntaxException(msg, fromToken(token)));
                         } else {
                             var pos = new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
                             errors.add(new VtlScriptException(msg, () -> pos));

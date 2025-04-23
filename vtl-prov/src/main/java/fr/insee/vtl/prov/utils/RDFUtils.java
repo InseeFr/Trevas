@@ -17,7 +17,7 @@ import org.apache.jena.vocabulary.XSD;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class RDFUtils {
@@ -152,7 +152,7 @@ public class RDFUtils {
     }
 
     public static void writeJsonLdToFile(Model model, String path) throws IOException {
-        model.write(Files.newOutputStream(Paths.get(path)), "JSON-LD");
+        model.write(Files.newOutputStream(Path.of(path)), "JSON-LD");
     }
 
     public static String serialize(Model model, String format) {

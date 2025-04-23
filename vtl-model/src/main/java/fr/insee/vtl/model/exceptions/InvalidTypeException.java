@@ -22,7 +22,7 @@ public class InvalidTypeException extends VtlScriptException {
      * @param position     The position of the error.
      */
     public InvalidTypeException(Class<?> expectedType, Class<?> receivedType, Positioned position) {
-        super(String.format("invalid type %s, expected %s",
+        super("invalid type %s, expected %s".formatted(
                 receivedType.getSimpleName(), expectedType.getSimpleName()
         ), position);
         this.expectedType = expectedType;
@@ -38,7 +38,7 @@ public class InvalidTypeException extends VtlScriptException {
      * @param position      The parsing context where the exception is thrown.
      */
     public InvalidTypeException(Set<Class<?>> expectedTypes, Class<?> receivedType, Positioned position) {
-        super(String.format("invalid type %s to be %s",
+        super("invalid type %s to be %s".formatted(
                 receivedType.getSimpleName(),
                 expectedTypes
                         .stream()

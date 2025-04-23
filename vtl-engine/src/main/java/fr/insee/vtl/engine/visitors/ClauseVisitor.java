@@ -166,7 +166,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             var fromNameString = getName(renameCtx.fromName);
             if (!renamed.add(toNameString)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("duplicate column: %s", toNameString), fromContext(renameCtx)
+                        "duplicate column: %s".formatted(toNameString), fromContext(renameCtx)
                 ));
             }
             fromTo.put(fromNameString, toNameString);

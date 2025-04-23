@@ -97,8 +97,8 @@ public class SparkSQLTest {
         var ds2 = (Dataset) bindings.get("ds2");
         List<List<Object>> roundedDs2 = ds2.getDataAsList().stream().map(line ->
                 line.stream().map(element -> {
-                    if (element instanceof Double) {
-                        BigDecimal bd = new BigDecimal(Double.toString((Double) element));
+                    if (element instanceof Double double1) {
+                        BigDecimal bd = new BigDecimal(Double.toString(double1));
                         bd = bd.setScale(10, RoundingMode.HALF_UP);
                         return bd.doubleValue();
                     }

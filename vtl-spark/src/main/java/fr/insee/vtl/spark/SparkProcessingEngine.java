@@ -163,12 +163,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
 
     private SparkDataset asSparkDataset(DatasetExpression expression) {
-        if (expression instanceof SparkDatasetExpression) {
-            return ((SparkDatasetExpression) expression).resolve(Map.of());
+        if (expression instanceof SparkDatasetExpression datasetExpression) {
+            return datasetExpression.resolve(Map.of());
         } else {
             var dataset = expression.resolve(Map.of());
-            if (dataset instanceof SparkDataset) {
-                return (SparkDataset) dataset;
+            if (dataset instanceof SparkDataset sparkDataset) {
+                return sparkDataset;
             } else {
                 return new SparkDataset(dataset, getRoleMap(dataset), spark);
             }
@@ -1008,8 +1008,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
             // Try to find the session in the script engine.
             var session = engine.get(SPARK_SESSION);
             if (session != null) {
-                if (session instanceof SparkSession) {
-                    return new SparkProcessingEngine((SparkSession) session);
+                if (session instanceof SparkSession sparkSession) {
+                    return new SparkProcessingEngine(sparkSession);
                 } else {
                     throw new IllegalArgumentException(SPARK_SESSION + " was not a spark session");
                 }

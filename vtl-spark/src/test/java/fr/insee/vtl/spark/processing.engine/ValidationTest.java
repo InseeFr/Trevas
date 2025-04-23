@@ -122,19 +122,21 @@ public class ValidationTest {
                     new Structured.Component("imbalance_1", Long.class, Dataset.Role.MEASURE)
             )
     );
-    private final String hierarchicalRulesetDef = "define hierarchical ruleset HR_1 (variable rule Me_1) is \n" +
-            "R010 : A = J + K + L errorlevel 5;\n" +
-            "R020 : B = M + N + O errorlevel 5;\n" +
-            "R030 : C = P + Q errorcode \"XX\" errorlevel 5;\n" +
-            "R040 : D = R + S errorlevel 1;\n" +
-            "R050 : E = T + U + V errorlevel 0;\n" +
-            "R060 : F = Y + W + Z errorlevel 7;\n" +
-            "R070 : G = B + C;\n" +
-            "R080 : H = D + E errorlevel 0;\n" +
-            "R090 : I = D + G errorcode \"YY\" errorlevel 0;\n" +
-            "R100 : M >= N errorlevel 5;\n" +
-            "R110 : M <= G errorlevel 5\n" +
-            "end hierarchical ruleset; \n";
+    private final String hierarchicalRulesetDef = """
+            define hierarchical ruleset HR_1 (variable rule Me_1) is\s
+            R010 : A = J + K + L errorlevel 5;
+            R020 : B = M + N + O errorlevel 5;
+            R030 : C = P + Q errorcode "XX" errorlevel 5;
+            R040 : D = R + S errorlevel 1;
+            R050 : E = T + U + V errorlevel 0;
+            R060 : F = Y + W + Z errorlevel 7;
+            R070 : G = B + C;
+            R080 : H = D + E errorlevel 0;
+            R090 : I = D + G errorcode "YY" errorlevel 0;
+            R100 : M >= N errorlevel 5;
+            R110 : M <= G errorlevel 5
+            end hierarchical ruleset;\s
+            """;
     private final Dataset DS_1_HR = new InMemoryDataset(
             List.of(
                     List.of("2010", "A", 5L),
@@ -871,20 +873,22 @@ public class ValidationTest {
         engine.put("$vtl.engine.processing_engine_names", "spark");
         engine.put("$vtl.spark.session", spark);
 
-        engine.eval("// Ensure ds1 metadata definition is good\n" +
-                "ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];" +
-                "ds2 := ds1[filter id = \"A\"];\n" +
-                "\n" +
-                "// Define hierarchical ruleset\n" +
-                "define hierarchical ruleset hr (variable rule Me) is\n" +
-                "    My_Rule : ABC = A + B + C errorcode \"ABC is not sum of A,B,C\" errorlevel 1;\n" +
-                "    DEF = D + E + F errorcode \"DEF is not sum of D,E,F\";\n" +
-                "    HIJ : HIJ = H + I - J errorcode \"HIJ is not H + I - J\" errorlevel 10\n" +
-                "end hierarchical ruleset;\n" +
-                "ds_all := check_hierarchy(ds1, hr rule id all);\n" +
-                "ds_all_empty := check_hierarchy(ds2, hr rule id all);\n" +
-                "ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);\n" +
-                "ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);");
+        engine.eval("""
+                // Ensure ds1 metadata definition is good
+                ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];\
+                ds2 := ds1[filter id = "A"];
+                
+                // Define hierarchical ruleset
+                define hierarchical ruleset hr (variable rule Me) is
+                    My_Rule : ABC = A + B + C errorcode "ABC is not sum of A,B,C" errorlevel 1;
+                    DEF = D + E + F errorcode "DEF is not sum of D,E,F";
+                    HIJ : HIJ = H + I - J errorcode "HIJ is not H + I - J" errorlevel 10
+                end hierarchical ruleset;
+                ds_all := check_hierarchy(ds1, hr rule id all);
+                ds_all_empty := check_hierarchy(ds2, hr rule id all);
+                ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);
+                ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);\
+                """);
 
         fr.insee.vtl.model.Dataset ds_all = (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all");
         assertThat(ds_all.getDataPoints()).hasSize(1);

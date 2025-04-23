@@ -43,7 +43,7 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
             var componentName = getName(component);
             if (!dataStructure.containsKey(componentName)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("unknown component %s", componentName),
+                        "unknown component %s".formatted(componentName),
                         fromContext(component)
                 ));
             }

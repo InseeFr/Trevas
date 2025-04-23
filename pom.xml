@@ -71,7 +71,7 @@
     <properties>
         <jdk.version>17</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jacoco.version>0.8.7</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -92,10 +92,37 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>openrewrite</id>
+            <url>https://repo.openrewrite.org/repository/maven-releases/</url>
+        </repository>
+    </repositories>
+
     <build>
         <!-- Restore the default maven final artifact name. -->
         <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
+
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <version>6.6.1</version>
+                <configuration>
+                    <activeRecipes>
+                        <recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>
+                    </activeRecipes>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-migrate-java</artifactId>
+                        <version>3.4.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+
             <plugin>
                 <!-- Require minimum Java and Maven versions. -->
                 <groupId>org.apache.maven.plugins</groupId>
@@ -177,12 +204,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                     <configuration>
-                        <release>${jdk.version}</release>
+                        <release>17</release>
                         <testRelease>${jdk.version}</testRelease>
-                        <target>${jdk.version}</target>
-                        <source>${jdk.version}</source>
                     </configuration>
                 </plugin>
             </plugins>

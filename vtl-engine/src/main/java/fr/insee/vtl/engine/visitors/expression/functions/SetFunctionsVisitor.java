@@ -55,8 +55,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 structure = rest.getDataStructure();
             } else if (!structure.equals(rest.getDataStructure())) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format(
-                                "dataset structure of %s is incompatible with %s",
+                        "dataset structure of %s is incompatible with %s".formatted(
                                 expr.getText(),
                                 ctx.expr().stream().map(RuleContext::getText)
                                         .collect(Collectors.joining(", "))

@@ -95,7 +95,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
     public ResolvableExpression invokeFunction(String funcName, List<ResolvableExpression> parameters, Positioned position) throws VtlScriptException {
         try {
-            List<DatasetExpression> noMonoDs = parameters.stream().filter(e -> e instanceof DatasetExpression && !(((DatasetExpression) e).isMonoMeasure()))
+            List<DatasetExpression> noMonoDs = parameters.stream().filter(e -> e instanceof DatasetExpression de && !(de.isMonoMeasure()))
                     .map(ds -> (DatasetExpression) ds)
                     .collect(Collectors.toList());
             if (noMonoDs.size() > 2) {
@@ -128,8 +128,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 Map<String, DatasetExpression> results = new HashMap<>();
                 for (Structured.Component measure : measures) {
                     List<ResolvableExpression> params = parameters.stream().map(p -> {
-                        if (p instanceof DatasetExpression) {
-                            DatasetExpression ds = (DatasetExpression) p;
+                        if (p instanceof DatasetExpression ds) {
                             List<String> idAndMeasure = Stream.concat(ds.getIdentifiers().stream(), Stream.of(measure))
                                     .map(Structured.Component::getName)
                                     .collect(Collectors.toList());
@@ -140,11 +139,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 }
                 finalRes = proc.executeInnerJoin(results);
             }
-            if (finalRes instanceof DatasetExpression) {
-                List<Structured.Component> measures = ((DatasetExpression) finalRes).getMeasures();
+            if (finalRes instanceof DatasetExpression expression) {
+                List<Structured.Component> measures = expression.getMeasures();
                 if (measures.size() == 1 && measures.get(0).getType().equals(Boolean.class)) {
                     // TODO: refine with constraints matrix
-                    return proc.executeRename((DatasetExpression) finalRes, Map.of(measures.get(0).getName(), "bool_var"));
+                    return proc.executeRename(expression, Map.of(measures.get(0).getName(), "bool_var"));
                 }
             }
             return finalRes;

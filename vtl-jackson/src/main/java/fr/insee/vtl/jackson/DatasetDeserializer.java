@@ -175,7 +175,7 @@ public class DatasetDeserializer extends StdDeserializer<Dataset> {
             } catch (IOException ioe) {
                 throw from(
                         p,
-                        String.format("failed to deserialize column %s", component.getName()),
+                        "failed to deserialize column %s".formatted(component.getName()),
                         ioe
                 );
             }

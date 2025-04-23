@@ -128,8 +128,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             Structured.DataStructure structure = ((DatasetExpression) ds).getDataStructure();
             String componentName = ctx.simpleComponentId().getText();
             if (!structure.containsKey(componentName)) {
-                throw new VtlScriptException(String.format(
-                        "column %s not found in %s", componentName, ctx.expr().getText()
+                throw new VtlScriptException("column %s not found in %s".formatted(componentName, ctx.expr().getText()
                 ), fromContext(ctx));
             }
 

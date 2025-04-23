@@ -104,8 +104,8 @@ public class CastExpression extends ResolvableExpression {
 
                 var value = expr.resolve(context);
                 Instant exprValue;
-                if (value instanceof LocalDate) {
-                    exprValue = ((LocalDate) value).atStartOfDay().toInstant(ZoneOffset.UTC);
+                if (value instanceof LocalDate date) {
+                    exprValue = date.atStartOfDay().toInstant(ZoneOffset.UTC);
                 } else {
                     exprValue = (Instant) value;
                 }
