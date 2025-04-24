@@ -89,7 +89,7 @@ Your PR should:
 ### 🌟 Becoming a Maintainer
 
 If you're interested in taking on a more active role and helping maintain the project, feel free to reach out to us!  
-You can request to become a **maintainer** by sending an email to **todo@mail.com**.  
+You can request to become a **maintainer** by sending an email to **contact@making-sense.info**.  
 We’d love to have you help guide the project forward!
 
 ### 📅 Roadmap & Progress Tracking
