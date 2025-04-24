@@ -6,7 +6,9 @@ import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.coverage.utils.JSONStructureLoader;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,26 +20,38 @@ import java.util.zip.ZipInputStream;
 public class TCK {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static List<Folder> runTCK(String zipPath) {
-        File extractedFolder = null;
+    public static List<Folder> runTCK(InputStream zipInputStream) {
+        File extractedFolder;
         try {
-            extractedFolder = init(new File(zipPath));
+            extractedFolder = init(zipInputStream);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error unzipping input stream", e);
         }
-        List<Folder> folders;
+
         try {
-            folders = loadInput(extractedFolder);
+            return loadInput(extractedFolder);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error loading input from extracted folder", e);
+        } finally {
+            deleteDirectory(extractedFolder);
         }
-        deleteDirectory(extractedFolder);
-        return folders;
     }
 
-    private static File init(File zipFile) throws IOException {
+    public static List<Folder> runTCK(File zipFile) {
+        try (InputStream in = Files.newInputStream(zipFile.toPath())) {
+            return runTCK(in);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading zip file: " + zipFile, e);
+        }
+    }
+
+    public static List<Folder> runTCK(String zipPath) {
+        return runTCK(new File(zipPath));
+    }
+
+    private static File init(InputStream zipInputStream) throws IOException {
         Path tempDir = Files.createTempDirectory("tck-unzip-");
-        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipFile.toPath()))) {
+        try (ZipInputStream zis = new ZipInputStream(zipInputStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 Path newPath = zipSlipProtect(entry, tempDir);

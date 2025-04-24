@@ -8,6 +8,7 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.*;
 
 import javax.script.*;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +36,11 @@ class TCKTest {
 
     @TestFactory
     Stream<DynamicNode> generateTests() {
-        String zipPath = "v2.1.zip";
-        boolean resourceExists = getClass().getClassLoader().getResource(zipPath) != null;
+        InputStream in = getClass().getClassLoader().getResourceAsStream("v2.1.zip");
         // Skip the test factory entirely if file is not present
-        Assumptions.assumeTrue(resourceExists, "Skipping TCK tests: resource file not found");
+        Assumptions.assumeTrue(in != null, "Skipping TCK tests: resource file not found");
 
-        List<Folder> tests = TCK.runTCK(zipPath);
+        List<Folder> tests = TCK.runTCK(in);
         Folder root = new Folder();
         root.setName("root");
         root.setFolders(tests);
