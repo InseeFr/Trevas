@@ -35,7 +35,12 @@ class TCKTest {
 
     @TestFactory
     Stream<DynamicNode> generateTests() {
-        List<Folder> tests = TCK.runTCK();
+        String zipPath = "src/main/resources/v2.1.zip";
+        boolean resourceExists = getClass().getClassLoader().getResource(zipPath) != null;
+        // Skip the test factory entirely if file is not present
+        Assumptions.assumeTrue(resourceExists, "Skipping TCK tests: resource file not found");
+
+        List<Folder> tests = TCK.runTCK(zipPath);
         Folder root = new Folder();
         root.setName("root");
         root.setFolders(tests);

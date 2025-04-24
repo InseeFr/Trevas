@@ -16,13 +16,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class TCK {
-    private static final String TCK_ZIP_PATH = "src/main/resources/v2.1.zip";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static List<Folder> runTCK() {
+    public static List<Folder> runTCK(String zipPath) {
         File extractedFolder = null;
         try {
-            extractedFolder = init(new File(TCK_ZIP_PATH));
+            extractedFolder = init(new File(zipPath));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
