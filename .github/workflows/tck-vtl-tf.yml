@@ -2,9 +2,9 @@ name: Run VTL TF TCK
 
 on:
   push:
-    branches: ['**']
+    branches: [ '**' ]
   pull_request:
-    branches: [master, develop]
+    branches: [ master, develop ]
 
 jobs:
   test:
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout main project
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Clone vtl spec repo (branch fix/tck-2.1)
         run: git clone --branch fix/tck-2.1 https://github.com/sdmx-twg/vtl.git
@@ -36,6 +38,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - uses: s4u/maven-settings-action@v3.0.0
+        with:
+          githubServer: false
+          servers: |
+            [{
+                "id": "Github",
+                "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
+                "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
+            }]
 
       - name: Cache Maven packages
         uses: actions/cache@v4
