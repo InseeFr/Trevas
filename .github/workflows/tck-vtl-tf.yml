@@ -60,17 +60,11 @@ jobs:
       - name: Build and run tests
         run: mvn clean test --batch-mode
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: surefire-reports
-          path: target/surefire-reports
 
       - name: Publish JUnit test results
         if: always()
         uses: dorny/test-reporter@v2
         with:
           name: JUnit Test Report
-          path: target/surefire-reports/*.xml
+          path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
