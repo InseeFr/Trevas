@@ -72,8 +72,8 @@ class TCKTest {
                             Object actualValue = engine.getContext().getAttribute(name);
                             assertThat(actualValue).isInstanceOf(Dataset.class);
                             Dataset dataset = (Dataset) actualValue;
-                            assertThat(dataset.getDataStructure()).isEqualTo(value.getDataStructure());
-                            assertThat(dataset.getDataAsList()).containsAnyElementsOf(value.getDataAsList());
+                            assertThat(dataset.getDataStructure().equals(value.getDataStructure())).isTrue();
+                            assertThat(dataset.getDataPoints().equals((value.getDataPoints()))).isTrue();
                         });
                     }
             ));
