@@ -66,5 +66,5 @@ jobs:
         uses: dorny/test-reporter@v2
         with:
           name: JUnit Test Report
-          path: coverage/target/surefire-reports/*.xml
+          path: coverage/target/surefire-reports/open-test-report.xml
           reporter: java-junit
