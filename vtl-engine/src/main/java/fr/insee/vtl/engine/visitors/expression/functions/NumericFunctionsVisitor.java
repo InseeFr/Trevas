@@ -157,22 +157,15 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         try {
             VtlParser.ExprContext expr = ctx.expr();
             List<ResolvableExpression> parameter = List.of(exprVisitor.visit(expr));
-            switch (ctx.op.getType()) {
-                case VtlParser.CEIL:
-                    return genericFunctionsVisitor.invokeFunction("ceil", parameter, fromContext(ctx));
-                case VtlParser.FLOOR:
-                    return genericFunctionsVisitor.invokeFunction("floor", parameter, fromContext(ctx));
-                case VtlParser.ABS:
-                    return genericFunctionsVisitor.invokeFunction("abs", parameter, fromContext(ctx));
-                case VtlParser.EXP:
-                    return genericFunctionsVisitor.invokeFunction("exp", parameter, fromContext(ctx));
-                case VtlParser.LN:
-                    return genericFunctionsVisitor.invokeFunction("ln", parameter, fromContext(ctx));
-                case VtlParser.SQRT:
-                    return genericFunctionsVisitor.invokeFunction("sqrt", parameter, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.CEIL -> genericFunctionsVisitor.invokeFunction("ceil", parameter, fromContext(ctx));
+                case VtlParser.FLOOR -> genericFunctionsVisitor.invokeFunction("floor", parameter, fromContext(ctx));
+                case VtlParser.ABS -> genericFunctionsVisitor.invokeFunction("abs", parameter, fromContext(ctx));
+                case VtlParser.EXP -> genericFunctionsVisitor.invokeFunction("exp", parameter, fromContext(ctx));
+                case VtlParser.LN -> genericFunctionsVisitor.invokeFunction("ln", parameter, fromContext(ctx));
+                case VtlParser.SQRT -> genericFunctionsVisitor.invokeFunction("sqrt", parameter, fromContext(ctx));
+                default -> throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
@@ -193,14 +186,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     ctx.optionalExpr() == null ?
                             ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L) :
                             exprVisitor.visit(ctx.optionalExpr()));
-            switch (ctx.op.getType()) {
-                case VtlParser.ROUND:
-                    return genericFunctionsVisitor.invokeFunction("round", parameters, fromContext(ctx));
-                case VtlParser.TRUNC:
-                    return genericFunctionsVisitor.invokeFunction("trunc", parameters, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.ROUND -> genericFunctionsVisitor.invokeFunction("round", parameters, fromContext(ctx));
+                case VtlParser.TRUNC -> genericFunctionsVisitor.invokeFunction("trunc", parameters, fromContext(ctx));
+                default -> throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
@@ -219,18 +209,13 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );
-            switch (ctx.op.getType()) {
-                case VtlParser.MOD:
-                    return genericFunctionsVisitor.invokeFunction("mod", parameters, fromContext(ctx));
-                case VtlParser.POWER:
-                    return genericFunctionsVisitor.invokeFunction("power", parameters, fromContext(ctx));
-                case VtlParser.RANDOM:
-                    return genericFunctionsVisitor.invokeFunction("random", parameters, fromContext(ctx));
-                case VtlParser.LOG:
-                    return genericFunctionsVisitor.invokeFunction("log", parameters, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.MOD -> genericFunctionsVisitor.invokeFunction("mod", parameters, fromContext(ctx));
+                case VtlParser.POWER -> genericFunctionsVisitor.invokeFunction("power", parameters, fromContext(ctx));
+                case VtlParser.RANDOM -> genericFunctionsVisitor.invokeFunction("random", parameters, fromContext(ctx));
+                case VtlParser.LOG -> genericFunctionsVisitor.invokeFunction("log", parameters, fromContext(ctx));
+                default -> throw new UnsupportedOperationException(UNKNOWN_OPERATOR + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

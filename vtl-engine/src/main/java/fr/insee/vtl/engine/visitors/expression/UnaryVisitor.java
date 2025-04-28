@@ -70,16 +70,12 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.right));
-            switch (ctx.op.getType()) {
-                case VtlParser.PLUS:
-                    return genericFunctionsVisitor.invokeFunction("plus", parameters, pos);
-                case VtlParser.MINUS:
-                    return genericFunctionsVisitor.invokeFunction("minus", parameters, pos);
-                case VtlParser.NOT:
-                    return genericFunctionsVisitor.invokeFunction("not", parameters, pos);
-                default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx);
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.PLUS -> genericFunctionsVisitor.invokeFunction("plus", parameters, pos);
+                case VtlParser.MINUS -> genericFunctionsVisitor.invokeFunction("minus", parameters, pos);
+                case VtlParser.NOT -> genericFunctionsVisitor.invokeFunction("not", parameters, pos);
+                default -> throw new UnsupportedOperationException("unknown operator " + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

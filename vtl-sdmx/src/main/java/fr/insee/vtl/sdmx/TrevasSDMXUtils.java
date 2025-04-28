@@ -57,26 +57,16 @@ public class TrevasSDMXUtils {
         if (textType == null) {
             textType = TEXT_TYPE.STRING;
         }
-        switch (textType) {
-            case INTEGER:
-            case LONG:
-            case BIG_INTEGER:
-                return Long.class;
-            case FLOAT:
-            case DOUBLE:
-            case DECIMAL:
-            case NUMERIC:
-                return Double.class;
-            case BOOLEAN:
-                return Boolean.class;
+        return switch (textType) {
+            case INTEGER, LONG, BIG_INTEGER -> Long.class;
+            case FLOAT, DOUBLE, DECIMAL, NUMERIC -> Double.class;
+            case BOOLEAN -> Boolean.class;
             // TODO: add the right Duration class (PeriodDuration)
             // case OBSERVATIONAL_TIME_PERIOD:
             // case REPORTING_TIME_PERIOD:
             //    return PeriodDuration.class;
-            case STRING:
-            default:
-                return String.class;
-        }
+            default -> String.class;
+        };
     }
 
     private static String convertValuedomain(ComponentBean sdmxComp) {
@@ -87,17 +77,12 @@ public class TrevasSDMXUtils {
     }
 
     private static Dataset.Role convertTypeToRole(ComponentBean.COMPONENT_TYPE type) {
-        switch (type) {
-            case MEASURE:
-                return Dataset.Role.MEASURE;
-            case ATTRIBUTE:
-            case METADATA_ATTRIBUE:
-                return Dataset.Role.ATTRIBUTE;
-            case DIMENSION:
-                return Dataset.Role.IDENTIFIER;
-            default:
-                throw new UnsupportedOperationException("unsupported role " + type);
-        }
+        return switch (type) {
+            case MEASURE -> Dataset.Role.MEASURE;
+            case ATTRIBUTE, METADATA_ATTRIBUE -> Dataset.Role.ATTRIBUTE;
+            case DIMENSION -> Dataset.Role.IDENTIFIER;
+            default -> throw new UnsupportedOperationException("unsupported role " + type);
+        };
     }
 
     public static Structured.DataStructure buildStructureFromSDMX3(SdmxBeans beans, String structureID) {

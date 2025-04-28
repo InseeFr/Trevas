@@ -147,22 +147,19 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         .withPosition(fromContext(ctx))
                         .using(c -> null);
             }
-            switch (type.getType()) {
-                case VtlParser.EQ:
-                    return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
-                case VtlParser.NEQ:
-                    return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
-                case VtlParser.LT:
-                    return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
-                case VtlParser.MT:
-                    return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
-                case VtlParser.LE:
-                    return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
-                case VtlParser.ME:
-                    return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException(unknownOperator + ctx);
-            }
+            return switch (type.getType()) {
+                case VtlParser.EQ -> genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
+                case VtlParser.NEQ ->
+                        genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
+                case VtlParser.LT -> genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
+                case VtlParser.MT ->
+                        genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
+                case VtlParser.LE ->
+                        genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
+                case VtlParser.ME ->
+                        genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
+                default -> throw new UnsupportedOperationException(unknownOperator + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
@@ -182,14 +179,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     visit(ctx.lists()));
             Positioned pos = fromContext(ctx);
 
-            switch (ctx.op.getType()) {
-                case VtlParser.IN:
-                    return genericFunctionsVisitor.invokeFunction("in", parameters, pos);
-                case VtlParser.NOT_IN:
-                    return genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
-                default:
-                    throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.IN -> genericFunctionsVisitor.invokeFunction("in", parameters, pos);
+                case VtlParser.NOT_IN -> genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
+                default -> throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

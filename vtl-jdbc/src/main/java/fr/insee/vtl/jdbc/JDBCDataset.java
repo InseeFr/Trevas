@@ -35,34 +35,14 @@ public class JDBCDataset implements Dataset {
      * @return The corresponding VTL data type as a class.
      */
     public static Class<?> toVtlType(Integer sqlType) {
-        switch (sqlType) {
-            case Types.BIGINT:
-            case Types.INTEGER:
-            case Types.SMALLINT:
-            case Types.TINYINT:
-                return Long.class;
-            case Types.DOUBLE:
-            case Types.REAL:
-            case Types.FLOAT:
-            case Types.NUMERIC:
-            case Types.DECIMAL:
-                return Double.class;
-            case Types.BOOLEAN:
-            case Types.BIT:
-                return Boolean.class;
-            case Types.CHAR:
-            case Types.CLOB:
-            case Types.LONGNVARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.NVARCHAR:
-            case Types.REF:
-            case Types.SQLXML:
-            case Types.STRUCT:
-            case Types.VARCHAR:
-                return String.class;
-            default:
-                throw new UnsupportedOperationException("unsupported type " + sqlType);
-        }
+        return switch (sqlType) {
+            case Types.BIGINT, Types.INTEGER, Types.SMALLINT, Types.TINYINT -> Long.class;
+            case Types.DOUBLE, Types.REAL, Types.FLOAT, Types.NUMERIC, Types.DECIMAL -> Double.class;
+            case Types.BOOLEAN, Types.BIT -> Boolean.class;
+            case Types.CHAR, Types.CLOB, Types.LONGNVARCHAR, Types.LONGVARCHAR, Types.NVARCHAR, Types.REF, Types.SQLXML,
+                 Types.STRUCT, Types.VARCHAR -> String.class;
+            default -> throw new UnsupportedOperationException("unsupported type " + sqlType);
+        };
     }
 
     /**

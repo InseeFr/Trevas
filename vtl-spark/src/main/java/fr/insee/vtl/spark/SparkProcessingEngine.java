@@ -381,49 +381,22 @@ public class SparkProcessingEngine implements ProcessingEngine {
         // step 2: call analytic func on window spec
         // 2.1 get all measurement column
 
-        Column column;
-        switch (function) {
-            case COUNT:
-                column = count(sourceColName).over(windowSpec);
-                break;
-            case SUM:
-                column = sum(sourceColName).over(windowSpec);
-                break;
-            case MIN:
-                column = min(sourceColName).over(windowSpec);
-                break;
-            case MAX:
-                column = max(sourceColName).over(windowSpec);
-                break;
-            case AVG:
-                column = avg(sourceColName).over(windowSpec);
-                break;
-            case MEDIAN:
-                column = percentile_approx(col(sourceColName), lit(0.5),
-                        lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec);
-                break;
-            case STDDEV_POP:
-                column = stddev_pop(sourceColName).over(windowSpec);
-                break;
-            case STDDEV_SAMP:
-                column = stddev_samp(sourceColName).over(windowSpec);
-                break;
-            case VAR_POP:
-                column = var_pop(sourceColName).over(windowSpec);
-                break;
-            case VAR_SAMP:
-                column = var_samp(sourceColName).over(windowSpec);
-                break;
-            case FIRST_VALUE:
-                column = first(sourceColName).over(windowSpec);
-                break;
-            case LAST_VALUE:
-                column = last(sourceColName).over(windowSpec);
-                break;
-            default:
-                throw UNKNOWN_ANALYTIC_FUNCTION;
-
-        }
+        Column column = switch (function) {
+            case COUNT -> count(sourceColName).over(windowSpec);
+            case SUM -> sum(sourceColName).over(windowSpec);
+            case MIN -> min(sourceColName).over(windowSpec);
+            case MAX -> max(sourceColName).over(windowSpec);
+            case AVG -> avg(sourceColName).over(windowSpec);
+            case MEDIAN -> percentile_approx(col(sourceColName), lit(0.5),
+                    lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec);
+            case STDDEV_POP -> stddev_pop(sourceColName).over(windowSpec);
+            case STDDEV_SAMP -> stddev_samp(sourceColName).over(windowSpec);
+            case VAR_POP -> var_pop(sourceColName).over(windowSpec);
+            case VAR_SAMP -> var_samp(sourceColName).over(windowSpec);
+            case FIRST_VALUE -> first(sourceColName).over(windowSpec);
+            case LAST_VALUE -> last(sourceColName).over(windowSpec);
+            default -> throw UNKNOWN_ANALYTIC_FUNCTION;
+        };
         var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result), dataset);
     }
@@ -443,17 +416,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
         WindowSpec windowSpec = buildWindowSpec(partitionBy, orderBy);
 
         // step 2: call analytic func on window spec
-        Column column;
-        switch (function) {
-            case LEAD:
-                column = lead(sourceColName, offset).over(windowSpec);
-                break;
-            case LAG:
-                column = lag(sourceColName, offset).over(windowSpec);
-                break;
-            default:
-                throw UNKNOWN_ANALYTIC_FUNCTION;
-        }
+        Column column = switch (function) {
+            case LEAD -> lead(sourceColName, offset).over(windowSpec);
+            case LAG -> lag(sourceColName, offset).over(windowSpec);
+            default -> throw UNKNOWN_ANALYTIC_FUNCTION;
+        };
         var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
         return new SparkDatasetExpression(new SparkDataset(result), dataset);
     }

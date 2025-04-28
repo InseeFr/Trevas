@@ -97,14 +97,12 @@ public class ArithmeticVisitor extends VtlBaseVisitor<ResolvableExpression> {
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );
-            switch (ctx.op.getType()) {
-                case VtlParser.MUL:
-                    return genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
-                case VtlParser.DIV:
-                    return genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx);
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.MUL ->
+                        genericFunctionsVisitor.invokeFunction("multiplication", parameters, fromContext(ctx));
+                case VtlParser.DIV -> genericFunctionsVisitor.invokeFunction("division", parameters, fromContext(ctx));
+                default -> throw new UnsupportedOperationException("unknown operator " + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

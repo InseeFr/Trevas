@@ -62,24 +62,16 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
      * @param basicScalarText Basic scalar text.
      */
     private static Class<?> getOutputClass(Integer basicScalarType, String basicScalarText) {
-        switch (basicScalarType) {
-            case VtlParser.STRING:
-                return String.class;
-            case VtlParser.INTEGER:
-                return Long.class;
-            case VtlParser.NUMBER:
-                return Double.class;
-            case VtlParser.BOOLEAN:
-                return Boolean.class;
-            case VtlParser.DATE:
-                return Instant.class;
-            case VtlParser.DURATION:
-                return PeriodDuration.class;
-            case VtlParser.TIME_PERIOD:
-                return Interval.class;
-            default:
-                throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
-        }
+        return switch (basicScalarType) {
+            case VtlParser.STRING -> String.class;
+            case VtlParser.INTEGER -> Long.class;
+            case VtlParser.NUMBER -> Double.class;
+            case VtlParser.BOOLEAN -> Boolean.class;
+            case VtlParser.DATE -> Instant.class;
+            case VtlParser.DURATION -> PeriodDuration.class;
+            case VtlParser.TIME_PERIOD -> Interval.class;
+            default -> throw new UnsupportedOperationException("basic scalar type " + basicScalarText + " unsupported");
+        };
     }
 
     public List<DatasetExpression> splitToMonoMeasure(DatasetExpression dataset) {

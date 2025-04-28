@@ -214,24 +214,17 @@ public class TemporalFunctions {
 
     private static Instant truncate_time(Instant op, ChronoUnit unit, ZoneId zone) {
         var zonedOp = op.atZone(zone);
-        switch (unit) {
-            case DAYS:
-                return zonedOp.truncatedTo(ChronoUnit.DAYS).toInstant();
-            case MONTHS:
-                return zonedOp.withDayOfMonth(1)
-                        .truncatedTo(ChronoUnit.DAYS).toInstant();
-            case YEARS:
-                return zonedOp.withDayOfYear(1)
-                        .truncatedTo(ChronoUnit.DAYS).toInstant();
-            case HOURS:
-                return zonedOp.truncatedTo(ChronoUnit.HOURS).toInstant();
-            case MINUTES:
-                return zonedOp.truncatedTo(ChronoUnit.MINUTES).toInstant();
-            case SECONDS:
-                return zonedOp.truncatedTo(ChronoUnit.SECONDS).toInstant();
-            default:
-                throw new IllegalArgumentException("Unsupported unit: " + unit);
-        }
+        return switch (unit) {
+            case DAYS -> zonedOp.truncatedTo(ChronoUnit.DAYS).toInstant();
+            case MONTHS -> zonedOp.withDayOfMonth(1)
+                    .truncatedTo(ChronoUnit.DAYS).toInstant();
+            case YEARS -> zonedOp.withDayOfYear(1)
+                    .truncatedTo(ChronoUnit.DAYS).toInstant();
+            case HOURS -> zonedOp.truncatedTo(ChronoUnit.HOURS).toInstant();
+            case MINUTES -> zonedOp.truncatedTo(ChronoUnit.MINUTES).toInstant();
+            case SECONDS -> zonedOp.truncatedTo(ChronoUnit.SECONDS).toInstant();
+            default -> throw new IllegalArgumentException("Unsupported unit: " + unit);
+        };
     }
 
     public static Instant truncate_time(Instant op, String unit, String zone) {
@@ -253,21 +246,14 @@ public class TemporalFunctions {
     }
 
     private static ChronoUnit toChronoUnit(String unit) {
-        switch (unit.toLowerCase()) {
-            case "day":
-                return ChronoUnit.DAYS;
-            case "month":
-                return ChronoUnit.MONTHS;
-            case "year":
-                return ChronoUnit.YEARS;
-            case "hour":
-                return ChronoUnit.HOURS;
-            case "minute":
-                return ChronoUnit.MINUTES;
-            case "second":
-                return ChronoUnit.SECONDS;
-            default:
-                throw new IllegalArgumentException("Unsupported unit: " + unit);
-        }
+        return switch (unit.toLowerCase()) {
+            case "day" -> ChronoUnit.DAYS;
+            case "month" -> ChronoUnit.MONTHS;
+            case "year" -> ChronoUnit.YEARS;
+            case "hour" -> ChronoUnit.HOURS;
+            case "minute" -> ChronoUnit.MINUTES;
+            case "second" -> ChronoUnit.SECONDS;
+            default -> throw new IllegalArgumentException("Unsupported unit: " + unit);
+        };
     }
 }

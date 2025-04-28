@@ -135,22 +135,15 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
         try {
             var pos = fromContext(ctx);
             var parameters = List.of(exprVisitor.visit(ctx.expr()));
-            switch (ctx.op.getType()) {
-                case VtlParser.TRIM:
-                    return genericFunctionsVisitor.invokeFunction("trim", parameters, pos);
-                case VtlParser.LTRIM:
-                    return genericFunctionsVisitor.invokeFunction("ltrim", parameters, pos);
-                case VtlParser.RTRIM:
-                    return genericFunctionsVisitor.invokeFunction("rtrim", parameters, pos);
-                case VtlParser.UCASE:
-                    return genericFunctionsVisitor.invokeFunction("ucase", parameters, pos);
-                case VtlParser.LCASE:
-                    return genericFunctionsVisitor.invokeFunction("lcase", parameters, pos);
-                case VtlParser.LEN:
-                    return genericFunctionsVisitor.invokeFunction("len", parameters, pos);
-                default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx.op.getText());
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.TRIM -> genericFunctionsVisitor.invokeFunction("trim", parameters, pos);
+                case VtlParser.LTRIM -> genericFunctionsVisitor.invokeFunction("ltrim", parameters, pos);
+                case VtlParser.RTRIM -> genericFunctionsVisitor.invokeFunction("rtrim", parameters, pos);
+                case VtlParser.UCASE -> genericFunctionsVisitor.invokeFunction("ucase", parameters, pos);
+                case VtlParser.LCASE -> genericFunctionsVisitor.invokeFunction("lcase", parameters, pos);
+                case VtlParser.LEN -> genericFunctionsVisitor.invokeFunction("len", parameters, pos);
+                default -> throw new UnsupportedOperationException("unknown operator " + ctx.op.getText());
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
