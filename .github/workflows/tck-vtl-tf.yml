@@ -60,11 +60,8 @@ jobs:
       - name: Build and run tests
         run: mvn clean test --batch-mode
 
-
-      - name: Publish JUnit test results
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
         if: always()
-        uses: dorny/test-reporter@v2
         with:
-          name: JUnit Test Report
-          path: coverage/target/surefire-reports/open-test-report.xml
-          reporter: java-junit
+          report_paths: 'coverage/target/surefire-reports/open-test-report.xml'
