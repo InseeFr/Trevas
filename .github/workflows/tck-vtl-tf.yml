@@ -65,5 +65,5 @@ jobs:
         if: always()
         with:
           name: JUnit Test Report
-          path: coverage/target/surefire-reports/open-test-report.xml
+          path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
