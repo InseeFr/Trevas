@@ -60,20 +60,26 @@ class TCKTest {
                     folder.getName(),
                     () -> {
                         Test test = folder.getTest();
+                        String script = test.getScript();
                         Map<String, Dataset> inputs = test.getInput();
+                        
                         Bindings bindings = new SimpleBindings();
                         bindings.putAll(inputs);
 
                         engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-                        engine.eval(test.getScript());
+                        engine.eval(script);
 
                         Map<String, Dataset> outputs = test.getOutputs();
-                        outputs.forEach((name, value) -> {
-                            Object actualValue = engine.getContext().getAttribute(name);
-                            assertThat(actualValue).isInstanceOf(Dataset.class);
-                            Dataset dataset = (Dataset) actualValue;
-                            assertThat(dataset.getDataStructure().equals(value.getDataStructure())).isTrue();
-                            assertThat(dataset.getDataPoints().equals((value.getDataPoints()))).isTrue();
+                        outputs.forEach((name, tckDataset) -> {
+                            Object trevasValue = engine.getContext().getAttribute(name);
+                            assertThat(trevasValue).isInstanceOf(Dataset.class);
+                            Dataset trevasDataset = (Dataset) trevasValue;
+                            assertThat(trevasDataset.getDataStructure())
+                                    .as(script)
+                                    .isEqualTo(tckDataset.getDataStructure());
+                            assertThat(trevasDataset.getDataAsMap())
+                                    .as(script)
+                                    .containsExactlyElementsOf(tckDataset.getDataAsMap());
                         });
                     }
             ));
