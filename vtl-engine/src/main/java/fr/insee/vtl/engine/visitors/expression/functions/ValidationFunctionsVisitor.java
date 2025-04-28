@@ -66,7 +66,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         dpr.getValuedomains().forEach(vd -> {
             List<String> vars = finalDs.getDataStructure().getByValuedomain(vd)
                     .stream().map(Structured.Component::getName)
-                    .collect(Collectors.toList());
+                    .toList();
             if (vars.isEmpty()) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Valuedomain " + vd +
@@ -139,7 +139,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         DatasetExpression dsExpression = (DatasetExpression) assertTypeExpression(expressionVisitor.visit(ctx.expr()),
                 Dataset.class, ctx.expr());
         List<Structured.Component> exprMeasures = dsExpression.getDataStructure().values().stream()
-                .filter(Structured.Component::isMeasure).collect(Collectors.toList());
+                .filter(Structured.Component::isMeasure).toList();
         if (exprMeasures.size() != 1) {
             throw new VtlRuntimeException(
                     new InvalidArgumentException("Check operand dataset contains several measures", pos)
@@ -156,7 +156,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
                 Dataset.class, ctx.imbalanceExpr());
         if (null != imbalanceExpression) {
             List<Structured.Component> imbalanceMeasures = imbalanceExpression.getDataStructure().values().stream()
-                    .filter(Structured.Component::isMeasure).collect(Collectors.toList());
+                    .filter(Structured.Component::isMeasure).toList();
             if (imbalanceMeasures.size() != 1) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("Check imbalance dataset contains several measures", pos)

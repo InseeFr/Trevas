@@ -89,7 +89,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         try {
             List<DatasetExpression> noMonoDs = parameters.stream().filter(e -> e instanceof DatasetExpression de && !(de.isMonoMeasure()))
                     .map(ds -> (DatasetExpression) ds)
-                    .collect(Collectors.toList());
+                    .toList();
             if (noMonoDs.size() > 2) {
                 throw new VtlRuntimeException(
                         new InvalidArgumentException("too many no mono-measure datasets (" + noMonoDs.size() + ")", position)

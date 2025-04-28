@@ -89,7 +89,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
             List<String> dsMeasures = datasetExpression.getDataStructure().values().stream()
                     .filter(Component::isMeasure)
                     .map(Component::getName)
-                    .collect(Collectors.toList());
+                    .toList();
             if (alias == null) {
                 dsMeasures.forEach(m -> {
                     if (measures.contains(m)) {
@@ -152,7 +152,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 .collect(Collectors.toSet());
         List<String> componentNamesWithAlias = dataset.getDataStructure().values().stream()
                 .map(Component::getName)
-                .filter(n -> n.contains("#")).collect(Collectors.toList());
+                .filter(n -> n.contains("#")).toList();
         Map<String, String> toFrom = new HashMap<>();
         componentNamesWithAlias.forEach(n -> {
             String extraction = n.substring(n.lastIndexOf("#") + 1);
@@ -243,7 +243,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
                 Component component = datasets.values().iterator().next()
                         .getDataStructure().values().stream()
                         .filter(c -> c.getName().equals(name))
-                        .collect(Collectors.toList()).get(0);
+                        .toList().get(0);
                 commonIdentifiers.add(component);
             }
         }
