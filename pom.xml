@@ -75,20 +75,22 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
-        <jupiter-version>5.13.0-M2</jupiter-version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${jupiter-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>${jupiter-version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-reporting</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -98,6 +100,18 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.12.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <!-- Restore the default maven final artifact name. -->
@@ -130,7 +144,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.5.2</version>
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <!-- Suppress UnresolvedMavenProperty. -->
@@ -138,6 +152,12 @@
                     <useSystemClassLoader>false</useSystemClassLoader>
                     <forkedProcessExitTimeoutInSeconds>180</forkedProcessExitTimeoutInSeconds>
                     <forkCount>1</forkCount>
+                    <properties>
+                        <configurationParameters>
+                            junit.platform.reporting.open.xml.enabled = true
+                            junit.platform.reporting.output.dir = target/surefire-reports
+                        </configurationParameters>
+                    </properties>
                 </configuration>
             </plugin>
             <plugin>
