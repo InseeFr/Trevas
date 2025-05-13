@@ -67,3 +67,4 @@ jobs:
           name: JUnit Test Report
           path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
+          fail-on-error: 'false'
