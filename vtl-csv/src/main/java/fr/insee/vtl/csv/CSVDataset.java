@@ -30,7 +30,7 @@ public class CSVDataset implements Dataset {
 
     public CSVDataset(DataStructure structure, Reader csv, CsvPreference csvPreference) throws IOException {
         this.structure = structure;
-        this.csvReader = new CsvMapReader(csv, CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
+        this.csvReader = new CsvMapReader(csv, csvPreference);
         var columns = this.csvReader.getHeader(true);
         if (!this.structure.keySet().containsAll(List.of(columns))) {
             throw new RuntimeException("missing columns in CSV");
