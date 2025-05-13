@@ -35,34 +35,14 @@ public class JDBCDataset implements Dataset {
      * @return The corresponding VTL data type as a class.
      */
     public static Class<?> toVtlType(Integer sqlType) {
-        switch (sqlType) {
-            case Types.BIGINT:
-            case Types.INTEGER:
-            case Types.SMALLINT:
-            case Types.TINYINT:
-                return Long.class;
-            case Types.DOUBLE:
-            case Types.REAL:
-            case Types.FLOAT:
-            case Types.NUMERIC:
-            case Types.DECIMAL:
-                return Double.class;
-            case Types.BOOLEAN:
-            case Types.BIT:
-                return Boolean.class;
-            case Types.CHAR:
-            case Types.CLOB:
-            case Types.LONGNVARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.NVARCHAR:
-            case Types.REF:
-            case Types.SQLXML:
-            case Types.STRUCT:
-            case Types.VARCHAR:
-                return String.class;
-            default:
-                throw new UnsupportedOperationException("unsupported type " + sqlType);
-        }
+        return switch (sqlType) {
+            case Types.BIGINT, Types.INTEGER, Types.SMALLINT, Types.TINYINT -> Long.class;
+            case Types.DOUBLE, Types.REAL, Types.FLOAT, Types.NUMERIC, Types.DECIMAL -> Double.class;
+            case Types.BOOLEAN, Types.BIT -> Boolean.class;
+            case Types.CHAR, Types.CLOB, Types.LONGNVARCHAR, Types.LONGVARCHAR, Types.NVARCHAR, Types.REF, Types.SQLXML,
+                 Types.STRUCT, Types.VARCHAR -> String.class;
+            default -> throw new UnsupportedOperationException("unsupported type " + sqlType);
+        };
     }
 
     /**
@@ -73,7 +53,7 @@ public class JDBCDataset implements Dataset {
     public static DataStructure toDataStructure(ResultSetMetaData metaData) throws SQLException {
         List<Component> components = new ArrayList<>();
         for (int columnIdx = 1; columnIdx <= metaData.getColumnCount(); columnIdx++) {
-            String name = metaData.getColumnName(columnIdx);
+            var name = metaData.getColumnName(columnIdx);
             Class<?> type = toVtlType(metaData.getColumnType(columnIdx));
             // TODO: refine nullable strategy
             components.add(new Component(name, type, Role.MEASURE, true));
@@ -83,8 +63,8 @@ public class JDBCDataset implements Dataset {
 
     @Override
     public List<DataPoint> getDataPoints() {
-        try (ResultSet resultSet = this.resultSetSupplier.get()) {
-            List<DataPoint> result = new ArrayList<>();
+        try (var resultSet = this.resultSetSupplier.get()) {
+            var result = new ArrayList<DataPoint>();
             while (resultSet.next()) {
                 result.add(toDataPoint(resultSet));
             }
@@ -125,7 +105,7 @@ public class JDBCDataset implements Dataset {
 
     @Override
     public DataStructure getDataStructure() {
-        try (ResultSet resultSet = this.resultSetSupplier.get()) {
+        try (var resultSet = this.resultSetSupplier.get()) {
             return getDataStructure(resultSet);
         } catch (SQLException se) {
             throw new RuntimeException(se);

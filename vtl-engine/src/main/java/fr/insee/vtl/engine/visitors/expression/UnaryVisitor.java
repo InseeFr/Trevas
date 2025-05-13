@@ -1,9 +1,7 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -70,18 +68,14 @@ public class UnaryVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
         try {
-            Positioned pos = fromContext(ctx);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(exprVisitor.visit(ctx.right));
-            switch (ctx.op.getType()) {
-                case VtlParser.PLUS:
-                    return genericFunctionsVisitor.invokeFunction("plus", parameters, pos);
-                case VtlParser.MINUS:
-                    return genericFunctionsVisitor.invokeFunction("minus", parameters, pos);
-                case VtlParser.NOT:
-                    return genericFunctionsVisitor.invokeFunction("not", parameters, pos);
-                default:
-                    throw new UnsupportedOperationException("unknown operator " + ctx);
-            }
+            var pos = fromContext(ctx);
+            var parameters = List.of(exprVisitor.visit(ctx.right));
+            return switch (ctx.op.getType()) {
+                case VtlParser.PLUS -> genericFunctionsVisitor.invokeFunction("plus", parameters, pos);
+                case VtlParser.MINUS -> genericFunctionsVisitor.invokeFunction("minus", parameters, pos);
+                case VtlParser.NOT -> genericFunctionsVisitor.invokeFunction("not", parameters, pos);
+                default -> throw new UnsupportedOperationException("unknown operator " + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

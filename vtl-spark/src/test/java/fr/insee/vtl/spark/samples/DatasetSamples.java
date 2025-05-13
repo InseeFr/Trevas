@@ -1,16 +1,16 @@
 package fr.insee.vtl.spark.samples;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class DatasetSamples {
 
     public static InMemoryDataset ds1 = new InMemoryDataset(
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("long1", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("long2", Long.class, Dataset.Role.MEASURE),
@@ -28,7 +28,7 @@ public class DatasetSamples {
     );
 
     public static InMemoryDataset ds2 = new InMemoryDataset(
-            Java8Helpers.listOf(
+            List.of(
                     new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                     new Structured.Component("long1", Long.class, Dataset.Role.MEASURE),
                     new Structured.Component("double1", Double.class, Dataset.Role.MEASURE),

@@ -1,7 +1,6 @@
 package fr.insee.vtl.csv;
 
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDouble;
@@ -9,6 +8,7 @@ import org.supercsv.cellprocessor.ParseLong;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.prefs.CsvPreference;
+import org.threeten.extra.Interval;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -25,10 +25,14 @@ public class CSVDataset implements Dataset {
     private ArrayList<DataPoint> data;
 
     public CSVDataset(DataStructure structure, Reader csv) throws IOException {
+        this(structure, csv, CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
+    }
+
+    public CSVDataset(DataStructure structure, Reader csv, CsvPreference csvPreference) throws IOException {
         this.structure = structure;
-        this.csvReader = new CsvMapReader(csv, CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
-        String[] columns = this.csvReader.getHeader(true);
-        if (!this.structure.keySet().containsAll(Java8Helpers.listOf(columns))) {
+        this.csvReader = new CsvMapReader(csv, csvPreference);
+        var columns = this.csvReader.getHeader(true);
+        if (!this.structure.keySet().containsAll(List.of(columns))) {
             throw new RuntimeException("missing columns in CSV");
         }
     }
@@ -46,15 +50,18 @@ public class CSVDataset implements Dataset {
         if (String.class.equals(type)) {
             return new Optional();
         } else if (Long.class.equals(type)) {
-            return new ParseLong();
+            return new Optional(new ParseLong());
         } else if (Double.class.equals(type)) {
-            return new ParseDouble();
+            return new Optional(new ParseDouble());
         } else if (Boolean.class.equals(type)) {
-            return new ParseBool();
+            return new Optional(new ParseBool());
         } else if (Instant.class.equals(type)) {
             throw new RuntimeException("TODO");
         } else if (LocalDate.class.equals(type)) {
             throw new RuntimeException("TODO");
+        } else if (Interval.class.equals(type)) {
+            // TODO: refine
+            return new Optional();
         } else {
             throw new UnsupportedOperationException("unsupported type " + type);
         }
@@ -69,8 +76,8 @@ public class CSVDataset implements Dataset {
         if (this.data == null) {
             this.data = new ArrayList<>();
             try {
-                String[] header = getNameMapping();
-                CellProcessor[] processors = getProcessors();
+                var header = getNameMapping();
+                var processors = getProcessors();
                 Map<String, Object> datum;
                 while ((datum = this.csvReader.read(header, processors)) != null) {
                     this.data.add(new DataPoint(this.structure, datum));

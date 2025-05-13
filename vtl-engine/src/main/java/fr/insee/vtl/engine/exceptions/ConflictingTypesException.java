@@ -18,7 +18,7 @@ public class ConflictingTypesException extends VtlScriptException {
      * @param tree  The parsing context where the exception is thrown.
      */
     public ConflictingTypesException(Collection<Class<?>> types, Positioned position) {
-        super(String.format("conflicting types: %s", types.stream().map(Class::getSimpleName)
+        super("conflicting types: %s".formatted(types.stream().map(Class::getSimpleName)
                 .collect(Collectors.toList())), position);
     }
 }

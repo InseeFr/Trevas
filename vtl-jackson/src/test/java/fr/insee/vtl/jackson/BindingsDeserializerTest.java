@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.script.Bindings;
 import java.io.IOException;
-import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,9 +13,9 @@ public class BindingsDeserializerTest extends AbstractMapperTest {
     @Test
     public void testSupportsBindinds() throws IOException {
 
-        InputStream jsonStream = getClass().getResourceAsStream("/bindings.json");
+        var jsonStream = getClass().getResourceAsStream("/bindings.json");
 
-        Bindings bindings = mapper.readValue(jsonStream, Bindings.class);
+        var bindings = mapper.readValue(jsonStream, Bindings.class);
 
         assertThat(bindings)
                 .containsEntry("string", "string")

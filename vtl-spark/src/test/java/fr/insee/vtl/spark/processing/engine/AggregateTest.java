@@ -1,32 +1,36 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.threeten.extra.Interval;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AggregateTest {
 
     InMemoryDataset dataset = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.mapOf("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
-                    Java8Helpers.mapOf("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
-                    Java8Helpers.mapOf("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
-                    Java8Helpers.mapOf("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
+            List.of(
+                    Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                    Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                    Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D),
+                    Map.of("name", "pengfei", "country", "france", "age", 13L, "weight", 11D)
             ),
-            Java8Helpers.mapOf("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-            Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "country", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+            Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+            Map.of("name", Dataset.Role.IDENTIFIER, "country", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
     );
     private SparkSession spark;
     private ScriptEngine engine;
@@ -57,12 +61,12 @@ public class AggregateTest {
         engine.put("ds1", dataset);
         engine.eval("res := ds1[aggr test := sum(age) group all length(name)];");
 
-        Dataset actual = ((Dataset) engine.get("res"));
+        var actual = ((Dataset) engine.get("res"));
 
         assertThat(actual.getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("test", 23L, "time", 7L),
-                Java8Helpers.mapOf("test", 12L, "time", 6L),
-                Java8Helpers.mapOf("test", 11L, "time", 4L)
+                Map.of("test", 23L, "time", 7L),
+                Map.of("test", 12L, "time", 6L),
+                Map.of("test", 11L, "time", 4L)
         );
     }
 
@@ -83,26 +87,26 @@ public class AggregateTest {
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("country", "france", "sumAge", 72L, "avgWeight", 10.0D,
+                Map.of("country", "france", "sumAge", 72L, "avgWeight", 10.0D,
                         "countVal", 3L, "maxAge", 13L, "maxWeight", 11.0D,
                         "minAge", 11L, "minWeight", 9D, "medianAge", 12L,
                         "medianWeight", 10.0D),
-                Java8Helpers.mapOf("country", "norway", "sumAge", 20L, "avgWeight", 11.0,
+                Map.of("country", "norway", "sumAge", 20L, "avgWeight", 11.0,
                         "countVal", 1L, "maxAge", 10L, "maxWeight", 11.0D,
                         "minAge", 10L, "minWeight", 11D, "medianAge", 10L,
                         "medianWeight", 11D)
         );
 
 //        InMemoryDataset dataset2 = new InMemoryDataset(
-//                Java8Helpers.listOf(
-//                        Java8Helpers.mapOf("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
-//                        Java8Helpers.mapOf("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
-//                        Java8Helpers.mapOf("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
-//                        Java8Helpers.mapOf("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
-//                        Java8Helpers.mapOf("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
+//                List.of(
+//                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+//                        Map.of("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
+//                        Map.of("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
+//                        Map.of("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
+//                        Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
 //                ),
-//                Java8Helpers.mapOf("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-//                Java8Helpers.mapOf("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+//                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+//                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
 //        );
 //
 //        context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);

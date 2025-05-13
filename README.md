@@ -28,7 +28,7 @@ If you want to contribute, see this [guide](docs/CONTRIBUTING.md).
 
 ## Requirements
 
-Open JDK 8+ is required.
+Open JDK 17 + is required.
 
 ## References
 
@@ -48,4 +48,4 @@ Trevas is part of the [sdmx.io](https://www.sdmx.io/) ecosystem.
     <img  src="https://awesome.re/mentioned-badge.svg" />
 </p>
 
-Trevas is referenced by [_Awesome official statistics software_](https://github.com/SNStatComp/awesome-official-statistics-software)
+Trevas is referenced by [_Awesome official statistics software_](https://github.com/SNStatComp/awesome-official-statistics-software).

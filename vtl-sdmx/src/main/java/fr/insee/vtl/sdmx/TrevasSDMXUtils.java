@@ -15,6 +15,7 @@ import io.sdmx.utils.core.io.InMemoryReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
@@ -56,26 +57,16 @@ public class TrevasSDMXUtils {
         if (textType == null) {
             textType = TEXT_TYPE.STRING;
         }
-        switch (textType) {
-            case INTEGER:
-            case LONG:
-            case BIG_INTEGER:
-                return Long.class;
-            case FLOAT:
-            case DOUBLE:
-            case DECIMAL:
-            case NUMERIC:
-                return Double.class;
-            case BOOLEAN:
-                return Boolean.class;
+        return switch (textType) {
+            case INTEGER, LONG, BIG_INTEGER -> Long.class;
+            case FLOAT, DOUBLE, DECIMAL, NUMERIC -> Double.class;
+            case BOOLEAN -> Boolean.class;
             // TODO: add the right Duration class (PeriodDuration)
             // case OBSERVATIONAL_TIME_PERIOD:
             // case REPORTING_TIME_PERIOD:
             //    return PeriodDuration.class;
-            case STRING:
-            default:
-                return String.class;
-        }
+            default -> String.class;
+        };
     }
 
     private static String convertValuedomain(ComponentBean sdmxComp) {
@@ -86,21 +77,16 @@ public class TrevasSDMXUtils {
     }
 
     private static Dataset.Role convertTypeToRole(ComponentBean.COMPONENT_TYPE type) {
-        switch (type) {
-            case MEASURE:
-                return Dataset.Role.MEASURE;
-            case ATTRIBUTE:
-            case METADATA_ATTRIBUE:
-                return Dataset.Role.ATTRIBUTE;
-            case DIMENSION:
-                return Dataset.Role.IDENTIFIER;
-            default:
-                throw new UnsupportedOperationException("unsupported role " + type);
-        }
+        return switch (type) {
+            case MEASURE -> Dataset.Role.MEASURE;
+            case ATTRIBUTE, METADATA_ATTRIBUE -> Dataset.Role.ATTRIBUTE;
+            case DIMENSION -> Dataset.Role.IDENTIFIER;
+            default -> throw new UnsupportedOperationException("unsupported role " + type);
+        };
     }
 
     public static Structured.DataStructure buildStructureFromSDMX3(SdmxBeans beans, String structureID) {
-        Map<String, Structured.DataStructure> structures = parseDataStructure(beans);
+        var structures = parseDataStructure(beans);
         return structures.get(structureID);
     }
 
@@ -117,12 +103,14 @@ public class TrevasSDMXUtils {
     }
 
     public static Map<String, DataStructureBean> dataflows(SdmxBeans sdmxBeans) {
-        return sdmxBeans.getDataflows().stream().collect(Collectors.toMap(
-                INamedBean::getId,
-                dataflowBean -> sdmxBeans.getDataStructures(dataflowBean.getDataStructureRef())
-                        .stream()
-                        .collect(toSingleton())
-        ));
+        return sdmxBeans.getDataflows().stream()
+                .map(df -> sdmxBeans.getDataStructures(df.getDataStructureRef()))
+                .distinct()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(
+                        INamedBean::getId,
+                        dataStructureBean -> dataStructureBean
+                ));
     }
 
     public static Map<String, DataStructureBean> vtlMapping(SdmxBeans sdmxBeans) {

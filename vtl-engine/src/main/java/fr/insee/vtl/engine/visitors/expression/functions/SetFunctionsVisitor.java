@@ -3,7 +3,11 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import org.antlr.v4.runtime.RuleContext;
@@ -51,8 +55,7 @@ public class SetFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
                 structure = rest.getDataStructure();
             } else if (!structure.equals(rest.getDataStructure())) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format(
-                                "dataset structure of %s is incompatible with %s",
+                        "dataset structure of %s is incompatible with %s".formatted(
                                 expr.getText(),
                                 ctx.expr().stream().map(RuleContext::getText)
                                         .collect(Collectors.joining(", "))

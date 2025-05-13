@@ -1,7 +1,6 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -14,19 +13,21 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RenameTest {
 
     private final InMemoryDataset dataset = new InMemoryDataset(
-            Java8Helpers.listOf(
-                    Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                    Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                    Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+            List.of(
+                    Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                    Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                    Map.of("name", "Franck", "age", 12L, "weight", 9L)
             ),
-            Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-            Java8Helpers.mapOf("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Dataset.Role.IDENTIFIER, "age", Dataset.Role.MEASURE, "weight", Dataset.Role.MEASURE)
     );
     private SparkSession spark;
     private ScriptEngine engine;
@@ -62,11 +63,11 @@ public class RenameTest {
         engine.eval("ds := ds1[rename age to weight, weight to age, name to pseudo];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        Dataset ds = (Dataset) engine.getContext().getAttribute("ds");
+        var ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds.getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("pseudo", "Hadrien", "weight", 10L, "age", 11L),
-                Java8Helpers.mapOf("pseudo", "Nico", "weight", 11L, "age", 10L),
-                Java8Helpers.mapOf("pseudo", "Franck", "weight", 12L, "age", 9L)
+                Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
+                Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
+                Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
         );
         assertThat(ds.getDataStructure()).containsValues(
                 new Structured.Component("pseudo", String.class, Dataset.Role.IDENTIFIER),

@@ -1,7 +1,5 @@
 package fr.insee.vtl.engine;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
-
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import java.util.List;
@@ -39,7 +37,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public List<String> getExtensions() {
-        return Java8Helpers.listOf("vtl");
+        return List.of("vtl");
     }
 
     /**
@@ -49,7 +47,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public List<String> getMimeTypes() {
-        return Java8Helpers.listOf();
+        return List.of();
     }
 
     /**
@@ -59,7 +57,7 @@ public class VtlScriptEngineFactory implements ScriptEngineFactory {
      */
     @Override
     public List<String> getNames() {
-        return Java8Helpers.listOf(getLanguageName(), getEngineName(), "vtl", "Trevas", "trevas");
+        return List.of(getLanguageName(), getEngineName(), "vtl", "Trevas", "trevas");
     }
 
     /**

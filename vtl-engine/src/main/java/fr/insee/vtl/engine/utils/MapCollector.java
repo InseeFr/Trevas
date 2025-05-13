@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.utils;
 
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.utils.Java8Helpers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +90,6 @@ public class MapCollector implements Collector<Structured.DataPoint, Structured.
 
     @Override
     public Set<Characteristics> characteristics() {
-        return Java8Helpers.setOf(Characteristics.UNORDERED);
+        return Set.of(Characteristics.UNORDERED);
     }
 }

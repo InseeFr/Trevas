@@ -1,8 +1,8 @@
 package fr.insee.vtl.model;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
-
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +52,7 @@ public class InMemoryDataset implements Dataset {
 
     public InMemoryDataset(DataStructure structures, List<Object>... data) {
         this.structure = structures;
-        this.data = convertList(Java8Helpers.listOf(data));
+        this.data = convertList(List.of(data));
     }
 
     /**
@@ -62,7 +62,7 @@ public class InMemoryDataset implements Dataset {
      * @param structure  The list of structure components forming the structure of the dataset.
      */
     public InMemoryDataset(List<Component> structure, List<Object>... dataPoints) {
-        this(Java8Helpers.listOf(dataPoints), structure);
+        this(List.of(dataPoints), structure);
     }
 
     /**
