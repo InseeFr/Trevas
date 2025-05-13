@@ -16,7 +16,7 @@ public class DataStructureTest {
     public void buildDataset() throws IOException {
         DataStructure structure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_TOWN.xml", "BPE_CUBE_2021");
 
-        CSVDataset dataset = new CSVDataset(structure, new FileReader("src/test/resources/BPE_TOWN_SAMPLE.csv"));
+        var dataset = new CSVDataset(structure, new FileReader("src/test/resources/BPE_TOWN_SAMPLE.csv"));
 
         dataset.getDataAsMap().forEach(System.out::println);
     }

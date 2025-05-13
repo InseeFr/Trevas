@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +11,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,9 +90,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ceil(ds[keep id, long1, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 150L, "double1", 2L),
-                Java8Helpers.mapOf("id", "Nico", "long1", 20L, "double1", 3L),
-                Java8Helpers.mapOf("id", "Franck", "long1", 100L, "double1", -1L)
+                Map.of("id", "Hadrien", "long1", 150L, "double1", 2L),
+                Map.of("id", "Nico", "long1", 20L, "double1", 3L),
+                Map.of("id", "Franck", "long1", 100L, "double1", -1L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ceil(\"ko\");");
@@ -115,9 +115,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(ds[keep id, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "double1", 1L),
-                Java8Helpers.mapOf("id", "Nico", "double1", 2L),
-                Java8Helpers.mapOf("id", "Franck", "double1", -2L)
+                Map.of("id", "Hadrien", "double1", 1L),
+                Map.of("id", "Nico", "double1", 2L),
+                Map.of("id", "Franck", "double1", -2L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := floor(\"ko\");");
@@ -136,9 +136,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := abs(ds[keep id, double1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "double1", 1.1D),
-                Java8Helpers.mapOf("id", "Nico", "double1", 2.2D),
-                Java8Helpers.mapOf("id", "Franck", "double1", 1.21D)
+                Map.of("id", "Hadrien", "double1", 1.1D),
+                Map.of("id", "Nico", "double1", 2.2D),
+                Map.of("id", "Franck", "double1", 1.21D)
         );
         assertThatThrownBy(() -> {
             engine.eval("c := abs(\"ko\");");
@@ -161,9 +161,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(exp(ds[keep id, double1, long1]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "double1", 3L, "long1", 9223372036854775807L),
-                Java8Helpers.mapOf("id", "Nico", "double1", 9L, "long1", 485165195L),
-                Java8Helpers.mapOf("id", "Franck", "double1", 0L, "long1", 9223372036854775807L)
+                Map.of("id", "Hadrien", "double1", 3L, "long1", 9223372036854775807L),
+                Map.of("id", "Nico", "double1", 9L, "long1", 485165195L),
+                Map.of("id", "Franck", "double1", 0L, "long1", 9223372036854775807L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := exp(\"ko\");");
@@ -186,9 +186,9 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := floor(ln(abs(ds[keep id, double1])));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "double1", 0L),
-                Java8Helpers.mapOf("id", "Nico", "double1", 0L),
-                Java8Helpers.mapOf("id", "Franck", "double1", 0L)
+                Map.of("id", "Hadrien", "double1", 0L),
+                Map.of("id", "Nico", "double1", 0L),
+                Map.of("id", "Franck", "double1", 0L)
         );
         assertThatThrownBy(() -> {
             engine.eval("e := ln(\"ko\");");
@@ -213,10 +213,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := round(ds[keep id, long1, double2], 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 30.0D, "double2", 1.2D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 20.0D, "double2", 21.1D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 100.0D, "double2", 100.9D)
+                Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
+                Map.of("id", "Nico", "long1", 20.0D, "double2", 21.1D),
+                Map.of("id", "Franck", "long1", 100.0D, "double2", 100.9D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
@@ -246,10 +246,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := trunc(ds[keep id, long1, double2], 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 30.0D, "double2", 1.2D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 20.0D, "double2", 21.1D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 100.0D, "double2", 100.9D)
+                Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 10.0D, "double2", 10.1D),
+                Map.of("id", "Nico", "long1", 20.0D, "double2", 21.1D),
+                Map.of("id", "Franck", "long1", 100.0D, "double2", 100.9D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
         assertThatThrownBy(() -> {
@@ -273,10 +273,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := round(sqrt(ds[keep id, long1, double2]));");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 5.0D, "double2", 1D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 3.0D, "double2", 3.0D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 4.0D, "double2", 5.0D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 10.0D, "double2", 10.0D)
+                Map.of("id", "Toto", "long1", 5.0D, "double2", 1D),
+                Map.of("id", "Hadrien", "long1", 3.0D, "double2", 3.0D),
+                Map.of("id", "Nico", "long1", 4.0D, "double2", 5.0D),
+                Map.of("id", "Franck", "long1", 10.0D, "double2", 10.0D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
 
@@ -303,10 +303,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := trunc(mod(ds[keep id, long1, double2], 2), 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 0.0D, "double2", 1.2D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 0.0D, "double2", 0.1D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 0.0D, "double2", 1.1D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 0.0D, "double2", 0.9D)
+                Map.of("id", "Toto", "long1", 0.0D, "double2", 1.2D),
+                Map.of("id", "Hadrien", "long1", 0.0D, "double2", 0.1D),
+                Map.of("id", "Nico", "long1", 0.0D, "double2", 1.1D),
+                Map.of("id", "Franck", "long1", 0.0D, "double2", 0.9D)
         );
 
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
@@ -333,10 +333,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := trunc(power(ds[keep id, long1, double2], 2), 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 900.0D, "double2", 1.4D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 400.0D, "double2", 445.2D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
+                Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
+                Map.of("id", "Hadrien", "long1", 100.0D, "double2", 102.2D),
+                Map.of("id", "Nico", "long1", 400.0D, "double2", 445.2D),
+                Map.of("id", "Franck", "long1", 10000.0D, "double2", 10180.8D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
 
@@ -381,10 +381,10 @@ public class NumericFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := trunc(log(ds[keep id, long1, double2], 2), 1);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 4.9D, "double2", 0.2D),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 3.3D, "double2", 3.3D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 4.3D, "double2", 4.3D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 6.6D, "double2", 6.6D)
+                Map.of("id", "Toto", "long1", 4.9D, "double2", 0.2D),
+                Map.of("id", "Hadrien", "long1", 3.3D, "double2", 3.3D),
+                Map.of("id", "Nico", "long1", 4.3D, "double2", 4.3D),
+                Map.of("id", "Franck", "long1", 6.6D, "double2", 6.6D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
 

@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -48,7 +47,7 @@ public class DistanceFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressio
     @Override
     public ResolvableExpression visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     exprVisitor.visit(ctx.right)
             );

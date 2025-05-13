@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -93,23 +93,23 @@ public class StringFunctionsTest {
                 "dsLower := lower(ds[keep id, string1]); " +
                 "dsLen := length(ds[keep id, string1]);");
         assertThat(((Dataset) context.getAttribute("dsTrim")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", "toto")
+                Map.of("id", "Toto", "string1", "toto")
         );
         assertThat(((Dataset) context.getAttribute("dsLTrim")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", "toto")
+                Map.of("id", "Toto", "string1", "toto")
         );
         assertThat(((Dataset) context.getAttribute("dsRTrim")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", "toto")
+                Map.of("id", "Toto", "string1", "toto")
         );
         assertThat(((Dataset) context.getAttribute("dsUpper")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", "TOTO")
+                Map.of("id", "Toto", "string1", "TOTO")
         );
         assertThat(((Dataset) context.getAttribute("dsLower")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", "toto")
+                Map.of("id", "Toto", "string1", "toto")
         );
         assertThat(((Dataset) context.getAttribute("dsLower")).getDataStructure().get("string1").getType()).isEqualTo(String.class);
         assertThat(((Dataset) context.getAttribute("dsLen")).getDataAsMap().get(0)).isEqualTo(
-                Java8Helpers.mapOf("id", "Toto", "string1", 4L)
+                Map.of("id", "Toto", "string1", 4L)
         );
         assertThat(((Dataset) context.getAttribute("dsLen")).getDataStructure().get("string1").getType()).isEqualTo(Long.class);
     }
@@ -131,10 +131,10 @@ public class StringFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := substr(ds[keep id, string1, string2], 2, 4);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "string1", "oto", "string2", ""),
-                Java8Helpers.mapOf("id", "Hadrien", "string1", "adri", "string2", ""),
-                Java8Helpers.mapOf("id", "Nico", "string1", "ico", "string2", ""),
-                Java8Helpers.mapOf("id", "Franck", "string1", "ranc", "string2", "")
+                Map.of("id", "Toto", "string1", "oto", "string2", ""),
+                Map.of("id", "Hadrien", "string1", "adri", "string2", ""),
+                Map.of("id", "Nico", "string1", "ico", "string2", ""),
+                Map.of("id", "Franck", "string1", "ranc", "string2", "")
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
     }
@@ -150,10 +150,10 @@ public class StringFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := replace(ds[keep id, string1, string2], \"o\", \"O\");");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "string1", "tOtO", "string2", "t"),
-                Java8Helpers.mapOf("id", "Hadrien", "string1", "hadrien", "string2", "k"),
-                Java8Helpers.mapOf("id", "Nico", "string1", "nicO", "string2", "l"),
-                Java8Helpers.mapOf("id", "Franck", "string1", "franck", "string2", "c")
+                Map.of("id", "Toto", "string1", "tOtO", "string2", "t"),
+                Map.of("id", "Hadrien", "string1", "hadrien", "string2", "k"),
+                Map.of("id", "Nico", "string1", "nicO", "string2", "l"),
+                Map.of("id", "Franck", "string1", "franck", "string2", "c")
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
 
@@ -182,10 +182,10 @@ public class StringFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := instr(ds[keep id, string1, string2], \"o\", 0, 2);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "string1", 4L, "string2", 0L),
-                Java8Helpers.mapOf("id", "Hadrien", "string1", 0L, "string2", 0L),
-                Java8Helpers.mapOf("id", "Nico", "string1", 0L, "string2", 0L),
-                Java8Helpers.mapOf("id", "Franck", "string1", 0L, "string2", 0L)
+                Map.of("id", "Toto", "string1", 4L, "string2", 0L),
+                Map.of("id", "Hadrien", "string1", 0L, "string2", 0L),
+                Map.of("id", "Nico", "string1", 0L, "string2", 0L),
+                Map.of("id", "Franck", "string1", 0L, "string2", 0L)
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(Long.class);
 

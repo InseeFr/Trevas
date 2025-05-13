@@ -6,11 +6,8 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.VtlParser.AggrFunctionClauseContext;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
@@ -60,7 +57,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     static String getSource(ParserRuleContext ctx) {
-        CharStream stream = ctx.getStart().getInputStream();
+        var stream = ctx.getStart().getInputStream();
         return stream.getText(new Interval(
                 ctx.getStart().getStartIndex(),
                 ctx.getStop().getStopIndex()
@@ -69,33 +66,33 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     private static AggregationExpression convertToAggregation(VtlParser.AggrDatasetContext groupFunctionCtx, ResolvableExpression expression) {
         if (groupFunctionCtx.SUM() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.sum(numberExpression);
         } else if (groupFunctionCtx.AVG() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.avg(numberExpression);
         } else if (groupFunctionCtx.COUNT() != null) {
             return AggregationExpression.count();
         } else if (groupFunctionCtx.MAX() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.max(numberExpression);
         } else if (groupFunctionCtx.MIN() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.min(numberExpression);
         } else if (groupFunctionCtx.MEDIAN() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.median(numberExpression);
         } else if (groupFunctionCtx.STDDEV_POP() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.stdDevPop(numberExpression);
         } else if (groupFunctionCtx.STDDEV_SAMP() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.stdDevSamp(numberExpression);
         } else if (groupFunctionCtx.VAR_POP() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.varPop(numberExpression);
         } else if (groupFunctionCtx.VAR_SAMP() != null) {
-            ResolvableExpression numberExpression = assertNumber(expression, groupFunctionCtx.expr());
+            var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
             return AggregationExpression.varSamp(numberExpression);
         } else {
             throw new VtlRuntimeException(new VtlScriptException("not implemented", fromContext(groupFunctionCtx)));
@@ -105,8 +102,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
         // Normalize to keep operation.
-        boolean keep = ctx.op.getType() == VtlParser.KEEP;
-        Set<String> names = ctx.componentID().stream().map(ClauseVisitor::getName)
+        var keep = ctx.op.getType() == VtlParser.KEEP;
+        var names = ctx.componentID().stream().map(ClauseVisitor::getName)
                 .collect(Collectors.toSet());
         List<String> columnNames = datasetExpression.getDataStructure().values().stream().map(Dataset.Component::getName)
                 .filter(name -> keep == names.contains(name))
@@ -118,15 +115,15 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     @Override
     public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
-        Map<String, ResolvableExpression> expressions = new LinkedHashMap<>();
-        Map<String, String> expressionStrings = new LinkedHashMap<>();
-        Map<String, Dataset.Role> roles = new LinkedHashMap<>();
-        DatasetExpression currentDatasetExpression = datasetExpression;
+        var expressions = new LinkedHashMap<String, ResolvableExpression>();
+        var expressionStrings = new LinkedHashMap<String, String>();
+        var roles = new LinkedHashMap<String, Dataset.Role>();
+        var currentDatasetExpression = datasetExpression;
         // TODO: Refactor so we call the executeCalc for each CalcClauseItemContext the same way we call the
         //  analytics functions.
         for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
-            String columnName = getName(calcCtx.componentID());
-            Dataset.Role columnRole = calcCtx.componentRole() == null
+            var columnName = getName(calcCtx.componentID());
+            var columnRole = calcCtx.componentRole() == null
                     ? Dataset.Role.MEASURE
                     : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
 
@@ -165,11 +162,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         Map<String, String> fromTo = new LinkedHashMap<>();
         Set<String> renamed = new HashSet<>();
         for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-            String toNameString = getName(renameCtx.toName);
-            String fromNameString = getName(renameCtx.fromName);
+            var toNameString = getName(renameCtx.toName);
+            var fromNameString = getName(renameCtx.fromName);
             if (!renamed.add(toNameString)) {
                 throw new VtlRuntimeException(new InvalidArgumentException(
-                        String.format("duplicate column: %s", toNameString), fromContext(renameCtx)
+                        "duplicate column: %s".formatted(toNameString), fromContext(renameCtx)
                 ));
             }
             fromTo.put(fromNameString, toNameString);
@@ -181,7 +178,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     public DatasetExpression visitAggrClause(VtlParser.AggrClauseContext ctx) {
 
         // Normalize the dataset so the expressions are removed from the aggregations.
-        List<AggrFunctionClauseContext> aggregationsWithExpressions = ctx.aggregateClause().aggrFunctionClause().stream()
+        var aggregationsWithExpressions = ctx.aggregateClause().aggrFunctionClause().stream()
                 .filter(agg -> agg.aggrOperatorsGrouping() instanceof VtlParser.AggrDatasetContext)
                 .collect(Collectors.toList());
 
@@ -201,19 +198,20 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                         agg -> getSource(agg.aggrOperatorsGrouping())
                 ));
 
-        Structured.DataStructure dataStructure = datasetExpression.getDataStructure();
+        var dataStructure = datasetExpression.getDataStructure();
+
 
         DatasetExpression normalizedDataset = processingEngine.executeCalc(this.datasetExpression, expressions, roles, expressionStrings);
 
         // Execute the group all as a calc.
         List<String> groupBy = new ArrayList<>();
-        ResolvableExpression groupAll = new GroupAllVisitor(componentExpressionVisitor).visit(ctx);
+        var groupAll = new GroupAllVisitor(componentExpressionVisitor).visit(ctx);
         if (groupAll != null) {
             // TODO, use the name? What if the expression uses multiple columns.
             normalizedDataset = processingEngine.executeCalc(normalizedDataset,
-                    Java8Helpers.mapOf("time", groupAll),
-                    Java8Helpers.mapOf("time", Dataset.Role.IDENTIFIER),
-                    Java8Helpers.mapOf()
+                    Map.of("time", groupAll),
+                    Map.of("time", Dataset.Role.IDENTIFIER),
+                    Map.of()
             );
             groupBy.add("time");
         }
@@ -236,7 +234,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             // TODO: Refactor to avoid this if
             if (normalizedStructure.containsKey(alias)) {
                 Structured.Component normalizedComponent = normalizedStructure.get(alias);
-                AggregationExpression aggregationFunction = convertToAggregation(
+                var aggregationFunction = convertToAggregation(
                         // Note that here we replace the expression by the name of the columns.
                         (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
                         new ResolvableExpression(fromContext(ctx)) {

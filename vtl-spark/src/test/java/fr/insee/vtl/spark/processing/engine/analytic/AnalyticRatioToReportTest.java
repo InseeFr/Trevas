@@ -1,12 +1,13 @@
 package fr.insee.vtl.spark.processing.engine.analytic;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import org.junit.jupiter.api.Test;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,19 +17,19 @@ public class AnalyticRatioToReportTest extends AnalyticTest {
     public void testAnRatioToReportWithCalcClause() throws ScriptException {
 
         InMemoryDataset anDS = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3D)
+                List.of(
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3D)
 
                 ),
-                Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-                Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+                Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+                Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
         );
         /* Input dataset
         +----+----+----+----+----+
@@ -66,14 +67,14 @@ public class AnalyticRatioToReportTest extends AnalyticTest {
         +----+----+----+----+----+----------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "ratio_Me_1", 0.15D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3.0D, "ratio_Me_1", 0.2D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "ratio_Me_1", 0.35D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1.0D, "ratio_Me_1", 0.3D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0.0D, "ratio_Me_1", 0.3D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8.0D, "ratio_Me_1", 0.2D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5.0D, "ratio_Me_1", 0.15D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3.0D, "ratio_Me_1", 0.35D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "ratio_Me_1", 0.15D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3.0D, "ratio_Me_1", 0.2D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5.0D, "ratio_Me_1", 0.35D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1.0D, "ratio_Me_1", 0.3D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0.0D, "ratio_Me_1", 0.3D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8.0D, "ratio_Me_1", 0.2D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5.0D, "ratio_Me_1", 0.15D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3.0D, "ratio_Me_1", 0.35D)
         );
 
     }
@@ -88,19 +89,19 @@ public class AnalyticRatioToReportTest extends AnalyticTest {
     public void testAnRatioToReport() throws ScriptException {
 
         InMemoryDataset anDS = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5D),
-                        Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3D)
+                List.of(
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 3D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 7L, "Me_2", 5D),
+                        Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 1D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 12L, "Me_2", 0D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 8L, "Me_2", 8D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 6L, "Me_2", 5D),
+                        Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 14L, "Me_2", -3D)
 
                 ),
-                Java8Helpers.mapOf("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
-                Java8Helpers.mapOf("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
+                Map.of("Id_1", String.class, "Id_2", String.class, "Year", Long.class, "Me_1", Long.class, "Me_2", Double.class),
+                Map.of("Id_1", Dataset.Role.IDENTIFIER, "Id_2", Dataset.Role.IDENTIFIER, "Year", Dataset.Role.IDENTIFIER, "Me_1", Dataset.Role.MEASURE, "Me_2", Dataset.Role.MEASURE)
         );
         /* Input dataset
         +----+----+----+----+----+
@@ -139,14 +140,14 @@ public class AnalyticRatioToReportTest extends AnalyticTest {
         +----+----+----+----+----+----------+----------+----------+----------+
         * */
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.15D, "Me_2", 0.1D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.3D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 0.35D, "Me_2", 0.5D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 0.3D, "Me_2", 0.1D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 0.3D, "Me_2", 0.0D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.8D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 0.15D, "Me_2", 0.5D),
-                Java8Helpers.mapOf("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 0.35D, "Me_2", -0.3D)
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 0.15D, "Me_2", 0.1D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.3D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 0.35D, "Me_2", 0.5D),
+                Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 0.3D, "Me_2", 0.1D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 0.3D, "Me_2", 0.0D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 0.2D, "Me_2", 0.8D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 0.15D, "Me_2", 0.5D),
+                Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 0.35D, "Me_2", -0.3D)
         );
 
 

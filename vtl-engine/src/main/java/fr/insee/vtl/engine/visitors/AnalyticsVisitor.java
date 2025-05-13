@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Analytics;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -39,44 +38,27 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      * @return The function name of the analytic expression with Enum type Analytics.Function
      */
     private Analytics.Function toFunctionEnum(Token op, ParseTree ctx) {
-        switch (op.getType()) {
-            case VtlParser.SUM:
-                return Analytics.Function.SUM;
-            case VtlParser.AVG:
-                return Analytics.Function.AVG;
-            case VtlParser.COUNT:
-                return Analytics.Function.COUNT;
-            case VtlParser.MEDIAN:
-                return Analytics.Function.MEDIAN;
-            case VtlParser.MIN:
-                return Analytics.Function.MIN;
-            case VtlParser.MAX:
-                return Analytics.Function.MAX;
-            case VtlParser.STDDEV_POP:
-                return Analytics.Function.STDDEV_POP;
-            case VtlParser.STDDEV_SAMP:
-                return Analytics.Function.STDDEV_SAMP;
-            case VtlParser.VAR_POP:
-                return Analytics.Function.VAR_POP;
-            case VtlParser.VAR_SAMP:
-                return Analytics.Function.VAR_SAMP;
-            case VtlParser.FIRST_VALUE:
-                return Analytics.Function.FIRST_VALUE;
-            case VtlParser.LAST_VALUE:
-                return Analytics.Function.LAST_VALUE;
-            case VtlParser.LEAD:
-                return Analytics.Function.LEAD;
-            case VtlParser.LAG:
-                return Analytics.Function.LAG;
-            case VtlParser.RATIO_TO_REPORT:
-                return Analytics.Function.RATIO_TO_REPORT;
-            case VtlParser.RANK:
-                return Analytics.Function.RANK;
-            default:
-                throw new VtlRuntimeException(
-                        new InvalidArgumentException("not an analytic function", fromContext(ctx))
-                );
-        }
+        return switch (op.getType()) {
+            case VtlParser.SUM -> Analytics.Function.SUM;
+            case VtlParser.AVG -> Analytics.Function.AVG;
+            case VtlParser.COUNT -> Analytics.Function.COUNT;
+            case VtlParser.MEDIAN -> Analytics.Function.MEDIAN;
+            case VtlParser.MIN -> Analytics.Function.MIN;
+            case VtlParser.MAX -> Analytics.Function.MAX;
+            case VtlParser.STDDEV_POP -> Analytics.Function.STDDEV_POP;
+            case VtlParser.STDDEV_SAMP -> Analytics.Function.STDDEV_SAMP;
+            case VtlParser.VAR_POP -> Analytics.Function.VAR_POP;
+            case VtlParser.VAR_SAMP -> Analytics.Function.VAR_SAMP;
+            case VtlParser.FIRST_VALUE -> Analytics.Function.FIRST_VALUE;
+            case VtlParser.LAST_VALUE -> Analytics.Function.LAST_VALUE;
+            case VtlParser.LEAD -> Analytics.Function.LEAD;
+            case VtlParser.LAG -> Analytics.Function.LAG;
+            case VtlParser.RATIO_TO_REPORT -> Analytics.Function.RATIO_TO_REPORT;
+            case VtlParser.RANK -> Analytics.Function.RANK;
+            default -> throw new VtlRuntimeException(
+                    new InvalidArgumentException("not an analytic function", fromContext(ctx))
+            );
+        };
     }
 
     /**
@@ -87,7 +69,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private List<String> toPartitionBy(VtlParser.PartitionByClauseContext partition) {
         if (partition == null) {
-            return Java8Helpers.listOf();
+            return List.of();
         }
         return partition.componentID().stream()
                 .map(ClauseVisitor::getName)
@@ -102,7 +84,7 @@ public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
      */
     private Map<String, Analytics.Order> toOrderBy(VtlParser.OrderByClauseContext orderByCtx) {
         if (orderByCtx == null) {
-            return Java8Helpers.mapOf();
+            return Map.of();
         }
         Map<String, Analytics.Order> orderBy = new LinkedHashMap<>();
         for (VtlParser.OrderByItemContext item : orderByCtx.orderByItem()) {

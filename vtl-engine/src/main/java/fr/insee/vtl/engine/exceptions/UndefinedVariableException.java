@@ -15,6 +15,6 @@ public class UndefinedVariableException extends VtlScriptException {
      * @param position The position.
      */
     public UndefinedVariableException(String name, Positioned position) {
-        super(String.format("undefined variable %s", name), position);
+        super("undefined variable %s".formatted(name), position);
     }
 }

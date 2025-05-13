@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -70,7 +69,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     @Override
     public ResolvableExpression visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.op),
                     exprVisitor.visit(ctx.from_),
                     exprVisitor.visit(ctx.to_)
@@ -90,7 +89,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     @Override
     public ResolvableExpression visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.op),
                     exprVisitor.visit(ctx.pattern)
             );
@@ -109,7 +108,7 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     @Override
     public ResolvableExpression visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.expr())
             );
             return genericFunctionsVisitor.invokeFunction("isNull", parameters, fromContext(ctx));

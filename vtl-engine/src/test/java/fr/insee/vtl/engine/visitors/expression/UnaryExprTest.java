@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,9 +47,9 @@ public class UnaryExprTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := + ds[keep id, long1, double1];");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 150L, "double1", 1.1D),
-                Java8Helpers.mapOf("id", "Nico", "long1", 20L, "double1", 2.2D),
-                Java8Helpers.mapOf("id", "Franck", "long1", 100L, "double1", -1.21D)
+                Map.of("id", "Hadrien", "long1", 150L, "double1", 1.1D),
+                Map.of("id", "Nico", "long1", 20L, "double1", 2.2D),
+                Map.of("id", "Franck", "long1", 100L, "double1", -1.21D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
@@ -61,9 +61,9 @@ public class UnaryExprTest {
         context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         res = engine.eval("res := - ds[keep id, long1, double1];");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "long1", -150L, "double1", -1.1D),
-                Java8Helpers.mapOf("id", "Nico", "long1", -20L, "double1", -2.2D),
-                Java8Helpers.mapOf("id", "Franck", "long1", -100L, "double1", 1.21D)
+                Map.of("id", "Hadrien", "long1", -150L, "double1", -1.1D),
+                Map.of("id", "Nico", "long1", -20L, "double1", -2.2D),
+                Map.of("id", "Franck", "long1", -100L, "double1", 1.21D)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 

@@ -31,7 +31,7 @@ public class ConstantVisitor extends VtlBaseVisitor<ConstantExpression> {
             return new ConstantExpression(Boolean.parseBoolean(ctx.getText()), pos);
         }
         if (ctx.STRING_CONSTANT() != null) {
-            String text = ctx.getText();
+            var text = ctx.getText();
             return new ConstantExpression(text.substring(1, text.length() - 1), pos);
         }
         if (ctx.NULL_CONSTANT() != null) {

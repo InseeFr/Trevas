@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
@@ -16,6 +15,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,20 +45,20 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         if (left == null || right == null) {
             return null;
         }
-        if (left instanceof Number && right instanceof Number) {
-            if (left instanceof Long && right instanceof Long) {
-                return Long.compare(((Number) left).longValue(), ((Number) right).longValue());
+        if (left instanceof Number leftNumber && right instanceof Number rightNumber) {
+            if (left instanceof Long leftLong && right instanceof Long rightLong) {
+                return Long.compare(leftLong, rightLong);
             }
-            return Double.compare(((Number) left).doubleValue(), ((Number) right).doubleValue());
+            return Double.compare(leftNumber.doubleValue(), rightNumber.doubleValue());
         }
-        if (left instanceof Boolean && right instanceof Boolean) {
-            return Boolean.compare((Boolean) left, (Boolean) right);
+        if (left instanceof Boolean leftBoolean && right instanceof Boolean rightBoolean) {
+            return Boolean.compare(leftBoolean, rightBoolean);
         }
-        if (left instanceof String && right instanceof String) {
-            return ((String) left).compareTo((String) right);
+        if (left instanceof String leftString && right instanceof String rightString) {
+            return leftString.compareTo(rightString);
         }
-        if (left instanceof Date && right instanceof Date) {
-            return ((Date) left).compareTo((Date) right);
+        if (left instanceof Date leftDate && right instanceof Date rightDate) {
+            return leftDate.compareTo(rightDate);
         } else {
             throw new Exception("Comparisons require Comparable params");
         }
@@ -136,8 +136,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
         try {
             Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
-            ResolvableExpression leftExpression = exprVisitor.visit(ctx.left);
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            var leftExpression = exprVisitor.visit(ctx.left);
+            List<ResolvableExpression> parameters = List.of(
                     leftExpression,
                     exprVisitor.visit(ctx.right));
             // If a parameter is the null token
@@ -147,22 +147,19 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
                         .withPosition(fromContext(ctx))
                         .using(c -> null);
             }
-            switch (type.getType()) {
-                case VtlParser.EQ:
-                    return genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
-                case VtlParser.NEQ:
-                    return genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
-                case VtlParser.LT:
-                    return genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
-                case VtlParser.MT:
-                    return genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
-                case VtlParser.LE:
-                    return genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
-                case VtlParser.ME:
-                    return genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
-                default:
-                    throw new UnsupportedOperationException(unknownOperator + ctx);
-            }
+            return switch (type.getType()) {
+                case VtlParser.EQ -> genericFunctionsVisitor.invokeFunction("isEqual", parameters, fromContext(ctx));
+                case VtlParser.NEQ ->
+                        genericFunctionsVisitor.invokeFunction("isNotEqual", parameters, fromContext(ctx));
+                case VtlParser.LT -> genericFunctionsVisitor.invokeFunction("isLessThan", parameters, fromContext(ctx));
+                case VtlParser.MT ->
+                        genericFunctionsVisitor.invokeFunction("isGreaterThan", parameters, fromContext(ctx));
+                case VtlParser.LE ->
+                        genericFunctionsVisitor.invokeFunction("isLessThanOrEqual", parameters, fromContext(ctx));
+                case VtlParser.ME ->
+                        genericFunctionsVisitor.invokeFunction("isGreaterThanOrEqual", parameters, fromContext(ctx));
+                default -> throw new UnsupportedOperationException(unknownOperator + ctx);
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
@@ -177,19 +174,16 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
         try {
-            List<ResolvableExpression> parameters = Java8Helpers.listOf(
+            List<ResolvableExpression> parameters = List.of(
                     exprVisitor.visit(ctx.left),
                     visit(ctx.lists()));
             Positioned pos = fromContext(ctx);
 
-            switch (ctx.op.getType()) {
-                case VtlParser.IN:
-                    return genericFunctionsVisitor.invokeFunction("in", parameters, pos);
-                case VtlParser.NOT_IN:
-                    return genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
-                default:
-                    throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
-            }
+            return switch (ctx.op.getType()) {
+                case VtlParser.IN -> genericFunctionsVisitor.invokeFunction("in", parameters, pos);
+                case VtlParser.NOT_IN -> genericFunctionsVisitor.invokeFunction("notIn", parameters, pos);
+                default -> throw new IllegalStateException("Unexpected value: " + ctx.op.getType());
+            };
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }
@@ -213,7 +207,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         Set<Class<?>> types = listExpressions.stream().map(TypedExpression::getType)
                 .collect(Collectors.toSet());
 
-        Positioned pos = fromContext(ctx);
+        var pos = fromContext(ctx);
 
         if (types.size() > 1) {
             throw new VtlRuntimeException(
@@ -228,7 +222,7 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
         // Since all expression are constant we don't need any context.
         List<Object> values = listExpressions
                 .stream()
-                .map(expression -> expression.resolve(Java8Helpers.mapOf()))
+                .map(expression -> expression.resolve(Map.of()))
                 .collect(Collectors.toList());
 
         return ListExpression.withContainedType(values, type, pos);

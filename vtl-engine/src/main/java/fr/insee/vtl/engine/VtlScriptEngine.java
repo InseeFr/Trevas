@@ -2,24 +2,53 @@ package fr.insee.vtl.engine;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.FunctionProvider;
+import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.ProcessingEngineFactory;
+import fr.insee.vtl.model.VtlMethod;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import javax.script.*;
+import javax.script.AbstractScriptEngine;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,12 +99,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public static Positioned fromContext(ParseTree tree) {
-        if (tree instanceof ParserRuleContext) {
-            ParserRuleContext parserRuleContext = (ParserRuleContext) tree;
+        if (tree instanceof ParserRuleContext parserRuleContext) {
             return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
         }
-        if (tree instanceof TerminalNode) {
-            return fromToken(((TerminalNode) tree).getSymbol());
+        if (tree instanceof TerminalNode treeNode) {
+            return fromToken(treeNode.getSymbol());
         }
         throw new IllegalStateException();
     }
@@ -84,7 +112,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         if (to == null) {
             to = from;
         }
-        Positioned.Position position = new Positioned.Position(
+        var position = new Positioned.Position(
                 from.getLine() - 1,
                 to.getLine() - 1,
                 from.getCharPositionInLine(),
@@ -114,8 +142,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
     static boolean isAssignableTo(Class<?> clazz, Class<?> target, Type genericTarget, Map<TypeVariable<?>, Class<?>> typeArguments) {
         if (target.isAssignableFrom(clazz)) {
-            if (genericTarget instanceof TypeVariable) {
-                TypeVariable<?> typeVariable = (TypeVariable<?>) genericTarget;
+            if (genericTarget instanceof TypeVariable<?> typeVariable) {
                 Class<?> existingTypeArgument = typeArguments.get(typeVariable);
                 if (existingTypeArgument == null) {
                     typeArguments.put(typeVariable, clazz);
@@ -124,8 +151,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             return true;
         }
 
-        if (genericTarget instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) genericTarget;
+        if (genericTarget instanceof ParameterizedType parameterizedType) {
             Type[] typeArgumentsArray = parameterizedType.getActualTypeArguments();
 
             if (typeArgumentsArray.length != 1) {
@@ -134,15 +160,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
             Type typeArgument = typeArgumentsArray[0];
 
-            if (typeArgument instanceof TypeVariable) {
-                TypeVariable<?> typeVariable = (TypeVariable<?>) typeArgument;
+            if (typeArgument instanceof TypeVariable<?> typeVariable) {
                 Class<?> existingTypeArgument = typeArguments.get(typeVariable);
                 if (existingTypeArgument == null) {
                     typeArguments.put(typeVariable, clazz);
                 } else return existingTypeArgument.equals(clazz);
                 return true;
-            } else if (typeArgument instanceof Class) {
-                Class<?> classArgument = (Class<?>) typeArgument;
+            } else if (typeArgument instanceof Class<?> classArgument) {
                 return classArgument.isAssignableFrom(clazz);
             }
         }
@@ -158,8 +182,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     private String getProcessingEngineName() {
         Object engineName = Optional.ofNullable(get(PROCESSING_ENGINE_NAMES))
                 .orElse("memory");
-        if (engineName instanceof String) {
-            return (String) engineName;
+        if (engineName instanceof String engineNameString) {
+            return engineNameString;
         } else {
             throw new IllegalArgumentException(PROCESSING_ENGINE_NAMES + " must be a string");
         }
@@ -172,10 +196,12 @@ public class VtlScriptEngine extends AbstractScriptEngine {
      */
     public ProcessingEngine getProcessingEngine() {
         String name = getProcessingEngineName();
-        Optional<ProcessingEngineFactory> factory = Java8Helpers.streamIterator(ServiceLoader.load(ProcessingEngineFactory.class).iterator())
+        Optional<ProcessingEngineFactory> factory = ServiceLoader.load(ProcessingEngineFactory.class)
+                .stream()
+                .map(ServiceLoader.Provider::get)
                 .filter(f -> f.getName().equals(name))
                 .findFirst();
-        return factory.orElseThrow(() -> new NoSuchElementException("No value present")).getProcessingEngine(this);
+        return factory.orElseThrow().getProcessingEngine(this);
     }
 
     /**
@@ -197,10 +223,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                     if (e != null && e.getCtx() != null) {
                         errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
                     } else {
-                        if (offendingSymbol instanceof Token) {
-                            errors.add(new VtlSyntaxException(msg, fromToken((Token) offendingSymbol)));
+                        if (offendingSymbol instanceof Token offendingSymbolToken) {
+                            errors.add(new VtlSyntaxException(msg, fromToken(offendingSymbolToken)));
                         } else {
-                            Positioned.Position pos = new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
+                            var pos = new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
                             errors.add(new VtlScriptException(msg, () -> pos));
                         }
                     }
@@ -217,10 +243,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
             // Note that we need to call this method to trigger the
             // error listener.
-            VtlParser.StartContext start = parser.start();
+            var start = parser.start();
 
             if (!errors.isEmpty()) {
-                VtlScriptException first = errors.removeFirst();
+                var first = errors.removeFirst();
                 for (VtlScriptException suppressed : errors) {
                     first.addSuppressed(suppressed);
                 }
@@ -291,14 +317,14 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
 
     public VtlMethod findMethod(String name, Collection<Class> types) throws NoSuchMethodException {
-        Set<Method> customMethods = methodCache == null ? Java8Helpers.setOf()
+        Set<Method> customMethods = methodCache == null ? Set.of()
                 : new HashSet<>(methodCache.values());
         Set<Method> methods = Stream.concat(NATIVE_METHODS.stream(), customMethods.stream())
                 .collect(Collectors.toSet());
 
         List<Method> candidates = methods.stream()
                 .filter(method -> method.getName().equals(name))
-                .filter(method -> matchParameters(method, types.toArray(new Class[0])))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
         if (candidates.size() == 1) {
             return new VtlMethod(candidates.get(0));
@@ -318,7 +344,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
         List<Method> candidates = methods.stream()
                 .filter(method -> method.getName().equals(name))
-                .filter(method -> matchParameters(method, types.toArray(new Class[0])))
+                .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
                 .collect(Collectors.toList());
 
         if (candidates.size() == 0) {
