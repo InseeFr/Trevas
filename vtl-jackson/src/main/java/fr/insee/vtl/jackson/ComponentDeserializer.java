@@ -5,8 +5,12 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 /**
@@ -18,7 +22,11 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
             "STRING", String.class,
             "INTEGER", Long.class,
             "NUMBER", Double.class,
-            "BOOLEAN", Boolean.class
+            "BOOLEAN", Boolean.class,
+            "DATE", Instant.class,
+            "DURATION", PeriodDuration.class,
+            "TIME", OffsetDateTime.class,
+            "TIMEPERIOD", Interval.class
     );
 
     /**
