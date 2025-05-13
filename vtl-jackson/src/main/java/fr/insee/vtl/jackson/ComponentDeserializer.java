@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
