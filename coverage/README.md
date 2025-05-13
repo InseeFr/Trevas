@@ -10,6 +10,7 @@ We are working on a suite of compatibility tests to ensure conformance with the 
 
 - [junit5](https://github.com/junit-team/junit5/discussions/4504#discussioncomment-13046641)
 - [surefire](https://github.com/apache/maven-surefire/issues/835)
+- [dorny/test-reporter](https://github.com/dorny/test-reporter/issues/580)
 
 ### Temporary run procedure
 
