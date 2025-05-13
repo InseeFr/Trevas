@@ -24,7 +24,7 @@ public class JSONStructureLoader {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new TrevasModule());
 
-        String json = new String(Files.readAllBytes(jsonFile.toPath()), StandardCharsets.UTF_8);
+        String json = Files.readString(jsonFile.toPath());
         JsonNode root = mapper.readTree(json);
 
         Map<String, List<Structured.Component>> structureMap = new HashMap<>();
@@ -64,7 +64,7 @@ public class JSONStructureLoader {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new TrevasModule());
 
-        String json = new String(Files.readAllBytes(dataStructureFile.toPath()), StandardCharsets.UTF_8);
+        String json = Files.readString(dataStructureFile.toPath());
         JsonNode root = mapper.readTree(json);
 
         File parentDir = dataStructureFile.getParentFile();
