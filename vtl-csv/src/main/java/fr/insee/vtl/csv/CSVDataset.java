@@ -1,7 +1,6 @@
 package fr.insee.vtl.csv;
 
 import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDouble;
@@ -27,8 +26,8 @@ public class CSVDataset implements Dataset {
     public CSVDataset(DataStructure structure, Reader csv) throws IOException {
         this.structure = structure;
         this.csvReader = new CsvMapReader(csv, CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE);
-        String[] columns = this.csvReader.getHeader(true);
-        if (!this.structure.keySet().containsAll(Java8Helpers.listOf(columns))) {
+        var columns = this.csvReader.getHeader(true);
+        if (!this.structure.keySet().containsAll(List.of(columns))) {
             throw new RuntimeException("missing columns in CSV");
         }
     }
@@ -69,8 +68,8 @@ public class CSVDataset implements Dataset {
         if (this.data == null) {
             this.data = new ArrayList<>();
             try {
-                String[] header = getNameMapping();
-                CellProcessor[] processors = getProcessors();
+                var header = getNameMapping();
+                var processors = getProcessors();
                 Map<String, Object> datum;
                 while ((datum = this.csvReader.read(header, processors)) != null) {
                     this.data.add(new DataPoint(this.structure, datum));

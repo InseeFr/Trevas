@@ -4,7 +4,6 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.PersistentDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
@@ -45,11 +44,10 @@ public class SDMXVTLWorkflow {
     }
 
     private static String toComment(String comment) {
-        if (comment == null || comment.trim().isEmpty()) {
+        if (comment == null || comment.isBlank()) {
             return "";
         }
-        return Arrays.stream(comment.split("\n"))
-                .map(s -> "// " + s).collect(Collectors.joining("\n")) + "\n";
+        return comment.lines().map(s -> "// " + s).collect(Collectors.joining("\n")) + "\n";
     }
 
     private Map<String, String> getRulesets() {
@@ -59,8 +57,8 @@ public class SDMXVTLWorkflow {
                 )
                 .flatMap(v -> v.getItems().stream())
                 .collect(Collectors.toMap(INamedBean::getId, v -> {
-                                    String desc = toComment(v.getDescription());
-                                    String definition = addSemi(v.getRulesetDefinition());
+                                    var desc = toComment(v.getDescription());
+                                    var definition = addSemi(v.getRulesetDefinition());
                                     return desc + definition;
                                 },
                                 (u, v) -> {
@@ -82,10 +80,10 @@ public class SDMXVTLWorkflow {
                         v -> v.getItems().stream()
                 )
                 .collect(Collectors.toMap(ITransformationBean::getResult, v -> {
-                            String varName = v.getResult();
-                            String comment = toComment(v.getDescription());
-                            String expression = addSemi(v.getExpression());
-                            String assignment = (v.isPersistent() ? " <- " : " := ");
+                            var varName = v.getResult();
+                            var comment = toComment(v.getDescription());
+                            var expression = addSemi(v.getExpression());
+                            var assignment = (v.isPersistent() ? " <- " : " := ");
                             return comment + varName + assignment + expression;
                         },
                         (u, v) -> {
@@ -103,7 +101,7 @@ public class SDMXVTLWorkflow {
         return TrevasSDMXUtils.parseDataStructure(sdmxBeans).entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        new InMemoryDataset(Java8Helpers.listOf(), (Map<String, Structured.Component>) e.getValue())
+                        new InMemoryDataset(List.of(), (Map<String, Structured.Component>) e.getValue())
                 )).collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,

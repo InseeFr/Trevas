@@ -82,8 +82,8 @@ public class RegisterMethodTest {
         }
 
         private static SparkDataset asSparkDataset(fr.insee.vtl.model.Dataset dataset) {
-            if (dataset instanceof SparkDataset) {
-                return (SparkDataset) dataset;
+            if (dataset instanceof SparkDataset sparkDataset) {
+                return sparkDataset;
             } else {
                 return new SparkDataset(dataset, getRoleMap(dataset), spark);
             }

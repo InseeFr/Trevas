@@ -15,6 +15,6 @@ public class UnsupportedTypeException extends VtlScriptException {
      * @param position        The position of the error
      */
     public UnsupportedTypeException(Class<?> unsupportedType, Positioned position) {
-        super(String.format("the type %s is not supported", unsupportedType), position);
+        super("the type %s is not supported".formatted(unsupportedType), position);
     }
 }

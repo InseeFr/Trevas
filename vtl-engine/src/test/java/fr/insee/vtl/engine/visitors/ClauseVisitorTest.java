@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -36,8 +35,8 @@ public class ClauseVisitorTest {
     @Test
     public void testFilterClause() throws ScriptException {
 
-        InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
+        var dataset = new InMemoryDataset(
+                List.of(
                         new Structured.Component("name", String.class, Role.IDENTIFIER),
                         new Structured.Component("age", Long.class, Role.MEASURE),
                         new Structured.Component("weight", Long.class, Role.MEASURE)
@@ -54,29 +53,29 @@ public class ClauseVisitorTest {
         engine.eval("ds := ds1[filter age > 10 and age < 12];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(Java8Helpers.listOf(
-                Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L)
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
+                Map.of("name", "Nico", "age", 11L, "weight", 10L)
         ));
 
         engine.eval("ds := ds1[filter age > 10 or age < 12];");
 
-        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(Java8Helpers.listOf(
-                Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+        assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).isEqualTo(List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
         ));
     }
 
     @Test
     public void testManyCalc() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -84,24 +83,24 @@ public class ClauseVisitorTest {
 
         engine.eval("ds := ds1[rename age to wisdom][calc wisdom := wisdom * 2];");
 
-        Dataset ds = (Dataset) engine.getContext().getAttribute("ds");
+        var ds = (Dataset) engine.getContext().getAttribute("ds");
         assertThat(ds.getDataAsMap()).contains(
-                Java8Helpers.mapOf("name", "Hadrien", "weight", 11L, "wisdom", 20L),
-                Java8Helpers.mapOf("name", "Nico", "weight", 10L, "wisdom", 22L),
-                Java8Helpers.mapOf("name", "Franck", "weight", 9L, "wisdom", 24L)
+                Map.of("name", "Hadrien", "weight", 11L, "wisdom", 20L),
+                Map.of("name", "Nico", "weight", 10L, "wisdom", 22L),
+                Map.of("name", "Franck", "weight", 9L, "wisdom", 24L)
         );
     }
 
     @Test
     public void testCalcRoleModifier() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -128,13 +127,13 @@ public class ClauseVisitorTest {
     @Test
     public void testRenameClause() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -144,9 +143,9 @@ public class ClauseVisitorTest {
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("pseudo", "Hadrien", "weight", 10L, "age", 11L),
-                Java8Helpers.mapOf("pseudo", "Nico", "weight", 11L, "age", 10L),
-                Java8Helpers.mapOf("pseudo", "Franck", "weight", 12L, "age", 9L)
+                Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
+                Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
+                Map.of("pseudo", "Franck", "weight", 12L, "age", 9L)
         );
 
         assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
@@ -159,13 +158,13 @@ public class ClauseVisitorTest {
     public void testCalcClause() throws ScriptException {
 
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -175,9 +174,9 @@ public class ClauseVisitorTest {
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("name", "Hadrien", "res", 15.5, "age", 10L, "weight", 11L),
-                Java8Helpers.mapOf("name", "Nico", "res", 16.0, "age", 11L, "weight", 10L),
-                Java8Helpers.mapOf("name", "Franck", "res", 16.5, "age", 12L, "weight", 9L)
+                Map.of("name", "Hadrien", "res", 15.5, "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "res", 16.0, "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "res", 16.5, "age", 12L, "weight", 9L)
         );
 
     }
@@ -185,13 +184,13 @@ public class ClauseVisitorTest {
     @Test
     public void testKeepDropClause() throws ScriptException {
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "age", 10L, "weight", 11L),
-                        Java8Helpers.mapOf("name", "Nico", "age", 11L, "weight", 10L),
-                        Java8Helpers.mapOf("name", "Franck", "age", 12L, "weight", 9L)
+                List.of(
+                        Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                        Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                        Map.of("name", "Franck", "age", 12L, "weight", 9L)
                 ),
-                Java8Helpers.mapOf("name", String.class, "age", Long.class, "weight", Long.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+                Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         ScriptContext context = engine.getContext();
@@ -201,29 +200,29 @@ public class ClauseVisitorTest {
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("name", "Hadrien", "age", 10L),
-                Java8Helpers.mapOf("name", "Nico", "age", 11L),
-                Java8Helpers.mapOf("name", "Franck", "age", 12L)
+                Map.of("name", "Hadrien", "age", 10L),
+                Map.of("name", "Nico", "age", 11L),
+                Map.of("name", "Franck", "age", 12L)
         );
 
         engine.eval("ds := ds1[drop weight];");
 
         assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("name", "Hadrien", "age", 10L),
-                Java8Helpers.mapOf("name", "Nico", "age", 11L),
-                Java8Helpers.mapOf("name", "Franck", "age", 12L)
+                Map.of("name", "Hadrien", "age", 10L),
+                Map.of("name", "Nico", "age", 11L),
+                Map.of("name", "Franck", "age", 12L)
         );
     }
 
     @Test
     public void testAggregateType() {
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(),
-                Java8Helpers.mapOf("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                List.of(),
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
-        List<String> cases = Java8Helpers.listOf(
+        var cases = List.of(
                 "res := ds1[aggr a :=         sum(name) group by country];",
                 "res := ds1[aggr a :=         avg(name) group by country];",
                 "res := ds1[aggr a :=         max(name) group by country];",
@@ -249,14 +248,14 @@ public class ClauseVisitorTest {
     public void testAggregate() throws ScriptException {
 
         InMemoryDataset dataset = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
-                        Java8Helpers.mapOf("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
-                        Java8Helpers.mapOf("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck", "country", "france", "age", 12L, "weight", 9D)
                 ),
-                Java8Helpers.mapOf("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "country", Role.MEASURE, "age", Role.MEASURE, "weight", Role.MEASURE),
-                Java8Helpers.mapOf("name", false, "country", true)
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.MEASURE, "age", Role.MEASURE, "weight", Role.MEASURE),
+                Map.of("name", false, "country", true)
         );
 
         ScriptContext context = engine.getContext();
@@ -279,26 +278,26 @@ public class ClauseVisitorTest {
                 " group by country];");
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
         assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("country", "france", "sumAge", 23L, "avgWeight", 11.5,
+                Map.of("country", "france", "sumAge", 23L, "avgWeight", 11.5,
                         "countVal", 2L, "maxAge", 12L, "maxWeight", 10D,
                         "minAge", 11L, "minWeight", 9D, "medianAge", 11.5D,
                         "medianWeight", 9.5D),
-                Java8Helpers.mapOf("country", "norway", "sumAge", 10L, "avgWeight", 10.0,
+                Map.of("country", "norway", "sumAge", 10L, "avgWeight", 10.0,
                         "countVal", 1L, "maxAge", 10L, "maxWeight", 11D,
                         "minAge", 10L, "minWeight", 11D, "medianAge", 10D,
                         "medianWeight", 11D)
         );
 
         InMemoryDataset dataset2 = new InMemoryDataset(
-                Java8Helpers.listOf(
-                        Java8Helpers.mapOf("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
-                        Java8Helpers.mapOf("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
-                        Java8Helpers.mapOf("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
-                        Java8Helpers.mapOf("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
-                        Java8Helpers.mapOf("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
+                List.of(
+                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                        Map.of("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
+                        Map.of("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
+                        Map.of("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
+                        Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)
                 ),
-                Java8Helpers.mapOf("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
-                Java8Helpers.mapOf("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
+                Map.of("name", String.class, "country", String.class, "age", Long.class, "weight", Double.class),
+                Map.of("name", Role.IDENTIFIER, "country", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE)
         );
 
         context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
@@ -316,7 +315,7 @@ public class ClauseVisitorTest {
 
         assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
-        Map<String, Object> fr = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0);
+        var fr = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0);
 
         assertThat((Double) fr.get("stddev_popAge")).isCloseTo(1.118, Percentage.withPercentage(2));
         assertThat((Double) fr.get("stddev_popWeight")).isCloseTo(3.640, Percentage.withPercentage(2));
@@ -327,7 +326,7 @@ public class ClauseVisitorTest {
         assertThat((Double) fr.get("var_sampAge")).isCloseTo(1.666, Percentage.withPercentage(2));
         assertThat((Double) fr.get("var_sampWeight")).isCloseTo(17.666, Percentage.withPercentage(2));
 
-        Map<String, Object> no = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(1);
+        var no = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(1);
 
         assertThat((Double) no.get("stddev_popAge")).isEqualTo(0.0);
         assertThat((Double) no.get("stddev_popWeight")).isEqualTo(0.0);

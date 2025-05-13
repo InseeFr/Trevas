@@ -4,7 +4,6 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -16,14 +15,14 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
 import java.time.*;
 import java.time.temporal.Temporal;
 import java.util.*;
 
 import static fr.insee.vtl.model.Dataset.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TemporalFunctionsTest {
 
@@ -36,14 +35,14 @@ class TemporalFunctionsTest {
 
     @Test
     public void testAddition() throws ScriptException {
-        List<Temporal> ts = Lists.list(
+        var ts = Lists.list(
                 Instant.parse("2023-03-26T00:00:00Z"),
                 ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"), // Day before DST starts
                 ZonedDateTime.parse("2023-10-29T00:00:00+02:00[Europe/Paris]"), // Day before DST ends
                 OffsetDateTime.parse("2023-03-26T00:00:00+01:00"),              // OffsetDateTime for comparison
                 OffsetDateTime.parse("2023-10-29T00:00:00+02:00")               // OffsetDateTime for comparison
         );
-        PeriodDuration d = PeriodDuration.parse("P1DT1H");
+        var d = PeriodDuration.parse("P1DT1H");
         engine.put("d", d);
         for (Temporal t : ts) {
             engine.put("t", t);
@@ -59,13 +58,13 @@ class TemporalFunctionsTest {
     @Test
     public void testSubtraction() throws ScriptException {
         // Including different temporal types and specific dates for DST testing
-        List<Temporal> as = Java8Helpers.listOf(
+        var as = List.of(
                 Instant.parse("2023-04-15T00:00:00Z"),                          // Standard Instant
                 ZonedDateTime.parse("2023-03-26T00:00:00+01:00[Europe/Paris]"), // Day before DST starts
                 OffsetDateTime.parse("2023-04-15T00:00:00+01:00"),                    // Standard OffsetDateTime
                 ZonedDateTime.parse("2023-10-29T00:00:00+02:00[Europe/Paris]")  // Day before DST ends
         );
-        List<Temporal> bs = Java8Helpers.listOf(
+        var bs = List.of(
                 Instant.parse("2023-04-14T23:00:00Z"),                          // 1 hour before the Instant in 'as'
                 ZonedDateTime.parse("2023-03-26T03:00:00+02:00[Europe/Paris]"), // 3 hours after DST starts, same day
                 OffsetDateTime.parse("2023-04-15T01:00:00+01:00"),                    // 1 hour after the OffsetDateTime in 'as'
@@ -84,7 +83,7 @@ class TemporalFunctionsTest {
 
     @Test
     public void testMultiplication() throws ScriptException {
-        List<PeriodDuration> ds = Java8Helpers.listOf(
+        var ds = List.of(
                 PeriodDuration.parse("P1Y"),
                 PeriodDuration.parse("PT1H"),
                 PeriodDuration.parse("P1YT1H")
@@ -135,15 +134,15 @@ class TemporalFunctionsTest {
     @Test
     public void testTimeshift() throws ScriptException {
         Dataset ds1 = new InMemoryDataset(
-                new DataStructure(Java8Helpers.listOf(
+                new DataStructure(List.of(
                         new Component("id", String.class, Role.IDENTIFIER),
                         new Component("time", Interval.class, Role.IDENTIFIER),
                         new Component("measure", Long.class, Role.MEASURE)
                 )),
-                Java8Helpers.listOf("a", Interval.parse("2010-01-01T00:00:00Z/P1Y"), 1L),
-                Java8Helpers.listOf("b", Interval.parse("2011-01-01T00:00:00Z/P1Y"), 2L),
-                Java8Helpers.listOf("c", Interval.parse("2012-01-01T00:00:00Z/P1Y"), 4L),
-                Java8Helpers.listOf("d", Interval.parse("2013-01-01T00:00:00Z/P1Y"), 8L)
+                List.of("a", Interval.parse("2010-01-01T00:00:00Z/P1Y"), 1L),
+                List.of("b", Interval.parse("2011-01-01T00:00:00Z/P1Y"), 2L),
+                List.of("c", Interval.parse("2012-01-01T00:00:00Z/P1Y"), 4L),
+                List.of("d", Interval.parse("2013-01-01T00:00:00Z/P1Y"), 8L)
         );
         engine.put("ds1", ds1);
 
@@ -151,10 +150,10 @@ class TemporalFunctionsTest {
         Object d1 = engine.get("d1");
         assertThat(d1).isInstanceOf(Dataset.class);
         assertThat(((Dataset) d1).getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("id", "a", "measure", 1L, "time", Interval.parse("2009-01-01T00:00:00Z/P1Y")),
-                Java8Helpers.mapOf("id", "b", "measure", 2L, "time", Interval.parse("2010-01-01T00:00:00Z/P1Y")),
-                Java8Helpers.mapOf("id", "c", "measure", 4L, "time", Interval.parse("2011-01-01T00:00:00Z/P1Y")),
-                Java8Helpers.mapOf("id", "d", "measure", 8L, "time", Interval.parse("2012-01-01T00:00:00Z/P1Y"))
+                Map.of("id", "a", "measure", 1L, "time", Interval.parse("2009-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "b", "measure", 2L, "time", Interval.parse("2010-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "c", "measure", 4L, "time", Interval.parse("2011-01-01T00:00:00Z/P1Y")),
+                Map.of("id", "d", "measure", 8L, "time", Interval.parse("2012-01-01T00:00:00Z/P1Y"))
         );
 
         engine.put("t", Interval.parse("2010-01-01T00:00:00Z/P1Y"));
@@ -167,19 +166,19 @@ class TemporalFunctionsTest {
     @Test
     public void testTruncate() throws ScriptException {
 
-        List<Temporal> ts = Java8Helpers.listOf(
+        var ts = List.of(
                 Instant.parse("2023-04-15T01:30:30.1234Z"),                          // Standard Instant
                 ZonedDateTime.parse("2023-03-26T01:30:30.1234+01:00[Europe/Paris]"), // Day before DST starts
                 OffsetDateTime.parse("2023-04-15T01:30:30.1234+01:30"),                    // Standard OffsetDateTime
                 ZonedDateTime.parse("2023-10-29T01:30:30.1234+02:00[Europe/Paris]")  // Day before DST ends
         );
 
-        List<String> us = Java8Helpers.listOf(
+        var us = List.of(
                 "day", "month", "year", "hour", "minute", "second"
         );
 
-        List<Temporal> r = new ArrayList<>();
-        LinkedHashMap<String, List<Temporal>> rr = new LinkedHashMap<>();
+        var r = new ArrayList<Temporal>();
+        var rr = new LinkedHashMap<String, List<Temporal>>();
         for (Temporal t : ts) {
             for (String u : us) {
                 engine.put("t", t);
@@ -234,7 +233,7 @@ class TemporalFunctionsTest {
 
     @Test
     public void testAtZone() throws ScriptException {
-        Map<String, ZonedDateTime> testCases = Java8Helpers.mapOf(
+        Map<String, ZonedDateTime> testCases = Map.of(
                 "Europe/London", ZonedDateTime.ofInstant(Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Europe/London")),
                 "Asia/Kolkata", ZonedDateTime.ofInstant(Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Asia/Kolkata")),
                 "America/New_York", ZonedDateTime.ofInstant(Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("America/New_York"))
@@ -244,10 +243,10 @@ class TemporalFunctionsTest {
         engine.put("t", testInstant);
 
         for (Map.Entry<String, ZonedDateTime> testCase : testCases.entrySet()) {
-            String zone = testCase.getKey();
-            ZonedDateTime expected = testCase.getValue();
+            var zone = testCase.getKey();
+            var expected = testCase.getValue();
             engine.eval("r := at_zone(t, \"" + zone + "\");");
-            Object actual = engine.get("r");
+            var actual = engine.get("r");
             assertEquals(expected, actual, "Failed for zone: " + zone);
         }
 
@@ -266,7 +265,7 @@ class TemporalFunctionsTest {
 
         // This test is an attempt to implement the time aggregate. The state of the group all
         // prevents us to finish it. See https://github.com/sdmx-twg/vtl/issues/456
-        InMemoryDataset ds1 = new InMemoryDataset(Java8Helpers.listOf(
+        var ds1 = new InMemoryDataset(List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("t", Interval.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("me1", Long.class, Dataset.Role.MEASURE)
@@ -287,13 +286,13 @@ class TemporalFunctionsTest {
 
         // Test with own function.
         engine.eval("res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\", \"Europe/Oslo\")];");
-        Dataset actual = (Dataset) engine.get("res");
+        var actual = (Dataset) engine.get("res");
         actual.getDataAsMap().forEach(System.out::println);
         assertThat(actual.getDataAsMap()).containsExactly(
-                Java8Helpers.mapOf("time", Interval.parse("2009-12-31T23:00:00Z/2011-01-01T04:49:12Z"), "test", 70L),
-                Java8Helpers.mapOf("time", Interval.parse("2012-12-31T23:00:00Z/2014-01-01T04:49:12Z"), "test", 50L),
-                Java8Helpers.mapOf("time", Interval.parse("2010-12-31T23:00:00Z/2012-01-01T04:49:12Z"), "test", 30L),
-                Java8Helpers.mapOf("time", Interval.parse("2011-12-31T23:00:00Z/2012-12-31T04:49:12Z"), "test", 30L)
+                Map.of("time", Interval.parse("2009-12-31T23:00:00Z/2011-01-01T04:49:12Z"), "test", 70L),
+                Map.of("time", Interval.parse("2012-12-31T23:00:00Z/2014-01-01T04:49:12Z"), "test", 50L),
+                Map.of("time", Interval.parse("2010-12-31T23:00:00Z/2012-01-01T04:49:12Z"), "test", 30L),
+                Map.of("time", Interval.parse("2011-12-31T23:00:00Z/2012-12-31T04:49:12Z"), "test", 30L)
         );
 
     }

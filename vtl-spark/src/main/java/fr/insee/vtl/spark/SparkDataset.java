@@ -1,6 +1,5 @@
 package fr.insee.vtl.spark;
 
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import org.apache.spark.sql.Row;
@@ -36,8 +35,8 @@ public class SparkDataset implements Dataset {
      * @param roles        a map between component names and their roles in the dataset.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, Map<String, Role> roles) {
-        org.apache.spark.sql.Dataset<Row> castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
-        DataStructure dataStructure = fromSparkSchema(sparkDataset.schema(), roles, Java8Helpers.mapOf());
+        var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        var dataStructure = fromSparkSchema(sparkDataset.schema(), roles, Map.of());
         this.sparkDataset = addMetadata(castedSparkDataset, dataStructure);
         this.roles = Objects.requireNonNull(roles);
     }
@@ -49,7 +48,7 @@ public class SparkDataset implements Dataset {
      * @param structure    a Data Structure.
      */
     public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure structure) {
-        org.apache.spark.sql.Dataset<Row> castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
+        var castedSparkDataset = castIfNeeded(Objects.requireNonNull(sparkDataset));
         this.sparkDataset = addMetadata(castedSparkDataset, structure);
         this.roles = Objects.requireNonNull(
                 structure.entrySet()
@@ -95,7 +94,7 @@ public class SparkDataset implements Dataset {
      * Cast integer and float types to long and double.
      */
     private static org.apache.spark.sql.Dataset<Row> castIfNeeded(org.apache.spark.sql.Dataset<Row> sparkDataset) {
-        org.apache.spark.sql.Dataset<Row> casted = sparkDataset;
+        var casted = sparkDataset;
         StructType schema = sparkDataset.schema();
         for (StructField field : JavaConverters.asJavaCollection(schema)) {
             if (IntegerType.sameType(field.dataType())) {
@@ -113,7 +112,7 @@ public class SparkDataset implements Dataset {
     }
 
     private static org.apache.spark.sql.Dataset<Row> addMetadata(org.apache.spark.sql.Dataset<Row> sparkDataset, DataStructure structure) {
-        org.apache.spark.sql.Dataset<Row> casted = sparkDataset;
+        var casted = sparkDataset;
         for (StructField field : JavaConverters.asJavaCollection(toSparkSchema(structure))) {
             String name = field.name();
             casted = casted.withColumn(name, casted.col(name), field.metadata());
@@ -132,8 +131,11 @@ public class SparkDataset implements Dataset {
         for (Component component : structure.values()) {
             Object vd = null == component.getValuedomain() ? null : component.getValuedomain();
             // TODO: refine nullable strategy
-            scala.collection.immutable.Map<String, Object> md = mapAsScalaMap(Java8Helpers.mapOf("vtlRole", component.getRole().name(), "vtlValuedomain", vd))
-                    .toMap(Predef.$conforms());
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("vtlRole", component.getRole().name());
+            map.put("vtlValuedomain", vd);
+            var md = mapAsScalaMap(map).toMap(Predef.$conforms());
             schema.add(DataTypes.createStructField(
                     component.getName(),
                     fromVtlType(component.getType()),
@@ -167,7 +169,7 @@ public class SparkDataset implements Dataset {
         if (roles.containsKey(field.name())) {
             fieldRole = roles.get(field.name());
         } else if (field.metadata().contains("vtlRole")) {
-            String roleName = field.metadata().getString("vtlRole");
+            var roleName = field.metadata().getString("vtlRole");
             fieldRole = Role.valueOf(roleName);
         } else {
             fieldRole = Role.MEASURE;

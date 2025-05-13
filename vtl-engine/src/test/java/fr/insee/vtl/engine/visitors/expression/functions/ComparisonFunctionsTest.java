@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,10 +53,10 @@ public class ComparisonFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := between(ds[keep id, long1, double2], 5, 15);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", false, "double2", false),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", true, "double2", true),
-                Java8Helpers.mapOf("id", "Nico", "long1", false, "double2", false),
-                Java8Helpers.mapOf("id", "Franck", "long1", false, "double2", false)
+                Map.of("id", "Toto", "long1", false, "double2", false),
+                Map.of("id", "Hadrien", "long1", true, "double2", true),
+                Map.of("id", "Nico", "long1", false, "double2", false),
+                Map.of("id", "Franck", "long1", false, "double2", false)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Boolean.class);
 
@@ -81,10 +81,10 @@ public class ComparisonFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := match_characters(ds[keep id, string1, string2], \"(.*)o(.*)\");");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "string1", true, "string2", false),
-                Java8Helpers.mapOf("id", "Hadrien", "string1", false, "string2", false),
-                Java8Helpers.mapOf("id", "Nico", "string1", true, "string2", false),
-                Java8Helpers.mapOf("id", "Franck", "string1", false, "string2", false)
+                Map.of("id", "Toto", "string1", true, "string2", false),
+                Map.of("id", "Hadrien", "string1", false, "string2", false),
+                Map.of("id", "Nico", "string1", true, "string2", false),
+                Map.of("id", "Franck", "string1", false, "string2", false)
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(Boolean.class);
 
@@ -109,10 +109,10 @@ public class ComparisonFunctionsTest {
         context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := isnull(ds[keep id, string1, bool1]);");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "string1", false, "bool1", false),
-                Java8Helpers.mapOf("id", "Hadrien", "string1", false, "bool1", false),
-                Java8Helpers.mapOf("id", "Nico", "string1", false, "bool1", false),
-                Java8Helpers.mapOf("id", "Franck", "string1", false, "bool1", false)
+                Map.of("id", "Toto", "string1", false, "bool1", false),
+                Map.of("id", "Hadrien", "string1", false, "bool1", false),
+                Map.of("id", "Nico", "string1", false, "bool1", false),
+                Map.of("id", "Franck", "string1", false, "bool1", false)
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(Boolean.class);
     }

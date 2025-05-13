@@ -2,9 +2,12 @@ package fr.insee.vtl.spark;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import org.apache.spark.api.java.function.FilterFunction;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +19,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static fr.insee.vtl.model.Structured.Component;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,14 +45,14 @@ public class SparkDatasetTest {
 
     @Test
     public void testFilters() {
-        StructType schema = DataTypes.createStructType(Java8Helpers.listOf(
+        StructType schema = DataTypes.createStructType(List.of(
                 DataTypes.createStructField("string", DataTypes.StringType, false),
                 DataTypes.createStructField("integer", DataTypes.LongType, false),
                 DataTypes.createStructField("boolean", DataTypes.BooleanType, false),
                 DataTypes.createStructField("float", DataTypes.DoubleType, false)
         ));
 
-        Dataset<Row> dataFrame = spark.createDataFrame(Java8Helpers.listOf(
+        Dataset<Row> dataFrame = spark.createDataFrame(List.of(
                 RowFactory.create("string", 1L, true, 1.5D)
         ), schema);
 
@@ -60,14 +65,14 @@ public class SparkDatasetTest {
     @Test
     void testVtlCanReadSpark() {
 
-        StructType schema = DataTypes.createStructType(Java8Helpers.listOf(
+        StructType schema = DataTypes.createStructType(List.of(
                 DataTypes.createStructField("string", DataTypes.StringType, false),
                 DataTypes.createStructField("integer", DataTypes.LongType, false),
                 DataTypes.createStructField("boolean", DataTypes.BooleanType, false),
                 DataTypes.createStructField("float", DataTypes.DoubleType, false)
         ));
 
-        Dataset<Row> dataFrame = spark.createDataFrame(Java8Helpers.listOf(
+        Dataset<Row> dataFrame = spark.createDataFrame(List.of(
                 RowFactory.create("string", 1L, true, 1.5D)
         ), schema);
 
@@ -75,8 +80,8 @@ public class SparkDatasetTest {
         fr.insee.vtl.model.Dataset sparkDataset = new SparkDataset(dataFrame);
 
         fr.insee.vtl.model.Dataset expectedDataset = new InMemoryDataset(
-                Java8Helpers.listOf(Java8Helpers.listOf("string", 1L, true, 1.5D)),
-                Java8Helpers.listOf(
+                List.of(List.of("string", 1L, true, 1.5D)),
+                List.of(
                         new Component("string", String.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
                         new Component("integer", Long.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
                         new Component("boolean", Boolean.class, fr.insee.vtl.model.Dataset.Role.MEASURE),
@@ -93,7 +98,7 @@ public class SparkDatasetTest {
     public void testParquetMetadataReading(@TempDir Path tmpDirectory) {
         SparkDataset sparkDataset = new SparkDataset(
                 spark.read().parquet("src/main/resources/input_sample"),
-                Java8Helpers.mapOf(
+                Map.of(
                         "year", fr.insee.vtl.model.Dataset.Role.IDENTIFIER,
                         "student_number", fr.insee.vtl.model.Dataset.Role.ATTRIBUTE
                 )

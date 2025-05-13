@@ -6,7 +6,6 @@ import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -97,11 +96,11 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     @Override
     public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
         try {
-            ResolvableExpression conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
-            ResolvableExpression thenExpression = exprVisitor.visit(ctx.thenExpr);
-            ResolvableExpression elseExpression = exprVisitor.visit(ctx.elseExpr);
+            var conditionalExpr = exprVisitor.visit(ctx.conditionalExpr);
+            var thenExpression = exprVisitor.visit(ctx.thenExpr);
+            var elseExpression = exprVisitor.visit(ctx.elseExpr);
             Positioned position = fromContext(ctx);
-            ResolvableExpression expression = genericFunctionsVisitor.invokeFunction("ifThenElse", Java8Helpers.listOf(conditionalExpr, thenExpression, elseExpression), position);
+            ResolvableExpression expression = genericFunctionsVisitor.invokeFunction("ifThenElse", List.of(conditionalExpr, thenExpression, elseExpression), position);
             Class<?> actualType = thenExpression.getType();
             return new CastExpression(position, expression, actualType);
         } catch (VtlScriptException e) {
@@ -162,7 +161,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
         ResolvableExpression nextWhen = whenExpr.next();
 
-        return genericFunctionsVisitor.invokeFunction("ifThenElse", Java8Helpers.listOf(
+        return genericFunctionsVisitor.invokeFunction("ifThenElse", List.of(
                 nextWhen,
                 thenExpr.next(),
                 caseToIfIt(whenExpr, thenExpr, elseExpression)
@@ -183,7 +182,7 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
             ResolvableExpression defaultExpression = exprVisitor.visit(ctx.right);
 
             Positioned position = fromContext(ctx);
-            return genericFunctionsVisitor.invokeFunction("nvl", Java8Helpers.listOf(expression, defaultExpression), position);
+            return genericFunctionsVisitor.invokeFunction("nvl", List.of(expression, defaultExpression), position);
         } catch (VtlScriptException e) {
             throw new VtlRuntimeException(e);
         }

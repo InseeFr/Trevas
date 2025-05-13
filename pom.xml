@@ -69,12 +69,14 @@
     </distributionManagement>
 
     <properties>
-        <jdk.version>1.8</jdk.version>
+        <jdk.version>17</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jacoco.version>0.8.7</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <maven.compiler.source>${jdk.version}</maven.compiler.source>
+        <maven.compiler.target>${jdk.version}</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -110,7 +112,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>1.8</version>
+                                    <version>17.0.0</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.3.9</version>
@@ -171,16 +173,20 @@
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                     <configuration>
-                        <target>${jdk.version}</target>
-                        <source>${jdk.version}</source>
+                        <release>${jdk.version}</release>
+                        <testRelease>${jdk.version}</testRelease>
                     </configuration>
                 </plugin>
             </plugins>
@@ -220,7 +226,7 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.8.0</version>
                         <configuration>
-                            <source>8</source>
+                            <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
                         </configuration>
@@ -280,7 +286,7 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.7.0</version>
                         <configuration>
-                            <source>8</source>
+                            <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
                         </configuration>

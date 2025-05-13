@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.visitors.expression;
 
 import fr.insee.vtl.engine.samples.DatasetSamples;
-import fr.insee.vtl.model.utils.Java8Helpers;
 import fr.insee.vtl.model.Dataset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +9,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,10 +55,10 @@ public class ArithmeticExprOrConcatTest {
         context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ds1[keep id, long1, long2] + ds1[keep id, long1, long2];");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Toto", "long1", 60L, "long2", 600L),
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 20L, "long2", 2L),
-                Java8Helpers.mapOf("id", "Nico", "long1", 40L, "long2", 500L),
-                Java8Helpers.mapOf("id", "Franck", "long1", 200L, "long2", 4L)
+                Map.of("id", "Toto", "long1", 60L, "long2", 600L),
+                Map.of("id", "Hadrien", "long1", 20L, "long2", 2L),
+                Map.of("id", "Nico", "long1", 40L, "long2", 500L),
+                Map.of("id", "Franck", "long1", 200L, "long2", 4L)
         );
 //        assertThat(((Dataset) res).getDataStructure().get("long2").getType()).isEqualTo(Long.class);
     }
@@ -77,9 +77,9 @@ public class ArithmeticExprOrConcatTest {
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ds2[keep id, long1] - ds1[keep id, long1] + 1;");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "long1", 141L),
-                Java8Helpers.mapOf("id", "Nico", "long1", 1L),
-                Java8Helpers.mapOf("id", "Franck", "long1", 1L)
+                Map.of("id", "Hadrien", "long1", 141L),
+                Map.of("id", "Nico", "long1", 1L),
+                Map.of("id", "Franck", "long1", 1L)
         );
         assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
     }
@@ -94,9 +94,9 @@ public class ArithmeticExprOrConcatTest {
         context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
         Object res = engine.eval("res := ds2[keep id, string1] || \" \" || ds1[keep id, string1];");
         assertThat(((Dataset) res).getDataAsMap()).containsExactlyInAnyOrder(
-                Java8Helpers.mapOf("id", "Hadrien", "string1", "hadrien hadrien"),
-                Java8Helpers.mapOf("id", "Nico", "string1", "nico nico"),
-                Java8Helpers.mapOf("id", "Franck", "string1", "franck franck")
+                Map.of("id", "Hadrien", "string1", "hadrien hadrien"),
+                Map.of("id", "Nico", "string1", "nico nico"),
+                Map.of("id", "Franck", "string1", "franck franck")
         );
         assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
     }

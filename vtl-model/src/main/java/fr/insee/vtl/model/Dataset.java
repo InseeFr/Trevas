@@ -2,7 +2,6 @@ package fr.insee.vtl.model;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +26,7 @@ public interface Dataset extends Structured {
     List<DataPoint> getDataPoints();
 
     default List<List<Object>> getDataAsList() {
-        Set<String> columns = getDataStructure().keySet();
+        var columns = getDataStructure().keySet();
         return getDataPoints().stream()
                 .map(dataPoint -> columns.stream()
                         .map(dataPoint::get).collect(Collectors.toList())

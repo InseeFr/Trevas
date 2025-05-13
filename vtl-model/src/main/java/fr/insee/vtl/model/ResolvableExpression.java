@@ -50,7 +50,7 @@ public abstract class ResolvableExpression implements TypedExpression, Positione
             return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> null);
         }
         return ResolvableExpression.withType(clazz).withPosition(this).using(ctx -> {
-            Object value = this.resolve(ctx);
+            var value = this.resolve(ctx);
             try {
                 return clazz.cast(value);
             } catch (ClassCastException cce) {
