@@ -243,8 +243,18 @@
                             <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
+                            <additionalOptions>
+                                <additionalOption>-Xdoclint:none</additionalOption>
+                            </additionalOptions>
                         </configuration>
                         <executions>
+                            <execution>
+                                <id>aggregate</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>site</phase>
+                            </execution>
                             <execution>
                                 <id>attach-javadocs</id>
                                 <goals>
