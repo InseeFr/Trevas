@@ -245,6 +245,7 @@
                             <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
+                            <useModulePath>false</useModulePath>
                         </configuration>
                         <executions>
                             <execution>
