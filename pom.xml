@@ -128,7 +128,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>17.0.0</version>
+                                    <version>${jdk.version}</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.3.9</version>
@@ -188,10 +188,6 @@
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -259,14 +255,6 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
-                                <configuration>
-                                    <useModulePath>false</useModulePath>
-                                    <source>${jdk.version}</source>
-                                    <additionalOptions>
-                                        <additionalOption>--ignore-source-errors</additionalOption>
-                                        <additionalOption>-Xdoclint:none</additionalOption>
-                                    </additionalOptions>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -308,7 +296,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.7.0</version>
+                        <version>3.8.0</version>
                         <configuration>
                             <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
