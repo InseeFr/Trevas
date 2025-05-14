@@ -244,7 +244,10 @@
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
                             <additionalOptions>
+                                <additionalOption>--ignore-source-errors</additionalOption>
                                 <additionalOption>-Xdoclint:none</additionalOption>
+                                <additionalOption>--release</additionalOption>
+                                <additionalOption>${jdk.version}</additionalOption>
                             </additionalOptions>
                         </configuration>
                         <executions>
