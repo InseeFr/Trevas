@@ -199,8 +199,6 @@
                     <configuration>
                         <release>${jdk.version}</release>
                         <testRelease>${jdk.version}</testRelease>
-                        <target>${jdk.version}</target>
-                        <source>${jdk.version}</source>
                     </configuration>
                 </plugin>
             </plugins>
@@ -305,9 +303,14 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.8.0</version>
                         <configuration>
-                            <source>${jdk.version}</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
+                            <additionalOptions>
+                                <additionalOption>--release</additionalOption>
+                                <additionalOption>${jdk.version}</additionalOption>
+                                <additionalOption>--ignore-source-errors</additionalOption>
+                                <additionalOption>-Xdoclint:none</additionalOption>
+                            </additionalOptions>
                         </configuration>
                     </plugin>
                 </plugins>
