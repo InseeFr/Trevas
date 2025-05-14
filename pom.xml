@@ -261,6 +261,11 @@
                                 </goals>
                                 <configuration>
                                     <useModulePath>false</useModulePath>
+                                    <source>${jdk.version}</source>
+                                    <additionalOptions>
+                                        <additionalOption>--ignore-source-errors</additionalOption>
+                                        <additionalOption>-Xdoclint:none</additionalOption>
+                                    </additionalOptions>
                                 </configuration>
                             </execution>
                         </executions>
