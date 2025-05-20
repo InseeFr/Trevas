@@ -13,7 +13,7 @@
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
     <description>Trevas engine for Apache Spark</description>
-    <version>1.8.0</version>
+    <version>1.8.0-fixed</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
