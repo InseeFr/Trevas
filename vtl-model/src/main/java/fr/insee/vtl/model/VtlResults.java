@@ -8,37 +8,37 @@ import java.util.Map;
  */
 public class VtlResults {
 
-    /**
-     * Returns the input bindings.
-     *
-     * @return The input bindings as a map between variable name and corresponding dataset.
-     */
-    Map<String, Dataset> getInputs() {
+  /**
+   * Returns the input bindings.
+   *
+   * @return The input bindings as a map between variable name and corresponding dataset.
+   */
+  Map<String, Dataset> getInputs() {
 
-        Map<String, Dataset> inputs = new HashMap<>();
+    Map<String, Dataset> inputs = new HashMap<>();
 
-        return inputs;
-    }
+    return inputs;
+  }
 
-    /**
-     * Returns the output bindings.
-     *
-     * @return The output bindings as a map between variable name and corresponding dataset.
-     */
-    Map<String, Dataset> getOutputs() {
+  /**
+   * Returns the output bindings.
+   *
+   * @return The output bindings as a map between variable name and corresponding dataset.
+   */
+  Map<String, Dataset> getOutputs() {
 
-        Map<String, Dataset> outputs = new HashMap<>();
+    Map<String, Dataset> outputs = new HashMap<>();
 
-        return outputs;
-    }
+    return outputs;
+  }
 
-    /**
-     * Returns the metadata set produced by the evaluation.
-     *
-     * @return The metadata set.
-     */
-    Metadataset getMetadata() {
+  /**
+   * Returns the metadata set produced by the evaluation.
+   *
+   * @return The metadata set.
+   */
+  Metadataset getMetadata() {
 
-        return null;
-    }
+    return null;
+  }
 }

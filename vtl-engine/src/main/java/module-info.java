@@ -4,39 +4,39 @@ import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
-
 import javax.script.ScriptEngineFactory;
 
-/**
- * This module contains the actual VTL engine.
- */
+/** This module contains the actual VTL engine. */
 module fr.insee.vtl.engine {
-    exports fr.insee.vtl.engine.exceptions;
+  exports fr.insee.vtl.engine.exceptions;
 
-    requires transitive java.scripting;
-    requires transitive fr.insee.vtl.parser;
-    requires transitive fr.insee.vtl.model;
+  requires transitive java.scripting;
+  requires transitive fr.insee.vtl.parser;
+  requires transitive fr.insee.vtl.model;
 
-    uses ProcessingEngine;
-    uses ProcessingEngineFactory;
-    uses FunctionProvider;
+  uses ProcessingEngine;
+  uses ProcessingEngineFactory;
+  uses FunctionProvider;
 
-    // exports fr.insee.vtl.engine.functions;
-    provides FunctionProvider with LevenshteinProvider;
+  // exports fr.insee.vtl.engine.functions;
+  provides FunctionProvider with
+      LevenshteinProvider;
 
-    exports fr.insee.vtl.engine.processors;
-    provides ProcessingEngineFactory with InMemoryProcessingEngine.Factory;
+  exports fr.insee.vtl.engine.processors;
 
-    opens fr.insee.vtl.engine;
+  provides ProcessingEngineFactory with
+      InMemoryProcessingEngine.Factory;
 
-    requires org.antlr.antlr4.runtime;
+  opens fr.insee.vtl.engine;
 
-    // TODO: Consider removing these.
-    requires org.apache.commons.lang3;
-    requires org.apache.commons.text;
-    requires safety.mirror;
-    requires org.threeten.extra;
+  requires org.antlr.antlr4.runtime;
 
-    provides ScriptEngineFactory with VtlScriptEngineFactory;
+  // TODO: Consider removing these.
+  requires org.apache.commons.lang3;
+  requires org.apache.commons.text;
+  requires safety.mirror;
+  requires org.threeten.extra;
 
+  provides ScriptEngineFactory with
+      VtlScriptEngineFactory;
 }

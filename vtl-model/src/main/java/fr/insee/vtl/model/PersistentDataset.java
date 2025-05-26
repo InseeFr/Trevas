@@ -5,23 +5,23 @@ import java.util.Objects;
 
 public final class PersistentDataset implements Dataset {
 
-    private final Dataset delegate;
+  private final Dataset delegate;
 
-    public PersistentDataset(Dataset t) {
-        this.delegate = Objects.requireNonNull(t);
-    }
+  public PersistentDataset(Dataset t) {
+    this.delegate = Objects.requireNonNull(t);
+  }
 
-    public Dataset getDelegate() {
-        return this.delegate;
-    }
+  public Dataset getDelegate() {
+    return this.delegate;
+  }
 
-    @Override
-    public List<DataPoint> getDataPoints() {
-        return delegate.getDataPoints();
-    }
+  @Override
+  public List<DataPoint> getDataPoints() {
+    return delegate.getDataPoints();
+  }
 
-    @Override
-    public DataStructure getDataStructure() {
-        return delegate.getDataStructure();
-    }
+  @Override
+  public DataStructure getDataStructure() {
+    return delegate.getDataStructure();
+  }
 }
