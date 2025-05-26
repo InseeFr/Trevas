@@ -1,36 +1,45 @@
 # 🚀 Contributing to Trevas
 
-Thank you for your interest in contributing to Trevas! Your help is invaluable in improving this project. Here’s how you can get started.
+Thank you for your interest in contributing to Trevas! Your help is invaluable in improving this project. Here’s how you
+can get started.
 
 ## 🛠️ Contribution Guidelines
 
 ### 📌 Roles & Responsibilities
 
-- **[Insee](https://www.insee.fr/en)** is responsible for the overall **project governance**. They guide the vision of the project, make final decisions, and ensure the project aligns with its long-term goals.
-- **[Making Sense](https://making-sense.info/)** are responsible for reviewing **Pull Requests (PRs)**, merging them into the master branch, adjusting the **GitHub project board**, and tagging issues to ensure proper tracking. They ensure the code meets the project's standards before merging and help prioritize tasks.
-- **Maintainers** (which can include anyone who is granted this role) help with day-to-day management of the project, such as reviewing code, merging PRs, and managing the project's direction. If you're interested in becoming a maintainer, please see the section below.
+- **[Insee](https://www.insee.fr/en)** is responsible for the overall **project governance**. They guide the vision of
+  the project, make final decisions, and ensure the project aligns with its long-term goals.
+- **[Making Sense](https://making-sense.info/)** are responsible for reviewing **Pull Requests (PRs)**, merging them
+  into the master branch, adjusting the **GitHub project board**, and tagging issues to ensure proper tracking. They
+  ensure the code meets the project's standards before merging and help prioritize tasks.
+- **Maintainers** (which can include anyone who is granted this role) help with day-to-day management of the project,
+  such as reviewing code, merging PRs, and managing the project's direction. If you're interested in becoming a
+  maintainer, please see the section below.
 
 ### 📌 Issues & Pull Requests
 
 - Every **Pull Request (PR) must be linked to an existing issue**
 - When creating a PR, use the following naming convention:
-  - **`feat/your-feature-name`** for new features
-  - **`fix/your-bug-fix`** for bug fixes
+    - **`feat/your-feature-name`** for new features
+    - **`fix/your-bug-fix`** for bug fixes
 - Discuss your ideas in an issue before starting major work
 
 ### 👀 Four Eyes Principle & Code Review Practices
 
-To ensure the quality, reliability, and security of Trevas, we follow the **Four Eyes Principle** for all code contributions.
+To ensure the quality, reliability, and security of Trevas, we follow the **Four Eyes Principle** for all code
+contributions.
 
 #### 🔍 What is the Four Eyes Principle?
 
-The **Four Eyes Principle** means that **at least two people must review and approve any important action** before it is finalized. In the context of Trevas, this applies specifically to:
+The **Four Eyes Principle** means that **at least two people must review and approve any important action** before it is
+finalized. In the context of Trevas, this applies specifically to:
 
 - Pull Request (PR) reviews and approvals
 - Merges into the `develop` or `master` branches
 - Structural changes in architecture, testing strategy, or documentation
 
 This principle helps:
+
 - Catch potential bugs or security issues early
 - Encourage collaborative development
 - Share knowledge across the team
@@ -49,10 +58,12 @@ All Pull Requests should:
 
 **Only after meeting these conditions can a PR be merged**.
 
-Maintainers are expected to **uphold these principles** and ensure reviews are thoughtful, constructive, and inclusive.  
+Maintainers are expected to **uphold these principles** and ensure reviews are thoughtful, constructive, and
+inclusive.  
 We believe that code review is not just a checkpoint, but a space to learn, improve, and grow as a team.
 
-> 🤝 If you're contributing regularly and want to become a maintainer, don't hesitate to reach out to us at **contact@making-sense.info** — we’d love to welcome more eyes to the team!
+> 🤝 If you're contributing regularly and want to become a maintainer, don't hesitate to reach out to us at *
+*contact@making-sense.info** — we’d love to welcome more eyes to the team!
 
 ### 🧪 Test-Driven Development (TDD)
 
@@ -62,20 +73,42 @@ We encourage a **test-driven approach** to ensure code reliability and maintaina
 2. **Implement the code** needed to pass the test
 3. **Refactor** while ensuring all tests remain green
 
-### 🎨 Code Formatting
+### 🎨 Code Formatting with Spotless
 
-To keep our codebase consistent, please follow these formatting guidelines:
+We use [Spotless](https://github.com/diffplug/spotless) to enforce consistent code formatting based on the *
+*[Google Java Style Guide](https://google.github.io/styleguide/javaguide.html)**.
 
-- **Indentation**: Use tabs for indentation
-- **Line Length**: Keep lines under 120 characters
-- **Naming**: Use meaningful and descriptive English names for variables, functions, and classes
+#### 💻 Check formatting
+
+Before committing, run:
+
+```
+mvn spotless:check
+```
+
+#### 🛠️ Auto-format your code
+
+To automatically format your code, run:
+
+```
+mvn spotless:apply
+```
+
+This ensures that your code:
+
+- Uses **tabs** for indentation
+- Respects a **120-character line limit**
+- Applies **Google Java Format**
+
+All contributions **must pass `spotless:check` in CI**.
 
 ## 🔄 Creating a Pull Request
 
 To contribute, follow these steps:
 
 1. **Fork** the repository
-2. **Create a branch** from `develop` using the correct prefix (`feat/` or `fix/`). Example: `feat/authentication` or `fix/typo-readme`
+2. **Create a branch** from `develop` using the correct prefix (`feat/` or `fix/`). Example: `feat/authentication` or
+   `fix/typo-readme`
 3. **Commit** your changes with a clear and concise message
 4. **Push** your branch to your fork
 5. **Open a Pull Request** targeting the `develop` branch
@@ -100,7 +133,8 @@ Check out our [Project Board](https://github.com/InseeFr/Trevas/projects) to see
 ### 🗣️ Communication
 
 We encourage **open and transparent discussions**.  
-If you have any questions or suggestions, please use [GitHub Issues](https://github.com/InseeFr/Trevas/issues) so the whole community can participate.
+If you have any questions or suggestions, please use [GitHub Issues](https://github.com/InseeFr/Trevas/issues) so the
+whole community can participate.
 
 ## 📄 License
 
