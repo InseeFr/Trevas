@@ -93,10 +93,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   publish-release:
     name: Publish Trevas modules on Maven
-    # Pre filter thanks to test-sonar-package job
-    # Temp
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    if: github.ref == 'refs/heads/master'
+    if: startsWith(github.event.ref, 'refs/tags/v')
     needs: test-sonar-package
     runs-on: ubuntu-latest
     steps:
