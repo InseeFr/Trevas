@@ -54,7 +54,7 @@
 		"react-player": "^2.16.0",
 		"react-scroll": "^1.9.3",
 		"react-slick": "^0.30.3",
-		"sass": "^1.88.0",
+		"sass": "^1.89.0",
 		"typed.js": "^2.0.12"
 	},
 	"devDependencies": {
@@ -65,7 +65,7 @@
 		"@typescript-eslint/eslint-plugin": "^8.32.1",
 		"@typescript-eslint/parser": "^8.32.1",
 		"docusaurus-node-polyfills": "^1.0.0",
-		"eslint": "^9.26.0",
+		"eslint": "^9.27.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-import": "^2.31.0",
 		"eslint-plugin-prettier": "^5.4.0",
