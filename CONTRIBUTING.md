@@ -82,7 +82,7 @@ We use [Spotless](https://github.com/diffplug/spotless) to enforce consistent co
 
 Before committing, run:
 
-```
+```bash
 mvn spotless:check
 ```
 
@@ -90,7 +90,7 @@ mvn spotless:check
 
 To automatically format your code, run:
 
-```
+```bash
 mvn spotless:apply
 ```
 
@@ -101,6 +101,46 @@ This ensures that your code:
 - Applies **Google Java Format**
 
 All contributions **must pass `spotless:check` in CI**.
+
+### 🧠 IntelliJ IDEA Setup for Spotless
+
+To use Spotless formatting from IntelliJ:
+
+1. **Enable necessary VM options** (required to support Google Java Format):
+
+   Go to:
+
+   ```
+   Preferences (macOS) or Settings (Windows/Linux) >
+   Build, Execution, Deployment >
+   Compiler >
+   Java Compiler >
+   Additional command line parameters
+   ```
+
+   Add the following VM options:
+
+   ```
+   --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+   --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+   --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+   --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+   --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+   --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+   ```
+
+2. **(Optional)**: Automate formatting on save using the *Save Actions* plugin:
+
+- Install the **Save Actions** plugin from the IntelliJ Marketplace
+- Go to `Preferences > Save Actions`
+- Enable **"Activate save actions on save"**
+- Configure it to run an external tool with the command:
+
+  ```bash
+  mvn spotless:apply
+  ```
+
+> 💡 You can also define a custom keybinding in IntelliJ to run `mvn spotless:apply` easily when needed.
 
 ## 🔄 Creating a Pull Request
 
