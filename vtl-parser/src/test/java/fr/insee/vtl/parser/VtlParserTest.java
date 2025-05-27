@@ -10,42 +10,41 @@ import org.junit.jupiter.api.Test;
 
 public class VtlParserTest {
 
-    @Test
-    public void testThatParserCanFailToParse() {
+  @Test
+  public void testThatParserCanFailToParse() {
 
-        VtlParser parser = lexeAndParse("vtl that fails");
-        ParseTreeWalker walker = new ParseTreeWalker();
+    VtlParser parser = lexeAndParse("vtl that fails");
+    ParseTreeWalker walker = new ParseTreeWalker();
 
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            walker.walk(new FailingListener(), parser.start());
+    Assertions.assertThrows(
+        RuntimeException.class,
+        () -> {
+          walker.walk(new FailingListener(), parser.start());
         });
+  }
 
+  @Test
+  public void testThatParserCanParse() {
+
+    VtlParser parser = lexeAndParse("sumVar := 1 + 1 - -1;");
+    VtlParser.StartContext start = parser.start();
+
+    ParseTreeWalker walker = new ParseTreeWalker();
+    FailingListener listener = new FailingListener();
+
+    Assertions.assertDoesNotThrow(() -> walker.walk(listener, start));
+  }
+
+  private VtlParser lexeAndParse(String expression) {
+    CodePointCharStream stream = CharStreams.fromString(expression);
+    VtlLexer lexer = new VtlLexer(stream);
+    return new VtlParser(new CommonTokenStream(lexer));
+  }
+
+  static class FailingListener extends VtlBaseListener {
+    @Override
+    public void visitErrorNode(ErrorNode node) {
+      throw new RuntimeException();
     }
-
-    @Test
-    public void testThatParserCanParse() {
-
-        VtlParser parser = lexeAndParse("sumVar := 1 + 1 - -1;");
-        VtlParser.StartContext start = parser.start();
-
-        ParseTreeWalker walker = new ParseTreeWalker();
-        FailingListener listener = new FailingListener();
-
-        Assertions.assertDoesNotThrow(() ->
-                walker.walk(listener, start)
-        );
-    }
-
-    private VtlParser lexeAndParse(String expression) {
-        CodePointCharStream stream = CharStreams.fromString(expression);
-        VtlLexer lexer = new VtlLexer(stream);
-        return new VtlParser(new CommonTokenStream(lexer));
-    }
-
-    static class FailingListener extends VtlBaseListener {
-        @Override
-        public void visitErrorNode(ErrorNode node) {
-            throw new RuntimeException();
-        }
-    }
+  }
 }

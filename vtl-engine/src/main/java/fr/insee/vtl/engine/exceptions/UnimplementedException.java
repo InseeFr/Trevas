@@ -5,7 +5,7 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 public class UnimplementedException extends VtlScriptException {
 
-    public UnimplementedException(String msg, Positioned position) {
-        super(msg, position);
-    }
+  public UnimplementedException(String msg, Positioned position) {
+    super(msg, position);
+  }
 }

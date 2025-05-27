@@ -1,12 +1,9 @@
 package fr.insee.vtl.model;
 
 /**
- * Metadata set
+ * Metadata set <code>Metadataset</code> is the base interface for sets of metadata that can be
+ * provided by the VTL engine.
  *
- * <code>Metadataset</code> is the base interface for sets of metadata that can be provided by the VTL engine.
- * <p>
- * Metadata sets can be of very diverse types, so the interface does not specify any specifics.
+ * <p>Metadata sets can be of very diverse types, so the interface does not specify any specifics.
  */
-public interface Metadataset {
-
-}
+public interface Metadataset {}
