@@ -100,6 +100,7 @@ module.exports = {
 			label: 'Developer guide',
 			items: [
 				'developer-guide/index-developer-guide',
+				'developer-guide/developer-javadoc',
 				{
 					type: 'category',
 					label: 'Basic mode',
