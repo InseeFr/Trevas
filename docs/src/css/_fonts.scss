@@ -1,47 +1,86 @@
 @font-face {
 	font-family: 'Futura Light';
-	src: local('Futura Light'),
-		url(./fonts/Futura_Light_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/2167e76f00e569cc11b3665679996380.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/2167e76f00e569cc11b3665679996380.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/2167e76f00e569cc11b3665679996380.ttf')
+			format('truetype');
 }
 
 @font-face {
 	font-family: 'Futura Light Italic';
-	src: local('Futura Light Italic'),
-		url(./fonts/Futura_Light_Italic_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/02bbf3cf1491a49e5272882d0598111c.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/02bbf3cf1491a49e5272882d0598111c.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/02bbf3cf1491a49e5272882d0598111c.ttf')
+			format('truetype');
 }
 
 @font-face {
 	font-family: 'Futura Book';
-	src: local('Futura Book'),
-		url(./fonts/Futura_Book_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/02a0efa4275f78836dfc89db9e21feea.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/02a0efa4275f78836dfc89db9e21feea.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/02a0efa4275f78836dfc89db9e21feea.ttf')
+			format('truetype');
 }
 
 @font-face {
 	font-family: 'Futura Book Italic';
-	src: local('Futura Book Italic'),
-		url(./fonts/Futura_Book_Italic_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/5265249bdc5bb8258d22778263bfbe29.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/5265249bdc5bb8258d22778263bfbe29.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/5265249bdc5bb8258d22778263bfbe29.ttf')
+			format('truetype');
 }
 
 @font-face {
 	font-family: 'Futura Medium';
-	src: local('Futura Medium'),
-		url(./fonts/Futura_medium_bt.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/e8c6a63541de0a4211a9358cbe74690f.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/e8c6a63541de0a4211a9358cbe74690f.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/e8c6a63541de0a4211a9358cbe74690f.ttf')
+			format('truetype');
 }
-
 @font-face {
 	font-family: 'Futura Medium Italic';
-	src: local('Futura Medium Italic'),
-		url(./fonts/Futura_Medium_Italic_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/0754c79591548fdd9fb8078c683ca5ba.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/0754c79591548fdd9fb8078c683ca5ba.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/0754c79591548fdd9fb8078c683ca5ba.ttf')
+			format('truetype');
 }
 
 @font-face {
 	font-family: 'Futura Heavy';
-	src: local('Futura Heavy'),
-		url(./fonts/Futura_Heavy_font.ttf) format('truetype');
+	src:
+		url('https://db.onlinewebfonts.com/t/effabec88188d561f02a3a0f522838aa.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/effabec88188d561f02a3a0f522838aa.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/effabec88188d561f02a3a0f522838aa.ttf')
+			format('truetype');
 }
 
 @font-face {
-	font-family: 'Futura Heavy';
-	src: local('Futura Heavy'),
-		url(./fonts/Futura_Heavy_Italic_font.ttf) format('truetype');
+	font-family: 'Futura Heavy Italic';
+	src:
+		url('https://db.onlinewebfonts.com/t/4e74df009b7ff16fffa3e1212888e905.woff2')
+			format('woff2'),
+		url('https://db.onlinewebfonts.com/t/4e74df009b7ff16fffa3e1212888e905.woff')
+			format('woff'),
+		url('https://db.onlinewebfonts.com/t/4e74df009b7ff16fffa3e1212888e905.ttf')
+			format('truetype');
 }

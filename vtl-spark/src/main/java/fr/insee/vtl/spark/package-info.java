@@ -1,4 +1,2 @@
-/**
- * This package contains the Spark VTL engine.
- */
+/** This package contains the Spark VTL engine. */
 package fr.insee.vtl.spark;

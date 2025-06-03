@@ -1,17 +1,16 @@
 package fr.insee.vtl.jackson;
 
+import static com.fasterxml.jackson.databind.JsonMappingException.from;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.utils.Java8Helpers;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,168 +18,162 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.fasterxml.jackson.databind.JsonMappingException.from;
-
-/**
- * <code>DatasetDeserializer</code> is a JSON deserializer specialized for datasets.
- */
+/** <code>DatasetDeserializer</code> is a JSON deserializer specialized for datasets. */
 public class DatasetDeserializer extends StdDeserializer<Dataset> {
 
-    private static final Set<String> STRUCTURE_NAMES = Java8Helpers.setOf("structure", "dataStructure");
-    private static final Set<String> DATAPOINT_NAMES = Java8Helpers.setOf("data", "dataPoints");
+  private static final Set<String> STRUCTURE_NAMES = Set.of("structure", "dataStructure");
+  private static final Set<String> DATAPOINT_NAMES = Set.of("data", "dataPoints");
 
-    /**
-     * Base constructor.
-     */
-    protected DatasetDeserializer() {
-        super(Dataset.class);
+  /** Base constructor. */
+  protected DatasetDeserializer() {
+    super(Dataset.class);
+  }
+
+  /**
+   * Deserializes a JSON dataset into a <code>Dataset</code> object.
+   *
+   * @param p The base JSON parser.
+   * @param ctxt A deserialization context.
+   * @return The deserialized dataset.
+   * @throws IOException In case of problem while processing the JSON dataset.
+   */
+  @Override
+  public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+
+    // Json is an object.
+    if (p.currentToken() != JsonToken.START_OBJECT) {
+      ctxt.handleUnexpectedToken(Dataset.class, p);
     }
 
-    /**
-     * Deserializes a JSON dataset into a <code>Dataset</code> object.
-     *
-     * @param p    The base JSON parser.
-     * @param ctxt A deserialization context.
-     * @return The deserialized dataset.
-     * @throws IOException In case of problem while processing the JSON dataset.
-     */
-    @Override
-    public Dataset deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    List<Structured.Component> structure = null;
+    List<List<Object>> dataPoints = null;
 
-        // Json is an object.
-        if (p.currentToken() != JsonToken.START_OBJECT) {
-            ctxt.handleUnexpectedToken(Dataset.class, p);
+    while (p.nextToken() != JsonToken.END_OBJECT) {
+      if (STRUCTURE_NAMES.contains(p.currentName())) {
+        structure = deserializeStructure(p, ctxt);
+        if (dataPoints != null) {
+          convertDataPoints(p, dataPoints, structure);
         }
-
-        List<Structured.Component> structure = null;
-        List<List<Object>> dataPoints = null;
-
-        while (p.nextToken() != JsonToken.END_OBJECT) {
-            if (STRUCTURE_NAMES.contains(p.currentName())) {
-                structure = deserializeStructure(p, ctxt);
-                if (dataPoints != null) {
-                    convertDataPoints(p, dataPoints, structure);
-                }
-            } else if (DATAPOINT_NAMES.contains(p.currentName())) {
-                if (structure != null) {
-                    dataPoints = deserializeDataPoints(p, ctxt, structure);
-                } else {
-                    dataPoints = deserializeUncheckedDataPoint(p, ctxt);
-                }
-            }
+      } else if (DATAPOINT_NAMES.contains(p.currentName())) {
+        if (structure != null) {
+          dataPoints = deserializeDataPoints(p, ctxt, structure);
+        } else {
+          dataPoints = deserializeUncheckedDataPoint(p, ctxt);
         }
-
-        return new InMemoryDataset(dataPoints, structure);
-
+      }
     }
 
-    private void convertDataPoints(JsonParser p, List<List<Object>> objects, List<Structured.Component> components) throws IOException {
-        // Create a list of functions for each type. This require the structure
-        // to be before the data.
-        List<PointDeserializer> deserializers = components.stream()
-                .map(PointDeserializer::new)
-                .collect(Collectors.toList());
+    return new InMemoryDataset(dataPoints, structure);
+  }
 
-        for (List<Object> object : objects) {
-            for (int i = 0; i < object.size(); i++) {
-                Object converted = deserializers.get(i).convert(p, object.get(i));
-                object.set(i, converted);
-            }
-        }
+  private void convertDataPoints(
+      JsonParser p, List<List<Object>> objects, List<Structured.Component> components)
+      throws IOException {
+    // Create a list of functions for each type. This require the structure
+    // to be before the data.
+    List<PointDeserializer> deserializers =
+        components.stream().map(PointDeserializer::new).collect(Collectors.toList());
+
+    for (List<Object> object : objects) {
+      for (int i = 0; i < object.size(); i++) {
+        var converted = deserializers.get(i).convert(p, object.get(i));
+        object.set(i, converted);
+      }
+    }
+  }
+
+  private List<List<Object>> deserializeDataPoints(
+      JsonParser p, DeserializationContext ctxt, List<Structured.Component> components)
+      throws IOException {
+    var fieldName = p.currentName();
+    if (!DATAPOINT_NAMES.contains(fieldName)) {
+      ctxt.handleUnexpectedToken(Dataset.class, p);
     }
 
-    private List<List<Object>> deserializeDataPoints(JsonParser p, DeserializationContext ctxt, List<Structured.Component> components) throws IOException {
-        String fieldName = p.currentName();
-        if (!DATAPOINT_NAMES.contains(fieldName)) {
-            ctxt.handleUnexpectedToken(Dataset.class, p);
-        }
-
-        // row != array.
-        JsonToken token = p.nextToken();
-        if (token != JsonToken.START_ARRAY) {
-            ctxt.handleUnexpectedToken(Dataset.class, p);
-        }
-
-        // Create a list of functions for each type. This require the structure
-        // to be before the data.
-        List<PointDeserializer> deserializers = components.stream()
-                .map(PointDeserializer::new)
-                .collect(Collectors.toList());
-
-        List<List<Object>> dataPoints = new ArrayList<>();
-        while (p.nextToken() == JsonToken.START_ARRAY) {
-            List<Object> row = new ArrayList<>();
-            for (PointDeserializer deserializer : deserializers) {
-                p.nextValue();
-                row.add(deserializer.deserialize(p, ctxt));
-            }
-
-            // row > component size.
-            if (p.nextToken() != JsonToken.END_ARRAY) {
-                ctxt.handleUnexpectedToken(Dataset.class, p);
-            }
-            dataPoints.add(row);
-        }
-
-        return dataPoints;
+    // row != array.
+    var token = p.nextToken();
+    if (token != JsonToken.START_ARRAY) {
+      ctxt.handleUnexpectedToken(Dataset.class, p);
     }
 
-    private List<List<Object>> deserializeUncheckedDataPoint(JsonParser p, DeserializationContext ctxt) throws IOException {
-        String fieldName = p.currentName();
-        if (!DATAPOINT_NAMES.contains(fieldName)) {
-            ctxt.handleUnexpectedToken(Dataset.class, p);
-        }
-        p.nextToken();
+    // Create a list of functions for each type. This require the structure
+    // to be before the data.
+    List<PointDeserializer> deserializers =
+        components.stream().map(PointDeserializer::new).collect(Collectors.toList());
 
-        CollectionLikeType listOfComponentType = ctxt.getTypeFactory().constructCollectionLikeType(List.class, List.class);
-        return ctxt.readValue(p, listOfComponentType);
+    List<List<Object>> dataPoints = new ArrayList<>();
+    while (p.nextToken() == JsonToken.START_ARRAY) {
+      var row = new ArrayList<>();
+      for (var deserializer : deserializers) {
+        p.nextValue();
+        row.add(deserializer.deserialize(p, ctxt));
+      }
 
+      // row > component size.
+      if (p.nextToken() != JsonToken.END_ARRAY) {
+        ctxt.handleUnexpectedToken(Dataset.class, p);
+      }
+      dataPoints.add(row);
     }
 
-    private List<Structured.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt) throws IOException {
-        String fieldName = p.currentName();
-        if (!STRUCTURE_NAMES.contains(fieldName)) {
-            ctxt.handleUnexpectedToken(Dataset.class, p);
-        }
+    return dataPoints;
+  }
 
-        p.nextToken();
+  private List<List<Object>> deserializeUncheckedDataPoint(
+      JsonParser p, DeserializationContext ctxt) throws IOException {
+    var fieldName = p.currentName();
+    if (!DATAPOINT_NAMES.contains(fieldName)) {
+      ctxt.handleUnexpectedToken(Dataset.class, p);
+    }
+    p.nextToken();
 
-        CollectionLikeType listOfComponentType = ctxt.getTypeFactory().constructCollectionLikeType(List.class, Dataset.Component.class);
-        return ctxt.readValue(p, listOfComponentType);
+    var listOfComponentType =
+        ctxt.getTypeFactory().constructCollectionLikeType(List.class, List.class);
+    return ctxt.readValue(p, listOfComponentType);
+  }
+
+  private List<Structured.Component> deserializeStructure(JsonParser p, DeserializationContext ctxt)
+      throws IOException {
+    var fieldName = p.currentName();
+    if (!STRUCTURE_NAMES.contains(fieldName)) {
+      ctxt.handleUnexpectedToken(Dataset.class, p);
     }
 
-    private static class PointDeserializer {
+    p.nextToken();
 
-        private final Structured.Component component;
+    var listOfComponentType =
+        ctxt.getTypeFactory().constructCollectionLikeType(List.class, Dataset.Component.class);
+    return ctxt.readValue(p, listOfComponentType);
+  }
 
-        PointDeserializer(Structured.Component component) {
-            this.component = Objects.requireNonNull(component);
-        }
+  private static class PointDeserializer {
 
-        Object convert(JsonParser p, Object object) throws IOException {
-            return convert(p.getCodec(), object, component.getType());
-        }
+    private final Structured.Component component;
 
-        Object convert(ObjectCodec codec, Object node, Class<?> type) throws IOException {
-            TokenBuffer buf = new TokenBuffer(codec, false);
-            codec.writeValue(buf, node);
-            return buf.asParser().readValueAs(type);
-        }
-
-        Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            try {
-                if (p.currentToken() == JsonToken.VALUE_NULL) {
-                    return null;
-                } else {
-                    return ctxt.readValue(p, component.getType());
-                }
-            } catch (IOException ioe) {
-                throw from(
-                        p,
-                        String.format("failed to deserialize column %s", component.getName()),
-                        ioe
-                );
-            }
-        }
+    PointDeserializer(Structured.Component component) {
+      this.component = Objects.requireNonNull(component);
     }
+
+    Object convert(JsonParser p, Object object) throws IOException {
+      return convert(p.getCodec(), object, component.getType());
+    }
+
+    Object convert(ObjectCodec codec, Object node, Class<?> type) throws IOException {
+      var buf = new TokenBuffer(codec, false);
+      codec.writeValue(buf, node);
+      return buf.asParser().readValueAs(type);
+    }
+
+    Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      try {
+        if (p.currentToken() == JsonToken.VALUE_NULL) {
+          return null;
+        } else {
+          return ctxt.readValue(p, component.getType());
+        }
+      } catch (IOException ioe) {
+        throw from(p, "failed to deserialize column %s".formatted(component.getName()), ioe);
+      }
+    }
+  }
 }

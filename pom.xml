@@ -5,7 +5,7 @@
     <groupId>fr.insee.trevas</groupId>
     <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.8.0</version>
+    <version>1.10.0-SNAPSHOT</version>
     <modules>
         <module>vtl-parser</module>
         <module>vtl-model</module>
@@ -69,9 +69,9 @@
     </distributionManagement>
 
     <properties>
-        <jdk.version>1.8</jdk.version>
+        <jdk.version>17</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jacoco.version>0.8.7</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -80,8 +80,12 @@
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.11.0-M2</version>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -92,10 +96,42 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.12.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <!-- Restore the default maven final artifact name. -->
         <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.44.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>apply</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.27.0</version>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
+            </plugin>
             <plugin>
                 <!-- Require minimum Java and Maven versions. -->
                 <groupId>org.apache.maven.plugins</groupId>
@@ -110,7 +146,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>1.8</version>
+                                    <version>${jdk.version}</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.3.9</version>
@@ -123,7 +159,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.5.3</version>
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <!-- Suppress UnresolvedMavenProperty. -->
@@ -177,10 +213,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.14.0</version>
                     <configuration>
-                        <target>${jdk.version}</target>
-                        <source>${jdk.version}</source>
+                        <release>${jdk.version}</release>
+                        <testRelease>${jdk.version}</testRelease>
                     </configuration>
                 </plugin>
             </plugins>
@@ -220,9 +256,13 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.8.0</version>
                         <configuration>
-                            <source>8</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
+                            <additionalOptions>
+                                <additionalOption>--ignore-source-errors</additionalOption>
+                                <additionalOption>-Xdoclint:none</additionalOption>
+                                <additionalOption>--release=${jdk.version}</additionalOption>
+                            </additionalOptions>
                         </configuration>
                         <executions>
                             <execution>
@@ -278,11 +318,15 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.7.0</version>
+                        <version>3.8.0</version>
                         <configuration>
-                            <source>8</source>
                             <detectJavaApiLink>false</detectJavaApiLink>
                             <doclint>none</doclint>
+                            <additionalOptions>
+                                <additionalOption>--ignore-source-errors</additionalOption>
+                                <additionalOption>-Xdoclint:none</additionalOption>
+                                <additionalOption>--release=${jdk.version}</additionalOption>
+                            </additionalOptions>
                         </configuration>
                     </plugin>
                 </plugins>

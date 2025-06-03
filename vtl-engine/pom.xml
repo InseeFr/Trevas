@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.8.0</version>
+        <version>1.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vtl-engine</artifactId>
     <name>VTL Engine</name>
     <description>VTL engine framework for Trevas</description>
-    <version>1.8.0</version>
+    <version>1.10.0-SNAPSHOT</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -25,13 +25,13 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
-            <version>1.8.0</version>
+            <version>1.10.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>1.8.0</version>
+            <version>1.10.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -44,16 +44,10 @@
             <artifactId>commons-text</artifactId>
             <version>1.10.0</version>
         </dependency>
-        <!-- Because of safety mirror -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>20.1.0</version>
+            <groupId>com.github.hervian</groupId>
+            <artifactId>safety-mirror</artifactId>
+            <version>4.0.1</version>
         </dependency>
     </dependencies>
     <build>
@@ -76,21 +70,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.34</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
             </plugin>
         </plugins>
     </build>
