@@ -27,6 +27,21 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Verify code format with Spotless
         run: mvn spotless:check
+  test-excluding-vtl-sdmx:
+    name: Run Trevas tests excluding vtl-sdmx module
+    runs-on: ubuntu-latest
+    needs: format
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "adopt"
+      - name: Test
+        run: mvn test -pl '!vtl-sdmx'
   test:
     name: Run Trevas tests
     if: (github.repository != 'InseeFr/Trevas' &&
