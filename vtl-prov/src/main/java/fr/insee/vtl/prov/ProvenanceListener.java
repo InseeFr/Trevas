@@ -9,13 +9,14 @@ import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** ANTLR Listener that create provenance objects. */
 public class ProvenanceListener extends VtlBaseListener {
@@ -109,6 +110,7 @@ public class ProvenanceListener extends VtlBaseListener {
     String label = ctx.IDENTIFIER().getText();
     if (!rootAssignment) {
       ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
+      if (null == programStep) return;
       if (!isInDatasetClause) {
         Set<DataframeInstance> consumedDataframe = programStep.getConsumedDataframe();
         String dfId = ProvenanceUtils.getOrBuildUUID(availableDataframeUUID, label);
@@ -184,7 +186,7 @@ public class ProvenanceListener extends VtlBaseListener {
   }
 
   public static Program run(String expr, String id, String programName) {
-    CodePointCharStream stream = CharStreams.fromString(expr);
+    CodePointCharStream stream = CharStreams.fromString(expr.trim());
     VtlLexer lexer = new VtlLexer(stream);
     VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
@@ -201,7 +203,7 @@ public class ProvenanceListener extends VtlBaseListener {
     List<String> dsHandled = new ArrayList<>();
     // Split script to loop over program steps and run them
     AtomicInteger index = new AtomicInteger(1);
-    Arrays.stream(expr.split(";"))
+    Arrays.stream(expr.trim().split(";"))
         .map(e -> e + ";")
         .forEach(
             stepScript -> {
