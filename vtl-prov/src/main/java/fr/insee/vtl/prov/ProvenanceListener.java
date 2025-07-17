@@ -9,14 +9,13 @@ import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /** ANTLR Listener that create provenance objects. */
 public class ProvenanceListener extends VtlBaseListener {
@@ -185,7 +184,7 @@ public class ProvenanceListener extends VtlBaseListener {
     return program;
   }
 
-  public static Program run(String expr, String id, String programName) {
+  private static Program prepareProgram(String expr, String id, String programName) {
     CodePointCharStream stream = CharStreams.fromString(expr.trim());
     VtlLexer lexer = new VtlLexer(stream);
     VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
@@ -195,9 +194,8 @@ public class ProvenanceListener extends VtlBaseListener {
     return provenanceListener.getProgram();
   }
 
-  public static Program runWithBindings(
-      ScriptEngine engine, String expr, String id, String programName) {
-    Program program = run(expr, id, programName);
+  public static Program run(ScriptEngine engine, String expr, String id, String programName) {
+    Program program = prepareProgram(expr, id, programName);
     // 0 check if input dataset are empty?
     // Keep already handled dataset
     List<String> dsHandled = new ArrayList<>();

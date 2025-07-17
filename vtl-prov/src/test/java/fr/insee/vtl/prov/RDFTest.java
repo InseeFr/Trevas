@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 
 public class RDFTest {
 
+  private ScriptEngine engine;
+
   static Properties conf;
 
   static {
@@ -52,6 +54,13 @@ public class RDFTest {
     Model model = modelClass.add(modelDetail).add(modelLink);
     RDFUtils.loadModelWithCredentials(
         model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
+
+    SparkSession spark = SparkSession.builder().appName("test").master("local").getOrCreate();
+
+    ScriptEngineManager mgr = new ScriptEngineManager();
+    engine = mgr.getEngineByExtension("vtl");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+    engine.put("$vtl.spark.session", spark);
   }
 
   @BeforeEach
@@ -68,14 +77,15 @@ public class RDFTest {
 
     String script =
         """
-                ds_sum := ds1 + ds2;
-                ds_mul := ds_sum * 3;\s
-                ds_res <- ds_mul   [filter mod(var1, 2) = 0]\
-                                   [calc var_sum := var1 + var2];\
-                """;
+                        ds_sum := ds1 + ds2;
+                        ds_mul := ds_sum * 3;\s
+                        ds_res <- ds_mul   [filter mod(var1, 2) = 0]\
+                                           [calc var_sum := var1 + var2];\
+                        """;
 
     Program program =
-        ProvenanceListener.run(script, "trevas-simple-test", "Simple test from Trevas tests");
+        ProvenanceListener.run(
+            engine, script, "trevas-simple-test", "Simple test from Trevas tests");
     Model model = RDFUtils.buildModel(program);
     String content = RDFUtils.serialize(model, "JSON-LD");
     assertThat(content).isNotEmpty();
@@ -127,15 +137,15 @@ public class RDFTest {
 
     String script =
         """
-                ds1 := ds1[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
-                ds2 := ds2[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
-                ds_sum := ds1 + ds2;
-                ds_mul := ds_sum * 3;\s
-                ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
-                """;
+                        ds1 := ds1[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                        ds2 := ds2[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                        ds_sum := ds1 + ds2;
+                        ds_mul := ds_sum * 3;\s
+                        ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
+                        """;
 
     Program program =
-        ProvenanceListener.runWithBindings(
+        ProvenanceListener.run(
             engine, script, "trevas-simple-test", "Simple test from Trevas tests");
     Model model = RDFUtils.buildModel(program);
     String content = RDFUtils.serialize(model, "JSON-LD");
@@ -151,40 +161,41 @@ public class RDFTest {
 
     String bpeScript =
         """
-                // Validation of municipality code in input file
-                CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid);
+                        // Validation of municipality code in input file
+                        CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid);
 
-                // Clean BPE input database
-                BPE_DETAIL_CLEAN := BPE_DETAIL_VTL  [drop LAMBERT_X, LAMBERT_Y]
-                                            [rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];
+                        // Clean BPE input database
+                        BPE_DETAIL_CLEAN := BPE_DETAIL_VTL  [drop LAMBERT_X, LAMBERT_Y]
+                                                    [rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];
 
-                // BPE aggregation by municipality, type and year
-                BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN    [aggr nb := count(id) group by municipality, year, facility_type];
+                        // BPE aggregation by municipality, type and year
+                        BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN    [aggr nb := count(id) group by municipality, year, facility_type];
 
-                // BPE aggregation by NUTS 3, type and year
-                BPE_NUTS3 <- BPE_MUNICIPALITY    [calc nuts3 := if substr(municipality,1,2) = "97" then substr(municipality,1,3) else substr(municipality,1,2)]
-                                                    [aggr nb := count(nb) group by year, nuts3, facility_type];
+                        // BPE aggregation by NUTS 3, type and year
+                        BPE_NUTS3 <- BPE_MUNICIPALITY    [calc nuts3 := if substr(municipality,1,2) = "97" then substr(municipality,1,3) else substr(municipality,1,2)]
+                                                            [aggr nb := count(nb) group by year, nuts3, facility_type];
 
-                // BPE validation of facility types by NUTS 3
-                CHECK_NUTS3_TYPES := check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid);
+                        // BPE validation of facility types by NUTS 3
+                        CHECK_NUTS3_TYPES := check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid);
 
-                // Prepare 2021 census dataset by NUTS 3
-                CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]
-                                                    [filter year = "2021"]
-                                                    [calc pop := cast(pop, integer)]
-                                                    [drop year, NB_COM, POP_MUNI];
+                        // Prepare 2021 census dataset by NUTS 3
+                        CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]
+                                                            [filter year = "2021"]
+                                                            [calc pop := cast(pop, integer)]
+                                                            [drop year, NB_COM, POP_MUNI];
 
-                // Extract dataset on general practitioners from BPE by NUTS 3 in 2021
-                GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3   [filter facility_type = "D201" and year = "2021"]
-                                            [drop facility_type, year];
+                        // Extract dataset on general practitioners from BPE by NUTS 3 in 2021
+                        GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3   [filter facility_type = "D201" and year = "2021"]
+                                                    [drop facility_type, year];
 
-                // Merge practitioners and legal population datasets by NUTS 3 in 2021 and compute an indicator
-                BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
-                                        [calc pract_per_10000_inhabitants := nb / pop * 10000]
-                                        [drop nb, pop];\
-                """;
+                        // Merge practitioners and legal population datasets by NUTS 3 in 2021 and compute an indicator
+                        BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
+                                                [calc pract_per_10000_inhabitants := nb / pop * 10000]
+                                                [drop nb, pop];\
+                        """;
 
-    Program program = ProvenanceListener.run(bpeScript, "trevas-bpe-test", "BPE from Trevas tests");
+    Program program =
+        ProvenanceListener.run(engine, bpeScript, "trevas-bpe-test", "BPE from Trevas tests");
     Model model = RDFUtils.buildModel(program);
     RDFUtils.loadModelWithCredentials(
         model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
