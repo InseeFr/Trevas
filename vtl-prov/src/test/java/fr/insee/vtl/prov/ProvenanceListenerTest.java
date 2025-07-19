@@ -32,13 +32,13 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  public void simpleTestWithBindings() {
+  public void simpleTest() {
     String simpleScript =
         """
-                              ds_sum := ds1 + ds2;
-                              ds_mul := ds_sum * 3;\s
-                              ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
-                        """;
+                ds_sum := ds1 + ds2;
+                ds_mul := ds_sum * 3;\s
+                ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
+                """;
 
     Map<String, Class<?>> types =
         Map.of("id", String.class, "var1", Long.class, "var2", Long.class);
@@ -91,17 +91,46 @@ public class ProvenanceListenerTest {
         """
 
 
-                            ds1 := 'data.ds1'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                    ds1 := 'data.ds1'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
 
 
-                            ds2_out := 'other.ds2'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
-                            ds_sum := ds1 + ds2_out;
-                            ds_mul <- ds_sum * 3;
-                                    'data.ds_res' <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
+                    ds2_out := 'other.ds2'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                    ds_sum := ds1 + ds2_out;
+                    ds_mul <- ds_sum * 3;
+                            'data.ds_res' <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 
 
 
-                        """;
+                """;
+    Map<String, Class<?>> types =
+        Map.of("id", String.class, "var1", Long.class, "var2", Long.class);
+    Map<String, Dataset.Role> roles =
+        Map.of(
+            "id",
+            Dataset.Role.IDENTIFIER,
+            "var1",
+            Dataset.Role.MEASURE,
+            "var2",
+            Dataset.Role.MEASURE);
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "var1", 10L, "var2", 11L),
+                Map.of("id", "2", "var1", 11L, "var2", 10L),
+                Map.of("id", "3", "var1", 12L, "var2", 9L)),
+            types,
+            roles);
+    InMemoryDataset ds2 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "var1", 20L, "var2", 110L),
+                Map.of("id", "2", "var1", -1L, "var2", 10L),
+                Map.of("id", "3", "var1", 0L, "var2", 9L)),
+            types,
+            roles);
+    ScriptContext context = engine.getContext();
+    context.setAttribute("data.ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("other.ds2", ds1, ScriptContext.ENGINE_SCOPE);
 
     Program program =
         ProvenanceListener.run(
@@ -113,11 +142,11 @@ public class ProvenanceListenerTest {
   void testValidationWithBindings() {
     String validationExpr =
         """
-                              define datapoint ruleset test (variable sex) is
-                                  myrule : sex in {"M"} errorcode "ERROR"
-                              end datapoint ruleset;
-                              pengfei.ds_result <- check_datapoint(pengfei.pengfei, test);
-                        """;
+                      define datapoint ruleset test (variable sex) is
+                          myrule : sex in {"M"} errorcode "ERROR"
+                      end datapoint ruleset;
+                      pengfei.ds_result <- check_datapoint(pengfei.pengfei, test);
+                """;
 
     Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
     Map<String, Dataset.Role> roles =
