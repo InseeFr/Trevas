@@ -49,6 +49,12 @@
             <artifactId>vtl-model</artifactId>
             <version>1.10.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-sdmx</artifactId>
+            <version>1.10.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Jena 5 requires Java 17+ -->
         <dependency>
