@@ -35,10 +35,10 @@ public class ProvenanceListenerTest {
   public void simpleTest() {
     String simpleScript =
         """
-                ds_sum := ds1 + ds2;
-                ds_mul := ds_sum * 3;\s
-                ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
-                """;
+                        ds_sum := ds1 + ds2;
+                        ds_mul := ds_sum * 3;\s
+                        ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
+                        """;
 
     Map<String, Class<?>> types =
         Map.of("id", String.class, "var1", Long.class, "var2", Long.class);
@@ -91,17 +91,17 @@ public class ProvenanceListenerTest {
         """
 
 
-                    ds1 := 'data.ds1'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                            ds1 := data.ds1[calc identifier id := id, var1 := cast(var1, integer), var2 := cast(var2, integer)];
 
 
-                    ds2_out := 'other.ds2'[calc identifier id1 := id1, var1 := cast(var1, integer), var2 := cast(var2, integer)];
-                    ds_sum := ds1 + ds2_out;
-                    ds_mul <- ds_sum * 3;
-                            'data.ds_res' <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
+                            ds2_out := other.ds2[calc identifier id := id, var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                            ds_sum := ds1 + ds2_out;
+                            ds_mul <- ds_sum * 3;
+                                    'data.ds_res' <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 
 
 
-                """;
+                        """;
     Map<String, Class<?>> types =
         Map.of("id", String.class, "var1", Long.class, "var2", Long.class);
     Map<String, Dataset.Role> roles =
@@ -130,7 +130,7 @@ public class ProvenanceListenerTest {
             roles);
     ScriptContext context = engine.getContext();
     context.setAttribute("data.ds1", ds1, ScriptContext.ENGINE_SCOPE);
-    context.setAttribute("other.ds2", ds1, ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("other.ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
     Program program =
         ProvenanceListener.run(
@@ -139,14 +139,14 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  void testValidationWithBindings() {
+  void testValidation() {
     String validationExpr =
         """
-                      define datapoint ruleset test (variable sex) is
-                          myrule : sex in {"M"} errorcode "ERROR"
-                      end datapoint ruleset;
-                      pengfei.ds_result <- check_datapoint(pengfei.pengfei, test);
-                """;
+                              define datapoint ruleset test (variable sex) is
+                                  myrule : sex in {"M"} errorcode "ERROR"
+                              end datapoint ruleset;
+                              pengfei.ds_result <- check_datapoint(pengfei.pengfei, test);
+                        """;
 
     Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
     Map<String, Dataset.Role> roles =
