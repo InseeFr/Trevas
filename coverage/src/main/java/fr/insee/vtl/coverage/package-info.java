@@ -1,4 +1,2 @@
-/**
- * This package contains tools for TCK.
- */
+/** This package contains tools for TCK. */
 package fr.insee.vtl.coverage;

@@ -9,6 +9,7 @@ import SvgReleaseNote from '@site/src/svg/ReleaseNote';
 import SvgDevelop from '@site/src/svg/Develop';
 import SvgEngine from '@site/src/svg/Engine';
 import SvgTrevasBox from '@site/src/svg/TrevasBox';
+import SvgJavadoc from '@site/src/svg/Javadoc';
 
 function Hero() {
 	const { colorMode } = useColorMode();
@@ -149,6 +150,33 @@ function Hero() {
 								</div>
 								<a
 									href={useBaseUrl('/user-guide/vtl/client-apps')}
+									className="link"
+								>
+									<Translate description="See more">See more</Translate>
+								</a>
+							</div>
+							<div className="box">
+								<span className="icon">
+									<SvgJavadoc color={svgColor} />
+								</span>
+								<div className="text">
+									<h3 className="title">
+										<Translate description="Box title javadoc">
+											Javadoc
+										</Translate>
+									</h3>
+									<p className="description">
+										<Translate description="Box description javadoc">
+											Discover Trevas Java API documentation
+										</Translate>
+									</p>
+									<span className="more">
+										<Translate description="See more">See more</Translate>{' '}
+										<SvgArrowRight color="#DC382C" />
+									</span>
+								</div>
+								<a
+									href={useBaseUrl('/developer-guide/javadoc')}
 									className="link"
 								>
 									<Translate description="See more">See more</Translate>

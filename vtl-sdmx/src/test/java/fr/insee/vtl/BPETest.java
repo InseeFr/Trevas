@@ -1,5 +1,7 @@
 package fr.insee.vtl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.PersistentDataset;
@@ -9,220 +11,238 @@ import fr.insee.vtl.sdmx.TrevasSDMXUtils;
 import fr.insee.vtl.spark.SparkDataset;
 import io.sdmx.api.io.ReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
-import org.apache.spark.sql.SparkSession;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BPETest {
 
-    private SparkSession spark;
-    private ScriptEngine engine;
+  private SparkSession spark;
+  private ScriptEngine engine;
 
-    @BeforeEach
-    public void setUp() {
-        spark = SparkSession.builder()
-                .appName("test")
-                .master("local")
-                .getOrCreate();
+  @BeforeEach
+  public void setUp() {
+    spark = SparkSession.builder().appName("test").master("local").getOrCreate();
 
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        engine = mgr.getEngineByExtension("vtl");
-        engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
-    }
+    ScriptEngineManager mgr = new ScriptEngineManager();
+    engine = mgr.getEngineByExtension("vtl");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+  }
 
-    @Test
-    public void bpeV1() throws ScriptException {
-        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
+  @Test
+  public void bpeV1() throws ScriptException {
+    Structured.DataStructure bpeStructure =
+        TrevasSDMXUtils.buildStructureFromSDMX3(
+            "src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
 
-        SparkDataset bpeDetailDs = new SparkDataset(
-                spark.read()
-                        .option("header", "true")
-                        .option("delimiter", ";")
-                        .option("quote", "\"")
-                        .csv("src/test/resources/BPE_DETAIL_SAMPLE.csv"),
-                bpeStructure
-        );
+    SparkDataset bpeDetailDs =
+        new SparkDataset(
+            spark
+                .read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("src/test/resources/BPE_DETAIL_SAMPLE.csv"),
+            bpeStructure);
 
-        assertThat(bpeDetailDs.getDataStructure().size()).isEqualTo(6);
+    assertThat(bpeDetailDs.getDataStructure().size()).isEqualTo(6);
 
-        ScriptContext context = engine.getContext();
-        context.setAttribute("BPE_DETAIL_VTL", bpeDetailDs, ScriptContext.ENGINE_SCOPE);
+    ScriptContext context = engine.getContext();
+    context.setAttribute("BPE_DETAIL_VTL", bpeDetailDs, ScriptContext.ENGINE_SCOPE);
 
-        // Step 1
-        engine.eval("" +
-                "define datapoint ruleset UNIQUE_MUNICIPALITY (variable DEPCOM) is\n" +
-                "    MUNICIPALITY_FORMAT_RULE : match_characters(DEPCOM, \"[0-9]{5}|2[A-B][0-9]{3}\") errorcode \"Municipality code is not in the correct format\"\n" +
-                "end datapoint ruleset;\n" +
-                "\n" +
-                "CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid);");
+    // Step 1
+    engine.eval(
+        ""
+            + "define datapoint ruleset UNIQUE_MUNICIPALITY (variable DEPCOM) is\n"
+            + "    MUNICIPALITY_FORMAT_RULE : match_characters(DEPCOM, \"[0-9]{5}|2[A-B][0-9]{3}\") errorcode \"Municipality code is not in the correct format\"\n"
+            + "end datapoint ruleset;\n"
+            + "\n"
+            + "CHECK_MUNICIPALITY := check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid);");
 
-        Dataset checkMunicipality = (Dataset) engine.getContext().getAttribute("CHECK_MUNICIPALITY");
+    Dataset checkMunicipality = (Dataset) engine.getContext().getAttribute("CHECK_MUNICIPALITY");
 
-        assertThat(checkMunicipality.getDataPoints()).isEmpty();
+    assertThat(checkMunicipality.getDataPoints()).isEmpty();
 
-        // Step 2
-        engine.eval("BPE_DETAIL_CLEAN := BPE_DETAIL_VTL[drop LAMBERT_X, LAMBERT_Y]\n" +
-                "[rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];");
+    // Step 2
+    engine.eval(
+        "BPE_DETAIL_CLEAN := BPE_DETAIL_VTL[drop LAMBERT_X, LAMBERT_Y]\n"
+            + "[rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year];");
 
-        Dataset bpeDetailClean = (Dataset) engine.getContext().getAttribute("BPE_DETAIL_CLEAN");
-        Structured.DataStructure bpeDetailCleanStructure = bpeDetailClean.getDataStructure();
+    Dataset bpeDetailClean = (Dataset) engine.getContext().getAttribute("BPE_DETAIL_CLEAN");
+    Structured.DataStructure bpeDetailCleanStructure = bpeDetailClean.getDataStructure();
 
-        assertThat(bpeDetailCleanStructure.get("id").getType()).isEqualTo(String.class);
-        assertThat(bpeDetailCleanStructure.get("id").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeDetailCleanStructure.get("id").getType()).isEqualTo(String.class);
+    assertThat(bpeDetailCleanStructure.get("id").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeDetailCleanStructure.get("facility_type").getType()).isEqualTo(String.class);
-        assertThat(bpeDetailCleanStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(bpeDetailCleanStructure.get("facility_type").getType()).isEqualTo(String.class);
+    assertThat(bpeDetailCleanStructure.get("facility_type").getRole())
+        .isEqualTo(Dataset.Role.ATTRIBUTE);
 
-        assertThat(bpeDetailCleanStructure.get("municipality").getType()).isEqualTo(String.class);
-        assertThat(bpeDetailCleanStructure.get("municipality").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(bpeDetailCleanStructure.get("municipality").getType()).isEqualTo(String.class);
+    assertThat(bpeDetailCleanStructure.get("municipality").getRole())
+        .isEqualTo(Dataset.Role.ATTRIBUTE);
 
-        assertThat(bpeDetailCleanStructure.get("year").getType()).isEqualTo(String.class);
-        assertThat(bpeDetailCleanStructure.get("year").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(bpeDetailCleanStructure.get("year").getType()).isEqualTo(String.class);
+    assertThat(bpeDetailCleanStructure.get("year").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
 
-        // Step 3
-        engine.eval("BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN[aggr nb := count(id) group by municipality, year, facility_type]" +
-                "[rename year to TIME_PERIOD];");
+    // Step 3
+    engine.eval(
+        "BPE_MUNICIPALITY <- BPE_DETAIL_CLEAN[aggr nb := count(id) group by municipality, year, facility_type]"
+            + "[rename year to TIME_PERIOD];");
 
-        Dataset bpeMunicipality = (Dataset) engine.getContext().getAttribute("BPE_MUNICIPALITY");
-        Structured.DataStructure bpeMunicipalityStructure = bpeMunicipality.getDataStructure();
+    Dataset bpeMunicipality = (Dataset) engine.getContext().getAttribute("BPE_MUNICIPALITY");
+    Structured.DataStructure bpeMunicipalityStructure = bpeMunicipality.getDataStructure();
 
-        assertThat(bpeMunicipalityStructure.get("municipality").getType()).isEqualTo(String.class);
-        assertThat(bpeMunicipalityStructure.get("municipality").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeMunicipalityStructure.get("municipality").getType()).isEqualTo(String.class);
+    assertThat(bpeMunicipalityStructure.get("municipality").getRole())
+        .isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeMunicipalityStructure.get("facility_type").getType()).isEqualTo(String.class);
-        assertThat(bpeMunicipalityStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeMunicipalityStructure.get("facility_type").getType()).isEqualTo(String.class);
+    assertThat(bpeMunicipalityStructure.get("facility_type").getRole())
+        .isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
-        assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
+    assertThat(bpeMunicipalityStructure.get("TIME_PERIOD").getRole())
+        .isEqualTo(Dataset.Role.IDENTIFIER);
 
+    assertThat(bpeMunicipalityStructure.get("nb").getType()).isEqualTo(Long.class);
+    assertThat(bpeMunicipalityStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
-        assertThat(bpeMunicipalityStructure.get("nb").getType()).isEqualTo(Long.class);
-        assertThat(bpeMunicipalityStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    // Step 4
+    engine.eval(
+        "BPE_NUTS3 <- BPE_MUNICIPALITY[calc nuts3 := if substr(municipality,1,2) = \"97\" then substr(municipality,1,3) else substr(municipality,1,2)]\n"
+            + "[aggr nb := count(nb) group by TIME_PERIOD, nuts3, facility_type];");
 
-        // Step 4
-        engine.eval("BPE_NUTS3 <- BPE_MUNICIPALITY[calc nuts3 := if substr(municipality,1,2) = \"97\" then substr(municipality,1,3) else substr(municipality,1,2)]\n" +
-                "[aggr nb := count(nb) group by TIME_PERIOD, nuts3, facility_type];");
+    Dataset bpeNuts = (Dataset) engine.getContext().getAttribute("BPE_NUTS3");
+    Structured.DataStructure bpeNutsStructure = bpeNuts.getDataStructure();
 
-        Dataset bpeNuts = (Dataset) engine.getContext().getAttribute("BPE_NUTS3");
-        Structured.DataStructure bpeNutsStructure = bpeNuts.getDataStructure();
+    assertThat(bpeNutsStructure.get("nuts3").getType()).isEqualTo(String.class);
+    assertThat(bpeNutsStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeNutsStructure.get("nuts3").getType()).isEqualTo(String.class);
-        assertThat(bpeNutsStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeNutsStructure.get("facility_type").getType()).isEqualTo(String.class);
+    assertThat(bpeNutsStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeNutsStructure.get("facility_type").getType()).isEqualTo(String.class);
-        assertThat(bpeNutsStructure.get("facility_type").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeNutsStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
+    assertThat(bpeNutsStructure.get("TIME_PERIOD").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        assertThat(bpeNutsStructure.get("TIME_PERIOD").getType()).isEqualTo(String.class);
-        assertThat(bpeNutsStructure.get("TIME_PERIOD").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    assertThat(bpeNutsStructure.get("nb").getType()).isEqualTo(Long.class);
+    assertThat(bpeNutsStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
+    // Step 5
+    engine.eval(
+        ""
+            + "define datapoint ruleset NUTS3_TYPES (variable facility_type, nb) is\n"
+            + "    BOWLING_ALLEY_RULE : when facility_type = \"F102\" then nb > 10 errorcode \"Not enough bowling alleys\"\n"
+            + "end datapoint ruleset;\n"
+            + "\n"
+            + "CHECK_NUTS3_TYPES := check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid);");
 
-        assertThat(bpeNutsStructure.get("nb").getType()).isEqualTo(Long.class);
-        assertThat(bpeNutsStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    Dataset checkNutsTypes = (Dataset) engine.getContext().getAttribute("CHECK_NUTS3_TYPES");
 
-        // Step 5
-        engine.eval("" +
-                "define datapoint ruleset NUTS3_TYPES (variable facility_type, nb) is\n" +
-                "    BOWLING_ALLEY_RULE : when facility_type = \"F102\" then nb > 10 errorcode \"Not enough bowling alleys\"\n" +
-                "end datapoint ruleset;\n" +
-                "\n" +
-                "CHECK_NUTS3_TYPES := check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid);");
+    // size is 2 with full dataset instead of sample
+    assertThat(checkNutsTypes.getDataPoints()).isEmpty();
 
-        Dataset checkNutsTypes = (Dataset) engine.getContext().getAttribute("CHECK_NUTS3_TYPES");
+    // Step 6
+    Structured.DataStructure censusStructure =
+        TrevasSDMXUtils.buildStructureFromSDMX3(
+            "src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
-        // size is 2 with full dataset instead of sample
-        assertThat(checkNutsTypes.getDataPoints()).isEmpty();
+    SparkDataset legalPop =
+        new SparkDataset(
+            spark
+                .read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
+            censusStructure);
 
-        // Step 6
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
+    context.setAttribute("LEGAL_POP", legalPop, ScriptContext.ENGINE_SCOPE);
 
-        SparkDataset legalPop = new SparkDataset(
-                spark.read()
-                        .option("header", "true")
-                        .option("delimiter", ";")
-                        .option("quote", "\"")
-                        .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
-                censusStructure
-        );
+    engine.eval(
+        "CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]\n"
+            + "[filter TIME_PERIOD = \"2021\"]\n"
+            + "[calc pop := cast(pop, integer)]\n"
+            + "[drop TIME_PERIOD, NB_COM, POP_MUNI];");
 
-        context.setAttribute("LEGAL_POP", legalPop, ScriptContext.ENGINE_SCOPE);
+    Dataset censusNuts2021 = (Dataset) engine.getContext().getAttribute("CENSUS_NUTS3_2021");
+    Structured.DataStructure censusNuts2021Structure = censusNuts2021.getDataStructure();
 
-        engine.eval("CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]\n" +
-                "[filter TIME_PERIOD = \"2021\"]\n" +
-                "[calc pop := cast(pop, integer)]\n" +
-                "[drop TIME_PERIOD, NB_COM, POP_MUNI];");
+    assertThat(censusNuts2021Structure.get("nuts3").getType()).isEqualTo(String.class);
+    assertThat(censusNuts2021Structure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        Dataset censusNuts2021 = (Dataset) engine.getContext().getAttribute("CENSUS_NUTS3_2021");
-        Structured.DataStructure censusNuts2021Structure = censusNuts2021.getDataStructure();
+    assertThat(censusNuts2021Structure.get("pop").getType()).isEqualTo(Long.class);
+    assertThat(censusNuts2021Structure.get("pop").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
-        assertThat(censusNuts2021Structure.get("nuts3").getType()).isEqualTo(String.class);
-        assertThat(censusNuts2021Structure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    // Step 7
+    engine.eval(
+        "GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3[filter facility_type = \"D201\" and TIME_PERIOD = \"2021\"]\n"
+            + "[drop facility_type, TIME_PERIOD];");
 
-        assertThat(censusNuts2021Structure.get("pop").getType()).isEqualTo(Long.class);
-        assertThat(censusNuts2021Structure.get("pop").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    Dataset generalNuts = (Dataset) engine.getContext().getAttribute("GENERAL_PRACT_NUTS3_2021");
+    Structured.DataStructure generalNutsStructure = generalNuts.getDataStructure();
 
-        // Step 7
-        engine.eval("GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3[filter facility_type = \"D201\" and TIME_PERIOD = \"2021\"]\n" +
-                "[drop facility_type, TIME_PERIOD];");
+    assertThat(generalNutsStructure.get("nuts3").getType()).isEqualTo(String.class);
+    assertThat(generalNutsStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        Dataset generalNuts = (Dataset) engine.getContext().getAttribute("GENERAL_PRACT_NUTS3_2021");
-        Structured.DataStructure generalNutsStructure = generalNuts.getDataStructure();
+    assertThat(generalNutsStructure.get("nb").getType()).isEqualTo(Long.class);
+    assertThat(generalNutsStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
 
-        assertThat(generalNutsStructure.get("nuts3").getType()).isEqualTo(String.class);
-        assertThat(generalNutsStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+    // Step 8
+    engine.eval(
+        "BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)\n"
+            + "[calc pract_per_10000_inhabitants := nb / pop * 10000]\n"
+            + "[drop nb, pop];");
 
-        assertThat(generalNutsStructure.get("nb").getType()).isEqualTo(Long.class);
-        assertThat(generalNutsStructure.get("nb").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    Dataset bpeCensus = (Dataset) engine.getContext().getAttribute("BPE_CENSUS_NUTS3_2021");
+    Structured.DataStructure bpeCensusStructure = bpeCensus.getDataStructure();
 
-        // Step 8
-        engine.eval("BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)\n" +
-                "[calc pract_per_10000_inhabitants := nb / pop * 10000]\n" +
-                "[drop nb, pop];");
+    assertThat(bpeCensusStructure.get("nuts3").getType()).isEqualTo(String.class);
+    assertThat(bpeCensusStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
 
-        Dataset bpeCensus = (Dataset) engine.getContext().getAttribute("BPE_CENSUS_NUTS3_2021");
-        Structured.DataStructure bpeCensusStructure = bpeCensus.getDataStructure();
+    assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getType())
+        .isEqualTo(Double.class);
+    assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getRole())
+        .isEqualTo(Dataset.Role.MEASURE);
+  }
 
-        assertThat(bpeCensusStructure.get("nuts3").getType()).isEqualTo(String.class);
-        assertThat(bpeCensusStructure.get("nuts3").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
+  @Test
+  public void bpeV2() {
+    Structured.DataStructure bpeStructure =
+        TrevasSDMXUtils.buildStructureFromSDMX3(
+            "src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
+    Structured.DataStructure censusStructure =
+        TrevasSDMXUtils.buildStructureFromSDMX3(
+            "src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
 
-        assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getType()).isEqualTo(Double.class);
-        assertThat(bpeCensusStructure.get("pract_per_10000_inhabitants").getRole()).isEqualTo(Dataset.Role.MEASURE);
-    }
+    SparkDataset bpeDetailDs =
+        new SparkDataset(
+            spark
+                .read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("src/test/resources/BPE_DETAIL_SAMPLE.csv"),
+            bpeStructure);
 
-    @Test
-    public void bpeV2() {
-        Structured.DataStructure bpeStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "BPE_DETAIL_VTL");
-        Structured.DataStructure censusStructure = TrevasSDMXUtils.buildStructureFromSDMX3("src/test/resources/DSD_BPE_CENSUS.xml", "LEGAL_POP");
-
-        SparkDataset bpeDetailDs = new SparkDataset(
-                spark.read()
-                        .option("header", "true")
-                        .option("delimiter", ";")
-                        .option("quote", "\"")
-                        .csv("src/test/resources/BPE_DETAIL_SAMPLE.csv"),
-                bpeStructure
-        );
-
-
-        SparkDataset censusNuts = new SparkDataset(
-                spark.read()
-                        .option("header", "true")
-                        .option("delimiter", ";")
-                        .option("quote", "\"")
-                        .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
-                censusStructure
-        );
-        Map<String, Dataset> inputs = Map.of("BPE_DETAIL_VTL", bpeDetailDs, "LEGAL_POP", censusNuts);
-        ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
-        SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
-        Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
-        assertThat(bindings.size()).isEqualTo(3);
-    }
+    SparkDataset censusNuts =
+        new SparkDataset(
+            spark
+                .read()
+                .option("header", "true")
+                .option("delimiter", ";")
+                .option("quote", "\"")
+                .csv("src/test/resources/LEGAL_POP_NUTS3.csv"),
+            censusStructure);
+    Map<String, Dataset> inputs = Map.of("BPE_DETAIL_VTL", bpeDetailDs, "LEGAL_POP", censusNuts);
+    ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
+    SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, inputs);
+    Map<String, PersistentDataset> bindings = sdmxVtlWorkflow.run();
+    assertThat(bindings.size()).isEqualTo(3);
+  }
 }
