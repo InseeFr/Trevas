@@ -155,6 +155,11 @@ public class RDFTest {
                         BPE_NUTS3 <- BPE_MUNICIPALITY    [calc nuts3 := if substr(municipality,1,2) = "97" then substr(municipality,1,3) else substr(municipality,1,2)]
                                                             [aggr nb := count(nb) group by year, nuts3, facility_type];
                         
+                        // Define ruleset
+                        define datapoint ruleset NUTS3_TYPES (variable facility_type, nb) is
+                         BOWLING_ALLEY_RULE : when facility_type = "F102" then nb > 10 errorcode "Not enough bowling alleys"
+                        end datapoint ruleset;
+                        
                         // BPE validation of facility types by NUTS 3
                         CHECK_NUTS3_TYPES := check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid);
                         
