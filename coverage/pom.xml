@@ -11,6 +11,8 @@
 
     <artifactId>coverage</artifactId>
     <description>Aggregate Coverage Report</description>
+    <name>VTL coverage</name>
+    <version>1.10.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>

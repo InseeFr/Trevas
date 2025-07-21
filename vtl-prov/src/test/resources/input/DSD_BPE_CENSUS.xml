@@ -1,0 +1,451 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message https://raw.githubusercontent.com/sdmx-twg/sdmx-ml/refs/heads/master/schemas/SDMXMessage.xsd">
+    <mes:Header>
+        <mes:ID>DSD_BPE_DETAIL_1049</mes:ID>
+        <mes:Test>false</mes:Test>
+        <mes:Prepared>2024-03-26T10:49:00Z</mes:Prepared>
+        <mes:Sender id="Unknown" />
+        <mes:Receiver id="not_supplied" /></mes:Header>
+    <mes:Structures>
+		<str:Codelists>
+			<str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)"
+			              isExternalReference="false"
+			              agencyID="FR1"
+			              id="CL_TYPEQU"
+			              version="1.0">
+				<com:Name xml:lang="fr">Type d'équipements</com:Name>
+				<com:Description xml:lang="fr">La classification des équipements en gammes a pour objectif de réunir des équipements qui présentent des logiques d'implantation voisines, en ce sens qu'ils sont fréquemment présents dans les mêmes communes. Ces regroupements permettent d'élaborer des indicateurs synthétiques reflétant l'organisation hiérarchisée des territoires en termes de services à la population. Les gammes d’équipements sont actualisées chaque année pour une nouvelle version de la Base Permanente des Équipements. En effet, d’une part de nouveaux équipements peuvent être introduits dans la base et, d’autre part, l’implantation des équipements dans les communes peut être modifiée, tout cela pouvant avoir des conséquences sur la composition des gammes.</com:Description>
+				<str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=FR1:CL_TYPEQU(1.0).A101"
+				          id="A101">
+					<com:Name xml:lang="fr">POLICE</com:Name>
+				</str:Code>
+			</str:Codelist>
+			<str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)"
+			              isExternalReference="false"
+			              agencyID="FR1"
+			              id="CL_DEPCOM"
+			              version="1.0">
+				<com:Name xml:lang="fr">Code officiel géographique 2021</com:Name>
+				<com:Description xml:lang="fr">Les objets géographiques contenus dans le COG sont les collectivités territoriales (communes, départements, régions, collectivités territoriales à statut particulier), les découpages administratifs (arrondissements, arrondissements municipaux, pseudo-cantons) et certains découpages électoraux (cantons), ainsi que les pays et territoires étrangers. Ils sont répertoriés au 1er janvier de chaque année. Pour la mise à jour du millésime N, tous les événements intervenus entre le 02/01/N-1 et 01/01/N sont pris en compte.</com:Description>
+				<str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=FR1:CL_DEPCOM(1.0).01001"
+				          id="01001">
+					<com:Name xml:lang="fr">L'Abergement-Clémenciat</com:Name>
+				</str:Code>
+			</str:Codelist>
+            <str:Codelist urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)"
+                          isExternalReference="false"
+                          agencyID="FR1"
+                          id="CL_REF_AREA"
+                          version="1.0">
+                <com:Name xml:lang="en">Code officiel géographique</com:Name>
+                <com:Description xml:lang="fr">Les objets géographiques contenus dans le COG sont les collectivités territoriales (communes, départements, régions, collectivités territoriales à statut particulier), les découpages administratifs (arrondissements, arrondissements municipaux, pseudo-cantons) et certains découpages électoraux (cantons), ainsi que les pays et territoires étrangers. Ils sont répertoriés au 1er janvier de chaque année. Pour la mise à jour du millésime N, tous les événements intervenus entre le 02/01/N-1 et 01/01/N sont pris en compte.</com:Description>
+                <str:Code urn="urn:sdmx:org.sdmx.infomodel.codelist.Code=FR1:CL_REF_AREA(1.0).01"
+                          id="01">
+                    <com:Name xml:lang="fr">Ain</com:Name>
+                </str:Code>
+            </str:Codelist>
+		</str:Codelists>
+		<str:ConceptSchemes>
+			<str:ConceptScheme urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=FR1:INSEE_CONCEPTS(1.0)" isExternalReference="false" agencyID="FR1" id="INSEE_CONCEPTS" version="1.0">
+				<com:Name xml:lang="fr">Ensemble des concepts de l'Insee</com:Name>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).EQUIPEMENT" id="EQUIPEMENT">
+					<com:Name xml:lang="fr">Equipement</com:Name>
+				</str:Concept>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT" id="TYPE_EQUIPEMENT">
+					<com:Name xml:lang="fr">Type de l'équipement</com:Name>
+					<str:CoreRepresentation>
+						<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
+						<str:EnumerationFormat textType="String"/>
+					</str:CoreRepresentation>
+				</str:Concept>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).MUNICIPALITY" id="MUNICIPALITY">
+					<com:Name xml:lang="fr">Commune</com:Name>
+					<str:CoreRepresentation>
+						<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)</str:Enumeration>
+						<str:EnumerationFormat textType="String"/>
+					</str:CoreRepresentation>
+				</str:Concept>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR" id="REF_YEAR">
+					<com:Name xml:lang="fr">Année de référence</com:Name>
+				</str:Concept>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).LAMBERT_X" id="LAMBERT_X">
+					<com:Name xml:lang="fr">Abscisse (Système de coordonnées Lambert 93)</com:Name>
+				</str:Concept>
+				<str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).LAMBERT_Y" id="LAMBERT_Y">
+					<com:Name xml:lang="fr">Ordonnée (Système de coordonnées Lambert 93)</com:Name>
+				</str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA" id="REF_AREA">
+                    <com:Name xml:lang="fr">Code officiel géographique</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TIME_PERIOD" id="TIME_PERIOD">
+                    <com:Name xml:lang="fr">Année</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_COM" id="NB_COM">
+                    <com:Name xml:lang="fr">Nombre de communes</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_EQUIPEMENT" id="NB_EQUIPEMENT">
+                    <com:Name xml:lang="fr">Nombre d'équipement</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_GENERALISTES_PAR_HABITANTS" id="NB_GENERALISTES_PAR_HABITANTS">
+                    <com:Name xml:lang="fr">Nombre de médecins généralistes pour 10 OOO habitants</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_MUNI" id="POP_MUNI">
+                    <com:Name xml:lang="fr">Population municipale</com:Name>
+                </str:Concept>
+                <str:Concept urn="urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_TOT" id="POP_TOT">
+                    <com:Name xml:lang="fr">Population totale</com:Name>
+                </str:Concept>
+			</str:ConceptScheme>
+		</str:ConceptSchemes>
+        <str:DataStructures>
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_DETAIL(1.0)" isExternalReference="false" agencyID="FR1" id="BPE_DETAIL" version="1.0">
+                <com:Name xml:lang="en">Geolocalized Equipments (geography 2021)</com:Name>
+                <str:DataStructureComponents>
+                    <str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:BPE_DETAIL(1.0).DimensionDescriptor" id="DimensionDescriptor">
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_DETAIL(1.0).ID_EQUIPEMENT" id="ID_EQUIPEMENT" position="1">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).EQUIPEMENT</str:ConceptIdentity>
+                            <str:LocalRepresentation >
+                                <str:TextFormat textType="String" maxLength="10" />
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                    </str:DimensionList>
+                    <str:AttributeList urn="urn:sdmx:org.sdmx.infomodel.datastructure.AttributeDescriptor=FR1:BPE_DETAIL(1.0).AttributeDescriptor" id="AttributeDescriptor">
+						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_DETAIL(1.0).TYPEQU" id="TYPEQU" usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT</str:ConceptIdentity>
+                            <str:LocalRepresentation minOccurs="1" maxOccurs="1">
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="4" textType="String" maxLength="4"/>
+                            </str:LocalRepresentation>
+                            <str:AttributeRelationship>
+                                <str:Observation />
+                            </str:AttributeRelationship>
+                        </str:Attribute>
+						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_DETAIL(1.0).DEPCOM" id="DEPCOM" usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).MUNICIPALITY</str:ConceptIdentity>
+                            <str:LocalRepresentation minOccurs="1" maxOccurs="1">
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="5" textType="String" maxLength="5"/>
+                            </str:LocalRepresentation>
+                            <str:AttributeRelationship>
+                                <str:Observation />
+                            </str:AttributeRelationship>
+                        </str:Attribute>
+						<str:Attribute urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataAttribute=FR1:BPE_DETAIL(1.0).REF_YEAR" id="REF_YEAR" usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
+                            <str:LocalRepresentation minOccurs="1" maxOccurs="1">
+                                <str:TextFormat minLength="4" textType="String" maxLength="4" />
+                            </str:LocalRepresentation>
+                            <str:AttributeRelationship>
+                                <str:Observation />
+                            </str:AttributeRelationship>
+                        </str:Attribute>
+                    </str:AttributeList>
+                    <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_DETAIL(1.0).MeasureDescriptor" id="MeasureDescriptor">
+    					<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:BPE_DETAIL(1.0).LAMBERT_X" id="LAMBERT_X" usage="mandatory">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).LAMBERT_X</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat textType="Double"/>
+							</str:LocalRepresentation>
+                        </str:Measure>
+						<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:BPE_DETAIL(1.0).LAMBERT_Y" id="LAMBERT_Y" usage="mandatory">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).LAMBERT_Y</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat textType="Double"/>
+							</str:LocalRepresentation>
+                        </str:Measure>
+                    </str:MeasureList>
+                </str:DataStructureComponents>
+            </str:DataStructure>
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:LEGAL_POP_CUBE(1.0)"
+			                   isExternalReference="false"
+			                   agencyID="FR1"
+			                   id="LEGAL_POP_CUBE"
+			                   version="1.0">
+				<com:Name xml:lang="en">Cube populations légales</com:Name>
+				<str:DataStructureComponents>
+					<str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:LEGAL_POP_CUBE(1.0).DimensionDescriptor"
+					                   id="DimensionDescriptor">
+						<str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:LEGAL_POP_CUBE(1.0).REF_AREA"
+						               id="REF_AREA"
+						               position="1">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)</str:Enumeration>
+							</str:LocalRepresentation>
+						</str:Dimension>
+						<str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:LEGAL_POP_CUBE(1.0).TIME_PERIOD"
+						                   id="TIME_PERIOD">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TIME_PERIOD</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat textType="ObservationalTimePeriod"/>
+							</str:LocalRepresentation>
+						</str:TimeDimension>
+					</str:DimensionList>
+					<str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:LEGAL_POP_CUBE(1.0).MeasureDescriptor"
+					                 id="MeasureDescriptor">
+						<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:LEGAL_POP_CUBE(1.0).NB_COM"
+						             id="NB_COM"
+						             usage="mandatory">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_COM</str:ConceptIdentity>
+						</str:Measure>
+						<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:LEGAL_POP_CUBE(1.0).POP_MUNI"
+						             id="POP_MUNI"
+						             usage="mandatory">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_MUNI</str:ConceptIdentity>
+						</str:Measure>
+						<str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:LEGAL_POP_CUBE(1.0).POP_TOT"
+						             id="POP_TOT"
+						             usage="mandatory">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).POP_TOT</str:ConceptIdentity>
+						</str:Measure>
+					</str:MeasureList>
+				</str:DataStructureComponents>
+			</str:DataStructure>
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_MUNICIPALITY(1.0)"
+                               isExternalReference="false"
+                               agencyID="FR1"
+                               id="BPE_MUNICIPALITY"
+                               version="1.0">
+                <com:Name xml:lang="en">Cube BPE par ville</com:Name>
+                <str:DataStructureComponents>
+                    <str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:BPE_MUNICIPALITY(1.0).DimensionDescriptor"
+                                       id="DimensionDescriptor">
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_MUNICIPALITY(1.0).municipality"
+                                       id="municipality"
+                                       position="1">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).MUNICIPALITY</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_DEPCOM(1.0)</str:Enumeration>
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_MUNICIPALITY(1.0).facility_type"
+                                       id="facility_type"
+                                       position="2">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_MUNICIPALITY(1.0).TIME_PERIOD"
+                                           id="TIME_PERIOD">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:TextFormat textType="ObservationalTimePeriod"/>
+                            </str:LocalRepresentation>
+                        </str:TimeDimension>
+                    </str:DimensionList>
+                    <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_MUNICIPALITY(1.0).MeasureDescriptor"
+                                     id="MeasureDescriptor">
+                        <str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:BPE_MUNICIPALITY(1.0).nb"
+                                     id="nb"
+                                     usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_EQUIPEMENT</str:ConceptIdentity>
+                        </str:Measure>
+                    </str:MeasureList>
+                </str:DataStructureComponents>
+            </str:DataStructure>
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_NUTS3(1.0)"
+                               isExternalReference="false"
+                               agencyID="FR1"
+                               id="BPE_NUTS3"
+                               version="1.0">
+                <com:Name xml:lang="en">Cube BPE par nuts 3</com:Name>
+                <str:DataStructureComponents>
+                    <str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:BPE_NUTS3(1.0).DimensionDescriptor"
+                                       id="DimensionDescriptor">
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_NUTS3(1.0).nuts3"
+                                       id="nuts3"
+                                       position="1">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)</str:Enumeration>
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_NUTS3(1.0).facility_type"
+                                       id="facility_type"
+                                       position="2">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).TYPE_EQUIPEMENT</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_TYPEQU(1.0)</str:Enumeration>
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                        <str:TimeDimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.TimeDimension=FR1:BPE_NUTS3(1.0).TIME_PERIOD"
+                                           id="TIME_PERIOD">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_YEAR</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:TextFormat textType="ObservationalTimePeriod"/>
+                            </str:LocalRepresentation>
+                        </str:TimeDimension>
+                    </str:DimensionList>
+                    <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_NUTS3(1.0).MeasureDescriptor"
+                                     id="MeasureDescriptor">
+                        <str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:BPE_NUTS3(1.0).nb"
+                                     id="nb"
+                                     usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_EQUIPEMENT</str:ConceptIdentity>
+                        </str:Measure>
+                    </str:MeasureList>
+                </str:DataStructureComponents>
+            </str:DataStructure>
+            <str:DataStructure urn="urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_CENSUS_NUTS3_2021(1.0)"
+                               isExternalReference="false"
+                               agencyID="FR1"
+                               id="BPE_CENSUS_NUTS3_2021"
+                               version="1.0">
+                <com:Name xml:lang="en">Cube médecins généralistes par habitants ventillé par nuts 3 en 2010</com:Name>
+                <str:DataStructureComponents>
+                    <str:DimensionList urn="urn:sdmx:org.sdmx.infomodel.datastructure.DimensionDescriptor=FR1:BPE_CENSUS_NUTS3_2021(1.0).DimensionDescriptor"
+                                       id="DimensionDescriptor">
+                        <str:Dimension urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=FR1:BPE_CENSUS_NUTS3_2021(1.0).nuts3"
+                                       id="nuts3"
+                                       position="1">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).REF_AREA</str:ConceptIdentity>
+                            <str:LocalRepresentation>
+                                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FR1:CL_REF_AREA(1.0)</str:Enumeration>
+                            </str:LocalRepresentation>
+                        </str:Dimension>
+                    </str:DimensionList>
+                    <str:MeasureList urn="urn:sdmx:org.sdmx.infomodel.datastructure.MeasureDescriptor=FR1:BPE_CENSUS_NUTS3_2021(1.0).MeasureDescriptor"
+                                     id="MeasureDescriptor">
+                        <str:Measure urn="urn:sdmx:org.sdmx.infomodel.datastructure.Measure=FR1:BPE_CENSUS_NUTS3_2021(1.0).pract_per_10000_inhabitants"
+                                     id="pract_per_10000_inhabitants"
+                                     usage="mandatory">
+                            <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=FR1:INSEE_CONCEPTS(1.0).NB_GENERALISTES_PAR_HABITANTS</str:ConceptIdentity>
+                        </str:Measure>
+                    </str:MeasureList>
+                </str:DataStructureComponents>
+            </str:DataStructure>
+        </str:DataStructures>
+        <str:Dataflows>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)" agencyID="FR1" id="BPE_DETAIL" version="1.0">
+              <com:Name xml:lang="en">Dataflow for BPE_DETAIL</com:Name>
+              <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_DETAIL(1.0)</str:Structure>
+            </str:Dataflow>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:LEGAL_POP_CUBE(1.0)" agencyID="FR1" id="LEGAL_POP_CUBE" version="1.0">
+              <com:Name xml:lang="en">Dataflow for LEGAL_POP_CUBE</com:Name>
+              <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:LEGAL_POP_CUBE(1.0)</str:Structure>
+            </str:Dataflow>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_MUNICIPALITY(1.0)" agencyID="FR1" id="BPE_MUNICIPALITY" version="1.0">
+                <com:Name xml:lang="en">Dataflow for BPE_MUNICIPALITY</com:Name>
+                <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_MUNICIPALITY(1.0)</str:Structure>
+            </str:Dataflow>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_NUTS3(1.0)" agencyID="FR1" id="BPE_NUTS3" version="1.0">
+                <com:Name xml:lang="en">Dataflow for BPE_NUTS3</com:Name>
+                <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_NUTS3(1.0)</str:Structure>
+            </str:Dataflow>
+            <str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_CENSUS_NUTS3_2021(1.0)" agencyID="FR1" id="BPE_CENSUS_NUTS3_2021" version="1.0">
+                <com:Name xml:lang="en">Dataflow for BPE_CENSUS_NUTS3_2021</com:Name>
+                <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FR1:BPE_CENSUS_NUTS3_2021(1.0)</str:Structure>
+            </str:Dataflow>
+        </str:Dataflows>
+        <str:VtlMappingSchemes>
+            <str:VtlMappingScheme urn="urn:sdmx:org.sdmx.infomodel.transformation.VtlMappingScheme=FR1:VTLMS1(1.0)" agencyID="FR1" id="VTLMS1" version="1.0">
+              <com:Name xml:lang="en">VTL Mapping Scheme #1</com:Name>
+              <str:VtlMapping alias="BPE_DETAIL_VTL" id="VTLM1">
+                <com:Name xml:lang="en">VTL Mapping #1</com:Name>
+                <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:BPE_DETAIL(1.0)</str:Dataflow>
+              </str:VtlMapping>
+              <str:VtlMapping alias="LEGAL_POP" id="VTLM2">
+                <com:Name xml:lang="en">VTL Mapping #2</com:Name>
+                <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=FR1:LEGAL_POP_CUBE(1.0)</str:Dataflow>
+              </str:VtlMapping>
+            </str:VtlMappingScheme>
+        </str:VtlMappingSchemes>
+        <str:RulesetSchemes>
+          <str:RulesetScheme vtlVersion="2.0" agencyID="FR1" id="RS1" version="1.0">
+            <com:Name xml:lang="en">Ruleset Scheme #1</com:Name>
+            <str:Ruleset id="UNIQUE_MUNICIPALITY" rulesetScope="valuedomain" rulesetType="datapoint">
+              <com:Name xml:lang="en">Datapoint Ruleset UNIQUE_MUNICIPALITY</com:Name>
+              <str:RulesetDefinition>
+                define datapoint ruleset UNIQUE_MUNICIPALITY (variable DEPCOM) is
+                    MUNICIPALITY_FORMAT_RULE : match_characters(DEPCOM, "[0-9]{5}|2[A-B][0-9]{3}") errorcode "Municipality code is not in the correct format"
+                end datapoint ruleset;
+              </str:RulesetDefinition>
+            </str:Ruleset>
+            <str:Ruleset id="NUTS3_TYPES" rulesetScope="variable" rulesetType="datapoint">
+              <com:Name xml:lang="en">Datapoint Ruleset NUTS3_TYPES</com:Name>
+              <str:RulesetDefinition>
+                define datapoint ruleset NUTS3_TYPES (variable facility_type, nb) is
+                    BOWLING_ALLEY_RULE : when facility_type = "F102" then nb > 10 errorcode "Not enough bowling alleys"
+                end datapoint ruleset;
+              </str:RulesetDefinition>
+            </str:Ruleset>
+          </str:RulesetScheme>
+        </str:RulesetSchemes>
+        <str:TransformationSchemes>
+          <str:TransformationScheme agencyID="FR1" id="BPE_CENSUS" version="1.0" vtlVersion="2.0">
+            <com:Name xml:lang="en">Transformation Scheme for BPE - CENSUS</com:Name>
+            <str:Transformation id="STEP_1" isPersistent="false">
+              <com:Name xml:lang="en">Step 1</com:Name>
+              <com:Description xml:lang="en">Validation of municipality code in input file</com:Description>
+              <str:Expression>check_datapoint(BPE_DETAIL_VTL, UNIQUE_MUNICIPALITY invalid)</str:Expression>
+              <str:Result>CHECK_MUNICIPALITY</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_2" isPersistent="false">
+              <com:Name xml:lang="en">Step 2</com:Name>
+              <com:Description xml:lang="en">Clean BPE input database</com:Description>
+              <str:Expression>
+                BPE_DETAIL_VTL  [drop LAMBERT_X, LAMBERT_Y]
+                            [rename ID_EQUIPEMENT to id, TYPEQU to facility_type, DEPCOM to municipality, REF_YEAR to year]
+              </str:Expression>
+              <str:Result>BPE_DETAIL_CLEAN</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_3" isPersistent="true">
+              <com:Name xml:lang="en">Step 3</com:Name>
+              <com:Description xml:lang="en">BPE aggregation by municipality, type and year</com:Description>
+              <str:Expression>
+                BPE_DETAIL_CLEAN    [aggr nb := count(id) group by municipality, year, facility_type] [rename year to TIME_PERIOD]
+              </str:Expression>
+              <str:Result>BPE_MUNICIPALITY</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_4" isPersistent="true">
+              <com:Name xml:lang="en">Step 4</com:Name>
+              <com:Description xml:lang="en">BPE aggregation by NUTS 3, type and year</com:Description>
+              <str:Expression>
+                BPE_MUNICIPALITY    [calc nuts3 := if substr(municipality,1,2) = "97" then substr(municipality,1,3) else substr(municipality,1,2)]
+                                    [aggr nb := count(nb) group by TIME_PERIOD, nuts3, facility_type]
+               </str:Expression>
+              <str:Result>BPE_NUTS3</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_5" isPersistent="false">
+              <com:Name xml:lang="en">Step 5</com:Name>
+              <com:Description xml:lang="en">BPE validation of facility types by NUTS 3</com:Description>
+              <str:Expression>check_datapoint(BPE_NUTS3, NUTS3_TYPES invalid)</str:Expression>
+              <str:Result>CHECK_NUTS3_TYPES</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_6" isPersistent="false">
+              <com:Name xml:lang="en">Step 6</com:Name>
+              <com:Description xml:lang="en">Prepare 2021 census dataset by NUTS 3</com:Description>
+              <str:Expression>
+                LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]
+                                    [filter TIME_PERIOD = "2021"]
+                                    [calc pop := cast(pop, integer)]
+                                    [drop TIME_PERIOD, NB_COM, POP_MUNI]
+              </str:Expression>
+              <str:Result>CENSUS_NUTS3_2021</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_7" isPersistent="false">
+              <com:Name xml:lang="en">Step 7</com:Name>
+              <com:Description xml:lang="en">Extract dataset on general practitioners from BPE by NUTS 3 in 2021</com:Description>
+              <str:Expression>
+                BPE_NUTS3   [filter facility_type = "D201" and TIME_PERIOD = "2021"]
+                            [drop facility_type, TIME_PERIOD]
+              </str:Expression>
+              <str:Result>GENERAL_PRACT_NUTS3_2021</str:Result>
+            </str:Transformation>
+            <str:Transformation id="STEP_8" isPersistent="true">
+              <com:Name xml:lang="en">Step 8</com:Name>
+              <com:Description xml:lang="en">Merge practitioners and legal population datasets by NUTS 3 in 2021 and compute an indicator</com:Description>
+              <str:Expression>
+                inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
+                        [calc pract_per_10000_inhabitants := nb / pop * 10000]
+                        [drop nb, pop]
+              </str:Expression>
+              <str:Result>BPE_CENSUS_NUTS3_2021</str:Result>
+            </str:Transformation>
+            <str:VtlMappingScheme>urn:sdmx:org.sdmx.infomodel.transformation.VtlMappingScheme=FR1:VTLMS1(1.0)</str:VtlMappingScheme>
+            <str:RulesetScheme>urn:sdmx:org.sdmx.infomodel.transformation.RulesetScheme=FR1:RS1(1.0)</str:RulesetScheme>
+          </str:TransformationScheme>
+    </str:TransformationSchemes>
+    </mes:Structures>
+</mes:Structure>

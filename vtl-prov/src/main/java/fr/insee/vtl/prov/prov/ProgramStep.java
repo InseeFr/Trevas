@@ -1,8 +1,6 @@
 package fr.insee.vtl.prov.prov;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ProgramStep {
 
@@ -14,6 +12,7 @@ public class ProgramStep {
   Set<VariableInstance> assignedVariables = new HashSet<>();
   Set<DataframeInstance> consumedDataframe = new HashSet<>();
   DataframeInstance producedDataframe;
+  List<String> usedDefines = new ArrayList<>();
 
   public ProgramStep(String label, String sourceCode, int index) {
     this.id = UUID.randomUUID().toString();
@@ -84,5 +83,13 @@ public class ProgramStep {
 
   public void setProducedDataframe(DataframeInstance producedDataframe) {
     this.producedDataframe = producedDataframe;
+  }
+
+  public List<String> getUsedDefines() {
+    return usedDefines;
+  }
+
+  public void setUsedDefines(List<String> usedDefines) {
+    this.usedDefines = usedDefines;
   }
 }
