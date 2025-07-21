@@ -1,5 +1,6 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlLexer;
@@ -8,9 +9,11 @@ import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
+import fr.insee.vtl.prov.utils.AntlrUtils;
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import org.antlr.v4.runtime.*;
@@ -109,6 +112,7 @@ public class ProvenanceListener extends VtlBaseListener {
     String label = ctx.IDENTIFIER().getText();
     if (!rootAssignment) {
       ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
+      if (null == programStep) return;
       if (!isInDatasetClause) {
         Set<DataframeInstance> consumedDataframe = programStep.getConsumedDataframe();
         String dfId = ProvenanceUtils.getOrBuildUUID(availableDataframeUUID, label);
@@ -152,9 +156,7 @@ public class ProvenanceListener extends VtlBaseListener {
   }
 
   @Override
-  public void exitComponentID(VtlParser.ComponentIDContext ctx) {
-    System.out.println(ctx.IDENTIFIER());
-  }
+  public void exitComponentID(VtlParser.ComponentIDContext ctx) {}
 
   @Override
   public void enterCalcClauseItem(VtlParser.CalcClauseItemContext ctx) {
@@ -183,8 +185,8 @@ public class ProvenanceListener extends VtlBaseListener {
     return program;
   }
 
-  public static Program run(String expr, String id, String programName) {
-    CodePointCharStream stream = CharStreams.fromString(expr);
+  private static Program prepareProgram(String expr, String id, String programName) {
+    CodePointCharStream stream = CharStreams.fromString(expr.trim());
     VtlLexer lexer = new VtlLexer(stream);
     VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
 
@@ -193,70 +195,88 @@ public class ProvenanceListener extends VtlBaseListener {
     return provenanceListener.getProgram();
   }
 
-  public static Program runWithBindings(
-      ScriptEngine engine, String expr, String id, String programName) {
-    Program program = run(expr, id, programName);
+  public static Program run(ScriptEngine engine, String expr, String id, String programName) {
+    Program program = prepareProgram(expr, id, programName);
     // 0 check if input dataset are empty?
     // Keep already handled dataset
     List<String> dsHandled = new ArrayList<>();
     // Split script to loop over program steps and run them
     AtomicInteger index = new AtomicInteger(1);
-    Arrays.stream(expr.split(";"))
-        .map(e -> e + ";")
-        .forEach(
-            stepScript -> {
-              int i = index.getAndIncrement();
-              // 1 - Handle input dataset
-              ProgramStep step = program.getProgramStepByIndex(i);
-              Set<DataframeInstance> consumedDataframe = step.getConsumedDataframe();
-              consumedDataframe.forEach(
-                  d -> {
-                    if (!dsHandled.contains(d.getLabel())) {
-                      Dataset ds = (Dataset) engine.getContext().getAttribute(d.getLabel());
-                      ds.getDataStructure()
-                          .values()
-                          .forEach(
-                              c -> {
-                                VariableInstance variableInstance =
-                                    step.getUsedVariables().stream()
-                                        .filter(
-                                            v ->
-                                                v.getParentDataframe().equals(d.getLabel())
-                                                    && v.getLabel().equals(c.getName()))
-                                        .findFirst()
-                                        .orElse(new VariableInstance(c.getName()));
-                                variableInstance.setRole(c.getRole());
-                                variableInstance.setType(c.getType());
-                                d.getHasVariableInstances().add(variableInstance);
-                              });
-                    }
-                  });
-              try {
-                engine.eval(stepScript);
-              } catch (ScriptException e) {
-                throw new RuntimeException(e);
-              }
-              // Improve built variables attributes
-              DataframeInstance producedDataframe = step.getProducedDataframe();
-              Dataset ds = (Dataset) engine.getContext().getAttribute(producedDataframe.getLabel());
+    Map<String, String> defineStatements = AntlrUtils.getDefineStatements(expr.trim());
+    // Add all defines to engine context
+    try {
+      engine.eval(String.join(" ", defineStatements.values()));
+    } catch (ScriptException e) {
+      throw new RuntimeException(e);
+    }
+    List<String> assignmentStatements = AntlrUtils.getAssignmentStatements(expr.trim());
+    assignmentStatements.forEach(
+        stepScript -> {
+          AtomicReference<String> stepScriptWithDefines = new AtomicReference<>(stepScript);
+          int i = index.getAndIncrement();
+          // 1 - Handle input dataset
+          ProgramStep step = program.getProgramStepByIndex(i);
+          Set<DataframeInstance> consumedDataframe = step.getConsumedDataframe();
+          consumedDataframe.forEach(
+              d -> {
+                if (!dsHandled.contains(d.getLabel())) {
+                  Object attribute = engine.getContext().getAttribute(d.getLabel());
+                  if (attribute instanceof Dataset ds) {
+                    ds.getDataStructure()
+                        .values()
+                        .forEach(
+                            c -> {
+                              VariableInstance variableInstance =
+                                  step.getUsedVariables().stream()
+                                      .filter(
+                                          v ->
+                                              v.getParentDataframe().equals(d.getLabel())
+                                                  && v.getLabel().equals(c.getName()))
+                                      .findFirst()
+                                      .orElse(new VariableInstance(c.getName()));
+                              variableInstance.setRole(c.getRole());
+                              variableInstance.setType(c.getType());
+                              d.getHasVariableInstances().add(variableInstance);
+                            });
+                  }
+                  if (attribute instanceof DataPointRuleset) {
+                    // Remove dpr from consumedDataframe
+                    consumedDataframe.removeIf(df -> d.getLabel().equals(df.getLabel()));
+                    // Add dpr to usedDefines
+                    List<String> usedDefines = step.getUsedDefines();
+                    String defineScript = defineStatements.get(d.getLabel());
+                    stepScriptWithDefines.set(defineScript + "\n" + stepScriptWithDefines);
+                    usedDefines.add(defineStatements.get(d.getLabel()));
+                    step.setUsedDefines(usedDefines);
+                  }
+                }
+              });
+          try {
+            engine.eval(stepScriptWithDefines.get());
+          } catch (ScriptException e) {
+            throw new RuntimeException(e);
+          }
+          // Improve built variables attributes
+          DataframeInstance producedDataframe = step.getProducedDataframe();
+          Dataset ds = (Dataset) engine.getContext().getAttribute(producedDataframe.getLabel());
 
-              ds.getDataStructure()
-                  .values()
-                  .forEach(
-                      c -> {
-                        VariableInstance variableInstance =
-                            step.getAssignedVariables().stream()
-                                .filter(v -> v.getLabel().equals(c.getName()))
-                                .findFirst()
-                                // TODO: refine variable detection in usedVariable
-                                .orElse(new VariableInstance(c.getName()));
-                        variableInstance.setRole(c.getRole());
-                        variableInstance.setType(c.getType());
-                        producedDataframe.getHasVariableInstances().add(variableInstance);
-                      });
-              dsHandled.add((producedDataframe.getLabel()));
-              // Correct usedVariables ID checking ds/var of last assignment
-            });
+          ds.getDataStructure()
+              .values()
+              .forEach(
+                  c -> {
+                    VariableInstance variableInstance =
+                        step.getAssignedVariables().stream()
+                            .filter(v -> v.getLabel().equals(c.getName()))
+                            .findFirst()
+                            // TODO: refine variable detection in usedVariable
+                            .orElse(new VariableInstance(c.getName()));
+                    variableInstance.setRole(c.getRole());
+                    variableInstance.setType(c.getType());
+                    producedDataframe.getHasVariableInstances().add(variableInstance);
+                  });
+          dsHandled.add((producedDataframe.getLabel()));
+          // Correct usedVariables ID checking ds/var of last assignment
+        });
 
     return program;
   }

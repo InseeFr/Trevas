@@ -40,8 +40,9 @@ jobs:
         with:
           java-version: 17
           distribution: "adopt"
+      # Also exclude vtl-prov because of vtl-sdmx scope test dependency
       - name: Test
-        run: mvn test -pl '!vtl-sdmx'
+        run: mvn test -pl '!vtl-sdmx,!vtl-prov'
   test:
     name: Run Trevas tests
     if: (github.repository != 'InseeFr/Trevas' &&
