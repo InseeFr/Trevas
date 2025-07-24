@@ -1,6 +1,6 @@
 package fr.insee.vtl.prov.prov;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /* Filled thanks to listener, except for dataframInstances */
@@ -8,10 +8,10 @@ public class Program {
 
   String id;
   String label;
-  Set<ProgramStep> programSteps = new HashSet<>();
+  Set<ProgramStep> programSteps = new LinkedHashSet<>();
 
   /* Provided running preview mode */
-  Set<DataframeInstance> dataframeInstances = new HashSet<>();
+  Set<DataframeInstance> dataframeInstances = new LinkedHashSet<>();
 
   String sourceCode;
 
