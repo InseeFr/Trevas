@@ -1,0 +1,1211 @@
+//Examples run from reference manual 10/04/2018
+//'variable' keyword missing
+define datapoint ruleset dpr1 (flow, obs_value) is
+when flow="CREDIT" or flow="DEBIT" then obs_value >=0 errorcode "bad value"
+end datapoint ruleset;
+
+//parenthesis in errorcode
+define datapoint ruleset dpr1 (variable flow, obs_value) is
+when flow="CREDIT" or flow="DEBIT" then obs_value >=0 errorcode ("bad value")
+end datapoint ruleset;
+
+//'is' keyword is missing after signature
+define datapoint ruleset DPR_1 ( valuedomain flow_type as A, numeric_value as B )
+when A = "CREDIT" or A = "DEBIT" then B >= 0 errorcode "Bad value" errorlevel 10
+end datapoint ruleset;
+
+//'when' keyword is missing
+define datapoint ruleset DPR_2 ( variable flow as F, obs_value as O) is
+F = "CREDIT" or F = "DEBIT" then O >= 0 errorcode "Bad value"
+end datapoint ruleset;
+
+//'rule' keyword missing in signature
+define hierarchical ruleset BeneluxCountriesHierearchy (valuedomain Geo_Area) is
+BENELUX = BELGIUM + LUXEMBOURG + NETHERLANDS
+end hierarchical ruleset;
+
+//'ruleset' keyword missing at the end
+define hierarchical ruleset BeneluxRuleset (valuedomain rule GeoArea) is
+Belgium = Belgium
+;Luxembourg = Luxembourg
+;Netherlands = Netherlands
+;Benelux = Belgium + Luxembourg + Netherlands
+end hierarchical;
+
+//'hierarchical' keyword missing from define
+define ruleset CalcCountryLevel (valuedomain condition Residence rule GeoArea) is
+when Residence = "resident" then Country1 = Country1
+; when Residence = "non-resident" then Country1 = Region11+Region1M
+; when Residence = "resident" then CountryN = CountryN
+; when Residence = "non-resident" then CountryN = RegionN1 + RegionNM
+end hierarchical ruleset;
+
+//second part missing from hierarchy (should be male + female)
+define hierarchical ruleset sex_hr (valuedomain rule sex) is
+TOTAL = MALE +
+end hierarchical ruleset;
+
+//'valuedomain' keyword missing form signature
+define hierarchical ruleset BeneluxCountriesHierarchy (rule GeoArea) is
+BENELUX = BELGIUM + LUXEMBOURG + NETHERLANDS errorcode "Bad value for Benelux"
+end hierarchical ruleset;
+
+//wrong keyword used in signature 'variables'
+define hierarchical ruleset american_partners_hr (variables rule PartnerArea) is
+NORTH_AMERICA > US ;
+SOUTH_AMERICA = BR + UY + AR + CL
+end hierarchical ruleset;
+
+//operator name starts with dot
+define operator .max1 (x integer, y integer)
+returns boolean is
+if x > y then x else y
+end operator;
+
+//second parameter missing type
+define operator max1 (x integer, y)
+returns boolean is
+if x > y then x else y
+end operator;
+
+//'returns' keyword missing
+define operator add (x integer default 0, y integer default 0)
+number is
+x+y
+end operator;
+
+//body is missing
+define operator add (x integer default 0, y integer default 0)
+returns number is
+end operator;
+
+//right parenthesis missing
+( DS_1  +  DS_2
+
+//left parenthesis missing
+CMP_1  -  CMP_2 )
+
+//third operand is missing
+( DS_2   -   3   * )
+
+//unmatched parethesis at the end
+(DS_1 + DS_2) * DS_3 (
+
+//persistent assignment used twice in a row
+DS_r <- <- DS_1
+
+//'=' placed after persistent assignment
+DS_r <- = DS_1 - DS_2
+
+//two identifiers in a row
+DS_r := DS_1 DS_2
+
+//empty assignment
+DS_r :=
+
+//left operand missing
+:= DS_1 - DS_2
+
+//last identifier starts with a numeric character
+DS_r := 3 + 22d
+
+//membership used two times in a row
+DS_r  := DS_1#Me_1#Me_2
+
+//component missing
+DS_r  := DS_1#
+
+//dataset name missing
+DS_r  := #At_1
+
+//unmatched parenthesis
+max1 ( 2, 3
+
+//arguments not separated by comma
+max1 ( 2 3 id)
+
+//'returns' keyword is missing
+DS_r := eval( SQL3( DS_1 ) integer)
+
+//1st mandatory operator is missing
+ds2 := ds1[calc m2 := cast(number, "DD.DDD")+2]
+
+//2nd mandatory operator is missing
+ds2 := ds1[calc m2 := cast(m1,"YYYY-MM-DD")]
+
+//both mandatory operators missing
+ds2 := ds1[calc m2 := cast("YYYY-MM-DD")]
+
+//no operators in cast
+ds2 := ds1[calc m2 := length(cast())]
+
+//incorrect use of keyword 'inner_join'
+innerjoin ( ds1 as d1, ds2 as d2 using Id1, Id2 filter d1#Me1 + d2#Me1 <10
+apply d1 / d2
+keep Me1, Me2, Me3
+rename Id1 to Id10, id2 to id20
+)
+
+//comma placed before using
+inner_join ( ds1 as d1, ds2 as d2, using Id1, Id2 filter d1#Me1 + d2#Me1 <10
+apply d1 / d2
+keep Me1, Me2, Me3
+rename Id1 to Id10, id2 to id20
+)
+
+//rename used without 'to'
+left_join ( ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10,
+calc Me1 := d1#Me1 + d2#Me3, keep Me1
+rename Id1 , Me1
+)
+
+//'having' expression in parenthesis
+full_join (ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10,
+aggr Me1:= sum(Me1), attribute At20:=avg(Me2)
+group by Id1, Id2
+having (sum(Me3)>0)
+)
+
+//expression is used in grouping clause instead of component list
+full_join (ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10,
+aggr Me1:= sum(Me1), attribute At20:=avg(Me2)
+group by Id1>2
+having (sum(Me3)>0)
+)
+
+//parenthesis mismatch
+DS_r := inner_join ( DS_1 as d1, DS_2 as d2, keep Me_1, d2#Me_2, Me_1A
+
+//no use of parenthesis
+DS_r := left_join DS_1 as d1, DS_2 as d2, keep Me_1, d2#Me_2, Me_1A
+
+//comma used before 'rename'
+DS_r := cross_join (DS_1 as d1, DS_2 as d2,
+rename d1#Id_1 to Id11, d1#Id_2 to Id12, d2#Id1 to Id21, d2#Id2 to Id22, d1#Me_2 to Me12 )
+
+//no operands after join keyword
+DS_r := inner_join (filter Me_1 ="A",
+calc Me_4 = Me_1||Me_1A, drop d1#Me_2)
+
+//filter clause misplaced
+full_join (ds1 as d1, ds2 as d2
+aggr Me1:= sum(Me1), attribute At20:=avg(Me2)
+filter d1#Me1 + d2#Me1 <10
+group by Id1, Id2
+having sum(Me3)>0
+)
+
+//keep and drop used together
+left_join ( ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10
+calc Me1 := d1#Me1 + d2#Me3
+keep Me1 drop Me3
+rename Id1 to Ident1, Me1 to Meas1
+)
+
+//second operand missing
+ds_1 ||
+
+
+//first operand missing
+DS_r :=  || DS_2
+
+//space used between '||'
+DS_r := DS_1[calc Me_2:= Me_1 | | "world"]
+
+//more than one operands used
+DS_r := rtrim(DS_1, DS_2)
+
+//no operands used
+trim()
+
+//more than one operands used
+lower(ds_1, ds_2)
+
+//no operands used
+DS_r := upper()
+
+//no operands used
+substr ()
+
+//more than 3 operands used
+substr (DS_1, 2, 3, 5)
+
+//first operand ignored
+substr (_, 2, 3)
+
+//all operands ignored
+substr ( _, _ , _ )
+
+//no operands used
+replace()
+
+//more than 3 operands used
+replace(DS_1, "Hello", "Hi", "hi")
+
+//second operand ignored
+replace("Hello world", _ , "Hi")
+
+//second operand missing
+replace("Hello world", , "Hello")
+
+//only one operand used
+replace ("Hello")
+
+//no operands used
+instr()
+
+//first operand ignored
+instr(_, "ab", 2, 3)
+
+//first and second operands ignored
+instr(_, _, 2,3)
+
+//all operands ignored
+instr(_, _, _, _)
+
+//no operand used
+length()
+
+//more than one operands used
+length(DS_1, "hi")
+
+//second operand missing
+DS_r := DS_1 +
+
+//second operand missing
+DS_r := DS_1 -
+
+//first operand missing
+DS_r :=  * DS_2
+
+//second operand missing
+DS_r := DS_1 /
+
+//no operands used
+DS_r := mod ()
+
+//only one operand used
+DS_r := mod ( DS_1)
+
+//more than two operands used
+DS_r := mod ( DS_1, DS_2, DS_3 )
+
+//no operands used
+DS_r := round()
+
+//first operand ignored
+DS_r := round(_, 2)
+
+//more than two operands used
+DS_r := round(DS_1, 0, 3)
+
+//both operands ignored
+round(_,_)
+
+//no operands used
+DS_r := trunc()
+
+//first operand ignored
+DS_r := trunc(_, 0)
+
+//more than two operands used
+DS_r := trunc(DS_1, 0, 3)
+
+//both operands ignored
+DS_r := trunc(_, _)
+
+//no operands used
+DS_r := ceil ()
+
+//more than one operands used
+DS_r := ceil (DS_1,2,3)
+
+//no operands used
+DS_r := floor ()
+
+//more than one operands used
+DS_r := floor ( DS_1,2)
+
+//no operands used
+DS_r := abs ()
+
+//more than one operands used
+DS_r := abs (DS_1, DS_2)
+
+//no operands used
+DS_r := exp()
+
+//more than one operands used
+DS_r := exp(DS_1, DS_2)
+
+//no operands used
+DS_r := ln()
+
+//more than one operands used
+DS_r := ln(DS_1, DS_2)
+
+//no operands used
+DS_r := power()
+
+//more than two operands used
+DS_r := power(DS_1, 2, 3)
+
+//no operands used
+DS_r := log ()
+
+//more than two operands used
+DS_r := log ( DS_1, 2, 3 )
+
+//no operand used
+DS_r := sqrt()
+
+//more than one operands used
+DS_r := sqrt(DS_1, DS_2)
+
+//first operand missing
+DS_r := = 0.08
+
+//second operand missing
+DS_r := DS_1 [ calc Me_2 := Me_1 = ]
+
+//first operand missing
+DS_r :=  <> DS_2
+
+//second operand missing
+DS_r := DS_1 [ Me_2 := Me_1<>]
+
+//first operand missing
+DS_r :=  > 20
+
+//second operand missing
+DS_r := DS_1 [ Me_2 := Me_1 >  ]
+
+//first operand missing
+DS_r :=  < 15000000
+
+//second operand missing
+DS_r := DS_1 <
+
+//no operands used
+DS_r:= between()
+
+//more than three operands used
+DS_r:= between(ds1, 5,10, 3)
+
+//less than three operands used
+DS_r:= between(ds1, 5)
+
+//no use of '{' '}'
+ds := ds_2 in 1,4,6
+
+//parenthesis used
+ds := ds_2 in (1,4,6)
+
+//wrong type of collection
+DS_r := DS_1#Id_2 in "myGeoValueDomain"
+
+//operand is missing
+ds :=  in myValueDomain
+
+//collection is missing
+DS_r := DS_1 [ calc Me_2:= Me_1 in {}]
+
+//wrong type of collection
+"a" in 123
+
+//no operands used
+match_characters()
+
+//more than two operands used
+match_characters(ds1, "[abc]+\d\d", "abc")
+
+//first operand missing
+ds1 [ calc m1 := match_characters("[abc]+\d\d")]
+
+//no operand used
+isnull()
+
+//more than one operand used
+isnull(NULL, "hello")
+
+//no operands used
+exists_in ()
+
+//more than three operands used
+exists_in ( DS_1, DS_2, true, all )
+
+//first two operands missing
+exists_in ( true )
+
+//first operand missing
+DS_r:= and DS_2
+
+//second operand missing
+DS_r := DS_1 [ Me_2:= Me_1 and ]
+
+//first operand missing
+DS_r:= or DS_2
+
+//second operand missing
+DS_r:= DS_1 [ Me_2:= Me_1 or ]
+
+//first operand missing
+DS_r:= xor DS_2
+
+//second operand missing
+DS_r:= DS_1 [ Me_2:= Me_1 xor ]
+
+//operand positioned prior not
+DS_r:= DS_1 not
+
+//two operands used
+DS_r:= DS_1 [ calc Me_2 := ds_1 not Me_1 ]
+
+//more than one operands used
+DS_r := period_indicator ( DS_1, DS_2 )
+
+//no operands used
+DS_r := fill_time_series ()
+
+//more than two operands used
+DS_r := fill_time_series ( DS_1, DS_2, all )
+
+//wrong use of second operand
+DS_r := fill_time_series ( DS_2, DS_1 )
+
+//wrong use of first operator
+DS_r := fill_time_series (all, single )
+
+//first operand omitted
+DS_r := fill_time_series (single )
+
+//no operand used
+DS_r := flow_to_stock ()
+
+//more than one operands used
+DS_r := flow_to_stock ( DS_1, DS_2 )
+
+//no operand used
+DS_r := stock_to_flow ()
+
+//more than one operands used
+DS_r := stock_to_flow( DS_1, DS_2 )
+
+//no operands used
+DS_r := timeshift()
+
+//more than two operands used
+DS_r := timeshift(DS_2, 2, 3)
+
+//only one operand used
+DS_r := timeshift(DS_1)
+
+//wrong value for second operand
+DS_r := timeshift(DS_3, "ABC")
+
+//no operands used
+sum ( DS group all time_agg ())
+
+//more than 4 operands used
+DS_r := sum ( DS_1 ) group all time_agg ( "A",_,Me_1, last, first)
+
+//first operand omitted
+time_agg(_,cast("2012Q1", time_period, "YYYY\Qq"))
+
+//wrong value for last operand
+DS_r := sum ( DS_1 ) group all time_agg ( "A",_,Me_1, Me_2)
+
+//operator used with parenthesis
+current_date()
+
+//no operands used
+DS_r := union()
+
+//wrong use of operands list
+DS_r := union([DS_1,DS_2])
+
+//no operands used
+DS_r := intersect()
+
+//wrong use of operands list
+DS_r := intersect({DS_1,DS_2})
+
+//no operands used
+DS_r := setdiff ()
+
+//one operand used
+DS_r := setdiff ( DS_1)
+
+//more than two operands used
+DS_r := setdiff ( DS_1, DS_2, DS_3 )
+
+//no operands used
+DS_r := symdiff ()
+
+//one operand used
+DS_r := symdiff ( DS_1)
+
+//more than two operands used
+DS_r := symdiff ( DS_1, DS_2, DS_3 )
+
+//no operands used
+hierarchy ()
+
+//first operand omitted
+hierarchy (total all)
+
+//no comma used after first operand
+hierarchy (DS1 HR1 total all)
+
+//no hr name provided
+hierarchy (DS1, condition var1,var2 total all)
+
+//condition keyword omitted
+hierarchy (DS1,HR1 var1,var2 total all)
+
+//wrong use of variables list
+hierarchy (DS1, HR1 condition {var1,var2} total all)
+
+//rule keyword omitted
+hierarchy (DS1, HR1 condition var1,var2 rule2 total all)
+
+//comma separated operands
+hierarchy (DS1, HR1, total, all)
+
+//no component placed after group by
+DS_r := count(DS_1 group by )
+
+//no operands used
+DS_r := min ()
+
+//no operands used
+DS_r := max ()
+
+//no operands used
+DS_r := median ()
+
+//no operands used
+DS_r := sum ()
+
+//wrong type of operand
+DS_r := sum ( 1,2,3)
+
+//wrong use of partition by
+sum ( DS_1 over ( partition by 3 order by Id_2 ) )
+
+//parenthesis omitted for order by
+DS_r := sum ( DS_1 over order by Id_1, Id_2, Id_3 data points between 1 preceding and 1 following )
+
+//incorrect use of between
+avg ( DS_1 over ( order by Id_1 data points between  preceding 2 and  following 2) )
+
+//no operands used
+avg()
+
+//wrong use of group by
+avg ( DS_1 group by except Id_1, Id_2 )
+
+//no operands used
+DS_r := stddev_pop ()
+
+//no operands used
+DS_r := var_pop ()
+
+//no operands used
+DS_r := var_samp ()
+
+//Wrong group by use
+DS_r := var_samp ( DS_1 group by [Id_1])
+
+//no operands used
+DS_r := first_value ()
+
+//more than one operands used
+DS_r := first_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 data points between 1 preceding and 1 following), DS_2)
+
+//'data points' keyword missing
+DS_r := first_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 between 1 preceding and 1 following))
+
+//no operands used
+DS_r := last_value ()
+
+//more than one operands used
+DS_r := last_value ( DS_1 over ( partition by Id_1, Id_2), DS_2)
+
+//analytic clause missing
+DS_r := last_value ( DS_1 over)
+
+//no operands used
+DS_r := lag ( )
+
+//'over' keyword missing
+DS_r := lag ( DS_1 , 1 ( partition by Id_1 , Id_2 order by Id_3 ) )
+
+//no parenthesis used for over
+DS_r := lag ( DS_1 , 1 over partition by Id_1 , Id_2 order by Id_3 )
+
+//no operands used
+DS_r := lead ()
+
+//'over' keyword missing
+DS_r := lead ( DS_1 , 1 ( partition by Id_1 , Id_2 order by Id_3 ) )
+
+//no parenthesis used for over
+DS_r := lead ( DS_1 , 1 over partition by Id_1 , Id_2 order by Id_3 )
+
+//no operands used
+DS_r := DS_1 [ calc Me2 := rank ()]
+
+//'over' keyword is missing
+DS_r := DS_1 [ calc Me2 := rank (( partition by Id_1 , Id_2 order by Me_1 ) )]
+
+//no operands used
+DS_r := ratio_to_report ()
+
+//'over' keyword missing
+DS_r := ratio_to_report ( DS_1 ( partition by Id_1, Id_2 ) )
+
+//partitionClause missing
+DS_r := ratio_to_report ( DS_1 over Id_1, Id_2 )
+
+//partitionClause used without parenthesis
+DS_r := ratio_to_report ( DS_1 over partition by Id_1, Id_2 )
+
+//no operands used
+check_datapoint ()
+
+//more than two operands used
+check_datapoint ( DS1, DPR, output invalid)
+
+//'variables' keyword missing
+check_datapoint ( DS1, DPR m1, m2)
+
+//output is not provided after 'output' keyword
+DS_r := check_datapoint ( DS1, DPR output )
+
+//wrong keyword used for output
+DS_r := check_datapoint ( DS1, DPR output measures)
+
+//wrong listVariables use
+check_datapoint ( DS1, DPR variables {m1,m2,m3} output invalid)
+
+//no operands used
+DS_validation_report := check_hierarchy ()
+
+//more than two operands used
+DS_validation_report := check_hierarchy ( DS_1, hr1 total, DS_2 )
+
+//second operand missing
+DS_r:= DS_1 [ Me_2:= Me_1 or ]
+
+//first operand missing
+DS_r:= xor DS_2
+
+//second operand missing
+DS_r:= DS_1 [ Me_2:= Me_1 xor ]
+
+//operand positioned prior not
+DS_r:= DS_1 not
+
+//two operands used
+DS_r:= DS_1 [ calc Me_2 := ds_1 not Me_1 ]
+
+//more than one operands used
+DS_r := period_indicator ( DS_1, DS_2 )
+
+//no operands used
+DS_r := fill_time_series ()
+
+//more than two operands used
+DS_r := fill_time_series ( DS_1, DS_2, all )
+
+//wrong use of second operand
+DS_r := fill_time_series ( DS_2, DS_1 )
+
+//wrong use of first operator
+DS_r := fill_time_series (all, single )
+
+//first operand omitted
+DS_r := fill_time_series (single )
+
+//no operand used
+DS_r := flow_to_stock ()
+
+//more than one operands used
+DS_r := flow_to_stock ( DS_1, DS_2 )
+
+//no operand used
+DS_r := stock_to_flow ()
+
+//more than one operands used
+DS_r := stock_to_flow( DS_1, DS_2 )
+
+//no operands used
+DS_r := timeshift()
+
+//more than two operands used
+DS_r := timeshift(DS_2, 2, 3)
+
+//only one operand used
+DS_r := timeshift(DS_1)
+
+//wrong value for second operand
+DS_r := timeshift(DS_3, "ABC")
+
+//no operands used
+sum ( DS group all time_agg ())
+
+//more than 4 operands used
+DS_r := sum ( DS_1 ) group all time_agg ( "A",_,Me_1, last, first)
+
+//first operand omitted
+time_agg(_,cast("2012Q1", time_period, "YYYY\Qq"))
+
+//wrong value for last operand
+DS_r := sum ( DS_1 ) group all time_agg ( "A",_,Me_1, Me_2)
+
+//operator used with parenthesis
+current_date()
+
+//no operands used
+DS_r := union()
+
+//wrong use of operands list
+DS_r := union([DS_1,DS_2])
+
+//no operands used
+DS_r := intersect()
+
+//wrong use of operands list
+DS_r := intersect({DS_1,DS_2})
+
+//no operands used
+DS_r := setdiff ()
+
+//one operand used
+DS_r := setdiff ( DS_1)
+
+//more than two operands used
+DS_r := setdiff ( DS_1, DS_2, DS_3 )
+
+//no operands used
+DS_r := symdiff ()
+
+//one operand used
+DS_r := symdiff ( DS_1)
+
+//more than two operands used
+DS_r := symdiff ( DS_1, DS_2, DS_3 )
+
+//no operands used
+hierarchy ()
+
+//first operand omitted
+hierarchy (total all)
+
+//no comma used after first operand
+hierarchy (DS1 HR1 total all)
+
+//no hr name provided
+hierarchy (DS1, condition var1,var2 total all)
+
+//condition keyword omitted
+hierarchy (DS1,HR1 var1,var2 total all)
+
+//wrong use of variables list
+hierarchy (DS1, HR1 condition {var1,var2} total all)
+
+//rule keyword omitted
+hierarchy (DS1, HR1 condition var1,var2 rule2 total all)
+
+//comma separated operands
+hierarchy (DS1, HR1, total, all)
+
+//no component placed after group by
+DS_r := count(DS_1 group by )
+
+//no operands used
+DS_r := min ()
+
+//no operands used
+DS_r := max ()
+
+//no operands used
+DS_r := median ()
+
+//no operands used
+DS_r := sum ()
+
+//wrong type of operand
+DS_r := sum ( 1,2,3)
+
+//wrong use of partition by
+sum ( DS_1 over ( partition by 3 order by Id_2 ) )
+
+//parenthesis omitted for order by
+DS_r := sum ( DS_1 over order by Id_1, Id_2, Id_3 data points between 1 preceding and 1 following )
+
+//incorrect use of between
+avg ( DS_1 over ( order by Id_1 data points between  preceding 2 and  following 2) )
+
+//no operands used
+avg()
+
+//wrong use of group by
+avg ( DS_1 group by except Id_1, Id_2 )
+
+//no operands used
+DS_r := stddev_pop ()
+
+//no operands used
+DS_r := var_pop ()
+
+//no operands used
+DS_r := var_samp ()
+
+//Wrong group by use
+DS_r := var_samp ( DS_1 group by [Id_1])
+
+//no operands used
+DS_r := first_value ()
+
+//more than one operands used
+DS_r := first_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 data points between 1 preceding and 1 following), DS_2)
+
+//'data points' keyword missing
+DS_r := first_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 between 1 preceding and 1 following))
+
+//no operands used
+DS_r := last_value ()
+
+//more than one operands used
+DS_r := last_value ( DS_1 over ( partition by Id_1, Id_2), DS_2)
+
+//analytic clause missing
+DS_r := last_value ( DS_1 over)
+
+//no operands used
+DS_r := lag ( )
+
+//'over' keyword missing
+DS_r := lag ( DS_1 , 1 ( partition by Id_1 , Id_2 order by Id_3 ) )
+
+//no parenthesis used for over
+DS_r := lag ( DS_1 , 1 over partition by Id_1 , Id_2 order by Id_3 )
+
+//no operands used
+DS_r := lead ()
+
+//'over' keyword missing
+DS_r := lead ( DS_1 , 1 ( partition by Id_1 , Id_2 order by Id_3 ) )
+
+//no parenthesis used for over
+DS_r := lead ( DS_1 , 1 over partition by Id_1 , Id_2 order by Id_3 )
+
+//no operands used
+DS_r := DS_1 [ calc Me2 := rank ()]
+
+//'over' keyword is missing
+DS_r := DS_1 [ calc Me2 := rank (( partition by Id_1 , Id_2 order by Me_1 ) )]
+
+//no operands used
+DS_r := ratio_to_report ()
+
+//'over' keyword missing
+DS_r := ratio_to_report ( DS_1 ( partition by Id_1, Id_2 ) )
+
+//partitionClause missing
+DS_r := ratio_to_report ( DS_1 over Id_1, Id_2 )
+
+//partitionClause used without parenthesis
+DS_r := ratio_to_report ( DS_1 over partition by Id_1, Id_2 )
+
+//no operands used
+check_datapoint ()
+
+//more than two operands used
+check_datapoint ( DS1, DPR, output invalid)
+
+//'variables' keyword missing
+check_datapoint ( DS1, DPR m1, m2)
+
+//output is not provided after 'output' keyword
+DS_r := check_datapoint ( DS1, DPR output )
+
+//wrong keyword used for output
+DS_r := check_datapoint ( DS1, DPR output measures)
+
+//wrong listVariables use
+check_datapoint ( DS1, DPR variables {m1,m2,m3} output invalid)
+
+//no operands used
+DS_validation_report := check_hierarchy ()
+
+//more than two operands used
+DS_validation_report := check_hierarchy ( DS_1, hr1 total, DS_2 )
+
+//'condition' keyword omitted
+DS_validation_report := check_hierarchy ( DS_1, hr1 M1,M2)
+
+//wrong use of condVariables
+DS_validation_report := check_hierarchy ( DS_1, hr1 condition {M1,M2})
+
+//rule variable omitted
+DS_validation_report := check_hierarchy ( DS_1, hr1 rule partial)
+
+//wrong value for mode
+check_hierarchy(DS1, hr totals rule_priority invalid)
+
+//wrong value for input
+check_hierarchy(DS1, hr total priority invalid)
+
+//wrong value for output
+check_hierarchy(DS1, hr total rule_priority measures)
+
+//keywords misplaced
+check_hierarchy(DS1, hr rule_priority total invalid)
+
+//no operands used
+DS_r := check ()
+
+//more than one operands used
+DS_r := check ( DS1 >= DS2, DS3 > DS4 imbalance DS1 - DS2 )
+
+//op missing
+DS_r := check (imbalance DS1 - DS2 )
+
+//'errorcode' keyword missing
+check ( DS1 > DS2 "myerrorcode" errorlevel "myerrorlevel" imbalance DS1 - DS2 invalid )
+
+//'errorlevel' keyword missing
+check ( DS1 > DS2 errorcode "myerrorcode" "myerrorlevel" imbalance DS1 - DS2 invalid )
+
+//'imbalance' keyword missing
+check ( DS1 > DS2 errorcode "myerrorcode" errorlevel "myerrorlevel"  DS1 - DS2 invalid )
+
+//wrong output value
+check ( DS1 > DS2 errorcode "myerrorcode" errorlevel "myerrorlevel" imbalance DS1 - DS2 valid )
+
+//wrong type of errorcode/errorlevel
+check ( DS1 > DS2 errorcode (my code) errorlevel (level 2) imbalance DS1 - DS2 invalid )
+
+//else part is missing
+if x1 > x2 then 2
+
+//then part is missing
+DS_r := if ( DS_cond#Id_4 = "F" ) else DS_2
+
+//no operands used
+nvl ()
+
+//more than two operands used
+nvl ( ds1#m1, 0, 3 )
+
+//one operand used
+nvl ( 5)
+
+//op missing
+[ filter Me_3 > 0 ]
+
+//'filter' keyword missing
+DS_1[ Me_3 > 0 ]
+
+//filter condition missing
+DS_1 [ filter]
+
+//op missing
+[ calc Me_3 := Me_1 + Me_2 ]
+
+//calcComp missing
+DS_r := DS_1 [ calc := Me_1 * 2 ]
+
+//wrong type of calcComp
+DS_r := DS_1 [ calc "abc":= Me_1 * 2 ]
+
+//assignment missing in calc
+DS_r := DS_1 [ calc Me_1 Me_1 * 2 ]
+
+//calcExpr missing
+DS_r := DS_1 [ calc Me_1:= ]
+
+//wrong type of calcRole
+DS_r := DS_1 [ calc measures At_1:= "EP"]
+
+//op missing
+[ aggr M1 := min ( Me_1 ) group by Id_1, Id_2 ]
+
+//aggrClause missing
+DS_1 [ aggr group by Id_1, Id_2 ]
+
+//aggrComp missing
+DS_1 [ aggr min ( Me_1 ) group by Id_1, Id_2 ]
+
+//aggrExpr missing
+DS_1 [ aggr M1  group by Id_1, Id_2 ]
+
+//groupingClause in parenthesis
+DS_r := DS_1 [ aggr Me_1:= sum( Me_1 ) (group by Id_1 , Id_2) ]
+
+//groupingClause keyword missing
+DS_1 [ aggr M1 := min ( Me_1 ) Id_1, Id_2 ]
+
+//incorrect keyword for groupingClause
+DS_r := DS_1 [ aggr Me_3:= min( Me_1 ) group_except Id_3 ]
+
+//incorrect keyword for aggrRole
+DS_r := DS_1 [ aggr attributes Me_3:= min( Me_1 ) group except Id_3 ]
+
+//havingClause in parenthesis
+DS_r := DS_1 [ aggr Me_1:= sum( Me_1 ), Me_2 := max( Me_1) group by Id_1 , Id_2
+(having median (Me_1 ) > 2) ]
+
+//op missing
+[ keep Me_2, Me_3 ]
+
+//'keep' keyword misplaced
+DS_1 keep[ Me_1]
+
+//components missing
+DS_1 [ keep ]
+
+//incorrect component list
+DS_1 [ keep {Me_2, Me_3} ]
+
+//no use of '[' ']'
+DS_1 keep Me_2, Me_3
+
+//op missing
+DS_r := [ drop At_1 ]
+
+//'drop' keyword misplaced
+DS_r := DS_1 drop[ At_1 ]
+
+//components missing
+DS_1 [ drop ]
+
+//incorrect component list
+DS_1 [ drop {Me_2, Me_3} ]
+
+//op missing
+[ rename Me_2 to Me_3 ]
+
+//'rename' keyword missing
+DS_1 [ Me_2 to Me_3 ]
+
+//comp_from missing
+DS_1 [ rename to Me_3 ]
+
+//'to' keyword missing
+DS_r := DS_1 [ rename Me_1  Me_2, At_1 to At_2]
+
+//comp_to missing
+DS_r := DS_1 [ rename Me_1 to , At_1 to At_2]
+
+//no comma placed between elements to be renamed
+DS_r := DS_1 [ rename Me_1 to Me_2 At_1 to At_2]
+
+//'rename' keyword used twice
+DS_r := DS_1 [ rename Me_1 to Me_2, rename At_1 to At_2]
+
+//op missing
+[ pivot Id_2, Me_1 ]
+
+//pivot keyword missing
+DS_1 [Id_2, Me_1 ]
+
+//identifier or measure missing
+DS_r := Ds_1 [ pivot  Me_1 ]
+
+//more than two operands used
+DS_r := Ds_1 [ pivot Id_2, Me_1, Me_2 ]
+
+//op missing
+[ unpivot Id_5, Me_3 ]
+
+//unpivot keyword missing
+DS [ Id_5, Me_3 ]
+
+//identifier or measure missing
+DS_r := DS_1 [ unpivot Id_2]
+
+//more than two operands used
+DS_r := DS_1 [ unpivot Id_2, Me_1, Me_2]
+
+//op missing
+DS_r := [sub Id_2 = "A", Id_5 = 1 ]
+
+//'sub' keyword missing
+DS_r := DS_1 [ Id_1 = 1, Id_2 = "A"]
+
+//identifier missing
+DS_r := DS_1 [ sub  = 1, Id_2 = "A"]
+
+//value missing
+DS_r := DS_1 [ sub Id_1 = 1, Id_2 = ]
+
+//no comma used between pairs
+DS_r := DS_1 [ sub Id_1 = 1  Id_2 = "A"]
+
+//'rename' keyword missing
+DS_1 [ Me_2 to Me_3 ]
+
+//comp_from missing
+DS_1 [ rename to Me_3 ]
+
+//'to' keyword missing
+DS_r := DS_1 [ rename Me_1  Me_2, At_1 to At_2]
+
+//comp_to missing
+DS_r := DS_1 [ rename Me_1 to , At_1 to At_2]
+
+//no comma placed between elements to be renamed
+DS_r := DS_1 [ rename Me_1 to Me_2 At_1 to At_2]
+
+//'rename' keyword used twice
+DS_r := DS_1 [ rename Me_1 to Me_2, rename At_1 to At_2]
+
+//op missing
+[ pivot Id_2, Me_1 ]
+
+//pivot keyword missing
+DS_1 [Id_2, Me_1 ]
+
+//identifier or measure missing
+DS_r := Ds_1 [ pivot  Me_1 ]
+
+//more than two operands used
+DS_r := Ds_1 [ pivot Id_2, Me_1, Me_2 ]
+
+//op missing
+[ unpivot Id_5, Me_3 ]
+
+//unpivot keyword missing
+DS [ Id_5, Me_3 ]
+
+//identifier or measure missing
+DS_r := DS_1 [ unpivot Id_2]
+
+//more than two operands used
+DS_r := DS_1 [ unpivot Id_2, Me_1, Me_2]
+
+//op missing
+DS_r := [sub Id_2 = "A", Id_5 = 1 ]
+
+//'sub' keyword missing
+DS_r := DS_1 [ Id_1 = 1, Id_2 = "A"]
+
+//identifier missing
+DS_r := DS_1 [ sub  = 1, Id_2 = "A"]
+
+//value missing
+DS_r := DS_1 [ sub Id_1 = 1, Id_2 = ]
+
+//no comma used between pairs
+DS_r := DS_1 [ sub Id_1 = 1  Id_2 = "A"]
+
+//nested clauses
+DS_r := DS_1 [ filter DS_2[sub id_1 = "AA"]];

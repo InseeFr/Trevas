@@ -1,0 +1,1029 @@
+/**
+ * Copyright © 2020 Banca D'Italia
+ *
+ * Licensed under the EUPL, Version 1.2 (the "License");
+ * You may not use this work except in compliance with the
+ * License.
+ * You may obtain a copy of the License at:
+ *
+ * https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
+ *
+ * Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is
+ * distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.
+ *
+ * See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+//Examples run from reference manual 10/04/2018
+
+## Start[DefineExpression[DefDatapointRuleset[RulesetID RulesetSignature[Signature[VarID] Signature[VarID]] RuleClauseDatapoint[RuleItemDatapoint[BooleanExprComp[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]] ErCode[StringLiteral]]]]]]
+define datapoint ruleset dpr1 (variable flow, obs_value) is
+when flow="CREDIT" or flow="DEBIT" then obs_value >=0 errorcode "bad value"
+end datapoint ruleset;
+
+/*NOTE: the following 2 examples are slightly modified than those in the published reference
+manual to contain the 'as' in the valuedomain */
+
+## Start[DefineExpression[DefDatapointRuleset[RulesetID RulesetSignature[Signature[VarID Alias] Signature[VarID Alias]] RuleClauseDatapoint[RuleItemDatapoint[BooleanExprComp[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]] ErCode[StringLiteral] ErLevel[IntegerLiteral[SignedInteger]]]]]]]
+define datapoint ruleset DPR_1 ( valuedomain flow_type as A, numeric_value as B ) is
+when A = "CREDIT" or A = "DEBIT" then B >= 0 errorcode "Bad value" errorlevel 10
+end datapoint ruleset;
+
+## Start[DefineExpression[DefDatapointRuleset[RulesetID RulesetSignature[Signature[VarID Alias] Signature[VarID Alias]] RuleClauseDatapoint[RuleItemDatapoint[BooleanExprComp[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]] ErCode[StringLiteral]]]]]]
+define datapoint ruleset DPR_2 ( variable flow as F, obs_value as O) is
+when F = "CREDIT" or F = "DEBIT" then O >= 0 errorcode "Bad value"
+end datapoint ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset BeneluxCountriesHierearchy (valuedomain rule Geo_Area) is
+BENELUX = BELGIUM + LUXEMBOURG + NETHERLANDS
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset BeneluxRuleset (valuedomain rule GeoArea) is
+Belgium = Belgium
+;Luxembourg = Luxembourg
+;Netherlands = Netherlands
+;Benelux = Belgium + Luxembourg + Netherlands
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature[ValueDomainSignature[Signature[VarID]]] RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]] ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset CalcCountryLevel (valuedomain condition Residence rule GeoArea) is
+when Residence = "resident" then Country1 = Country1
+; when Residence = "non-resident" then Country1 = Region11+Region1M
+; when Residence = "resident" then CountryN = CountryN
+; when Residence = "non-resident" then CountryN = RegionN1 + RegionNM
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset sex_hr (valuedomain rule sex) is
+TOTAL = MALE + FEMALE
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]] ErCode[StringLiteral]]]]]]
+define hierarchical ruleset BeneluxCountriesHierarchy (valuedomain rule GeoArea) is
+BENELUX = BELGIUM + LUXEMBOURG + NETHERLANDS errorcode "Bad value for Benelux"
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset american_partners_hr (variable rule PartnerArea) is
+NORTH_AMERICA > US ;
+SOUTH_AMERICA = BR + UY + AR + CL
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefHierarchical[RulesetID HierRuleSignature RuleClauseHierarchical[RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]] RuleItemHierarchical[CodeItemRelation[ValueDomainValue ComparisonOperand CodeItemRelationClause[ValueDomainValue] CodeItemRelationClause[ValueDomainValue]]]]]]]
+define hierarchical ruleset validationruleset_bop (variable rule BoPItem ) is
+transport_method1 : Transport  =  AirTransport + SeaTransport + LandTransport ;
+transport_method2 : Transport = PassengersTransport + FreightsTransport
+end hierarchical ruleset;
+
+## Start[DefineExpression[DefOperator[OperatorID ParameterItem[VarID InputParameterType[ScalarType[BasicScalarType]]] ParameterItem[VarID InputParameterType[ScalarType[BasicScalarType]]] OutputParameterType[ScalarType[BasicScalarType]] IfExpr[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] VarIdExpr[VarID] VarIdExpr[VarID]]]]]
+define operator max1 (x integer, y integer)
+returns boolean is
+if x > y then x else y
+end operator;
+
+## Start[DefineExpression[DefOperator[OperatorID ParameterItem[VarID InputParameterType[ScalarType[BasicScalarType]] SimpleScalar[IntegerLiteral[SignedInteger]]] ParameterItem[VarID InputParameterType[ScalarType[BasicScalarType]] SimpleScalar[IntegerLiteral[SignedInteger]]] OutputParameterType[ScalarType[BasicScalarType]] ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]
+define operator add (x integer default 0, y integer default 0)
+returns number is
+x+y
+end operator;
+
+## Start[TemporaryAssignment[VarID ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]
+temp := ( DS_1  +  DS_2 );
+
+## Start[TemporaryAssignment[VarID ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]
+temp := ( CMP_1  -  CMP_2 );
+
+## Start[TemporaryAssignment[VarID ParenthesisExpr[ArithmeticExprOrConcat[ConstantExpr[IntegerLiteral[SignedInteger]] VarIdExpr[VarID]]]]]
+temp := ( 2  +  DS_1 );
+
+## Start[TemporaryAssignment[VarID ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] ArithmeticExpr[ConstantExpr[IntegerLiteral[SignedInteger]] VarIdExpr[VarID]]]]]]
+temp := ( DS_2   -   3   *  DS_3 );
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]] VarIdExpr[VarID]]]]
+temp := (DS_1 + DS_2) * DS_3;
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] ArithmeticExpr[VarIdExpr[VarID] ParenthesisExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]] VarIdExpr[VarID]]]]
+temp := (CMP_1 - CMP_2/(CMP_3+CMP_4))*CMP_5;
+
+## Start[PersistAssignment[VarID VarIdExpr[VarID]]]
+DS_r <- DS_1;
+
+## Start[PersistAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r <- DS_1 - DS_2;
+
+## Start[TemporaryAssignment[VarID VarIdExpr[VarID]]]
+DS_r := DS_1;
+
+## Start[TemporaryAssignment[VarID ConstantExpr[IntegerLiteral[SignedInteger]]]]
+DS_r := 3;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 - DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := 3 + 2;
+
+## Start[TemporaryAssignment[VarID MembershipExpr[VarIdExpr[VarID] SimpleComponentId]]]
+temp := DS_1#COMP_3;
+
+## Start[TemporaryAssignment[VarID MembershipExpr[VarIdExpr[VarID] SimpleComponentId]]]
+DS_r  := DS_1#Me_1;
+
+## Start[TemporaryAssignment[VarID MembershipExpr[VarIdExpr[VarID] SimpleComponentId]]]
+DS_r  := DS_1#Id_1;
+
+## Start[TemporaryAssignment[VarID MembershipExpr[VarIdExpr[VarID] SimpleComponentId]]]
+DS_r  := DS_1#At_1;
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[GenericFunctions[CallDataset[OperatorID Parameter[ConstantExpr[IntegerLiteral[SignedInteger]]] Parameter[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := max1 ( 2, 3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[GenericFunctions[EvalAtom[RoutineName VarID]]]]]
+temp := eval ( routine1 ( DS_1 ) );
+
+/* The following examples referring to eval need to be modified in order to match the syntax definition of eval
+DS_r := eval( SQL3( DS_1 )
+returns dataset { identifier geo_area ,
+identifier time,
+measure obs_value,
+attribute obs_status } ); */
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[GenericFunctions[EvalAtom[RoutineName VarID EvalDatasetType[ScalarType[BasicScalarType]]]]]]]
+DS_r := eval( SQL3( DS_1 ) language "SQL"
+returns integer);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[EvalAtomComponent[RoutineName ComponentID SimpleScalar[IntegerLiteral[SignedInteger]] OutputParameterTypeComponent[ScalarType[BasicScalarType]]]]]]]]]]]
+DS_r := DS_1[calc Me := eval( f(Me, 1)language "Java" returns integer) ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[EvalAtomComponent[RoutineName ComponentID OutputParameterTypeComponent[ScalarType[BasicScalarType]]]]]]]]]]]
+ds_r := ds_1[calc me:=eval(f(me) language "Java" returns integer)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] BasicScalarType]]] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+//The following example is slightly modified to remove an extra parenthesis (line 2063 ref. manual)
+ds2 := ds1[calc m2 := cast(m1, number, "DD.DDD")+2];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] BasicScalarType]]]]]]]]]
+ds2 := ds1[calc m2 := cast(m1, date,"YYYY-MM-DD")];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] BasicScalarType]]] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+ds2 := ds1[calc m2 := cast(m1, integer) + 3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] BasicScalarType]]]]]]]]]]]]
+ds2 := ds1[calc m2 := length(cast(m1, string)) ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] BasicScalarType]]]]]]]]]
+ds2 := ds1[calc m2 := cast(m1, string,"YY-MON-DAY hh:mm:ss")];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] ValueDomainName]]]]]]]]]
+ds2 := ds1[calc m2 := cast(GEO_STRING, GEO_AREA)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]]]]]]]
+ds2 := ds1[calc m2 := length(GEO_AREA)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[GenericFunctionsComponents[CastExprComponent[CompId[ComponentID] ValueDomainName]]]]]]]]]
+ds2 := ds1 [ calc m2 := cast (GEO, GEO_AREA1) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias] ComponentID ComponentID] JoinBody[FilterClause[ComparisonExprComp[ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]] JoinApplyClause[ArithmeticExpr[VarIdExpr[VarID] VarIdExpr[VarID]]] KeepOrDropClause[ComponentID ComponentID ComponentID] RenameClause[RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID]]]]]]]]
+temp := inner_join ( ds1 as d1, ds2 as d2 using Id1, Id2 filter d1#Me1 + d2#Me1 <10
+apply d1 / d2
+keep Me1, Me2, Me3
+rename Id1 to Id10, id2 to id20
+);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[FilterClause[ComparisonExprComp[ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]] CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]]]] KeepOrDropClause[ComponentID] RenameClause[RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID]]]]]]]]
+temp := left_join ( ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10
+calc Me1 := d1#Me1 + d2#Me3
+keep Me1
+rename Id1 to Ident1, Me1 to Meas1
+);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClauseWithoutUsing[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[FilterClause[ComparisonExprComp[ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]] AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]] AggrFunctionClause[ComponentRole ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID ComponentID] HavingClause[ComparisonExprComp[FunctionsExpressionComp[AggregateFunctionsComponents[AggrComp[CompId[ComponentID]]]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]
+temp := full_join (ds1 as d1, ds2 as d2
+filter d1#Me1 + d2#Me1 <10
+aggr Me1:= sum(Me1), attribute At20:=avg(Me2)
+group by Id1, Id2
+having sum(Me3)>0
+);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[KeepOrDropClause[ComponentID ComponentID ComponentID]]]]]]]
+DS_r := inner_join ( DS_1 as d1, DS_2 as d2 keep Me_1, d2#Me_2, Me_1A);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[KeepOrDropClause[ComponentID ComponentID ComponentID]]]]]]]
+DS_r := left_join ( DS_1 as d1, DS_2 as d2 keep Me_1, d2#Me_2, Me_1A );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClauseWithoutUsing[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[KeepOrDropClause[ComponentID ComponentID ComponentID]]]]]]]
+DS_r := full_join ( DS_1 as d1, DS_2 as d2 keep Me_1, d2#Me_2, Me_1A );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClauseWithoutUsing[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[RenameClause[RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID]]]]]]]]
+DS_r := cross_join (DS_1 as d1, DS_2 as d2 rename d1#Id_1 to Id11, d1#Id_2 to Id12, d2#Id1 to Id21, d2#Id2 to Id22, d1#Me_2 to Me12 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[FilterClause[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]]] CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]]]] KeepOrDropClause[ComponentID]]]]]]]
+DS_r := inner_join (DS_1 as d1, DS_2 as d2 filter Me_1 ="A" calc Me_4 := Me_1||Me_1A drop d1#Me_2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID]]] JoinBody[FilterClause[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[StringLiteral]]] CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] ConstantExprComp[StringLiteral]]]] KeepOrDropClause[ComponentID ComponentID]]]]]]]
+DS_r := inner_join ( DS_1
+filter Id_2 ="B"
+calc Me_2 := Me_2 ||"_NEW"
+ keep Me_1, Me_2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[JoinFunctions[JoinExpr[JoinClause[JoinClauseItem[VarIdExpr[VarID] Alias] JoinClauseItem[VarIdExpr[VarID] Alias]] JoinBody[JoinApplyClause[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]]]]
+DS_r := inner_join ( DS_1 as d1, DS_2 as d2 apply d1 || d2);
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[ConstantExpr[StringLiteral] ConstantExpr[StringLiteral]]]]
+temp := "Hello" || ", world!";
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+temp := ds_1 || ds_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 || DS_2;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] ConstantExprComp[StringLiteral]]]]]]]]
+DS_r := DS_1[calc Me_2:= Me_1 || "world"];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[ConstantExpr[StringLiteral]]]]]]
+temp := trim("Hello ");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+temp := trim(ds_1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+DS_r := rtrim(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1[ calc Me_2:= rtrim(Me_1)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[ConstantExpr[StringLiteral]]]]]]
+temp := upper("Hello");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+temp := lower(ds_1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+DS_r := upper(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1[calc Me_2:= upper(Me_1)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := substr (DS_1, 2, 3);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := substr ( DS_1, 2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID] OptionalExpr OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := substr ( DS_1, _ , 3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID]]]]]]
+temp := substr ( DS_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+DS_r:= substr ( DS_1 , 7 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[SubstrAtom[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+DS_r:= substr ( DS_1 , 1 , 5 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[SubstrAtomComponent[CompId[ComponentID] OptionalExprComponent[ConstantExprComp[IntegerLiteral[SignedInteger]]] OptionalExprComponent[ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]]
+DS_r:= DS_1 [ calc Me_2:= substr ( Me_2 , 1 , 5 ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[StringLiteral]]]]]]]
+temp := replace(DS_1, "Hello", "Hi");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+temp := replace(DS_1, "Hello");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[ConstantExpr[StringLiteral] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[StringLiteral]]]]]]]
+temp := replace("Hello world", "Hello", "Hi");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[ConstantExpr[StringLiteral] ConstantExpr[StringLiteral]]]]]]
+temp := replace("Hello world", "Hello");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[ConstantExpr[StringLiteral] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[StringLiteral]]]]]]]
+temp := replace ("Hello", "ello", "i");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[ReplaceAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[StringLiteral]]]]]]]
+DS_r := replace (ds_1,"ello","i");
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[ReplaceAtomComponent[CompId[ComponentID] ConstantExprComp[StringLiteral] OptionalExprComponent[ConstantExprComp[StringLiteral]]]]]]]]]]]
+DS_r := DS_1[ calc Me_2:= replace (Me_1,"ello","i")];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := instr(DS_1, "ab", 2, 3);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := instr(DS_1, "ab", 2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral] OptionalExpr OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+temp := instr(DS_1, "ab",_,2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+temp := instr(DS_1, "ab");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+DS_r:= instr(ds_1,"hello");
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[InstrAtomComponent[CompId[ComponentID] ConstantExprComp[StringLiteral]]]]]]]]]]
+DS_r := DS_1[calc Me_2:=instr(Me_1,"hello")];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[InstrAtomComponent[CompId[ComponentID] ConstantExprComp[StringLiteral]]]]] CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[InstrAtomComponent[CompId[ComponentID] ConstantExprComp[StringLiteral]]]]]]]]]]
+DS_r := DS_2 [calc Me_10:= instr(Me_1, "o" ), Me_20:=instr(Me_2, "o")];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[InstrAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+DS_r := instr(DS_2, "o" );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[ConstantExpr[StringLiteral]]]]]]
+temp := length("Hello, World!");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+temp := length(DS_1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+DS_r := length(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]]]]]]]
+DS_r:= DS_1[calc Me_2:=length(Me_1)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]] CalcClauseItem[ComponentID FunctionsExpressionComp[StringFunctionsComponents[UnaryStringFunctionComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_2 [calc Me_10:= length(Me_1), Me_20:=length(Me_2)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[StringFunctions[UnaryStringFunction[VarIdExpr[VarID]]]]]]
+DS_r := length(DS_2);
+
+## Start[TemporaryAssignment[VarID UnaryExpr[VarIdExpr[VarID]]]]
+DS_r := + DS_1;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID UnaryExprComp[CompId[ComponentID]]]]]]]]
+DS_r := DS_1 [calc Me_3 := + Me_1 ];
+
+## Start[TemporaryAssignment[VarID UnaryExpr[VarIdExpr[VarID]]]]
+DS_r := - DS_1;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID UnaryExprComp[CompId[ComponentID]]]]]]]]
+DS_r := DS_1 [ calc Me_3 := - Me_1 ];
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 + DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := DS_1 + 3;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] ConstantExprComp[NumberLiteral[SignedNumber]]]]]]]]]
+DS_r := DS_1 [ calc Me_3 := Me_1 + 3.0 ];
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 - DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 -DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := DS_1 - 3;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := DS_1 [ calc Me_3 := Me_1 - 3 ];
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 * DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[VarIdExpr[VarID] UnaryExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]
+DS_r := DS_1 * -3;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprComp[CompId[ComponentID] CompId[ComponentID]]]]]]]]
+DS_r := DS_1 [ calc Me_3 := Me_1 * Me_2 ];
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := DS_1 / DS_2;
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := DS_1 / 10;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprComp[CompId[ComponentID] CompId[ComponentID]]]]]]]]
+DS_r := DS_1 [ calc Me_3 := Me_2 / Me_1 ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[BinaryNumeric[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+DS_r := mod ( DS_1, DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[BinaryNumeric[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r := mod ( DS_1, 15 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[BinaryNumericComponent[CompId[ComponentID] ConstantExprComp[NumberLiteral[SignedNumber]]]]]]]]]]]
+DS_r := DS_1[ calc Me_3 := mod( DS_1#Me_1, 3.0 ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryWithOptionalNumeric[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+DS_r := round(DS_1, 0);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryWithOptionalNumericComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1 [ calc Me_10:= round( Me_1)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryWithOptionalNumericComponent[CompId[ComponentID] OptionalExprComponent[UnaryExprComp[ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]]]
+DS_r := DS_1 [ calc Me_20:= round( Me_1 , -1 ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryWithOptionalNumeric[VarIdExpr[VarID] OptionalExpr[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]]
+DS_r := trunc(DS_1, 0);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryWithOptionalNumericComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1[ calc Me_10:= trunc( Me_1 ) ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryWithOptionalNumericComponent[CompId[ComponentID] OptionalExprComponent[UnaryExprComp[ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]]]
+DS_r := DS_1[ calc Me_20:= trunc( Me_1 , -1 ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := ceil (DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+//The following example is modified to include the calc clause in order to successfully run (line 3432)
+DS_r := DS_1[calc Me_10 := ceil(Me_1)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := floor ( DS_1 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+//The following example is modified to include the calc clause in order to successfully run (line 3478)
+DS_r := DS_1 [calc Me_10 := floor (Me_1) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := abs ( DS_1 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1 [ calc Me_10 := abs(Me_1) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := exp(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1 [ calc Me_1 := exp ( Me_1 ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := ln(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+//The following example is modified to include the last bracket in order to successfully run  (line 3617)
+DS_r := DS_1 [ calc Me_2 := ln ( DS_1#Me_1 )];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[BinaryNumeric[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r := power(DS_1, 2);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[BinaryNumericComponent[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]
+DS_r := DS_1[ calc Me_1 := power(Me_1, 2) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[BinaryNumeric[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r := log ( DS_1, 2 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[BinaryNumericComponent[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]
+DS_r := DS_1 [ calc Me_1 := log (Me_1, 2) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[BinaryNumeric[ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r := random(1, 2);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[BinaryNumericComponent[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]
+DS_r := DS_1 [ calc Me_1 := random (Me_1, 2) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[NumericFunctions[UnaryNumeric[VarIdExpr[VarID]]]]]]
+DS_r := sqrt(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[NumericFunctionsComponents[UnaryNumericComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1 [ calc Me_1 := sqrt ( Me_1 ) ];
+
+## Start[TemporaryAssignment[VarID ComparisonExpr[VarIdExpr[VarID] ComparisonOperand ConstantExpr[NumberLiteral[SignedNumber]]]]]
+DS_r := DS_1 = 0.08;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[NumberLiteral[SignedNumber]]]]]]]]]
+DS_r := DS_1 [ calc Me_2 := Me_1 = 0.08 ];
+
+## Start[TemporaryAssignment[VarID ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]]]]
+DS_r := DS_1 <> DS_2;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[NumberLiteral[SignedNumber]]]]]]]]]
+DS_r := DS_1 [ calc Me_2 := Me_1<>7.5];
+
+## Start[TemporaryAssignment[VarID ComparisonExpr[VarIdExpr[VarID] ComparisonOperand ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := DS_1 > 20;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := DS_1 [ calc Me_2 := Me_1 > 20 ];
+
+## Start[TemporaryAssignment[VarID ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]]]]
+DS_r:= DS_1 > DS_2;
+
+## Start[TemporaryAssignment[VarID ComparisonExpr[VarIdExpr[VarID] ComparisonOperand ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+DS_r := DS_1 < 15000000;
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[BetweenAtom[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r:= between(ds1, 5,10);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[ComparisonFunctionsComponents[BetweenAtomComponent[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]]]
+ds2 := ds1 [ calc m1 := between(me2, 5, 10) ];
+
+## Start[TemporaryAssignment[VarID InNotInExpr[VarIdExpr[VarID] Lists[SimpleScalar[IntegerLiteral[SignedInteger]] SimpleScalar[IntegerLiteral[SignedInteger]] SimpleScalar[IntegerLiteral[SignedInteger]]]]]]
+ds := ds_2 in {1,4,6};
+
+## Start[TemporaryAssignment[VarID InNotInExpr[VarIdExpr[VarID] ValueDomainID]]]
+ds := ds_3 in mySet;
+
+## Start[TemporaryAssignment[VarID InNotInExpr[VarIdExpr[VarID] ValueDomainID]]]
+ds := ds_3 in myValueDomain;
+
+## Start[TemporaryAssignment[VarID InNotInExpr[ConstantExpr[IntegerLiteral[SignedInteger]] Lists[SimpleScalar[IntegerLiteral[SignedInteger]] SimpleScalar[IntegerLiteral[SignedInteger]] SimpleScalar[IntegerLiteral[SignedInteger]]]]]]
+temp := 1 in {1,2,3};
+
+## Start[TemporaryAssignment[VarID InNotInExpr[ConstantExpr[StringLiteral] Lists[SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral]]]]]
+temp := "a" in {"c","ab","bb","bc"};
+
+## Start[TemporaryAssignment[VarID InNotInExpr[VarIdExpr[VarID] Lists[SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral]]]]]
+DS_r := DS_1 in { "BS","MO","HH","PP"};
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID InNotInExprComp[CompId[ComponentID] Lists[SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral] SimpleScalar[StringLiteral]]]]]]]]]
+DS_r := DS_1 [ calc Me_2:= Me_1 in {"BS","MO","HH","PP"}];
+
+## Start[TemporaryAssignment[VarID InNotInExpr[MembershipExpr[VarIdExpr[VarID] SimpleComponentId] ValueDomainID]]]
+DS_r := DS_1#Id_2 in myGeoValueDomain;
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[CharsetMatchAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+temp := match_characters(ds1, "[abc]+\d\d");
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[ComparisonFunctionsComponents[CharsetMatchAtomComponent[CompId[ComponentID] ConstantExprComp[StringLiteral]]]]]]]]]]
+temp := ds1 [ calc m1 := match_characters(ds1, "[abc]+\d\d")];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[CharsetMatchAtom[VarIdExpr[VarID] ConstantExpr[StringLiteral]]]]]]
+//The following example is modified to include the match_characters operator in order to run (line 4148)
+DS_r:= match_characters(ds1, "[:alpha:]{2}[:digit:]{3}");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[IsNullAtom[ConstantExpr[StringLiteral]]]]]]
+temp := isnull("hello");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[IsNullAtom[VarIdExpr[VarID]]]]]]
+temp := isnull(NULL);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[IsNullAtom[VarIdExpr[VarID]]]]]]
+DS_r := isnull(DS_1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[ComparisonFunctionsComponents[IsNullAtomComponent[CompId[ComponentID]]]]]]]]]]
+DS_r := DS_1[ calc Me_2 := isnull(Me_1) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID] RetainType]]]]]
+temp := exists_in ( DS_1, DS_2, true );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+temp := exists_in ( DS_1, DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID] RetainType]]]]]
+temp := exists_in ( DS_1, DS_2, all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID] RetainType]]]]]
+DS_r := exists_in (DS_1, DS_2, all);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID] RetainType]]]]]
+DS_r := exists_in (DS_1, DS_2, true);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ComparisonFunctions[ExistInAtom[VarIdExpr[VarID] VarIdExpr[VarID] RetainType]]]]]
+DS_r := exists_in (DS_1, DS_2, false);
+
+## Start[TemporaryAssignment[VarID BooleanExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r:= DS_1 and DS_2;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID BooleanExprComp[CompId[ComponentID] ConstantExprComp[BooleanLiteral]]]]]]]]
+DS_r := DS_1 [ calc Me_2:= Me_1 and true ];
+
+## Start[TemporaryAssignment[VarID BooleanExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r:= DS_1 or DS_2;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID BooleanExprComp[CompId[ComponentID] ConstantExprComp[BooleanLiteral]]]]]]]]
+DS_r:= DS_1 [ calc Me_2:= Me_1 or true ];
+
+## Start[TemporaryAssignment[VarID BooleanExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r:=DS_1 xor DS_2;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID BooleanExprComp[CompId[ComponentID] ConstantExprComp[BooleanLiteral]]]]]]]]
+DS_r:= DS_1 [ calc Me_2:= Me_1 xor true ];
+
+## Start[TemporaryAssignment[VarID UnaryExpr[VarIdExpr[VarID]]]]
+DS_r:= not DS_1;
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID UnaryExprComp[CompId[ComponentID]]]]]]]]
+DS_r:= DS_1 [ calc Me_2 := not Me_1 ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[PeriodAtom[VarIdExpr[VarID]]]]]]
+DS_r := period_indicator ( DS_1 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[FilterClause[ComparisonExprComp[FunctionsExpressionComp[TimeFunctionsComponents[PeriodAtomComponent[CompId[ComponentID]]]] ComparisonOperand ConstantExprComp[StringLiteral]]]]]]]
+DS_r := DS_1 [ filter period_indicator ( Id_3 ) = "a"];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_1, single );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_1, all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_2, single );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_2, all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_3, single );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_3, all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_4, single );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FillTimeAtom[VarIdExpr[VarID]]]]]]
+DS_r := fill_time_series ( DS_4, all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := flow_to_stock ( DS_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := flow_to_stock ( DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := flow_to_stock ( DS_3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := stock_to_flow ( DS_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := stock_to_flow ( DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := stock_to_flow ( DS_3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[FlowAtom[VarIdExpr[VarID]]]]]]
+DS_r := stock_to_flow ( DS_4 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeShiftAtom[VarIdExpr[VarID] SignedInteger]]]]]
+/*The following examples are modified to include the correct operator name timeshift in order
+to run (lines 4813, 4821, 4829, 4837) */
+DS_r := timeshift(DS_1, -1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeShiftAtom[VarIdExpr[VarID] SignedInteger]]]]]
+DS_r := timeshift(DS_2, 2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeShiftAtom[VarIdExpr[VarID] SignedInteger]]]]]
+DS_r := timeshift(DS_3,1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeShiftAtom[VarIdExpr[VarID] SignedInteger]]]]]
+DS_r := timeshift(DS_3, -1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupAll]]]]]
+//The following example is modified in order to match the time_agg syntax (line 4854)
+temp := sum ( DS group all time_agg ("A"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeAggAtom[OptionalExpr[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]]
+temp := time_agg("A",cast("2012Q1", time_period, "YYYY\Qq"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeAggAtom[OptionalExpr[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]]
+temp := time_agg("M", cast("2012-12-23",date,"YYYY-MM-DD"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeAggAtom[OptionalExpr[VarIdExpr[VarID]]]]]]]
+temp := time_agg("M", DS1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[TimeAggAtomComponent[OptionalExprComponent[CompId[ComponentID]]]]]]]]]]]
+ds_2 := ds1[calc Me1 := time_agg("M",Me1)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupAll]]]]]
+DS_r := sum ( DS_1 group all time_agg ( "A" ));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[TimeAggAtom[OptionalExpr[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]]
+//The following example is modified to remove a space inside keyword time_agg (line 4909)
+DS_r := time_agg ("Q", cast("2012M01",time_period, "YYYY\MMM"));
+
+/*The following two examples need to be modified in order to match the syntax definition (lines 4915, 4921)
+time_agg( “Q”, cast(“20120213”, date, ”YYYYMMDD”), _ , false )
+time_agg(cast( ”A”, “2012M1”, date, ”YYYYMMDD”), _, true ) */
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[GenericFunctions[CastExprDataset[FunctionsExpression[TimeFunctions[CurrentDateAtom]] BasicScalarType]]]]]
+temp := cast(current_date(), string, "YYYY.MM.DD");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateDiffAtom[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]] FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]
+temp := datediff(cast("20120213", date, "YYYYMMDD"), cast("20120213", date, "YYYYMMDD"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateDiffAtom[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]] FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]
+temp := datediff(cast("20120213", date, "YYYYMMDD"),cast("20120213", date, "YYYYMMDD"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateDiffAtom[FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]] FunctionsExpression[GenericFunctions[CastExprDataset[ConstantExpr[StringLiteral] BasicScalarType]]]]]]]]
+temp := datediff(cast("20120213", date, "YYYYMMDD"), cast("20120213", date, "YYYYMMDD"));
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[DateDiffAtomComponent[CompId[ComponentID] CompId[ComponentID]]]]]]]]]]
+ds2 := ds1[calc Me3 := datediff(Me1, Me2)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateAddAtom[ConstantExpr[StringLiteral] ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[StringLiteral]]]]]]
+temp := dateadd ("2022Q1", 5, "M");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateAddAtom[ConstantExpr[StringLiteral] UnaryExpr[ConstantExpr[IntegerLiteral[SignedInteger]]] ConstantExpr[StringLiteral]]]]]]
+temp := dateadd ("2020-12-14", -3 , "Y");
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[DateAddAtomComponent[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]] ConstantExprComp[StringLiteral]]]]]]]]]]
+ds2 := ds1[calc Me2 := dateadd(Me1, 3, "W")];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DateAddAtom[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[StringLiteral]]]]]]
+DS_r := dateadd(DS_1, 1, "M");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[YearAtom[ConstantExpr[StringLiteral]]]]]]
+temp := getyear("2022Q1");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DayOfYearAtom[ConstantExpr[StringLiteral]]]]]]
+temp := dayofyear("2020-12-14");
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DayToYearAtom[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := daytoyear(422);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[DayToMonthAtom[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := daytomonth(146);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[YearTodayAtom[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := yeartoday(422);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[TimeFunctions[MonthTodayAtom[ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := monthtoday(146);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[YearTodayAtomComponent[CompId[ComponentID]]]]]]]]]]
+ds2 := ds1[calc Me2 := yeartoday(Me1)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[DayToMonthAtomComponent[CompId[ComponentID]]]]]]]]]]
+ds2 := ds1[calc Me2 := daytomonth(Me1)];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[TimeFunctionsComponents[DayOfMonthAtomComponent[CompId[ComponentID]]]]]]]]]]
+ds2 := ds1[calc Me2 := dayofmonth(Me1)];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[SetFunctions[UnionAtom[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+DS_r := union(DS_1,DS_2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[SetFunctions[IntersectAtom[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+DS_r := intersect(DS_1,DS_2);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[SetFunctions[SetOrSYmDiffAtom[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+DS_r := setdiff ( DS_1, DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[SetFunctions[SetOrSYmDiffAtom[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]
+DS_r := symdiff ( DS_1, DS_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[HierarchyFunctions[HierarchyOperators[VarIdExpr[VarID] ComponentID ValidationMode OutputModeHierarchy]]]]]
+temp := hierarchy ( DS1, HR1  rule Id_1 non_null all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[HierarchyFunctions[HierarchyOperators[VarIdExpr[VarID] ConditionClause[ComponentID ComponentID] ComponentID ValidationMode InputModeHierarchy OutputModeHierarchy]]]]]
+temp := hierarchy ( DS2, HR2  condition Comp_1, Comp_2 rule Id_3 non_zero rule computed );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[HierarchyFunctions[HierarchyOperators[VarIdExpr[VarID] ComponentID ValidationMode]]]]]
+DS_r := hierarchy ( DS_1, HR_1 rule Id_2 non_null );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[HierarchyFunctions[HierarchyOperators[VarIdExpr[VarID] ComponentID ValidationMode]]]]]
+DS_r := hierarchy ( DS_1, HR_1 rule Id_2 non_zero );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[HierarchyFunctions[HierarchyOperators[VarIdExpr[VarID] ComponentID ValidationMode]]]]]
+DS_r := hierarchy ( DS_1, HR_1 rule Id_2 partial_null );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID]]]]]]
+temp := avg(DS_1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID ComponentID]]]]]]
+temp := avg ( DS_1 group by Id_1, Id_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID ComponentID]]]]]]
+temp := avg ( DS_1 group except Id_1, Id_2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupAll]]]]]
+temp := avg ( DS_1 group all time_agg ("Q"));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := avg ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID ComponentID]]]]]]
+DS_r := avg ( DS_1 group except Id_2, Id_3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[MembershipExpr[VarIdExpr[VarID] SimpleComponentId] GroupByOrExcept[ComponentID]]]]]]
+DS_r := avg ( DS_1#Me_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID ComponentID]]]]]]
+DS_r := sum ( DS_1 group by Id_1, Id_3 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID]]]]]]
+DS_r := avg ( DS_1 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]] AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID]]]]]]
+DS_r := DS_1 [ aggr Me_2 := max ( Me_1 ) , Me_3 := min ( Me_1 ) group by Id_1 ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] PartitionByClause[ComponentID] OrderByClause[OrderByItem[ComponentID]]]]]]]
+temp := sum ( DS_1 over ( partition by Id_1 order by Id_2 ) );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] OrderByClause[OrderByItem[ComponentID]]]]]]]
+temp := sum ( DS_1 over ( order by Id_2 ) );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] OrderByClause[OrderByItem[ComponentID]] WindowingClause[LimitClauseItem[SignedInteger] LimitClauseItem[SignedInteger]]]]]]]
+temp := avg ( DS_1 over ( order by Id_1 data points between 1 preceding and 1 following ) );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[AnalyticFunctionsComponents[AnSimpleFunctionComponent[CompId[ComponentID] OrderByClause[OrderByItem[ComponentID]]]]]]]]]]]
+temp := DS_1 [ calc M1 := sum ( Me_1 over ( order by Id_1 ) ) ];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] OrderByClause[OrderByItem[ComponentID] OrderByItem[ComponentID] OrderByItem[ComponentID]] WindowingClause[LimitClauseItem[SignedInteger] LimitClauseItem[SignedInteger]]]]]]]
+DS_r := sum ( DS_1 over ( order by Id_1, Id_2, Id_3 data points between 1 preceding and 1 following ) );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := count ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID] HavingClause[ComparisonExprComp[FunctionsExpressionComp[AggregateFunctionsComponents[CountAggrComp]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := sum ( DS_1 group by Id_1 having count() > 2 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := min ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := max ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := median ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := sum ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := avg ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := stddev_pop ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := stddev_samp ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+DS_r := var_pop ( DS_1 group by Id_1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]
+//In the following example '[' and ']' were removed in order to run (line 6011)
+DS_r := var_samp ( DS_1 group by Id_1);
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] PartitionByClause[ComponentID ComponentID] OrderByClause[OrderByItem[ComponentID]] WindowingClause[LimitClauseItem[SignedInteger] LimitClauseItem[SignedInteger]]]]]]]
+DS_r := first_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 data points between 1 preceding and 1 following));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[AnSimpleFunction[VarIdExpr[VarID] PartitionByClause[ComponentID ComponentID] OrderByClause[OrderByItem[ComponentID]] WindowingClause[LimitClauseItem[SignedInteger] LimitClauseItem[SignedInteger]]]]]]]
+DS_r := last_value ( DS_1 over ( partition by Id_1, Id_2 order by Id_3 data points between 1 preceding and 1 following));
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[LagOrLeadAn[VarIdExpr[VarID] SignedInteger PartitionByClause[ComponentID ComponentID] OrderByClause[OrderByItem[ComponentID]]]]]]]
+DS_r := lag ( DS_1 , 1 over ( partition by Id_1 , Id_2 order by Id_3 ) );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[LagOrLeadAn[VarIdExpr[VarID] SignedInteger PartitionByClause[ComponentID ComponentID] OrderByClause[OrderByItem[ComponentID]]]]]]]
+DS_r := lead ( DS_1 , 1 over ( partition by Id_1 , Id_2 order by Id_3 ) );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID FunctionsExpressionComp[AnalyticFunctionsComponents[RankAnComponent[PartitionByClause[ComponentID ComponentID] OrderByClause[OrderByItem[ComponentID]]]]]]]]]]]
+DS_r := DS_1 [ calc Me2 := rank ( over ( partition by Id_1 , Id_2 order by Me_1 ) )];
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[AnalyticFunctions[RatioToReportAn[VarIdExpr[VarID] PartitionByClause[ComponentID ComponentID]]]]]]
+DS_r := ratio_to_report ( DS_1 over ( partition by Id_1, Id_2 ) );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateDPruleset[VarIdExpr[VarID] ValidationOutput]]]]]
+temp := check_datapoint ( DS1, DPR invalid );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateDPruleset[VarIdExpr[VarID] ValidationOutput]]]]]
+temp := check_datapoint ( DS1, DPR all_measures );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateDPruleset[VarIdExpr[VarID]]]]]]
+DS_r := check_datapoint ( DS_1, dpr1 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateDPruleset[VarIdExpr[VarID] ValidationOutput]]]]]
+DS_r := check_datapoint ( DS_1, dpr1 all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateHRruleset[VarIdExpr[VarID] ValidationMode InputMode ValidationOutput]]]]]
+temp := check_hierarchy ( DS1, HR_2  non_null  dataset  invalid );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateHRruleset[VarIdExpr[VarID] ValidationMode InputMode ValidationOutput]]]]]
+temp := check_hierarchy ( DS1, HR_3  non_zero dataset_priority  all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidateHRruleset[VarIdExpr[VarID] ComponentID ValidationMode ValidationOutput]]]]]
+DS_r := check_hierarchy ( DS_1, HR_1 rule Id_2 partial_null all );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidationSimple[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ErCode[StringLiteral] ErLevel[StringLiteral] ImbalanceExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]]]
+//The following example is modified to place errorcode and errormessage in quotes (line 6572)
+temp := check ( DS1 > DS2 errorcode "myerrorcode" errorlevel "myerrorlevel" imbalance DS1 - DS2 invalid );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ValidationFunctions[ValidationSimple[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ImbalanceExpr[ArithmeticExprOrConcat[VarIdExpr[VarID] VarIdExpr[VarID]]]]]]]]
+DS_r := check ( DS1 >= DS2 imbalance DS1 - DS2 );
+
+## Start[TemporaryAssignment[VarID IfExpr[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[IntegerLiteral[SignedInteger]]]]]
+temp := if x1 > x2 then 2 else 5;
+
+## Start[TemporaryAssignment[VarID CaseExpr[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ConstantExpr[StringLiteral] ConstantExpr[StringLiteral]]]]
+temp := case
+            when x1 > x2 then "foo"
+            else "baz";
+
+## Start[TemporaryAssignment[VarID CaseExpr[ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ConstantExpr[StringLiteral] ComparisonExpr[VarIdExpr[VarID] ComparisonOperand VarIdExpr[VarID]] ConstantExpr[StringLiteral] ConstantExpr[StringLiteral]]]]
+temp := case
+            when x1 > x2 then "foo"
+            when x2 < x1 then "bar"
+        else "baz";
+
+## Start[TemporaryAssignment[VarID IfExpr[ParenthesisExpr[ComparisonExpr[MembershipExpr[VarIdExpr[VarID] SimpleComponentId] ComparisonOperand ConstantExpr[StringLiteral]]] VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := if ( DS_cond#Id_4 = "F" ) then DS_1 else DS_2;
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ConditionalFunctions[NvlAtom[MembershipExpr[VarIdExpr[VarID] SimpleComponentId] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := nvl ( ds1#m1, 0 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ConditionalFunctions[NvlAtom[ConstantExpr[IntegerLiteral[SignedInteger]] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := nvl ( 5, 0 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ConditionalFunctions[NvlAtom[ConstantExpr[NullLiteral] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+temp := nvl ( null, 0 );
+
+## Start[TemporaryAssignment[VarID FunctionsExpression[ConditionalFunctions[NvlAtom[VarIdExpr[VarID] ConstantExpr[IntegerLiteral[SignedInteger]]]]]]]
+DS_r := nvl ( DS_1, 0 );
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[FilterClause[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]
+temp := DS_1 [ filter Me_3 > 0 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[FilterClause[ComparisonExprComp[ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]
+temp := DS_1 [ filter Me_3 + Me_2 <= 0 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[FilterClause[BooleanExprComp[ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]] ComparisonExprComp[CompId[ComponentID] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := DS_1 [ filter Id_1 = 1 and Me_1 < 10 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprOrConcatComp[CompId[ComponentID] CompId[ComponentID]]]]]]]]
+temp := DS_1 [ calc Me_3 := Me_1 + Me_2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentID ArithmeticExprComp[CompId[ComponentID] ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := DS_1 [ calc Me_1:= Me_1 * 2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[CalcClause[CalcClauseItem[ComponentRole ComponentID ConstantExprComp[StringLiteral]]]]]]]
+DS_r := DS_1 [ calc attribute At_1:= "EP"];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID ComponentID]]]]]]
+temp := DS_1 [ aggr M1 := min ( Me_1 ) group by Id_1, Id_2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID ComponentID]]]]]]
+temp := DS_1 [ aggr M1 := min ( Me_1 ) group except Id_1, Id_2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID ComponentID]]]]]]
+DS_r := DS_1 [ aggr Me_1:= sum( Me_1 ) group by Id_1 , Id_2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID]]]]]]
+DS_r := DS_1 [ aggr Me_3:= min( Me_1 ) group except Id_3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[AggrClause[AggregateClause[AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]] AggrFunctionClause[ComponentID AggrComp[CompId[ComponentID]]]] GroupByOrExcept[ComponentID ComponentID] HavingClause[ComparisonExprComp[FunctionsExpressionComp[AggregateFunctionsComponents[AggrComp[CompId[ComponentID]]]] ComparisonOperand ConstantExprComp[IntegerLiteral[SignedInteger]]]]]]]]]
+DS_r := DS_1 [ aggr Me_1:= sum( Me_1 ), Me_2 := max( Me_1) group by Id_1 , Id_2
+having median (Me_1 ) > 2 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[KeepOrDropClause[ComponentID ComponentID]]]]]
+temp := DS_1 [ keep Me_2, Me_3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[KeepOrDropClause[ComponentID]]]]]
+DS_r := DS_1 [ keep Me_1 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[KeepOrDropClause[ComponentID ComponentID]]]]]
+temp := DS_1 [ drop Me_2, Me_3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[KeepOrDropClause[ComponentID]]]]]
+DS_r := DS_1 [ drop At_1 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[RenameClause[RenameClauseItem[ComponentID ComponentID]]]]]]
+temp := DS_1 [ rename Me_2 to Me_3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[RenameClause[RenameClauseItem[ComponentID ComponentID] RenameClauseItem[ComponentID ComponentID]]]]]]
+DS_r := DS_1 [ rename Me_1 to Me_2, At_1 to At_2];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[PivotOrUnpivotClause[ComponentID ComponentID]]]]]
+temp := DS_1 [ pivot Id_2, Me_1 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[PivotOrUnpivotClause[ComponentID ComponentID]]]]]
+DS_r := Ds_1 [ pivot Id_2, Me_1 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[PivotOrUnpivotClause[ComponentID ComponentID]]]]]
+temp := DS [ unpivot Id_5, Me_3 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[PivotOrUnpivotClause[ComponentID ComponentID]]]]]
+DS_r := DS_1 [ unpivot Id_2, Me_1];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]] SubspaceClauseItem[ComponentID SimpleScalar[IntegerLiteral[SignedInteger]]]]]]]]
+//The following example was modified to add the operator 'sub' in order to run (line 7201)
+DS_r := DS_1 [sub Id_2 = "A", Id_5 = 1 ];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[IntegerLiteral[SignedInteger]]] SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]]]]
+DS_r := DS_1 [ sub Id_1 = 1, Id_2 = "A"];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[IntegerLiteral[SignedInteger]]] SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]] SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]]]]
+DS_r := DS_1 [ sub Id_1 = 1, Id_2 = "B", Id_3 = "YY"];
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]] ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]]]]]
+DS_r := DS_1 [sub Id_2 ="A"] + DS_1 [sub Id_2 ="B"];
+
+## Start[TemporaryAssignment[VarID ArithmeticExprOrConcat[ConstantExpr[IntegerLiteral[SignedInteger]] VarIdExpr[VarID]]]]
+// Test SDMX identifiers
+DS_r := 1 + ECB:EXR;
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[VarIdExpr[VarID] VarIdExpr[VarID]]]]
+DS_r := ECB:EXR(*):A.USD.../ECB:EXR:A.GBP...;
+
+## Start[TemporaryAssignment[VarID ArithmeticExpr[ArithmeticExpr[FunctionsExpression[GenericFunctions[CallDataset[OperatorID Parameter[ConstantExpr[IntegerLiteral[SignedInteger]]] Parameter[ConstantExpr[IntegerLiteral[SignedInteger]]] Parameter[ConstantExpr[IntegerLiteral[SignedInteger]]]]]] VarIdExpr[VarID]] FunctionsExpression[AggregateFunctions[AggrDataset[VarIdExpr[VarID] GroupByOrExcept[ComponentID]]]]]]]
+DS_r := ECB:EXR:A(1, 2, 3)/ECB:EXR/sum(ds1 group by id1);
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]]]]
+DS_r := ECB:EXR(1.0):....[sub CURRENCY = "USD"];
+
+## Start[TemporaryAssignment[VarID ClauseExpr[VarIdExpr[VarID] DatasetClause[SubspaceClause[SubspaceClauseItem[ComponentID SimpleScalar[StringLiteral]]]]]]]
+DS_r:='ECB:EXR(1.0):....'[sub CURRENCY = "USD"];
