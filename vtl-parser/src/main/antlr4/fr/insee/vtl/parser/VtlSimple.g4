@@ -62,10 +62,6 @@ expr:
 
 //functionsComponents:
 //    genericOperatorsComponent           # genericFunctionsComponents
-//   | stringOperatorsComponent           # stringFunctionsComponents
-//   | numericOperatorsComponent          # numericFunctionsComponents
-//   | comparisonOperatorsComponent       # comparisonFunctionsComponents
-//   | timeOperatorsComponent             # timeFunctionsComponents
 //   | conditionalOperatorsComponent      # conditionalFunctionsComponents
 //   | aggrOperators                      # aggregateFunctionsComponents
 //   | anFunctionComponent                # analyticFunctionsComponents
@@ -76,10 +72,6 @@ expr:
 functions:
     joinOperators                       # joinFunctions
     | genericOperators                  # genericFunctions
-    | stringOperators                   # stringFunctions
-    | numericOperators                  # numericFunctions
-    | comparisonOperators               # comparisonFunctions
-    | timeOperators                     # timeFunctions
     | setOperators                      # setFunctions
     | hierarchyOperators                # hierarchyFunctions
     | validationOperators               # validationFunctions
@@ -179,82 +171,6 @@ parameter:
     | constant
     | OPTIONAL
 ;
-
-stringOperators:
-    op=(TRIM | LTRIM | RTRIM | UCASE | LCASE | LEN) LPAREN expr RPAREN	                                    # unaryStringFunction
-    | SUBSTR LPAREN expr (((COMMA startParameter=optionalExpr) (COMMA endParameter=optionalExpr))? | COMMA startParameter=optionalExpr ) RPAREN     # substrAtom
-    | REPLACE LPAREN expr COMMA param=expr ( COMMA optionalExpr)? RPAREN				                    # replaceAtom
-    | INSTR LPAREN expr COMMA pattern=expr ( COMMA startParameter=optionalExpr)? (COMMA occurrenceParameter=optionalExpr)? RPAREN	            # instrAtom
-;
-
-//stringOperatorsComponent:
-//    op=(TRIM | LTRIM | RTRIM | UCASE | LCASE | LEN) LPAREN exprComponent RPAREN	                                                    # unaryStringFunctionComponent
-//    | SUBSTR LPAREN exprComponent (((COMMA startParameter=optionalExprComponent) (COMMA endParameter=optionalExprComponent))? | COMMA startParameter=optionalExprComponent )  RPAREN  # substrAtomComponent
-//    | REPLACE LPAREN exprComponent COMMA param=exprComponent ( COMMA optionalExprComponent)? RPAREN                                 # replaceAtomComponent
-//    | INSTR LPAREN exprComponent COMMA pattern=exprComponent ( COMMA startParameter=optionalExprComponent)? (COMMA occurrenceParameter=optionalExprComponent)? RPAREN    # instrAtomComponent
-//;
-
-numericOperators:
-    op=(CEIL | FLOOR | ABS | EXP | LN | SQRT) LPAREN expr RPAREN						        # unaryNumeric
-    | op=(MOD | POWER | LOG | RANDOM) LPAREN left=expr COMMA right=expr RPAREN							    # binaryNumeric
-;
-
-//numericOperatorsComponent:
-//    op=(CEIL | FLOOR | ABS | EXP | LN | SQRT) LPAREN exprComponent RPAREN						# unaryNumericComponent
-//    | op=(ROUND | TRUNC) LPAREN exprComponent (COMMA optionalExprComponent)? RPAREN			    # unaryWithOptionalNumericComponent
-//    | op=(MOD | POWER | LOG | RANDOM) LPAREN left=exprComponent COMMA right=exprComponent RPAREN		    # binaryNumericComponent
-//;
-
-comparisonOperators:
-     BETWEEN LPAREN op=expr COMMA from_=expr COMMA to_=expr RPAREN	                    # betweenAtom
-    | CHARSET_MATCH LPAREN op=expr COMMA  pattern=expr RPAREN							    # charsetMatchAtom
-    | ISNULL LPAREN expr RPAREN												                # isNullAtom
-    | EXISTS_IN LPAREN left=expr COMMA right=expr (COMMA retainType)? RPAREN                # existInAtom
-;
-
-//comparisonOperatorsComponent:
-//     BETWEEN LPAREN op=exprComponent COMMA from_=exprComponent COMMA to_=exprComponent RPAREN    # betweenAtomComponent
-//    | CHARSET_MATCH LPAREN op=exprComponent COMMA  pattern=exprComponent RPAREN                     # charsetMatchAtomComponent
-//    | ISNULL LPAREN exprComponent RPAREN                                                            # isNullAtomComponent
-//;
-
-timeOperators:
-    PERIOD_INDICATOR LPAREN expr? RPAREN                                                                                                # periodAtom
-    | FILL_TIME_SERIES LPAREN expr (COMMA op=(SINGLE|ALL))? RPAREN                                                                      # fillTimeAtom
-    | op=(FLOW_TO_STOCK | STOCK_TO_FLOW) LPAREN expr RPAREN	                                                                            # flowAtom
-    | TIMESHIFT LPAREN expr COMMA signedInteger RPAREN                                                                                  # timeShiftAtom
-    | TIME_AGG LPAREN periodIndTo=STRING_CONSTANT (COMMA periodIndFrom=(STRING_CONSTANT| OPTIONAL ))? (COMMA op=optionalExpr)? (COMMA delim=(FIRST|LAST))? RPAREN     # timeAggAtom
-    | CURRENT_DATE LPAREN RPAREN                                                                                                        # currentDateAtom
-    | DATEDIFF LPAREN dateFrom=expr COMMA dateTo=expr RPAREN                    # dateDiffAtom
-    | DATEADD LPAREN op=expr COMMA shiftNumber=expr COMMA periodInd=expr RPAREN # dateAddAtom
-    | GETYEAR LPAREN expr RPAREN                                                # yearAtom
-    | GETMONTH LPAREN expr RPAREN                                               # monthAtom
-    | DAYOFMONTH LPAREN expr RPAREN                                             # dayOfMonthAtom
-    | DAYOFYEAR LPAREN expr RPAREN                                              # dayOfYearAtom
-    | DAYTOYEAR LPAREN expr RPAREN                                              # dayToYearAtom
-    | DAYTOMONTH LPAREN expr RPAREN                                             # dayToMonthAtom
-    | YEARTODAY LPAREN expr RPAREN                                              # yearTodayAtom
-    | MONTHTODAY LPAREN expr RPAREN                                             # monthTodayAtom
-;
-
-//timeOperatorsComponent:
-//    PERIOD_INDICATOR LPAREN exprComponent? RPAREN                                                                                               # periodAtomComponent
-//    | FILL_TIME_SERIES LPAREN exprComponent (COMMA op=(SINGLE|ALL))? RPAREN                                                                      # fillTimeAtomComponent
-//    | op=(FLOW_TO_STOCK | STOCK_TO_FLOW) LPAREN exprComponent RPAREN	                                                                                    # flowAtomComponent
-//    | TIMESHIFT LPAREN exprComponent COMMA signedInteger RPAREN                                                                                 # timeShiftAtomComponent
-//    | TIME_AGG LPAREN periodIndTo=STRING_CONSTANT (COMMA periodIndFrom=(STRING_CONSTANT| OPTIONAL ))? (COMMA op=optionalExprComponent)? (COMMA delim=(FIRST|LAST))? RPAREN    # timeAggAtomComponent
-//    | CURRENT_DATE LPAREN RPAREN                                                                                                                # currentDateAtomComponent
-//    | DATEDIFF LPAREN dateFrom=expr COMMA dateTo=expr RPAREN                    # dateDiffAtom
-//    | DATEADD LPAREN op=expr COMMA shiftNumber=expr COMMA periodInd=expr RPAREN # dateAddAtom
-//    | GETYEAR LPAREN expr RPAREN                                                # yearAtom
-//    | GETMONTH LPAREN expr RPAREN                                               # monthAtom
-//    | DAYOFMONTH LPAREN expr RPAREN                                             # dayOfMonthAtom
-//    | DAYOFYEAR LPAREN expr RPAREN                                              # datOfYearAtom
-//    | DAYTOYEAR LPAREN expr RPAREN                                              # dayToYearAtom
-//    | DAYTOMONTH LPAREN expr RPAREN                                             # dayToMonthAtom
-//    | YEARTODAY LPAREN expr RPAREN                                              # yearTodayAtom
-//    | MONTHTODAY LPAREN expr RPAREN                                             # monthTodayAtom
-//;
 
 setOperators:
     UNION LPAREN left=expr (COMMA expr)+ RPAREN                             # unionAtom
