@@ -6,6 +6,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -104,7 +105,7 @@ public class TypeChecking {
    *
    * @param expressions List of resolvable expressions to check.
    * @return A boolean which is <code>true</code> if the expressions have the same type, <code>false
-   *     </code> otherwise.
+   * </code> otherwise.
    */
   public static boolean hasSameTypeOrNull(List<ResolvableExpression> expressions) {
     return expressions.stream()
@@ -122,7 +123,7 @@ public class TypeChecking {
    *
    * @param expression The expression to check.
    * @return A boolean which is <code>true</code> if the expression evaluates to null, <code>false
-   *     </code> otherwise.
+   * </code> otherwise.
    */
   public static boolean isNull(TypedExpression expression) {
     return Object.class.equals(expression.getType());
@@ -195,6 +196,29 @@ public class TypeChecking {
    */
   public static <T extends TypedExpression> T assertDouble(T expression, ParseTree tree) {
     return assertTypeExpression(expression, Double.class, tree);
+  }
+
+  /**
+   * Checks if an expression can be interpreted as a date.
+   *
+   * @param expression The expression to check.
+   * @return A boolean which is <code>true</code> if the expression can be interpreted as a date,
+   *     <code>false</code> otherwise.
+   */
+  public static boolean isDate(TypedExpression expression) {
+    return isType(expression, Instant.class);
+  }
+
+  /**
+   * Asserts that an expression is of type <code>Instant</code>, otherwise raises an exception.
+   *
+   * @param expression The expression to check.
+   * @param tree The tree of the expression.
+   * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+   * @return The expression (typed as date if it evaluates to null).
+   */
+  public static <T extends TypedExpression> T assertDate(T expression, ParseTree tree) {
+    return assertTypeExpression(expression, Instant.class, tree);
   }
 
   /**

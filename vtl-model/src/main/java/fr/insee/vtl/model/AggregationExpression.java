@@ -1,11 +1,7 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -160,12 +156,22 @@ public class AggregationExpression
       Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
       Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
       return new MaxAggregationExpression(expression, res, Long.class);
+
     } else if (Double.class.equals(expression.getType())) {
       Collector<Double, ?, Optional<Double>> maxBy =
           Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
       Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
       Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
       return new MaxAggregationExpression(expression, res, Double.class);
+
+    } else if (Instant.class.equals(expression.getType())) {
+      Collector<Instant, ?, Optional<Instant>> maxBy =
+          Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+      Collector<Object, ?, Optional<Instant>> mapping = Collectors.mapping(v -> (Instant) v, maxBy);
+      Collector<Object, ?, Instant> res =
+          Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+      return new MaxAggregationExpression(expression, res, Instant.class);
+
     } else {
       // Type asserted in visitor.
       throw new Error("unexpected type");
@@ -199,6 +205,13 @@ public class AggregationExpression
       Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
       Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
       return new MinAggregationExpression(expression, res, Double.class);
+    } else if (Instant.class.equals(expression.getType())) {
+      Collector<Instant, ?, Optional<Instant>> maxBy =
+          Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+      Collector<Object, ?, Optional<Instant>> mapping = Collectors.mapping(v -> (Instant) v, maxBy);
+      Collector<Object, ?, Instant> res =
+          Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+      return new MinAggregationExpression(expression, res, Instant.class);
     } else {
       // Type asserted in visitor.
       throw new Error("unexpected type");
