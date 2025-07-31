@@ -62,7 +62,6 @@ expr:
 
 //functionsComponents:
 //    genericOperatorsComponent           # genericFunctionsComponents
-//   | conditionalOperatorsComponent      # conditionalFunctionsComponents
 //   | aggrOperators                      # aggregateFunctionsComponents
 //   | anFunctionComponent                # analyticFunctionsComponents
 //
@@ -72,13 +71,10 @@ expr:
 functions:
     joinOperators                       # joinFunctions
     | genericOperators                  # genericFunctions
-    | setOperators                      # setFunctions
     | hierarchyOperators                # hierarchyFunctions
     | validationOperators               # validationFunctions
-    | conditionalOperators              # conditionalFunctions
     | aggrOperatorsGrouping             # aggregateFunctions
     | anFunction                        # analyticFunctions
-    | distanceOperators                 # distanceFunctions
 ;
 
 
@@ -172,11 +168,6 @@ parameter:
     | OPTIONAL
 ;
 
-setOperators:
-    UNION LPAREN left=expr (COMMA expr)+ RPAREN                             # unionAtom
-    | INTERSECT LPAREN left=expr (COMMA expr)+ RPAREN                       # intersectAtom
-    | op=(SETDIFF|SYMDIFF) LPAREN left=expr COMMA right=expr RPAREN         # setOrSYmDiffAtom
-;
 /* hierarchy */
 hierarchyOperators:
     HIERARCHY LPAREN op=expr COMMA hrName=IDENTIFIER (conditionClause)? (RULE ruleComponent=componentID)? (validationMode)? (inputModeHierarchy)? outputModeHierarchy? RPAREN
@@ -187,14 +178,6 @@ validationOperators:
   | CHECK_HIERARCHY LPAREN op=expr COMMA hrName=IDENTIFIER conditionClause? (RULE componentID)? validationMode? inputMode? validationOutput? RPAREN 	                # validateHRruleset
   | CHECK LPAREN op=expr (codeErr=erCode)? (levelCode=erLevel)? imbalanceExpr?  output=(INVALID|ALL)? RPAREN													        # validationSimple
 ;
-
-conditionalOperators:
-    NVL LPAREN left=expr COMMA right = expr RPAREN							# nvlAtom
-;
-
-//conditionalOperatorsComponent:
-//    NVL LPAREN left=exprComponent COMMA right = exprComponent RPAREN        # nvlAtomComponent
-//;
 
 //aggrOperators:
 //    op =(SUM
@@ -265,9 +248,6 @@ aggrOperatorsGrouping:
 //    | op=RATIO_TO_REPORT LPAREN exprComponent OVER  LPAREN (partition=partitionByClause) RPAREN RPAREN                                                                          # ratioToReportAnComponent
 //;
 
-distanceOperators:
-    LEVENSHTEIN LPAREN left=expr COMMA right=expr RPAREN    # levenshteinAtom
-;
 /*---------------------------------------------------END FUNCTIONS-------------------------------------------------*/
 
 /*-------------------------------------------------CLAUSE EXPRESSION------------------------------------------------*/
