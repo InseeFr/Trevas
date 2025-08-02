@@ -1,6 +1,8 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
@@ -65,5 +67,19 @@ public class PivotTest {
     var result = (Dataset) context.getAttribute("DS_r");
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(Arrays.asList(1L, 5L, 2L, 7L), Arrays.asList(2L, 3L, 4L, 9L));
+    Exception exception =
+        assertThrows(
+            fr.insee.vtl.engine.exceptions.InvalidArgumentException.class,
+            () -> engine.eval("DS_id_issue := Ds_1 [ pivot bad, Me_1 ];"));
+    String expectedMessage = "bad is not part of the dataset identifiers";
+    String actualMessage = exception.getMessage();
+    assertTrue(actualMessage.contains(expectedMessage));
+    Exception exceptionMe =
+        assertThrows(
+            fr.insee.vtl.engine.exceptions.InvalidArgumentException.class,
+            () -> engine.eval("DS_id_issue := Ds_1 [ pivot Id_2, bad ];"));
+    String expectedMessageMe = "bad is not part of the dataset measures";
+    String actualMessageMe = exceptionMe.getMessage();
+    assertTrue(actualMessageMe.contains(expectedMessageMe));
   }
 }

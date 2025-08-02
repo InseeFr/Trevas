@@ -289,14 +289,14 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     String id = ctx.id_.getText();
     if (!datasetExpression.getIdentifierNames().contains(id)) {
       throw new VtlRuntimeException(
-          new VtlScriptException(
-              id + " is not contained in dataset identifiers", fromContext(ctx.id_)));
+          new InvalidArgumentException(
+              id + " is not part of the dataset identifiers", fromContext(ctx.id_)));
     }
     String me = ctx.mea.getText();
     if (!datasetExpression.getMeasureNames().contains(me)) {
       throw new VtlRuntimeException(
-          new VtlScriptException(
-              me + " is not contained in dataset measures", fromContext(ctx.mea)));
+          new InvalidArgumentException(
+              me + " is not part of the dataset measures", fromContext(ctx.mea)));
     }
     Positioned pos = fromContext(ctx);
     return processingEngine.executePivot(datasetExpression, id, me, pos);
