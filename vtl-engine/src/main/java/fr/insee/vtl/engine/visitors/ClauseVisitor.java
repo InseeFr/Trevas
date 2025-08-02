@@ -280,4 +280,25 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     return processingEngine.executeAggr(normalizedDataset, groupBy, collectorMap);
   }
+
+  @Override
+  public DatasetExpression visitPivotOrUnpivotClause(VtlParser.PivotOrUnpivotClauseContext ctx) {
+    if (ctx.op.equals(ctx.UNPIVOT())) {
+      throw new UnsupportedOperationException("unpivot is not supported");
+    }
+    String id = ctx.id_.getText();
+    if (!datasetExpression.getIdentifierNames().contains(id)) {
+      throw new VtlRuntimeException(
+          new VtlScriptException(
+              id + " is not contained in dataset identifiers", fromContext(ctx.id_)));
+    }
+    String me = ctx.mea.getText();
+    if (!datasetExpression.getMeasureNames().contains(id)) {
+      throw new VtlRuntimeException(
+          new VtlScriptException(
+              id + " is not contained in dataset measures", fromContext(ctx.id_)));
+    }
+    Positioned pos = fromContext(ctx);
+    return processingEngine.executePivot(datasetExpression, id, me, pos);
+  }
 }
