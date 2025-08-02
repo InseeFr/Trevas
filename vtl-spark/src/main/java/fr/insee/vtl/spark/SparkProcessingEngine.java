@@ -1087,6 +1087,21 @@ public class SparkProcessingEngine implements ProcessingEngine {
   }
 
   /**
+   * Execute pivot on dataset expression.
+   *
+   * @param dsExpr dataset expression
+   * @param idName identifier name
+   * @param meName measure name
+   * @param pos script error position
+   * @return the result of the pivot
+   */
+  public DatasetExpression executePivot(
+      DatasetExpression dsExpr, String idName, String meName, Positioned pos) {
+
+    return dsExpr;
+  }
+
+  /**
    * The <code>Factory</code> class is an implementation of a VTL engine factory that returns Spark
    * engines.
    */
