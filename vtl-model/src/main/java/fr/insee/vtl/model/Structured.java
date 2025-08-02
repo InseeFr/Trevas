@@ -49,6 +49,14 @@ public interface Structured {
     return getDataStructure().isMonoMeasure();
   }
 
+  default List<String> getIdentifierNames() {
+    return getIdentifiers().stream().map(Component::getName).toList();
+  }
+
+  default List<String> getMeasureNames() {
+    return getMeasures().stream().map(Component::getName).toList();
+  }
+
   /**
    * The <code>Structure</code> class represent a structure component with its name, type, role and
    * nullable.
@@ -133,7 +141,7 @@ public interface Structured {
      * @param initialNullable The dataset nullable attribute.
      * @param role The role of the component as a value of the <code>Role</code> enumeration
      * @return A boolean which is <code>true</code> if the component values can be null, <code>false
-     *     </code> otherwise.
+     * </code> otherwise.
      */
     private Boolean buildNullable(Boolean initialNullable, Dataset.Role role) {
       if (role.equals(Dataset.Role.IDENTIFIER)) return false;
