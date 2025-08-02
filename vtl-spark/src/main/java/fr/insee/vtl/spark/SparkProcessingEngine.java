@@ -18,10 +18,8 @@ import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
-import org.apache.spark.sql.Column;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
@@ -1098,7 +1096,27 @@ public class SparkProcessingEngine implements ProcessingEngine {
   public DatasetExpression executePivot(
       DatasetExpression dsExpr, String idName, String meName, Positioned pos) {
 
-    return dsExpr;
+    Dataset<Row> sparkDataset = asSparkDataset(dsExpr).getSparkDataset();
+
+    List<String> groupByIdentifiers = new ArrayList<>(dsExpr.getIdentifierNames());
+    groupByIdentifiers.remove(idName);
+
+    List<String> pivotValues =
+        sparkDataset.select(idName).distinct().sort(idName).as(Encoders.STRING()).collectAsList();
+    Seq<Object> pivotSeq = JavaConverters.asScalaBuffer(new ArrayList<Object>(pivotValues)).toSeq();
+
+    // Trick to respect Spark signature
+    String col1 = groupByIdentifiers.get(0);
+    String[] remainingCols =
+        groupByIdentifiers.subList(1, groupByIdentifiers.size()).toArray(new String[0]);
+
+    Dataset<Row> result =
+        sparkDataset
+            .groupBy(col1, remainingCols)
+            .pivot(idName, pivotSeq)
+            .agg(functions.first(meName));
+
+    return new SparkDatasetExpression(new SparkDataset(result), pos);
   }
 
   /**
