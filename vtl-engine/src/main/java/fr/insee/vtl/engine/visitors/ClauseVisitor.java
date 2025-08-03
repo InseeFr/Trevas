@@ -1,18 +1,17 @@
 package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
-import static fr.insee.vtl.engine.utils.TypeChecking.*;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -79,45 +78,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     } else if (groupFunctionCtx.COUNT() != null) {
       return AggregationExpression.count();
     } else if (groupFunctionCtx.MAX() != null) {
-      if (isNumber(expression)) {
-        var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-        return AggregationExpression.max(numberExpression);
-      } else if (isDate(expression)) {
-        var numberExpression = assertDate(expression, groupFunctionCtx.expr());
-        return AggregationExpression.max(numberExpression);
-      } else if (isString(expression)) {
-        var stringExpression = assertString(expression, groupFunctionCtx.expr());
-        return AggregationExpression.max(stringExpression);
-      } else if (isBoolean(expression)) {
-        var booleanExpression = assertBoolean(expression, groupFunctionCtx.expr());
-        return AggregationExpression.max(booleanExpression);
-      } else {
-        throw new VtlRuntimeException(
-            new InvalidTypeException(
-                Set.of(Number.class, Instant.class, String.class, Boolean.class),
-                expression.getType(),
-                fromContext(groupFunctionCtx.expr())));
-      }
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.max(typedExpression);
     } else if (groupFunctionCtx.MIN() != null) {
-      if (isNumber(expression)) {
-        var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-        return AggregationExpression.min(numberExpression);
-      } else if (isDate(expression)) {
-        var numberExpression = assertDate(expression, groupFunctionCtx.expr());
-        return AggregationExpression.min(numberExpression);
-      } else if (isString(expression)) {
-        var stringExpression = assertString(expression, groupFunctionCtx.expr());
-        return AggregationExpression.min(stringExpression);
-      } else if (isBoolean(expression)) {
-        var booleanExpression = assertBoolean(expression, groupFunctionCtx.expr());
-        return AggregationExpression.min(booleanExpression);
-      } else {
-        throw new VtlRuntimeException(
-            new InvalidTypeException(
-                Set.of(Number.class, Instant.class, String.class, Boolean.class),
-                expression.getType(),
-                fromContext(groupFunctionCtx.expr())));
-      }
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.min(typedExpression);
     } else if (groupFunctionCtx.MEDIAN() != null) {
       var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
       return AggregationExpression.median(numberExpression);
