@@ -1101,20 +1101,11 @@ public class SparkProcessingEngine implements ProcessingEngine {
     List<String> groupByIdentifiers = new ArrayList<>(dsExpr.getIdentifierNames());
     groupByIdentifiers.remove(idName);
 
-    List<String> pivotValues =
-        sparkDataset.select(idName).distinct().sort(idName).as(Encoders.STRING()).collectAsList();
-    Seq<Object> pivotSeq = JavaConverters.asScalaBuffer(new ArrayList<Object>(pivotValues)).toSeq();
+    Column[] groupByCols = groupByIdentifiers.stream().map(functions::col).toArray(Column[]::new);
 
-    // Trick to respect Spark signature
-    String col1 = groupByIdentifiers.get(0);
-    String[] remainingCols =
-        groupByIdentifiers.subList(1, groupByIdentifiers.size()).toArray(new String[0]);
-
+    // TODO: fail if any values needs to be aggregated
     Dataset<Row> result =
-        sparkDataset
-            .groupBy(col1, remainingCols)
-            .pivot(idName, pivotSeq)
-            .agg(functions.first(meName));
+        sparkDataset.groupBy(groupByCols).pivot(idName).agg(functions.first(meName));
 
     return new SparkDatasetExpression(new SparkDataset(result), pos);
   }
