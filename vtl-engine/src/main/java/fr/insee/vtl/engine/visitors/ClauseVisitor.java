@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
@@ -77,11 +78,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     } else if (groupFunctionCtx.COUNT() != null) {
       return AggregationExpression.count();
     } else if (groupFunctionCtx.MAX() != null) {
-      var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-      return AggregationExpression.max(numberExpression);
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.max(typedExpression);
     } else if (groupFunctionCtx.MIN() != null) {
-      var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-      return AggregationExpression.min(numberExpression);
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.min(typedExpression);
     } else if (groupFunctionCtx.MEDIAN() != null) {
       var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
       return AggregationExpression.median(numberExpression);
@@ -279,5 +280,26 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     return processingEngine.executeAggr(normalizedDataset, groupBy, collectorMap);
+  }
+
+  @Override
+  public DatasetExpression visitPivotOrUnpivotClause(VtlParser.PivotOrUnpivotClauseContext ctx) {
+    if (ctx.op.equals(ctx.UNPIVOT())) {
+      throw new UnsupportedOperationException("unpivot is not supported");
+    }
+    String id = ctx.id_.getText();
+    if (!datasetExpression.getIdentifierNames().contains(id)) {
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              id + " is not part of the dataset identifiers", fromContext(ctx.id_)));
+    }
+    String me = ctx.mea.getText();
+    if (!datasetExpression.getMeasureNames().contains(me)) {
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              me + " is not part of the dataset measures", fromContext(ctx.mea)));
+    }
+    Positioned pos = fromContext(ctx);
+    return processingEngine.executePivot(datasetExpression, id, me, pos);
   }
 }

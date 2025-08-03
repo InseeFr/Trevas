@@ -18,10 +18,8 @@ import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
-import org.apache.spark.sql.Column;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
@@ -1084,6 +1082,32 @@ public class SparkProcessingEngine implements ProcessingEngine {
         result = result.join(iterator.next(), iterableAsScalaIterable(identifiers).toSeq(), type);
     }
     return result;
+  }
+
+  /**
+   * Execute pivot on dataset expression.
+   *
+   * @param dsExpr dataset expression
+   * @param idName identifier name
+   * @param meName measure name
+   * @param pos script error position
+   * @return the result of the pivot
+   */
+  public DatasetExpression executePivot(
+      DatasetExpression dsExpr, String idName, String meName, Positioned pos) {
+
+    Dataset<Row> sparkDataset = asSparkDataset(dsExpr).getSparkDataset();
+
+    List<String> groupByIdentifiers = new ArrayList<>(dsExpr.getIdentifierNames());
+    groupByIdentifiers.remove(idName);
+
+    Column[] groupByCols = groupByIdentifiers.stream().map(functions::col).toArray(Column[]::new);
+
+    // TODO: fail if any values needs to be aggregated
+    Dataset<Row> result =
+        sparkDataset.groupBy(groupByCols).pivot(idName).agg(functions.first(meName));
+
+    return new SparkDatasetExpression(new SparkDataset(result), pos);
   }
 
   /**

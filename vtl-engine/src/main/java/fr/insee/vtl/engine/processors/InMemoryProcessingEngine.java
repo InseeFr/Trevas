@@ -1,18 +1,11 @@
 package fr.insee.vtl.engine.processors;
 
-import static fr.insee.vtl.model.Structured.Component;
-import static fr.insee.vtl.model.Structured.DataPoint;
-import static fr.insee.vtl.model.Structured.DataStructure;
+import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.script.ScriptEngine;
@@ -529,6 +522,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return structure;
       }
     };
+  }
+
+  @Override
+  public DatasetExpression executePivot(
+      DatasetExpression dataset, String idName, String meName, Positioned pos) {
+    throw new UnsupportedOperationException();
   }
 
   /**

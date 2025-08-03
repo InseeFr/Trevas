@@ -1,11 +1,7 @@
 package fr.insee.vtl.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -154,22 +150,30 @@ public class AggregationExpression
    * @return The max expression.
    */
   public static AggregationExpression max(ResolvableExpression expression) {
-    if (Long.class.equals(expression.getType())) {
-      Collector<Long, ?, Optional<Long>> maxBy =
-          Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
-      Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
-      Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-      return new MaxAggregationExpression(expression, res, Long.class);
-    } else if (Double.class.equals(expression.getType())) {
-      Collector<Double, ?, Optional<Double>> maxBy =
-          Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
-      Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
-      Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-      return new MaxAggregationExpression(expression, res, Double.class);
+    Class<?> type = expression.getType();
+
+    if (Long.class.equals(type)) {
+      return maxAggregation(expression, Long.class);
+    } else if (Double.class.equals(type)) {
+      return maxAggregation(expression, Double.class);
+    } else if (String.class.equals(type)) {
+      return maxAggregation(expression, String.class);
+    } else if (Boolean.class.equals(type)) {
+      return maxAggregation(expression, Boolean.class);
+    } else if (Instant.class.equals(type)) {
+      return maxAggregation(expression, Instant.class);
     } else {
-      // Type asserted in visitor.
       throw new Error("unexpected type");
     }
+  }
+
+  private static <T extends Comparable<? super T>> AggregationExpression maxAggregation(
+      ResolvableExpression expression, Class<T> type) {
+    Comparator<T> comparator = Comparator.nullsFirst(Comparator.naturalOrder());
+    Collector<Object, ?, T> collector =
+        Collectors.collectingAndThen(
+            Collectors.mapping(type::cast, Collectors.maxBy(comparator)), opt -> opt.orElse(null));
+    return new MaxAggregationExpression(expression, collector, type);
   }
 
   public static class MaxAggregationExpression extends AggregationExpression {
@@ -187,22 +191,30 @@ public class AggregationExpression
    * @return The min expression.
    */
   public static AggregationExpression min(ResolvableExpression expression) {
-    if (Long.class.equals(expression.getType())) {
-      Collector<Long, ?, Optional<Long>> maxBy =
-          Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
-      Collector<Object, ?, Optional<Long>> mapping = Collectors.mapping(v -> (Long) v, maxBy);
-      Collector<Object, ?, Long> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-      return new MinAggregationExpression(expression, res, Long.class);
-    } else if (Double.class.equals(expression.getType())) {
-      Collector<Double, ?, Optional<Double>> maxBy =
-          Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
-      Collector<Object, ?, Optional<Double>> mapping = Collectors.mapping(v -> (Double) v, maxBy);
-      Collector<Object, ?, Double> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
-      return new MinAggregationExpression(expression, res, Double.class);
+    Class<?> type = expression.getType();
+
+    if (Long.class.equals(type)) {
+      return minAggregation(expression, Long.class);
+    } else if (Double.class.equals(type)) {
+      return minAggregation(expression, Double.class);
+    } else if (String.class.equals(type)) {
+      return minAggregation(expression, String.class);
+    } else if (Boolean.class.equals(type)) {
+      return minAggregation(expression, Boolean.class);
+    } else if (Instant.class.equals(type)) {
+      return minAggregation(expression, Instant.class);
     } else {
-      // Type asserted in visitor.
       throw new Error("unexpected type");
     }
+  }
+
+  private static <T extends Comparable<? super T>> AggregationExpression minAggregation(
+      ResolvableExpression expression, Class<T> type) {
+    Comparator<T> comparator = Comparator.nullsFirst(Comparator.naturalOrder());
+    Collector<Object, ?, T> collector =
+        Collectors.collectingAndThen(
+            Collectors.mapping(type::cast, Collectors.minBy(comparator)), opt -> opt.orElse(null));
+    return new MinAggregationExpression(expression, collector, type);
   }
 
   public static class MinAggregationExpression extends AggregationExpression {
