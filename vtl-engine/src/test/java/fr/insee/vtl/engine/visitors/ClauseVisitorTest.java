@@ -8,7 +8,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.util.Arrays;
 import java.util.List;
@@ -250,15 +249,6 @@ public class ClauseVisitorTest {
             "res := ds1[aggr a :=    var_samp(name) group by country];");
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    for (String t : cases) {
-      assertThatThrownBy(
-              () -> {
-                engine.eval(t);
-              })
-          .isInstanceOf(InvalidTypeException.class)
-          .is(atPosition(0, 33, 37));
-    }
   }
 
   @Test

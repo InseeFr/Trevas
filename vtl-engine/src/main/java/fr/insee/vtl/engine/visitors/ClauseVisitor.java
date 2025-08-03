@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
@@ -77,11 +78,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     } else if (groupFunctionCtx.COUNT() != null) {
       return AggregationExpression.count();
     } else if (groupFunctionCtx.MAX() != null) {
-      var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-      return AggregationExpression.max(numberExpression);
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.max(typedExpression);
     } else if (groupFunctionCtx.MIN() != null) {
-      var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
-      return AggregationExpression.min(numberExpression);
+      var typedExpression = assertBasicScalarType(expression, groupFunctionCtx.expr());
+      return AggregationExpression.min(typedExpression);
     } else if (groupFunctionCtx.MEDIAN() != null) {
       var numberExpression = assertNumber(expression, groupFunctionCtx.expr());
       return AggregationExpression.median(numberExpression);
