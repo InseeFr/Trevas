@@ -9,8 +9,11 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 /**
  * The <code>TypeChecking</code> class contains useful methods for checking the type of VTL
@@ -222,6 +225,53 @@ public class TypeChecking {
   }
 
   /**
+   * Checks if an expression can be interpreted as a time_period.
+   *
+   * @param expression The expression to check.
+   * @return A boolean which is <code>true</code> if the expression can be interpreted as a
+   *     time_period, <code>false</code> otherwise.
+   */
+  public static boolean isTimePeriod(TypedExpression expression) {
+    return isType(expression, Interval.class);
+  }
+
+  /**
+   * Asserts that an expression is of type <code>Interval</code>, otherwise raises an exception.
+   *
+   * @param expression The expression to check.
+   * @param tree The tree of the expression.
+   * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+   * @return The expression (typed as time_period if it evaluates to null).
+   */
+  public static <T extends TypedExpression> T assertTimePeriod(T expression, ParseTree tree) {
+    return assertTypeExpression(expression, Interval.class, tree);
+  }
+
+  /**
+   * Checks if an expression can be interpreted as a duration.
+   *
+   * @param expression The expression to check.
+   * @return A boolean which is <code>true</code> if the expression can be interpreted as a
+   *     duration, <code>false</code> otherwise.
+   */
+  public static boolean isDuration(TypedExpression expression) {
+    return isType(expression, PeriodDuration.class);
+  }
+
+  /**
+   * Asserts that an expression is of type <code>PeriodDuration</code>, otherwise raises an
+   * exception.
+   *
+   * @param expression The expression to check.
+   * @param tree The tree of the expression.
+   * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+   * @return The expression (typed as duration if it evaluates to null).
+   */
+  public static <T extends TypedExpression> T assertDuration(T expression, ParseTree tree) {
+    return assertTypeExpression(expression, PeriodDuration.class, tree);
+  }
+
+  /**
    * Checks if an expression can be interpreted as a boolean.
    *
    * @param expression The expression to check.
@@ -276,5 +326,41 @@ public class TypeChecking {
    */
   public static boolean hasNullArgs(Object... objects) {
     return Stream.of(objects).anyMatch(Objects::isNull);
+  }
+
+  /**
+   * Asserts that an expression is a BasicScalarType, otherwise raises an exception.
+   *
+   * @param expression The expression to check.
+   * @param tree The tree of the expression.
+   * @param <T> The class of the expression provided (extends {@link TypedExpression}).
+   * @return The expression.
+   */
+  public static <T extends TypedExpression> T assertBasicScalarType(T expression, ParseTree tree) {
+    if (isString(expression)) {
+      return assertString(expression, tree);
+    } else if (isNumber(expression)) {
+      return assertNumber(expression, tree);
+    } else if (isBoolean(expression)) {
+      return assertBoolean(expression, tree);
+    } else if (isDate(expression)) {
+      return assertDate(expression, tree);
+    } else if (isDuration(expression)) {
+      return assertDuration(expression, tree);
+    } else if (isTimePeriod(expression)) {
+      return assertTimePeriod(expression, tree);
+    }
+    // TODO: add `time` support
+    throw new VtlRuntimeException(
+        new InvalidTypeException(
+            Set.of(
+                String.class,
+                Number.class,
+                Boolean.class,
+                Instant.class,
+                PeriodDuration.class,
+                Interval.class),
+            expression.getType(),
+            fromContext(tree)));
   }
 }
