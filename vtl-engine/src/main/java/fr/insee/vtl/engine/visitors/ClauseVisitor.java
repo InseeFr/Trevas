@@ -85,6 +85,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       } else if (isDate(expression)) {
         var numberExpression = assertDate(expression, groupFunctionCtx.expr());
         return AggregationExpression.max(numberExpression);
+      } else if (isString(expression)) {
+        var numberExpression = assertString(expression, groupFunctionCtx.expr());
+        return AggregationExpression.max(numberExpression);
       } else {
         throw new VtlRuntimeException(
             new InvalidTypeException(
@@ -98,6 +101,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         return AggregationExpression.min(numberExpression);
       } else if (isDate(expression)) {
         var numberExpression = assertDate(expression, groupFunctionCtx.expr());
+        return AggregationExpression.min(numberExpression);
+      } else if (isString(expression)) {
+        var numberExpression = assertString(expression, groupFunctionCtx.expr());
         return AggregationExpression.min(numberExpression);
       } else {
         throw new VtlRuntimeException(
