@@ -208,14 +208,15 @@ public class AggregateTest {
     InMemoryDataset ds =
         new InMemoryDataset(
             List.of(
-                List.of("Hadrien", "No", 10L, 11D, "01/01/1990"),
-                List.of("Nico", "Fr", 10L, 11D, "01/01/1991"),
-                List.of("Franck", "Fr", 12L, 9D, "01/01/1989")),
+                List.of("Hadrien", "No", 10L, 11D, true, "01/01/1990"),
+                List.of("Nico", "Fr", 10L, 11D, false, "01/01/1991"),
+                List.of("Franck", "Fr", 12L, 9D, true, "01/01/1989")),
             List.of(
                 new Structured.Component("name", String.class, Dataset.Role.MEASURE),
                 new Structured.Component("country", String.class, Dataset.Role.IDENTIFIER),
                 new Structured.Component("l", Long.class, Dataset.Role.MEASURE),
                 new Structured.Component("dou", Double.class, Dataset.Role.MEASURE),
+                new Structured.Component("boo", Boolean.class, Dataset.Role.MEASURE),
                 new Structured.Component("d", String.class, Dataset.Role.MEASURE)));
 
     engine.put("ds", ds);
@@ -228,6 +229,8 @@ public class AggregateTest {
             + "maxL := max(l),"
             + "minDou := min(dou),"
             + "maxDou := max(dou),"
+            + "minBoo := min(boo),"
+            + "maxBoo := max(boo),"
             + "minD := min(d),"
             + "maxD := max(d)"
             + " group by country]"
@@ -237,7 +240,29 @@ public class AggregateTest {
     assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsList())
         .containsExactlyInAnyOrder(
-            List.of("No", "Hadrien", "Hadrien", 10L, 10L, 11D, 11D, "01/01/1990", "01/01/1990"),
-            List.of("Fr", "Franck", "Nico", 10L, 12L, 9D, 11D, "01/01/1989", "01/01/1991"));
+            List.of(
+                "No",
+                "Hadrien",
+                "Hadrien",
+                10L,
+                10L,
+                11D,
+                11D,
+                true,
+                true,
+                "01/01/1990",
+                "01/01/1990"),
+            List.of(
+                "Fr",
+                "Franck",
+                "Nico",
+                10L,
+                12L,
+                9D,
+                11D,
+                false,
+                true,
+                "01/01/1989",
+                "01/01/1991"));
   }
 }

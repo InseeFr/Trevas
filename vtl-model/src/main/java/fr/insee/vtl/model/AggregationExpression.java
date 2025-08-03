@@ -171,6 +171,14 @@ public class AggregationExpression
       Collector<Object, ?, String> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
       return new MaxAggregationExpression(expression, res, String.class);
 
+    } else if (Boolean.class.equals(expression.getType())) {
+      Collector<Boolean, ?, Optional<Boolean>> maxBy =
+          Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+      Collector<Object, ?, Optional<Boolean>> mapping = Collectors.mapping(v -> (Boolean) v, maxBy);
+      Collector<Object, ?, Boolean> res =
+          Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+      return new MaxAggregationExpression(expression, res, Boolean.class);
+
     } else if (Instant.class.equals(expression.getType())) {
       Collector<Instant, ?, Optional<Instant>> maxBy =
           Collectors.maxBy(Comparator.nullsFirst(Comparator.naturalOrder()));
@@ -219,6 +227,13 @@ public class AggregationExpression
       Collector<Object, ?, String> res = Collectors.collectingAndThen(mapping, v -> v.orElse(null));
       return new MinAggregationExpression(expression, res, String.class);
 
+    } else if (Boolean.class.equals(expression.getType())) {
+      Collector<Boolean, ?, Optional<Boolean>> minBy =
+          Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));
+      Collector<Object, ?, Optional<Boolean>> mapping = Collectors.mapping(v -> (Boolean) v, minBy);
+      Collector<Object, ?, Boolean> res =
+          Collectors.collectingAndThen(mapping, v -> v.orElse(null));
+      return new MinAggregationExpression(expression, res, Boolean.class);
     } else if (Instant.class.equals(expression.getType())) {
       Collector<Instant, ?, Optional<Instant>> minBy =
           Collectors.minBy(Comparator.nullsFirst(Comparator.naturalOrder()));

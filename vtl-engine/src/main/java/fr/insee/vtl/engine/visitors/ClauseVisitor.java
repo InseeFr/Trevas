@@ -86,12 +86,15 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var numberExpression = assertDate(expression, groupFunctionCtx.expr());
         return AggregationExpression.max(numberExpression);
       } else if (isString(expression)) {
-        var numberExpression = assertString(expression, groupFunctionCtx.expr());
-        return AggregationExpression.max(numberExpression);
+        var stringExpression = assertString(expression, groupFunctionCtx.expr());
+        return AggregationExpression.max(stringExpression);
+      } else if (isBoolean(expression)) {
+        var booleanExpression = assertBoolean(expression, groupFunctionCtx.expr());
+        return AggregationExpression.max(booleanExpression);
       } else {
         throw new VtlRuntimeException(
             new InvalidTypeException(
-                Set.of(Number.class, Instant.class),
+                Set.of(Number.class, Instant.class, String.class, Boolean.class),
                 expression.getType(),
                 fromContext(groupFunctionCtx.expr())));
       }
@@ -103,12 +106,15 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         var numberExpression = assertDate(expression, groupFunctionCtx.expr());
         return AggregationExpression.min(numberExpression);
       } else if (isString(expression)) {
-        var numberExpression = assertString(expression, groupFunctionCtx.expr());
-        return AggregationExpression.min(numberExpression);
+        var stringExpression = assertString(expression, groupFunctionCtx.expr());
+        return AggregationExpression.min(stringExpression);
+      } else if (isBoolean(expression)) {
+        var booleanExpression = assertBoolean(expression, groupFunctionCtx.expr());
+        return AggregationExpression.min(booleanExpression);
       } else {
         throw new VtlRuntimeException(
             new InvalidTypeException(
-                Set.of(Number.class, Instant.class),
+                Set.of(Number.class, Instant.class, String.class, Boolean.class),
                 expression.getType(),
                 fromContext(groupFunctionCtx.expr())));
       }
