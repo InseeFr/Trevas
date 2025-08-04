@@ -4,7 +4,9 @@ import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
+import fr.insee.vtl.engine.visitors.DAGBuildingVisitor;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -19,19 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.script.AbstractScriptEngine;
@@ -70,6 +60,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
   /** Script engine property giving the (comma-separated) list of engine names. */
   public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
+
+  /** Script engine property to switch on DAG generation. */
+  public static final String USE_DAG = "$vtl.engine.use_dag";
 
   private final ScriptEngineFactory factory;
   private Map<String, Method> methodCache;
@@ -190,6 +183,16 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   }
 
   /**
+   * Returns whether to create and use the DAG or not.
+   *
+   * @return true if the DAG is to be used.
+   */
+  public boolean isUseDag() {
+    Object useDag = get(USE_DAG);
+    return useDag != null && "true".equalsIgnoreCase(useDag.toString());
+  }
+
+  /**
    * Returns an instance of the processing engine for the script engine.
    *
    * @return an instance of the processing engine for the script engine.
@@ -209,10 +212,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    *
    * @param stream The script to evaluate represented as a stream of Unicode code points.
    * @param context The evaluation context (for example: data bindings).
+   * @param isUseDag Build DAG of vtl script when true
    * @return The result of the evaluation of the script in the given context.
    * @throws VtlScriptException In case of error during the evaluation.
    */
-  private Object evalStream(CodePointCharStream stream, ScriptContext context)
+  private Object evalStream(CodePointCharStream stream, ScriptContext context, boolean isUseDag)
       throws VtlScriptException {
     try {
       VtlLexer lexer = new VtlLexer(stream);
@@ -261,6 +265,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         throw first;
       }
 
+      if (isUseDag) {
+        // Reorder Script code
+        start = reorderScript(start);
+      }
+
       AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, getProcessingEngine());
       Object lastValue = null;
       for (VtlParser.StatementContext stmt : start.statement()) {
@@ -273,6 +282,36 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   }
 
   /**
+   * Helper method to reorder the VTL script
+   *
+   * @param start Root of parsetree
+   * @return reordered VTL
+   */
+  private VtlParser.StartContext reorderScript(VtlParser.StartContext start) {
+      DAGBuildingVisitor visitor = new DAGBuildingVisitor();
+      List<DAGStatement> sortedStatements = visitor.visit(start);
+
+      VtlParser.StartContext startReordered =
+              new VtlParser.StartContext((ParserRuleContext) start.getRuleContext(), start.invokingState);
+
+      // Build a set of unsorted indices that need reordering
+      Set<Integer> sortedIndices = sortedStatements.stream()
+              .map(DAGStatement::unsortedIndex)
+              .collect(Collectors.toSet());
+
+      int sortedIndex = 0;
+      for (int i = 0; i < start.getChildCount(); i++) {
+          if (sortedIndices.contains(i)) {
+              DAGStatement stmt = sortedStatements.get(sortedIndex++);
+              startReordered.addAnyChild(start.getChild(stmt.unsortedIndex()));
+          } else {
+              startReordered.addAnyChild(start.getChild(i));
+          }
+      }
+      return startReordered;
+  }
+
+  /**
    * Evaluation of a script expression (represented as a string) in a given context.
    *
    * @param script The script to evaluate represented as a string.
@@ -282,8 +321,22 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    */
   @Override
   public Object eval(String script, ScriptContext context) throws VtlScriptException {
+    return eval(script, context, isUseDag());
+  }
+
+  /**
+   * Evaluation of a script expression (represented as a string) in a given context.
+   *
+   * @param script The script to evaluate represented as a string.
+   * @param context The evaluation context (for example: data bindings).
+   * @param isUseDag Build DAG of vtl script when true
+   * @return The result of the evaluation of the script in the given context.
+   * @throws VtlScriptException In case of error during the evaluation.
+   */
+  private Object eval(String script, ScriptContext context, boolean isUseDag)
+      throws VtlScriptException {
     CodePointCharStream stream = CharStreams.fromString(script);
-    return evalStream(stream, context);
+    return evalStream(stream, context, isUseDag);
   }
 
   /**
@@ -296,9 +349,23 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    */
   @Override
   public Object eval(Reader reader, ScriptContext context) throws ScriptException {
+    return eval(reader, context, isUseDag());
+  }
+
+  /**
+   * Evaluation of a script expression (read in a <code>Reader</code>) in a given context.
+   *
+   * @param reader The <code>Reader</code> containing the script to evaluate.
+   * @param context The evaluation context (for example: data bindings).
+   * @param isUseDag Build DAG of vtl script when true
+   * @return The result of the evaluation of the script in the given context.
+   * @throws ScriptException In case of error during the evaluation.
+   */
+  private Object eval(Reader reader, ScriptContext context, boolean isUseDag)
+      throws ScriptException {
     try {
       CodePointCharStream stream = CharStreams.fromReader(reader);
-      return evalStream(stream, context);
+      return evalStream(stream, context, isUseDag);
     } catch (IOException e) {
       throw new ScriptException(e);
     }
