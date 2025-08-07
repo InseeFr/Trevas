@@ -90,8 +90,8 @@ public class AnalyticVarSampTest extends AnalyticTest {
 
     engine.eval(
         "res := var_samp ( ds1 over ( partition by Id_1, Id_2 order by Year) );"
-            + "res := res [calc Me_1 := round(Me_1, 2), Me_2 := round(Me_2, 2)];");
-    assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+            + "res1 := res [calc Me_1 := round(Me_1, 2), Me_2 := round(Me_2, 2)];");
+    assertThat(engine.getContext().getAttribute("res1")).isInstanceOf(Dataset.class);
 
     /*
     +----+----+----+----+----+------------------+------------------+
@@ -109,7 +109,7 @@ public class AnalyticVarSampTest extends AnalyticTest {
     * */
 
     var actual =
-        ((Dataset) engine.getContext().getAttribute("res"))
+        ((Dataset) engine.getContext().getAttribute("res1"))
             .getDataAsMap().stream()
                 .map(map -> replaceNullValues(map, DEFAULT_NULL_STR))
                 .collect(Collectors.toList());

@@ -2,12 +2,15 @@ package fr.insee.vtl.engine.visitors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.HierarchicalRuleset;
+import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import java.util.List;
 import javax.script.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +43,24 @@ public class AssignmentTest {
     //        ));
     //
     //        assertThat(bindings.get("f")).isNull();
+  }
+
+  @Test
+  public void testMultipleAssignments() throws ScriptException {
+    Dataset ds = new InMemoryDataset(List.of());
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    VtlScriptException exception =
+        assertThrows(
+            VtlScriptException.class,
+            () -> {
+              engine.eval("ds1 := ds; ds1 <- ds;");
+            });
+    assertThat(exception).isInstanceOf(VtlScriptException.class);
+    assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
+    assertThat(exception.getPosition().startLine).isEqualTo(0);
+    assertThat(exception.getPosition().startColumn).isEqualTo(11);
   }
 
   @Test
@@ -139,20 +160,20 @@ public class AssignmentTest {
 
     String hierarchicalRulesetDef =
         """
-                define hierarchical ruleset HR_1 (variable rule Me_1) is\s
-                R010 : A = J + K + L errorlevel 5;
-                R020 : B = M + N + O errorlevel 5;
-                R030 : C = P + Q errorcode "XX" errorlevel 5;
-                R040 : D = R + S errorlevel 1;
-                R050 : E = T + U + V errorlevel 0;
-                R060 : F = Y + W + Z errorlevel 7;
-                R070 : G = B + C;
-                R080 : H = D + E errorlevel 0;
-                R090 : I = D + G errorcode "YY" errorlevel 0;
-                R100 : M >= N errorlevel 5;
-                R110 : M <= G errorlevel 5
-                end hierarchical ruleset;\s
-                """;
+                        define hierarchical ruleset HR_1 (variable rule Me_1) is\s
+                        R010 : A = J + K + L errorlevel 5;
+                        R020 : B = M + N + O errorlevel 5;
+                        R030 : C = P + Q errorcode "XX" errorlevel 5;
+                        R040 : D = R + S errorlevel 1;
+                        R050 : E = T + U + V errorlevel 0;
+                        R060 : F = Y + W + Z errorlevel 7;
+                        R070 : G = B + C;
+                        R080 : H = D + E errorlevel 0;
+                        R090 : I = D + G errorcode "YY" errorlevel 0;
+                        R100 : M >= N errorlevel 5;
+                        R110 : M <= G errorlevel 5
+                        end hierarchical ruleset;\s
+                        """;
 
     engine.eval(hierarchicalRulesetDef);
     HierarchicalRuleset hr1 = (HierarchicalRuleset) engine.getContext().getAttribute("HR_1");

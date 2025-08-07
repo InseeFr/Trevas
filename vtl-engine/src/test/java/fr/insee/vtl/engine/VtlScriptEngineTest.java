@@ -210,9 +210,9 @@ public class VtlScriptEngineTest {
             () -> {
               engine.eval(
                   """
-                    var := true and (10 +
-                    10);\
-                    """);
+                                    var := true and (10 +
+                                    10);\
+                                    """);
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .is(atPosition(0, 1, 17, 2))
@@ -227,10 +227,10 @@ public class VtlScriptEngineTest {
 
     engine.eval(
         """
-                res := testUpper("  foo bar ");
-                res := testTrim(res);\
-                """);
-    assertThat(engine.get("res")).isEqualTo("FOO BAR");
+                        res := testUpper("  foo bar ");
+                        res1 := testTrim(res);\
+                        """);
+    assertThat(engine.get("res1")).isEqualTo("FOO BAR");
   }
 
   @Test
