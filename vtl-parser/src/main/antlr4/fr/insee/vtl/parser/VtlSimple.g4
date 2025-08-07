@@ -165,6 +165,7 @@ genericOperators:
 parameter:
     varID
     | constant
+    | expr
     | OPTIONAL
 ;
 
