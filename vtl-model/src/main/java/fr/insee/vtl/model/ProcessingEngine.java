@@ -220,4 +220,16 @@ public interface ProcessingEngine {
       String inputMode,
       String validationOutput,
       Positioned pos);
+
+  /**
+   * Execute pivot on dataset expression.
+   *
+   * @param dsExpr dataset expression
+   * @param idName identifier name
+   * @param meName measure name
+   * @param pos script error position
+   * @return the result of the pivot
+   */
+  DatasetExpression executePivot(
+      DatasetExpression dsExpr, String idName, String meName, Positioned pos);
 }

@@ -46,30 +46,30 @@ public class OperatorsTest {
 
     engine.eval(
         "res := ds1#long1; "
-            + "res := isnull(ds1); "
+            + "res1 := isnull(ds1); "
             + "ds_1 := ds1[keep id, long1, double1]; ds_2 := ds2[keep id, long1, double1]; "
-            + "res := ds_1 + ds_2; "
-            + "res := ds_1 - ds_2; "
-            + "res := ds_1 * ds_2; "
-            + "res := ds_1 / ds_2; "
-            + "res := ds_1 = ds_2; "
-            + "res := ds_1 <> ds_2; "
-            + "res := ds_1 < ds_2; "
-            + "res := ds_1 <= ds_2; "
-            + "res := ds_1 > ds_2; "
-            + "res := ds_1 >= ds_2; "
-            + "res := + ds_1; "
-            + "res := - ds_1; "
-            + "res := ceil(floor(ln(exp(abs(ds_1))))); "
-            + "res := round(ds_1, 5); "
-            + "res := trunc(ds_1, 5); "
-            + "res := sqrt(abs(ds_1)); "
-            + "res := mod(ds_1, 5); "
-            + "res := power(ds_1, 5); "
-            + "res := log(abs(ds_1), 5); "
-            + "ds_1 := ds1[keep id, string1, string2]; ds_2 := ds2[keep id, string1][calc string2 := string1]; "
-            + "res := ds_1 || ds_2; ");
-    var res = engine.getContext().getAttribute("res");
+            + "res2 := ds_1 + ds_2; "
+            + "res3 := ds_1 - ds_2; "
+            + "res4 := ds_1 * ds_2; "
+            + "res5 := ds_1 / ds_2; "
+            + "res6 := ds_1 = ds_2; "
+            + "res7 := ds_1 <> ds_2; "
+            + "res8 := ds_1 < ds_2; "
+            + "res9 := ds_1 <= ds_2; "
+            + "res10 := ds_1 > ds_2; "
+            + "res11 := ds_1 >= ds_2; "
+            + "res12 := + ds_1; "
+            + "res13 := - ds_1; "
+            + "res14 := ceil(floor(ln(exp(abs(ds_1))))); "
+            + "res15 := round(ds_1, 5); "
+            + "res16 := trunc(ds_1, 5); "
+            + "res17 := sqrt(abs(ds_1)); "
+            + "res18 := mod(ds_1, 5); "
+            + "res19 := power(ds_1, 5); "
+            + "res20 := log(abs(ds_1), 5); "
+            + "ds_11 := ds1[keep id, string1, string2]; ds_22 := ds2[keep id, string1][calc string2 := string1]; "
+            + "res21 := ds_11 || ds_22; ");
+    var res = engine.getContext().getAttribute("res21");
     assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
   }
 

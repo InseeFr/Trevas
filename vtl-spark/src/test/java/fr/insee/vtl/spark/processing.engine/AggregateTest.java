@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Structured;
 import java.util.List;
 import java.util.Map;
 import javax.script.ScriptEngine;
@@ -199,5 +200,105 @@ public class AggregateTest {
     //        assertThat((Double) no.get("var_sampAge")).isEqualTo(0.0);
     //        assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
 
+  }
+
+  @Test
+  public void testMinMax() throws ScriptException {
+
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                List.of(
+                    "Hadrien", "No", 10L, 11D, true, "01/01/1990"
+                    // ,
+                    // "2000-01-01/2000-12-31",
+                    // "2000M12"
+                    ),
+                List.of(
+                    "Nico", "Fr", 10L, 11D, false, "01/01/1991"
+                    // ,
+                    // "2000-01-01/2000-01-31",
+                    // "2000M11"
+                    ),
+                List.of(
+                    "Franck", "Fr", 12L, 9D, true, "01/01/1989"
+                    // ,
+                    // "2000-01-01/2000-03-31",
+                    // "2010M10"
+                    )),
+            List.of(
+                new Structured.Component("name", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("country", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("l", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("dou", Double.class, Dataset.Role.MEASURE),
+                new Structured.Component("boo", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("d", String.class, Dataset.Role.MEASURE)
+                // ,
+                // new Structured.Component("dur", String.class, Dataset.Role.MEASURE),
+                // new Structured.Component("tp", String.class, Dataset.Role.MEASURE)
+                ));
+
+    engine.put("ds", ds);
+    engine.eval(
+        "res := ds[calc d := cast(d, date, \"dd/MM/yyyy\")"
+            +
+            // ", "
+            // + "             dur := cast(dur, string), "
+            // + "             tp := cast(tp, string)" +
+            "]"
+            + "[aggr "
+            + "minName := min(name),"
+            + "maxName := max(name),"
+            + "minL := min(l),"
+            + "maxL := max(l),"
+            + "minDou := min(dou),"
+            + "maxDou := max(dou),"
+            + "minBoo := min(boo),"
+            + "maxBoo := max(boo),"
+            + "minD := min(d),"
+            + "maxD := max(d)"
+            // + ","
+            // + "minDur := min(dur),"
+            // + "maxDur := max(dur),"
+            // + "minTp := min(tp),"
+            // + "maxTp := max(tp)"
+            + " group by country]"
+            + " [calc minD := cast(minD, string, \"dd/MM/yyyy\"),"
+            + "       maxD := cast(maxD, string, \"dd/MM/yyyy\")"
+            // + ","
+            // + "       minDur := cast(minDur, string),"
+            // + "       maxDur := cast(maxDur, string),"
+            // + "       minTp := cast(minTp, string),"
+            // + "       maxTp := cast(maxTp, string)"
+            + " ];");
+    assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsList())
+        .containsExactlyInAnyOrder(
+            List.of(
+                "No",
+                "Hadrien",
+                "Hadrien",
+                10L,
+                10L,
+                11D,
+                11D,
+                true,
+                true,
+                "01/01/1990",
+                "01/01/1990"
+                // ,
+                // "2000-01-01/2000-12-31",
+                // "2000-01-01/2000-12-31",
+                // "2000M12",
+                // "2000M12"
+                ),
+            List.of(
+                "Fr", "Franck", "Nico", 10L, 12L, 9D, 11D, false, true, "01/01/1989", "01/01/1991"
+                // ,
+                // "2000-01-01/2000-01-31",
+                // "2000-01-01/2000-03-31",
+                // "2000M11",
+                // "2010Q1"
+                ));
   }
 }

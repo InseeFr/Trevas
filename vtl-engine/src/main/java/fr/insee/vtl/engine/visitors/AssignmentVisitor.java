@@ -27,6 +27,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   private final ProcessingEngine processingEngine;
   private final ExpressionVisitor expressionVisitor;
 
+  private final Set<String> seenVarIds = new HashSet<>();
+
   /**
    * Constructor taking a scripting engine and a processing engine.
    *
@@ -48,9 +50,15 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
   @Override
   public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
-    var result = visitAssignment(ctx.expr());
-    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
     String variableIdentifier = ctx.varID().getText();
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    if (!seenVarIds.add(variableIdentifier)) {
+      throw new VtlRuntimeException(
+          new VtlScriptException(
+              "Dataset " + variableIdentifier + " has already been assigned",
+              fromContext(ctx.varID())));
+    }
+    var result = visitAssignment(ctx.expr());
     bindings.put(variableIdentifier, result);
     return result;
   }
@@ -59,9 +67,15 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
     var result = visitAssignment(ctx.expr());
     if (result instanceof Dataset resultDataset) {
-      result = new PersistentDataset(resultDataset);
-      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
       String variableIdentifier = ctx.varID().getText();
+      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+      if (!seenVarIds.add(variableIdentifier)) {
+        throw new VtlRuntimeException(
+            new VtlScriptException(
+                "Dataset " + variableIdentifier + " has already been assigned",
+                fromContext(ctx.varID())));
+      }
+      result = new PersistentDataset(resultDataset);
       bindings.put(variableIdentifier, result);
       return result;
     }
