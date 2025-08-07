@@ -5,11 +5,7 @@ import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.model.FunctionProvider;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.VtlMethod;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -19,37 +15,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.script.AbstractScriptEngine;
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.Token;
+import javax.script.*;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -292,15 +262,15 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    * @param reader The <code>Reader</code> containing the script to evaluate.
    * @param context The evaluation context (for example: data bindings).
    * @return The result of the evaluation of the script in the given context.
-   * @throws ScriptException In case of error during the evaluation.
+   * @throws VtlScriptException In case of error during the evaluation.
    */
   @Override
-  public Object eval(Reader reader, ScriptContext context) throws ScriptException {
+  public Object eval(Reader reader, ScriptContext context) throws VtlScriptException {
     try {
       CodePointCharStream stream = CharStreams.fromReader(reader);
       return evalStream(stream, context);
     } catch (IOException e) {
-      throw new ScriptException(e);
+      throw new RuntimeException(e);
     }
   }
 

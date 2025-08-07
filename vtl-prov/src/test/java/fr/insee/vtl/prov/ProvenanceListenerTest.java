@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  public void simpleTest() {
+  public void simpleTest() throws ScriptException {
     String simpleScript =
         """
                         ds_sum := ds1 + ds2;
@@ -86,7 +87,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  public void testWithEmptyLines() {
+  public void testWithEmptyLines() throws ScriptException {
     String script =
         """
 
@@ -139,7 +140,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  void testValidation() {
+  void testValidation() throws ScriptException {
     String validationExpr =
         """
                               define datapoint ruleset test (variable sex) is

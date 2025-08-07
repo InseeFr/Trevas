@@ -19,6 +19,7 @@ import java.util.Properties;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,7 +79,7 @@ public class RDFTest {
   }
 
   @Test
-  public void simpleTest() throws IOException {
+  public void simpleTest() throws IOException, ScriptException {
 
     String script =
         """
@@ -131,7 +132,7 @@ public class RDFTest {
   }
 
   @Test
-  public void bpeTest() throws IOException {
+  public void bpeTest() throws IOException, ScriptException {
 
     String bpeScript =
         """

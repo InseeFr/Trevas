@@ -195,7 +195,8 @@ public class ProvenanceListener extends VtlBaseListener {
     return provenanceListener.getProgram();
   }
 
-  public static Program run(ScriptEngine engine, String expr, String id, String programName) {
+  public static Program run(ScriptEngine engine, String expr, String id, String programName)
+      throws ScriptException {
     Program program = prepareProgram(expr, id, programName);
     // 0 check if input dataset are empty?
     // Keep already handled dataset
@@ -204,79 +205,69 @@ public class ProvenanceListener extends VtlBaseListener {
     AtomicInteger index = new AtomicInteger(1);
     Map<String, String> defineStatements = AntlrUtils.getDefineStatements(expr.trim());
     // Add all defines to engine context
-    try {
-      engine.eval(String.join(" ", defineStatements.values()));
-    } catch (ScriptException e) {
-      throw new RuntimeException(e);
-    }
+    engine.eval(String.join(" ", defineStatements.values()));
     List<String> assignmentStatements = AntlrUtils.getAssignmentStatements(expr.trim());
-    assignmentStatements.forEach(
-        stepScript -> {
-          AtomicReference<String> stepScriptWithDefines = new AtomicReference<>(stepScript);
-          int i = index.getAndIncrement();
-          // 1 - Handle input dataset
-          ProgramStep step = program.getProgramStepByIndex(i);
-          Set<DataframeInstance> consumedDataframe = step.getConsumedDataframe();
-          consumedDataframe.forEach(
-              d -> {
-                if (!dsHandled.contains(d.getLabel())) {
-                  Object attribute = engine.getContext().getAttribute(d.getLabel());
-                  if (attribute instanceof Dataset ds) {
-                    ds.getDataStructure()
-                        .values()
-                        .forEach(
-                            c -> {
-                              VariableInstance variableInstance =
-                                  step.getUsedVariables().stream()
-                                      .filter(
-                                          v ->
-                                              v.getParentDataframe().equals(d.getLabel())
-                                                  && v.getLabel().equals(c.getName()))
-                                      .findFirst()
-                                      .orElse(new VariableInstance(c.getName()));
-                              variableInstance.setRole(c.getRole());
-                              variableInstance.setType(c.getType());
-                              d.getHasVariableInstances().add(variableInstance);
-                            });
-                  }
-                  if (attribute instanceof DataPointRuleset) {
-                    // Remove dpr from consumedDataframe
-                    consumedDataframe.removeIf(df -> d.getLabel().equals(df.getLabel()));
-                    // Add dpr to usedDefines
-                    List<String> usedDefines = step.getUsedDefines();
-                    String defineScript = defineStatements.get(d.getLabel());
-                    stepScriptWithDefines.set(defineScript + "\n" + stepScriptWithDefines);
-                    usedDefines.add(defineStatements.get(d.getLabel()));
-                    step.setUsedDefines(usedDefines);
-                  }
-                }
-              });
-          try {
-            engine.eval(stepScriptWithDefines.get());
-          } catch (ScriptException e) {
-            throw new RuntimeException(e);
+    for (String stepScript : assignmentStatements) {
+      AtomicReference<String> stepScriptWithDefines = new AtomicReference<>(stepScript);
+      int i = index.getAndIncrement();
+      // 1 - Handle input dataset
+      ProgramStep step = program.getProgramStepByIndex(i);
+      Set<DataframeInstance> consumedDataframe = step.getConsumedDataframe();
+      for (DataframeInstance d : consumedDataframe) {
+        if (!dsHandled.contains(d.getLabel())) {
+          Object attribute = engine.getContext().getAttribute(d.getLabel());
+          if (attribute instanceof Dataset ds) {
+            ds.getDataStructure()
+                .values()
+                .forEach(
+                    c -> {
+                      VariableInstance variableInstance =
+                          step.getUsedVariables().stream()
+                              .filter(
+                                  v ->
+                                      v.getParentDataframe().equals(d.getLabel())
+                                          && v.getLabel().equals(c.getName()))
+                              .findFirst()
+                              .orElse(new VariableInstance(c.getName()));
+                      variableInstance.setRole(c.getRole());
+                      variableInstance.setType(c.getType());
+                      d.getHasVariableInstances().add(variableInstance);
+                    });
           }
-          // Improve built variables attributes
-          DataframeInstance producedDataframe = step.getProducedDataframe();
-          Dataset ds = (Dataset) engine.getContext().getAttribute(producedDataframe.getLabel());
+          if (attribute instanceof DataPointRuleset) {
+            // Remove dpr from consumedDataframe
+            consumedDataframe.removeIf(df -> d.getLabel().equals(df.getLabel()));
+            // Add dpr to usedDefines
+            List<String> usedDefines = step.getUsedDefines();
+            String defineScript = defineStatements.get(d.getLabel());
+            stepScriptWithDefines.set(defineScript + "\n" + stepScriptWithDefines);
+            usedDefines.add(defineStatements.get(d.getLabel()));
+            step.setUsedDefines(usedDefines);
+          }
+        }
+      }
+      engine.eval(stepScriptWithDefines.get());
+      // Improve built variables attributes
+      DataframeInstance producedDataframe = step.getProducedDataframe();
+      Dataset ds = (Dataset) engine.getContext().getAttribute(producedDataframe.getLabel());
 
-          ds.getDataStructure()
-              .values()
-              .forEach(
-                  c -> {
-                    VariableInstance variableInstance =
-                        step.getAssignedVariables().stream()
-                            .filter(v -> v.getLabel().equals(c.getName()))
-                            .findFirst()
-                            // TODO: refine variable detection in usedVariable
-                            .orElse(new VariableInstance(c.getName()));
-                    variableInstance.setRole(c.getRole());
-                    variableInstance.setType(c.getType());
-                    producedDataframe.getHasVariableInstances().add(variableInstance);
-                  });
-          dsHandled.add((producedDataframe.getLabel()));
-          // Correct usedVariables ID checking ds/var of last assignment
-        });
+      ds.getDataStructure()
+          .values()
+          .forEach(
+              c -> {
+                VariableInstance variableInstance =
+                    step.getAssignedVariables().stream()
+                        .filter(v -> v.getLabel().equals(c.getName()))
+                        .findFirst()
+                        // TODO: refine variable detection in usedVariable
+                        .orElse(new VariableInstance(c.getName()));
+                variableInstance.setRole(c.getRole());
+                variableInstance.setType(c.getType());
+                producedDataframe.getHasVariableInstances().add(variableInstance);
+              });
+      dsHandled.add((producedDataframe.getLabel()));
+      // Correct usedVariables ID checking ds/var of last assignment
+    }
 
     return program;
   }
