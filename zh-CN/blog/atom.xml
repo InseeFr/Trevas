@@ -273,7 +273,7 @@ Launching the batch will produce a Markdown file as output.</p>
 <li>SAS files (via the <code>loadSas</code> method)</li>
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="launch">Launch<a href="https://trevas.info/Trevas/zh-CN/blog/trevas-jupyter-0.3.2#launch" class="hash-link" aria-label="标题的直接链接" title="标题的直接链接">​</a></h3>
-<h4 class="anchor anchorWithStickyNavbar_LWe7" id="manually-adding-the-trevas-kernel-to-an-existing-jupyter-instance">Manually adding the Trevas Kernel to an existing Jupyter instance<a href="https://trevas.info/Trevas/zh-CN/blog/trevas-jupyter-0.3.2#manually-adding-the-trevas-kernel-to-an-existing-jupyter-instance" class="hash-link" aria-label="标题�的直接链接" title="标题的直接链接">​</a></h4>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="manually-adding-the-trevas-kernel-to-an-existing-jupyter-instance">Manually adding the Trevas Kernel to an existing Jupyter instance<a href="https://trevas.info/Trevas/zh-CN/blog/trevas-jupyter-0.3.2#manually-adding-the-trevas-kernel-to-an-existing-jupyter-instance" class="hash-link" aria-label="标题的直接链接" title="标题的直接链接">​</a></h4>
 <ul>
 <li>Trevas Jupyter compiler</li>
 <li>Copy the <code>kernel.json</code> file and the <code>bin</code> and <code>repo</code> folders to a new kernel folder.</li>
