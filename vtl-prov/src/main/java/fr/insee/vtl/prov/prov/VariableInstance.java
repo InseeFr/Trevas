@@ -16,6 +16,12 @@ public class VariableInstance {
     this.label = label;
   }
 
+  public VariableInstance(String label, String sourceCode) {
+    this.id = ProvenanceUtils.generateUUID();
+    this.label = label;
+    this.sourceCode = sourceCode + ";";
+  }
+
   public String getId() {
     return id;
   }
@@ -54,13 +60,5 @@ public class VariableInstance {
 
   public void setParentDataframe(String parentDataframe) {
     this.parentDataframe = parentDataframe;
-  }
-
-  public String getSourceCode() {
-    return sourceCode;
-  }
-
-  public void setSourceCode(String sourceCode) {
-    this.sourceCode = sourceCode;
   }
 }

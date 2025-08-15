@@ -17,7 +17,7 @@ public class ProgramStep {
   public ProgramStep(String label, String sourceCode, int index) {
     this.id = UUID.randomUUID().toString();
     this.label = label;
-    this.sourceCode = sourceCode;
+    this.sourceCode = sourceCode + ";";
     this.index = index;
   }
 

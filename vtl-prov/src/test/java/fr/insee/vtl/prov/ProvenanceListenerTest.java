@@ -38,6 +38,7 @@ public class ProvenanceListenerTest {
                         ds_sum := ds1 + ds2;
                         ds_mul := ds_sum * 3;\s
                         ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
+                        ds_aggr <- ds_res[aggr identifier a := sum(var1) group by id];
                         """;
 
     Map<String, Class<?>> types =
@@ -74,7 +75,7 @@ public class ProvenanceListenerTest {
     Program program =
         ProvenanceListener.run(
             engine, simpleScript, "trevas-simple-test", "Simple test from Trevas tests");
-    assertThat(program.getProgramSteps()).hasSize(3);
+    assertThat(program.getProgramSteps()).hasSize(4);
     ProgramStep dsMulProgram =
         program.getProgramSteps().stream()
             .filter(p -> p.getLabel().equals("ds_mul"))

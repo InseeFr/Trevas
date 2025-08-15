@@ -25,13 +25,13 @@ public class ProvenanceListener extends VtlBaseListener {
 
   private boolean isInDatasetClause;
 
-  private String currentComponentID;
-
   private String currentDataframeID;
 
   private int stepIndex = 1;
 
   private boolean rootAssignment = true;
+
+  private String aggrGroupingClause;
 
   public ProvenanceListener(String id, String programName) {
     program.setId(id);
@@ -98,7 +98,7 @@ public class ProvenanceListener extends VtlBaseListener {
         // Certainly don't need to reset? To check!
         currentDataframeID = label;
       }
-      if (isInDatasetClause && null != currentComponentID) {
+      if (isInDatasetClause) {
         Set<VariableInstance> usedVariables = programStep.getUsedVariables();
         VariableInstance v = new VariableInstance(label);
         v.setParentDataframe(currentDataframeID);
@@ -120,32 +120,33 @@ public class ProvenanceListener extends VtlBaseListener {
   }
 
   @Override
-  public void enterComponentID(VtlParser.ComponentIDContext ctx) {
-    String label = ctx.getText();
+  public void enterCalcClauseItem(VtlParser.CalcClauseItemContext ctx) {
     ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
     Set<VariableInstance> assignedVariables = programStep.getAssignedVariables();
-    VariableInstance assignedVariable = new VariableInstance(label);
+    VariableInstance assignedVariable =
+        new VariableInstance(getText(ctx.componentID()), getText(ctx));
     assignedVariables.add(assignedVariable);
   }
 
   @Override
-  public void enterCalcClauseItem(VtlParser.CalcClauseItemContext ctx) {
-    currentComponentID = getText(ctx.componentID());
+  public void enterAggrClause(VtlParser.AggrClauseContext ctx) {
+    aggrGroupingClause = getText(ctx.groupingClause());
   }
 
   @Override
-  public void exitCalcClauseItem(VtlParser.CalcClauseItemContext ctx) {
-    currentComponentID = null;
+  public void exitAggrClause(VtlParser.AggrClauseContext ctx) {
+    aggrGroupingClause = null;
   }
 
   @Override
   public void enterAggrFunctionClause(VtlParser.AggrFunctionClauseContext ctx) {
-    currentComponentID = getText(ctx.componentID());
-  }
-
-  @Override
-  public void exitAggrFunctionClause(VtlParser.AggrFunctionClauseContext ctx) {
-    currentComponentID = null;
+    ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
+    Set<VariableInstance> assignedVariables = programStep.getAssignedVariables();
+    String sourceCode =
+        null != aggrGroupingClause ? getText(ctx) + " " + aggrGroupingClause : getText(ctx);
+    VariableInstance assignedVariable =
+        new VariableInstance(getText(ctx.componentID()), sourceCode);
+    assignedVariables.add(assignedVariable);
   }
 
   /** Returns the program object */
