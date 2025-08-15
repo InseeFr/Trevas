@@ -1,72 +1,52 @@
 package fr.insee.vtl.prov.prov;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /* Filled thanks to listener, except for dataframInstances */
 public class Program {
 
-  String id;
-  String label;
-  Set<ProgramStep> programSteps = new HashSet<>();
+    String id;
+    String label;
+    LinkedHashSet<ProgramStep> programSteps = new LinkedHashSet<>();
+    String sourceCode;
 
-  /* Provided running preview mode */
-  Set<DataframeInstance> dataframeInstances = new HashSet<>();
+    public Program() {
+    }
 
-  String sourceCode;
+    public Program(String id, String label) {
+        this.id = id;
+        this.label = label;
+    }
 
-  public Program() {}
+    public String getId() {
+        return id;
+    }
 
-  public Program(String id, String label) {
-    this.id = id;
-    this.label = label;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getLabel() {
+        return label;
+    }
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
-  public String getLabel() {
-    return label;
-  }
+    public LinkedHashSet<ProgramStep> getProgramSteps() {
+        return programSteps;
+    }
 
-  public void setLabel(String label) {
-    this.label = label;
-  }
+    public String getSourceCode() {
+        return sourceCode;
+    }
 
-  public Set<ProgramStep> getProgramSteps() {
-    return programSteps;
-  }
+    public void setSourceCode(String sourceCode) {
+        this.sourceCode = sourceCode;
+    }
 
-  public void setProgramSteps(Set<ProgramStep> programSteps) {
-    this.programSteps = programSteps;
-  }
-
-  public Set<DataframeInstance> getDataframeInstances() {
-    return dataframeInstances;
-  }
-
-  public void setDataframeInstances(Set<DataframeInstance> dataframeInstances) {
-    this.dataframeInstances = dataframeInstances;
-  }
-
-  public String getSourceCode() {
-    return sourceCode;
-  }
-
-  public void setSourceCode(String sourceCode) {
-    this.sourceCode = sourceCode;
-  }
-
-  public ProgramStep getProgramStepByLabel(String label) {
-    return programSteps.stream().filter(p -> p.getLabel().equals(label)).findFirst().orElse(null);
-  }
-
-  public ProgramStep getProgramStepByIndex(int index) {
-    return programSteps.stream().filter(p -> p.getIndex() == index).findFirst().orElse(null);
-  }
+    public ProgramStep getProgramStepByLabel(String label) {
+        return programSteps.stream().filter(p -> p.getLabel().equals(label)).findFirst().orElse(null);
+    }
 }
