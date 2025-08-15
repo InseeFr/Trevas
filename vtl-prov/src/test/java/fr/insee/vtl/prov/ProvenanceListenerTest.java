@@ -82,7 +82,7 @@ public class ProvenanceListenerTest {
             .findFirst()
             .get();
     assertThat(
-            dsMulProgram.getConsumedDataframe().stream().map(DataframeInstance::getLabel).toList())
+            dsMulProgram.getConsumedDataframes().stream().map(DataframeInstance::getLabel).toList())
         .contains("ds_sum");
   }
 

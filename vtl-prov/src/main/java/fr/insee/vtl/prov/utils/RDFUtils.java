@@ -74,7 +74,7 @@ public class RDFUtils {
     // Link and define consumedDF
     Property SDTH_CONSUMES_DATAFRAME = model.createProperty(SDTH_BASE_URI + "consumesDataframe");
     programStep
-        .getConsumedDataframe()
+        .getConsumedDataframes()
         .forEach(
             df -> {
               Resource dfConsumedURI =
