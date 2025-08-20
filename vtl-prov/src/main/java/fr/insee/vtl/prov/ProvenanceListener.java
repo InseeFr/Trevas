@@ -1,6 +1,5 @@
 package fr.insee.vtl.prov;
 
-import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlLexer;
@@ -96,7 +95,7 @@ public class ProvenanceListener extends VtlBaseListener {
     String label = ctx.IDENTIFIER().getText();
     if (!rootAssignment) {
       ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
-      if (null == programStep) return;
+      if (null == programStep || label.equals(currentProgramStep)) return;
       if (!isInDatasetClause) {
         Set<DataframeInstance> consumedDataframe = programStep.getConsumedDataframes();
         DataframeInstance df = new DataframeInstance(label);
@@ -157,6 +156,22 @@ public class ProvenanceListener extends VtlBaseListener {
     assignedVariables.add(assignedVariable);
   }
 
+  @Override
+  public void enterValidateDPruleset(VtlParser.ValidateDPrulesetContext ctx) {
+    ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
+    if (null != programStep) {
+      programStep.getRulesets().add(ctx.IDENTIFIER().getText());
+    }
+  }
+
+  @Override
+  public void enterValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
+    ProgramStep programStep = program.getProgramStepByLabel(currentProgramStep);
+    if (null != programStep) {
+      programStep.getRulesets().add(ctx.IDENTIFIER().getText());
+    }
+  }
+
   /** Returns the program object */
   public Program getProgram() {
     return program;
@@ -186,6 +201,15 @@ public class ProvenanceListener extends VtlBaseListener {
         .getProgramSteps()
         .forEach(
             programStep -> {
+              // Handle rulesets
+              programStep
+                  .getRulesets()
+                  .forEach(
+                      ruleset -> {
+                        String defineScript = defineStatements.get(ruleset);
+                        programStep.setSourceCode(
+                            defineScript + "\n\n" + programStep.getSourceCode());
+                      });
               // producedDataframe
               DataframeInstance producedDataframe = programStep.getProducedDataframe();
               // fill producedDataframe variables
@@ -220,16 +244,6 @@ public class ProvenanceListener extends VtlBaseListener {
                   consumedDataframe -> {
                     Object attribute =
                         engine.getContext().getAttribute(consumedDataframe.getLabel());
-
-                    if (attribute instanceof DataPointRuleset) {
-                      // Remove dpr from consumedDataframe
-                      consumedDataframes.removeIf(
-                          df -> consumedDataframe.getLabel().equals(df.getLabel()));
-                      // Add define to step source code
-                      String defineScript = defineStatements.get(consumedDataframe.getLabel());
-                      programStep.setSourceCode(
-                          defineScript + "\n\n" + programStep.getSourceCode());
-                    }
 
                     if (attribute instanceof Dataset consumedDs) {
                       consumedDs

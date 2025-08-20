@@ -14,6 +14,7 @@ public class ProgramStep {
   Set<VariableInstance> assignedVariables = new HashSet<>();
   Set<DataframeInstance> consumedDataframes = new HashSet<>();
   DataframeInstance producedDataframe;
+  Set<String> rulesets = new HashSet<>();
 
   public ProgramStep(String label, String sourceCode, int index) {
     this.id = UUID.randomUUID().toString();
@@ -84,5 +85,9 @@ public class ProgramStep {
 
   public void setProducedDataframe(DataframeInstance producedDataframe) {
     this.producedDataframe = producedDataframe;
+  }
+
+  public Set<String> getRulesets() {
+    return rulesets;
   }
 }
