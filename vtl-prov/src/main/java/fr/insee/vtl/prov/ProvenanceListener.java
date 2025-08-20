@@ -153,6 +153,7 @@ public class ProvenanceListener extends VtlBaseListener {
         null != aggrGroupingClause ? getText(ctx) + " " + aggrGroupingClause : getText(ctx);
     VariableInstance assignedVariable =
         new VariableInstance(getText(ctx.componentID()), sourceCode);
+    assignedVariable.setParentDataframe(currentProgramStep);
     assignedVariables.add(assignedVariable);
   }
 
