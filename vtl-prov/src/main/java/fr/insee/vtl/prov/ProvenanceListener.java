@@ -212,6 +212,9 @@ public class ProvenanceListener extends VtlBaseListener {
                       });
               // producedDataframe
               DataframeInstance producedDataframe = programStep.getProducedDataframe();
+              String producedDataframeLabel = producedDataframe.getLabel();
+              idMappings.put(producedDataframeLabel, producedDataframe.getId());
+
               // fill producedDataframe variables
               Dataset ds =
                   (Dataset)
@@ -222,8 +225,7 @@ public class ProvenanceListener extends VtlBaseListener {
                   .values()
                   .forEach(
                       component -> {
-                        String variableId =
-                            producedDataframe.getLabel() + "|" + component.getName();
+                        String variableId = producedDataframeLabel + "|" + component.getName();
                         if (!idMappings.containsKey(variableId)) {
                           idMappings.put(variableId, ProvenanceUtils.generateUUID());
                         }
@@ -235,15 +237,19 @@ public class ProvenanceListener extends VtlBaseListener {
                         producedDataframe.getHasVariableInstances().add(variableInstance);
                       });
 
-              // Add producedDataframe to idMappings
-              idMappings.put(producedDataframe.getLabel(), producedDataframe.getId());
-
               // fill consumedDataframe and handle define scripts
               Set<DataframeInstance> consumedDataframes = programStep.getConsumedDataframes();
+
               consumedDataframes.forEach(
                   consumedDataframe -> {
-                    Object attribute =
-                        engine.getContext().getAttribute(consumedDataframe.getLabel());
+                    String consumedDataframeLabel = consumedDataframe.getLabel();
+                    if (!idMappings.containsKey(consumedDataframeLabel)) {
+                      idMappings.put(consumedDataframeLabel, consumedDataframe.getId());
+                    } else {
+                      consumedDataframe.setId(idMappings.get(consumedDataframeLabel));
+                    }
+
+                    Object attribute = engine.getContext().getAttribute(consumedDataframeLabel);
 
                     if (attribute instanceof Dataset consumedDs) {
                       consumedDs
@@ -252,7 +258,7 @@ public class ProvenanceListener extends VtlBaseListener {
                           .forEach(
                               component -> {
                                 String variableId =
-                                    consumedDataframe.getLabel() + "|" + component.getName();
+                                    consumedDataframeLabel + "|" + component.getName();
                                 if (!idMappings.containsKey(variableId)) {
                                   idMappings.put(variableId, ProvenanceUtils.generateUUID());
                                 }

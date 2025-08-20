@@ -168,4 +168,32 @@ public class ProvenanceListenerTest {
             engine, validationExpr, "trevas-validation-test", "Trevas validation test");
     assertThat(programWithBindings.getProgramSteps()).hasSize(1);
   }
+
+  @Test
+  void testJoin() {
+    String validationExpr =
+        """
+                              ds2 := ds1[rename sex to sex_old];
+                              ds1_1 := inner_join(ds1, ds2);
+                              ds1_2 := inner_join(ds1, ds2 using id);
+                        """;
+
+    Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
+    Map<String, Dataset.Role> roles =
+        Map.of("id", Dataset.Role.IDENTIFIER, "sex", Dataset.Role.MEASURE);
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "sex", "M"),
+                Map.of("id", "2", "sex", "F"),
+                Map.of("id", "3", "sex", "M")),
+            types,
+            roles);
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    Program programWithBindings =
+        ProvenanceListener.run(engine, validationExpr, "trevas-join-test", "Trevas join test");
+    assertThat(programWithBindings.getProgramSteps()).hasSize(3);
+  }
 }
