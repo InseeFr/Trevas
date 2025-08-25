@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>1.12.0-SNAPSHOT</version>
+        <version>1.12.0</version>
     </parent>
 
     <artifactId>vtl-jdbc</artifactId>
     <name>VTL JDBC</name>
     <description>Dataset wrapper around JDBC result set. Useful to expose SQL tables as VTL datasets</description>
-    <version>1.12.0-SNAPSHOT</version>
+    <version>1.12.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -25,14 +25,14 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>1.12.0-SNAPSHOT</version>
+            <version>1.12.0</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>1.12.0-SNAPSHOT</version>
+            <version>1.12.0</version>
             <scope>test</scope>
         </dependency>
 
