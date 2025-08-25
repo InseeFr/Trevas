@@ -1,7 +1,7 @@
 package fr.insee.vtl.prov.prov;
 
 import fr.insee.vtl.model.Dataset;
-import java.util.UUID;
+import fr.insee.vtl.prov.utils.ProvenanceUtils;
 
 public class VariableInstance {
   String id;
@@ -9,15 +9,17 @@ public class VariableInstance {
   Dataset.Role role;
   String parentDataframe;
   Class<?> type;
+  String sourceCode;
 
   public VariableInstance(String label) {
-    this.id = UUID.randomUUID().toString();
+    this.id = ProvenanceUtils.generateUUID();
     this.label = label;
   }
 
-  public VariableInstance(String id, String label) {
-    this.id = id;
+  public VariableInstance(String label, String sourceCode) {
+    this.id = ProvenanceUtils.generateUUID();
     this.label = label;
+    this.sourceCode = sourceCode + ";";
   }
 
   public String getId() {
@@ -58,5 +60,9 @@ public class VariableInstance {
 
   public void setParentDataframe(String parentDataframe) {
     this.parentDataframe = parentDataframe;
+  }
+
+  public String getSourceCode() {
+    return sourceCode;
   }
 }

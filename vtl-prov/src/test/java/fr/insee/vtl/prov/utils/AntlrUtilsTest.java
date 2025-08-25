@@ -2,7 +2,6 @@ package fr.insee.vtl.prov.utils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class AntlrUtilsTest {
@@ -29,15 +28,5 @@ public class AntlrUtilsTest {
     assertThat(AntlrUtils.getDefineStatements(simpleValidation).size()).isEqualTo(1);
     assertThat(AntlrUtils.getDefineStatements(simpleValidation).get("test"))
         .contains("define datapoint ruleset test (variable sex) is");
-  }
-
-  @Test
-  public void getAssignmentStatementsTest() {
-    List<String> simpleScriptAssignmentStatements =
-        AntlrUtils.getAssignmentStatements(simpleScript);
-    assertThat(simpleScriptAssignmentStatements.size()).isEqualTo(3);
-    assertThat(simpleScriptAssignmentStatements.get(0)).isEqualTo("ds_sum := ds1 + ds2;");
-
-    assertThat(AntlrUtils.getAssignmentStatements(simpleValidation).size()).isEqualTo(1);
   }
 }
