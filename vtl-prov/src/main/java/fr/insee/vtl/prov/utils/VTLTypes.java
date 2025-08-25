@@ -4,7 +4,7 @@ import java.time.Instant;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
-public class VtlTypes {
+public class VTLTypes {
 
   /**
    * Method to map Java classes and VTL basic scalar types.

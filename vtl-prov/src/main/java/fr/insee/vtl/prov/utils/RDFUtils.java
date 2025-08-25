@@ -74,7 +74,7 @@ public class RDFUtils {
     // Link and define consumedDF
     Property SDTH_CONSUMES_DATAFRAME = model.createProperty(SDTH_BASE_URI + "consumesDataframe");
     programStep
-        .getConsumedDataframe()
+        .getConsumedDataframes()
         .forEach(
             df -> {
               Resource dfConsumedURI =
@@ -143,7 +143,12 @@ public class RDFUtils {
       Class<?> type = varInstance.getType();
       // TO EXTRACT
       Property hasType = model.createProperty("http://id.making-sense.info/vtl/component/hasType");
-      varURI.addProperty(hasType, VtlTypes.getVtlType(type));
+      varURI.addProperty(hasType, VTLTypes.getVtlType(type));
+    }
+    String sourceCode = varInstance.getSourceCode();
+    if (null != varInstance.getSourceCode()) {
+      Property SDTH_HAS_SOURCE_CODE = model.createProperty(SDTH_BASE_URI + "hasSourceCode");
+      varURI.addProperty(SDTH_HAS_SOURCE_CODE, sourceCode);
     }
   }
 

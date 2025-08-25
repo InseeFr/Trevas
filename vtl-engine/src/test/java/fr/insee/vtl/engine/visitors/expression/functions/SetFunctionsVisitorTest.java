@@ -101,15 +101,15 @@ public class SetFunctionsVisitorTest {
 
     engine.eval(
         """
-                ds1 := ds1 [calc A := "A"];
-                ds1 := ds1 [calc B := "B"];
+                        ds1 := ds1 [calc A := "A"];
+                        ds11 := ds1 [calc B := "B"];
 
-                ds2 := ds2 [calc B := "B"];
-                ds2 := ds2 [calc A := "A"];
+                        ds2 := ds2 [calc B := "B"];
+                        ds22 := ds2 [calc A := "A"];
 
-                ds3 := union(ds1, ds2);
-                ds4 := union(ds2, ds1);\
-                """);
+                        ds3 := union(ds11, ds22);
+                        ds4 := union(ds22, ds11);\
+                        """);
 
     var ds3 = (Dataset) bindings.get("ds3");
     var ds4 = (Dataset) bindings.get("ds4");

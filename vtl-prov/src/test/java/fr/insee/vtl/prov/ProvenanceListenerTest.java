@@ -38,6 +38,7 @@ public class ProvenanceListenerTest {
                         ds_sum := ds1 + ds2;
                         ds_mul := ds_sum * 3;\s
                         ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];\
+                        ds_aggr <- ds_res[aggr identifier a := sum(var1) group by id];
                         """;
 
     Map<String, Class<?>> types =
@@ -74,14 +75,14 @@ public class ProvenanceListenerTest {
     Program program =
         ProvenanceListener.run(
             engine, simpleScript, "trevas-simple-test", "Simple test from Trevas tests");
-    assertThat(program.getProgramSteps()).hasSize(3);
+    assertThat(program.getProgramSteps()).hasSize(4);
     ProgramStep dsMulProgram =
         program.getProgramSteps().stream()
             .filter(p -> p.getLabel().equals("ds_mul"))
             .findFirst()
             .get();
     assertThat(
-            dsMulProgram.getConsumedDataframe().stream().map(DataframeInstance::getLabel).toList())
+            dsMulProgram.getConsumedDataframes().stream().map(DataframeInstance::getLabel).toList())
         .contains("ds_sum");
   }
 
@@ -166,5 +167,33 @@ public class ProvenanceListenerTest {
         ProvenanceListener.run(
             engine, validationExpr, "trevas-validation-test", "Trevas validation test");
     assertThat(programWithBindings.getProgramSteps()).hasSize(1);
+  }
+
+  @Test
+  void testJoin() {
+    String validationExpr =
+        """
+                              ds2 := ds1[rename sex to sex_old];
+                              ds1_1 := inner_join(ds1, ds2);
+                              ds1_2 := inner_join(ds1, ds2 using id);
+                        """;
+
+    Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
+    Map<String, Dataset.Role> roles =
+        Map.of("id", Dataset.Role.IDENTIFIER, "sex", Dataset.Role.MEASURE);
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "sex", "M"),
+                Map.of("id", "2", "sex", "F"),
+                Map.of("id", "3", "sex", "M")),
+            types,
+            roles);
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    Program programWithBindings =
+        ProvenanceListener.run(engine, validationExpr, "trevas-join-test", "Trevas join test");
+    assertThat(programWithBindings.getProgramSteps()).hasSize(3);
   }
 }

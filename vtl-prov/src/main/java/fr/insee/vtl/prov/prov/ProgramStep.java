@@ -1,6 +1,8 @@
 package fr.insee.vtl.prov.prov;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class ProgramStep {
 
@@ -10,14 +12,14 @@ public class ProgramStep {
   int index;
   Set<VariableInstance> usedVariables = new HashSet<>();
   Set<VariableInstance> assignedVariables = new HashSet<>();
-  Set<DataframeInstance> consumedDataframe = new HashSet<>();
+  Set<DataframeInstance> consumedDataframes = new HashSet<>();
   DataframeInstance producedDataframe;
-  List<String> usedDefines = new ArrayList<>();
+  Set<String> rulesets = new HashSet<>();
 
   public ProgramStep(String label, String sourceCode, int index) {
     this.id = UUID.randomUUID().toString();
     this.label = label;
-    this.sourceCode = sourceCode;
+    this.sourceCode = sourceCode + ";";
     this.index = index;
   }
 
@@ -69,12 +71,12 @@ public class ProgramStep {
     this.assignedVariables = assignedVariables;
   }
 
-  public Set<DataframeInstance> getConsumedDataframe() {
-    return consumedDataframe;
+  public Set<DataframeInstance> getConsumedDataframes() {
+    return consumedDataframes;
   }
 
-  public void setConsumedDataframe(Set<DataframeInstance> consumedDataframe) {
-    this.consumedDataframe = consumedDataframe;
+  public void setConsumedDataframes(Set<DataframeInstance> consumedDataframes) {
+    this.consumedDataframes = consumedDataframes;
   }
 
   public DataframeInstance getProducedDataframe() {
@@ -85,11 +87,7 @@ public class ProgramStep {
     this.producedDataframe = producedDataframe;
   }
 
-  public List<String> getUsedDefines() {
-    return usedDefines;
-  }
-
-  public void setUsedDefines(List<String> usedDefines) {
-    this.usedDefines = usedDefines;
+  public Set<String> getRulesets() {
+    return rulesets;
   }
 }

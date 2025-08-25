@@ -1,18 +1,13 @@
 package fr.insee.vtl.prov.prov;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /* Filled thanks to listener, except for dataframInstances */
 public class Program {
 
   String id;
   String label;
-  Set<ProgramStep> programSteps = new HashSet<>();
-
-  /* Provided running preview mode */
-  Set<DataframeInstance> dataframeInstances = new HashSet<>();
-
+  LinkedHashSet<ProgramStep> programSteps = new LinkedHashSet<>();
   String sourceCode;
 
   public Program() {}
@@ -38,20 +33,8 @@ public class Program {
     this.label = label;
   }
 
-  public Set<ProgramStep> getProgramSteps() {
+  public LinkedHashSet<ProgramStep> getProgramSteps() {
     return programSteps;
-  }
-
-  public void setProgramSteps(Set<ProgramStep> programSteps) {
-    this.programSteps = programSteps;
-  }
-
-  public Set<DataframeInstance> getDataframeInstances() {
-    return dataframeInstances;
-  }
-
-  public void setDataframeInstances(Set<DataframeInstance> dataframeInstances) {
-    this.dataframeInstances = dataframeInstances;
   }
 
   public String getSourceCode() {
@@ -64,9 +47,5 @@ public class Program {
 
   public ProgramStep getProgramStepByLabel(String label) {
     return programSteps.stream().filter(p -> p.getLabel().equals(label)).findFirst().orElse(null);
-  }
-
-  public ProgramStep getProgramStepByIndex(int index) {
-    return programSteps.stream().filter(p -> p.getIndex() == index).findFirst().orElse(null);
   }
 }
