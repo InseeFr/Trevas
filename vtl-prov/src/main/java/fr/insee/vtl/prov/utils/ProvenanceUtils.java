@@ -1,14 +1,10 @@
 package fr.insee.vtl.prov.utils;
 
-import java.util.Map;
 import java.util.UUID;
 
 public class ProvenanceUtils {
 
-  public static String getOrBuildUUID(Map<String, String> availableUUID, String label) {
-    if (null != availableUUID.get(label)) {
-      return availableUUID.get(label);
-    }
+  public static String generateUUID() {
     return UUID.randomUUID().toString();
   }
 
