@@ -145,6 +145,11 @@ public class RDFUtils {
       Property hasType = model.createProperty("http://id.making-sense.info/vtl/component/hasType");
       varURI.addProperty(hasType, VTLTypes.getVtlType(type));
     }
+    String sourceCode = varInstance.getSourceCode();
+    if (null != varInstance.getSourceCode()) {
+      Property SDTH_HAS_SOURCE_CODE = model.createProperty(SDTH_BASE_URI + "hasSourceCode");
+      varURI.addProperty(SDTH_HAS_SOURCE_CODE, sourceCode);
+    }
   }
 
   public static Model initModel(String baseFilePath) {

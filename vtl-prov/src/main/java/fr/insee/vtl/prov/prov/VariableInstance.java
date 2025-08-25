@@ -61,4 +61,8 @@ public class VariableInstance {
   public void setParentDataframe(String parentDataframe) {
     this.parentDataframe = parentDataframe;
   }
+
+  public String getSourceCode() {
+    return sourceCode;
+  }
 }
