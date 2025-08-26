@@ -46,8 +46,8 @@ public class ConditionalExprTest {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
-            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; "
+        "ds1 := ds_1[keep long1][rename long1 to bool_var]; "
+            + "ds2 := ds_2[keep long1][rename long1 to bool_var]; "
             + "res := if ds1 > ds2 then ds1 else ds2;");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
@@ -73,7 +73,7 @@ public class ConditionalExprTest {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "ds1 := ds_1[keep id, long1]; "
+        "ds1 := ds_1[keep long1]; "
             + "res <- ds1[calc c := case when long1 > 30 then \"ok\" else \"ko\"][drop long1];");
     Object res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
@@ -84,7 +84,7 @@ public class ConditionalExprTest {
             Map.of("id", "Franck", "c", "ok"));
     assertThat(((Dataset) res).getDataStructure().get("c").getType()).isEqualTo(String.class);
     engine.eval(
-        "ds1 := ds_1[keep id, long1]; "
+        "ds1 := ds_1[keep long1]; "
             + "res1 <- ds1[calc c := case when long1 > 30 then 1 else 0][drop long1];");
     Object res1 = engine.getContext().getAttribute("res1");
     assertThat(((Dataset) res1).getDataAsMap())
@@ -95,8 +95,8 @@ public class ConditionalExprTest {
             Map.of("id", "Franck", "c", 1L));
     assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
     engine.eval(
-        "ds1 := ds_1[keep id, long1][rename long1 to bool_var];"
-            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; "
+        "ds1 := ds_1[keep long1][rename long1 to bool_var];"
+            + "ds2 := ds_2[keep long1][rename long1 to bool_var]; "
             + "res_ds <- case when ds1 < 30 then ds1 else ds2;");
     Object res_ds = engine.getContext().getAttribute("res_ds");
     assertThat(((Dataset) res_ds).getDataAsMap())
@@ -115,7 +115,7 @@ public class ConditionalExprTest {
     assertThat(context.getAttribute("s")).isEqualTo("default");
 
     engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    engine.eval("res := nvl(ds[keep id, long1], 0);");
+    engine.eval("res := nvl(ds[keep long1], 0);");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -142,7 +142,7 @@ public class ConditionalExprTest {
     assertThat(context.getAttribute("s")).isEqualTo(1.1D);
 
     engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    engine.eval("res := nvl(ds[keep id, long1], 0.1);");
+    engine.eval("res := nvl(ds[keep long1], 0.1);");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(

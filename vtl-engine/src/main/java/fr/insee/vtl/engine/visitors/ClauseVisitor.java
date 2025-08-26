@@ -144,7 +144,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
               String.format(
                   "Error: column '%s' not found in dataset. Line %d, position %d. Statement: [%s]",
                   requested, line, charPosition, statement);
-          throw new RuntimeException(errorMsg);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
       }
 
@@ -168,7 +168,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             String.format(
                 "Error: identifiers %s must not be explicitly listed in KEEP/DROP. Line %d, position %d. Statement: [%s]. Details: %s",
                 forbidden, line, charPosition, statement, details.toString().trim());
-        throw new RuntimeException(errorMsg);
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
       }
 
       // Build result set:
@@ -194,14 +194,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
       return processingEngine.executeProject(datasetExpression, columnNames);
 
-    } catch (RuntimeException e) {
-      throw new RuntimeException(e.getMessage(), e);
     } catch (Exception e) {
       String errorMsg =
           String.format(
               "Unexpected error while processing KEEP/DROP clause at line %d, position %d. Statement: [%s]. Cause: %s",
               line, charPosition, statement, e.getMessage());
-      throw new RuntimeException(errorMsg, e);
+      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
   }
 
@@ -248,21 +246,21 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         // ---- Validate: duplicate target in the same clause ----
         if (!targetsSeen.add(columnName)) {
-          final String msg =
+          final String errorMsg =
               String.format(
                   "Error: duplicate target '%s' in CALC clause. Line %d, position %d. Statement: [%s]",
                   columnName, line, charPosition, statement);
-          throw new RuntimeException(msg);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
         // ---- Validate: identifiers must not be defined or overwritten by CALC ----
         // (VTL 2.x typical constraint: CALC creates/updates measures/attributes, not identifiers)
         if (columnRole == Dataset.Role.IDENTIFIER) {
-          final String msg =
+          final String errorMsg =
               String.format(
                   "Error: CALC must not define an IDENTIFIER component: '%s'. Line %d, position %d. Statement: [%s]",
                   columnName, line, charPosition, statement);
-          throw new RuntimeException(msg);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
         // If the target already exists in the dataset, check its role
@@ -276,11 +274,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                     existing.getRole(),
                     existing.getType() != null ? existing.getType() : "n/a",
                     columnRole);
-            final String msg =
+            final String errorMsg =
                 String.format(
                     "Error: role change via CALC is not allowed for '%s' (%s). Line %d, position %d. Statement: [%s]",
                     columnName, meta, line, charPosition, statement);
-            throw new RuntimeException(msg);
+            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
           }
           // Explicitly block overwriting identifiers (already handled above if role==IDENTIFIER).
           if (existing.getRole() == Dataset.Role.IDENTIFIER) {
@@ -288,11 +286,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                 String.format(
                     "(role=%s, type=%s)",
                     existing.getRole(), existing.getType() != null ? existing.getType() : "n/a");
-            final String msg =
+            final String errorMsg =
                 String.format(
                     "Error: CALC cannot overwrite IDENTIFIER '%s' %s. Line %d, position %d. Statement: [%s]",
                     columnName, meta, line, charPosition, statement);
-            throw new RuntimeException(msg);
+            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
           }
 
           // NOTE: If you want to FORBID overwriting any existing non-identifier column name,
@@ -333,11 +331,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
           final String exprSource = getSource(calcCtx.expr());
           if (exprSource == null || exprSource.isEmpty()) {
-            final String msg =
+            final String errorMsg =
                 String.format(
                     "Error: empty or unavailable source expression for '%s' in CALC. Line %d, position %d. Statement: [%s]",
                     columnName, line, charPosition, statement);
-            throw new RuntimeException(msg);
+            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
           }
 
           // Store in insertion order (deterministic column creation)
@@ -350,11 +348,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       // ---- Consistency checks before execution ----
       if (!(expressions.keySet().equals(expressionStrings.keySet())
           && expressions.keySet().equals(roles.keySet()))) {
-        final String msg =
+        final String errorMsg =
             String.format(
                 "Error: internal CALC maps out of sync (expressions/expressionStrings/roles). Line %d, position %d. Statement: [%s]",
                 line, charPosition, statement);
-        throw new RuntimeException(msg);
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
       }
 
       // ---- Execute the batch calc if any non-analytic expressions were collected ----
@@ -371,7 +369,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
           String.format(
               "Unexpected error while processing CALC clause at line %d, position %d. Statement: [%s]. Cause: %s",
               line, charPosition, statement, e.getMessage());
-      throw new RuntimeException(errorMsg, e);
+      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
   }
 
@@ -393,7 +391,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
           String.format(
               "Unexpected error while processing FILTER clause at line %d, position %d. Statement: [%s]. Cause: %s",
               line, charPosition, statement, e.getMessage());
-      throw new RuntimeException(errorMsg, e);
+      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
   }
 
@@ -433,11 +431,11 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
         // Validate: no duplicate "from" names inside the clause
         if (!fromSeen.add(fromNameString)) {
-          String err =
+          String errorMsg =
               String.format(
                   "Error: duplicate source name in RENAME clause: '%s'. Line %d, position %d. Statement: [%s]",
                   fromNameString, line, charPosition, statement);
-          throw new RuntimeException(err);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
         // Validate: "from" must exist in dataset
@@ -449,20 +447,20 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                       " (role=%s, type=%s)",
                       comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
                   : "";
-          String err =
+          String errorMsg =
               String.format(
                   "Error: source column to rename not found: '%s'%s. Line %d, position %d. Statement: [%s]",
                   fromNameString, meta, line, charPosition, statement);
-          throw new RuntimeException(err);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
         // Validate: no duplicate "to" names inside the clause
         if (!toSeen.add(toNameString)) {
-          String err =
+          String errorMsg =
               String.format(
                   "Error: duplicate output column name in RENAME clause: '%s'. Line %d, position %d. Statement: [%s]",
                   fromNameString, line, charPosition, statement);
-          throw new RuntimeException(err);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
         fromTo.put(fromNameString, toNameString);
@@ -488,26 +486,24 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                       " (role=%s, type=%s)",
                       comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
                   : "";
-          String err =
+          String errorMsg =
               String.format(
                   "Error: target name '%s'%s already exists in dataset and is not being renamed. "
                       + "Line %d, position %d. Statement: [%s]",
                   to, meta, line, charPosition, statement);
-          throw new RuntimeException(err);
+          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
       }
 
       // Execute rename in processing engine
       return processingEngine.executeRename(datasetExpression, fromTo);
 
-    } catch (RuntimeException e) {
-      throw new RuntimeException(e.getMessage(), e);
     } catch (Exception e) {
       String errorMsg =
           String.format(
               "Unexpected error while processing RENAME clause at line %d, position %d. Statement: [%s]. Cause: %s",
               line, charPosition, statement, e.getMessage());
-      throw new RuntimeException(errorMsg, e);
+      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
   }
 

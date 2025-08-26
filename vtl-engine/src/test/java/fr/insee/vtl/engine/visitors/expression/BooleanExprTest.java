@@ -92,8 +92,8 @@ public class BooleanExprTest {
     context.setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("ds_2", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "ds1 := ds_1[keep id, bool2][rename bool2 to bool1]; "
-            + "ds2 := ds_2[keep id, bool1]; "
+        "ds1 := ds_1[keep bool2][rename bool2 to bool1]; "
+            + "ds2 := ds_2[keep  bool1]; "
             + "andDs := ds1 and ds2; "
             + "orDs := ds1 or ds2; "
             + "xorDs := ds1 xor ds2; ");

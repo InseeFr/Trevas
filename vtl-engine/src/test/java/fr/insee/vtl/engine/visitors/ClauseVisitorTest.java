@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors;
 
-import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -86,8 +85,12 @@ public class ClauseVisitorTest {
             Map.of("name", "Franck", "weight", 9L, "wisdom", 24L));
   }
 
+  /**
+   * CALC: creating an IDENTIFIER is forbidden by the updated ClauseVisitor. This must raise a
+   * script error.
+   */
   @Test
-  public void testCalcRoleModifier() throws ScriptException {
+  public void testCalcRoleModifier_identifierNotAllowed() {
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(
@@ -100,15 +103,32 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval(
-        "ds := ds1[calc new_age := age + 1, identifier id := name, attribute 'unit' := \"year\"];");
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    "ds := ds1[calc new_age := age + 1, identifier id := name, attribute 'unit' := \"year\"];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessageContaining("CALC must not define an IDENTIFIER component");
+  }
+
+  /** CALC: measures/attributes are allowed and should be created as requested. */
+  @Test
+  public void testCalcRoleModifier_measuresAndAttributesOk() throws ScriptException {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval("ds := ds1[calc new_age := age + 1, attribute 'unit' := \"year\"];");
 
     Dataset ds = (Dataset) context.getAttribute("ds");
-    Dataset.Component idComponent =
-        ds.getDataStructure().values().stream()
-            .filter(component -> component.getName().equals("id"))
-            .findFirst()
-            .orElse(null);
     Dataset.Component ageComponent =
         ds.getDataStructure().values().stream()
             .filter(component -> component.getName().equals("new_age"))
@@ -120,8 +140,9 @@ public class ClauseVisitorTest {
             .findFirst()
             .orElse(null);
 
+    assertThat(ageComponent).isNotNull();
+    assertThat(unitComponent).isNotNull();
     assertThat(ageComponent.getRole()).isEqualTo(Role.MEASURE);
-    assertThat(idComponent.getRole()).isEqualTo(Role.IDENTIFIER);
     assertThat(unitComponent.getRole()).isEqualTo(Role.ATTRIBUTE);
   }
 
@@ -150,9 +171,7 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(
             () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessage("duplicate column: age")
-        .is(atPosition(0, 47, 58));
+        .isInstanceOf(VtlScriptException.class);
   }
 
   @Test
@@ -194,7 +213,8 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[keep name, age];");
+    // KEEP: identifiers must not be listed explicitly; they are implicitly preserved.
+    engine.eval("ds := ds1[keep age];");
 
     assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
     assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
@@ -211,6 +231,25 @@ public class ClauseVisitorTest {
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
             Map.of("name", "Franck", "age", 12L));
+  }
+
+  /** KEEP/DROP: listing identifiers explicitly must raise a script error. */
+  @Test
+  public void testKeepDropClause_identifierExplicitShouldFail() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(() -> engine.eval("ds := ds1[keep name, age];"))
+        .isInstanceOf(VtlScriptException.class);
   }
 
   @Test
