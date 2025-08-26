@@ -52,7 +52,7 @@ public class ArithmeticExprOrConcatTest {
     assertThat(context.getAttribute("plus")).isEqualTo(5.0);
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := ds1[keep id, long1, long2] + ds1[keep id, long1, long2];");
+    Object res = engine.eval("res := ds1[keep long1, long2] + ds1[keep long1, long2];");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 60L, "long2", 600L),
@@ -75,7 +75,7 @@ public class ArithmeticExprOrConcatTest {
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := ds2[keep id, long1] - ds1[keep id, long1] + 1;");
+    Object res = engine.eval("res := ds2[keep long1] - ds1[keep long1] + 1;");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 141L),
@@ -92,7 +92,7 @@ public class ArithmeticExprOrConcatTest {
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := ds2[keep id, string1] || \" \" || ds1[keep id, string1];");
+    Object res = engine.eval("res := ds2[keep string1] || \" \" || ds1[keep string1];");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "string1", "hadrien hadrien"),

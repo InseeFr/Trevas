@@ -43,7 +43,7 @@ public class DistanceFunctionsTest {
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res =
         engine.eval(
-            "res := levenshtein(ds[keep id, string1], ds[keep id, string2][rename string2 to string1])[rename string1 to lev];");
+            "res := levenshtein(ds[keep string1], ds[keep string2][rename string2 to string1])[rename string1 to lev];");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "lev", 3L),
