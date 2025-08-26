@@ -194,6 +194,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
       return processingEngine.executeProject(datasetExpression, columnNames);
 
+    } catch (VtlRuntimeException e) {
+      throw e;
     } catch (Exception e) {
       String errorMsg =
           String.format(
@@ -253,33 +255,9 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
           throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
         }
 
-        // ---- Validate: identifiers must not be defined or overwritten by CALC ----
-        // (VTL 2.x typical constraint: CALC creates/updates measures/attributes, not identifiers)
-        if (columnRole == Dataset.Role.IDENTIFIER) {
-          final String errorMsg =
-              String.format(
-                  "Error: CALC must not define an IDENTIFIER component: '%s'. Line %d, position %d. Statement: [%s]",
-                  columnName, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
-
         // If the target already exists in the dataset, check its role
         final Dataset.Component existing = byName.get(columnName);
         if (existing != null) {
-          // Disallow changing the role through CALC (keep roles stable)
-          if (existing.getRole() != columnRole) {
-            final String meta =
-                String.format(
-                    "existing(role=%s, type=%s) vs. requested(role=%s)",
-                    existing.getRole(),
-                    existing.getType() != null ? existing.getType() : "n/a",
-                    columnRole);
-            final String errorMsg =
-                String.format(
-                    "Error: role change via CALC is not allowed for '%s' (%s). Line %d, position %d. Statement: [%s]",
-                    columnName, meta, line, charPosition, statement);
-            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-          }
           // Explicitly block overwriting identifiers (already handled above if role==IDENTIFIER).
           if (existing.getRole() == Dataset.Role.IDENTIFIER) {
             final String meta =
@@ -292,16 +270,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                     columnName, meta, line, charPosition, statement);
             throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
           }
-
-          // NOTE: If you want to FORBID overwriting any existing non-identifier column name,
-          // uncomment the following block:
-          // {
-          //     final String msg = String.format(
-          //         "Error: target '%s' already exists; overwriting via CALC is not allowed. Line
-          // %d, position %d. Statement: [%s]",
-          //         columnName, line, charPosition, statement);
-          //     throw new RuntimeException(msg);
-          // }
         }
 
         // ---- Dispatch: analytics vs. regular calc ----
@@ -320,11 +288,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
               (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
 
           currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
-
-          // Optional: If analytics implicitly create/overwrite a column, you may want to enforce
-          // the same role checks here based on columnRole and existing metadata.
-          // That requires retrieving schema from currentDatasetExpression if needed.
-
         } else {
           // Regular calc expression – build resolvable expression and capture its source text
           final ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
@@ -364,6 +327,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
       return currentDatasetExpression;
 
+    } catch (VtlRuntimeException e) {
+      throw e;
     } catch (Exception e) {
       final String errorMsg =
           String.format(
@@ -386,6 +351,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
       return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
 
+    } catch (VtlRuntimeException e) {
+      throw e;
     } catch (Exception e) {
       String errorMsg =
           String.format(
@@ -498,6 +465,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       // Execute rename in processing engine
       return processingEngine.executeRename(datasetExpression, fromTo);
 
+    } catch (VtlRuntimeException e) {
+      throw e;
     } catch (Exception e) {
       String errorMsg =
           String.format(

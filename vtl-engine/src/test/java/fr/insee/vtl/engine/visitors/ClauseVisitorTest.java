@@ -85,32 +85,6 @@ public class ClauseVisitorTest {
             Map.of("name", "Franck", "weight", 9L, "wisdom", 24L));
   }
 
-  /**
-   * CALC: creating an IDENTIFIER is forbidden by the updated ClauseVisitor. This must raise a
-   * script error.
-   */
-  @Test
-  public void testCalcRoleModifier_identifierNotAllowed() {
-    InMemoryDataset dataset =
-        new InMemoryDataset(
-            List.of(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
-
-    ScriptContext context = engine.getContext();
-    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    assertThatThrownBy(
-            () ->
-                engine.eval(
-                    "ds := ds1[calc new_age := age + 1, identifier id := name, attribute 'unit' := \"year\"];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("CALC must not define an IDENTIFIER component");
-  }
-
   /** CALC: measures/attributes are allowed and should be created as requested. */
   @Test
   public void testCalcRoleModifier_measuresAndAttributesOk() throws ScriptException {
