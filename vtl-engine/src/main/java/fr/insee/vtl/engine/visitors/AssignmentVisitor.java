@@ -38,6 +38,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   public AssignmentVisitor(VtlScriptEngine engine, ProcessingEngine processingEngine) {
     this.engine = Objects.requireNonNull(engine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
+    this.seenVarIds.addAll(this.engine.getBindings(ScriptContext.ENGINE_SCOPE).keySet());
     expressionVisitor =
         new ExpressionVisitor(
             engine.getBindings(ScriptContext.ENGINE_SCOPE), processingEngine, engine);
