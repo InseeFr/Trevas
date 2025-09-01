@@ -1,6 +1,8 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -193,6 +195,8 @@ public class ProvenanceListener extends VtlBaseListener {
 
     try {
       engine.eval(expr);
+    } catch (VtlScriptException e) {
+      throw new VtlRuntimeException(e);
     } catch (ScriptException e) {
       throw new RuntimeException(e);
     }

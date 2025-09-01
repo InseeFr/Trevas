@@ -1,8 +1,10 @@
 package fr.insee.vtl.prov;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.prov.prov.DataframeInstance;
@@ -195,5 +197,32 @@ public class ProvenanceListenerTest {
     Program programWithBindings =
         ProvenanceListener.run(engine, validationExpr, "trevas-join-test", "Trevas join test");
     assertThat(programWithBindings.getProgramSteps()).hasSize(3);
+  }
+
+  @Test
+  void testScriptError() {
+    String failedExpr = "ds1 := ds1;";
+
+    Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
+    Map<String, Dataset.Role> roles =
+        Map.of("id", Dataset.Role.IDENTIFIER, "sex", Dataset.Role.MEASURE);
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "sex", "M"),
+                Map.of("id", "2", "sex", "F"),
+                Map.of("id", "3", "sex", "M")),
+            types,
+            roles);
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    assertThatThrownBy(
+            () -> {
+              ProvenanceListener.run(
+                  engine, failedExpr, "trevas-failed-test", "Trevas failed test");
+            })
+        .isInstanceOf(VtlRuntimeException.class)
+        .hasMessage(
+            "fr.insee.vtl.model.exceptions.VtlScriptException: Dataset ds1 has already been assigned");
   }
 }
