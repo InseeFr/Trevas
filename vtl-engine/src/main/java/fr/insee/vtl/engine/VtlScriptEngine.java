@@ -4,6 +4,7 @@ import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.engine.utils.dag.DAGBuilder;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.engine.visitors.DAGBuildingVisitor;
@@ -287,28 +288,32 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    * @param start Root of parsetree
    * @return reordered VTL
    */
-  private VtlParser.StartContext reorderScript(VtlParser.StartContext start) {
-      DAGBuildingVisitor visitor = new DAGBuildingVisitor();
-      List<DAGStatement> sortedStatements = visitor.visit(start);
+  private VtlParser.StartContext reorderScript(VtlParser.StartContext start)
+      throws VtlScriptException {
+    DAGBuildingVisitor visitor = new DAGBuildingVisitor();
+    List<DAGStatement> unsortedStatements = visitor.visit(start);
 
-      VtlParser.StartContext startReordered =
-              new VtlParser.StartContext((ParserRuleContext) start.getRuleContext(), start.invokingState);
+    // Create DAG & topological sort
+    DAGBuilder dagBuilder = new DAGBuilder(unsortedStatements, start);
+    List<DAGStatement> sortedStatements = dagBuilder.topologicalSortedStatements();
 
-      // Build a set of unsorted indices that need reordering
-      Set<Integer> sortedIndices = sortedStatements.stream()
-              .map(DAGStatement::unsortedIndex)
-              .collect(Collectors.toSet());
+    VtlParser.StartContext startReordered =
+        new VtlParser.StartContext((ParserRuleContext) start.getRuleContext(), start.invokingState);
 
-      int sortedIndex = 0;
-      for (int i = 0; i < start.getChildCount(); i++) {
-          if (sortedIndices.contains(i)) {
-              DAGStatement stmt = sortedStatements.get(sortedIndex++);
-              startReordered.addAnyChild(start.getChild(stmt.unsortedIndex()));
-          } else {
-              startReordered.addAnyChild(start.getChild(i));
-          }
+    // Build a set of unsorted indices that need reordering
+    Set<Integer> sortedIndices =
+        sortedStatements.stream().map(DAGStatement::unsortedIndex).collect(Collectors.toSet());
+
+    int sortedIndex = 0;
+    for (int i = 0; i < start.getChildCount(); i++) {
+      if (sortedIndices.contains(i)) {
+        DAGStatement stmt = sortedStatements.get(sortedIndex++);
+        startReordered.addAnyChild(start.getChild(stmt.unsortedIndex()));
+      } else {
+        startReordered.addAnyChild(start.getChild(i));
       }
-      return startReordered;
+    }
+    return startReordered;
   }
 
   /**
