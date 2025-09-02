@@ -1,12 +1,14 @@
 package fr.insee.vtl.engine.utils.dag;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.util.*;
 import java.util.stream.Stream;
 import javax.script.ScriptContext;
@@ -107,6 +109,51 @@ public class DagTest {
     engine.eval("b := a; d := c; c := b;");
     assertThat(context.getBindings(ScriptContext.ENGINE_SCOPE)).containsKey("b");
     assertThat((Long) context.getAttribute("b")).isEqualTo(1L);
+  }
+
+  @Test
+  public void testDagCycle() {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+    assertThatThrownBy(
+            () -> {
+              engine.eval("e := a; b := a; c := b; a := c; f := a;");
+            })
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage(
+            "Cycle detected in Script. The following statements form at least one cycle: b := a ;c := b ;a := c ");
+  }
+
+  @Test
+  public void testDagDoubleAssignment() {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+    // Note that the double assignment is not detected while building the DAG but later during
+    // execution
+    assertThatThrownBy(
+            () -> {
+              engine.eval("b := a; b := 1;");
+            })
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("Dataset b has already been assigned");
+  }
+
+  @Test
+  public void testDagMultipleAssignments() {
+    Dataset ds = new InMemoryDataset(List.of());
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    VtlScriptException exception =
+        assertThrows(
+            VtlScriptException.class,
+            () -> {
+              engine.eval("ds1 := ds; ds1 <- ds;");
+            });
+    assertThat(exception).isInstanceOf(VtlScriptException.class);
+    assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
+    assertThat(exception.getPosition().startLine).isEqualTo(0);
+    assertThat(exception.getPosition().startColumn).isEqualTo(11);
   }
 
   @ParameterizedTest

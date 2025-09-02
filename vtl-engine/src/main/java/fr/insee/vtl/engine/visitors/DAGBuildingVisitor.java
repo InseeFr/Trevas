@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.visitors;
 
-import fr.insee.vtl.engine.utils.dag.DAGBuilder;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -21,10 +20,7 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
   @Override // explicit call to super, as visiting children is only supported for the start node
   // (only top level statements can be reordered)
   public List<DAGStatement> visitStart(VtlParser.StartContext node) {
-    final List<DAGStatement> unsortedStatements = super.visitChildren(node);
-    // Create DAG & topological sort
-    DAGBuilder dagBuilder = new DAGBuilder(unsortedStatements);
-    return dagBuilder.topologicalSortedStatements();
+    return super.visitChildren(node);
   }
 
   // Extract statements that can be reordered
