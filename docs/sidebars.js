@@ -101,6 +101,7 @@ module.exports = {
 			items: [
 				'developer-guide/index-developer-guide',
 				'developer-guide/developer-javadoc',
+                'developer-guide/dag',
 				{
 					type: 'category',
 					label: 'Basic mode',
