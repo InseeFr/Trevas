@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.utils.dag;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
@@ -75,26 +76,26 @@ public class DagTest {
   }
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     engine = new ScriptEngineManager().getEngineByName("vtl");
     engine.put(VTL_ENGINE_USE_DAG, "true");
   }
 
   @Test
-  public void testNoDagConfig() {
+  void testNoDagConfig() {
     VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
     engine.put(VTL_ENGINE_USE_DAG, "false");
     assertThat(vtlScriptEngine.isUseDag()).isFalse();
   }
 
   @Test
-  public void testUseDagConfig() {
+  void testUseDagConfig() {
     VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
     assertThat(vtlScriptEngine.isUseDag()).isTrue();
   }
 
   @Test
-  public void testDagSimpleExampleNoReordering() throws ScriptException {
+  void testDagSimpleExampleNoReordering() throws ScriptException {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
     engine.eval("tmp := a; b := tmp;");
@@ -103,7 +104,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagSimpleExampleWithReordering() throws ScriptException {
+  void testDagSimpleExampleWithReordering() throws ScriptException {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
     engine.eval("b := a; d := c; c := b;");
@@ -112,53 +113,43 @@ public class DagTest {
   }
 
   @Test
-  public void testDagCycle() {
+  void testDagCycle() {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-    assertThatThrownBy(
-            () -> {
-              engine.eval("e := a; b := a; c := b; a := c; f := a;");
-            })
+    assertThatThrownBy(() -> engine.eval("e := a; b := a; c := b; a := c; f := a;"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage(
             "Cycle detected in Script. The following statements form at least one cycle: b := a ;c := b ;a := c ");
   }
 
   @Test
-  public void testDagDoubleAssignment() {
+  void testDagDoubleAssignment() {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
     // Note that the double assignment is not detected while building the DAG but later during
     // execution
-    assertThatThrownBy(
-            () -> {
-              engine.eval("b := a; b := 1;");
-            })
+    assertThatThrownBy(() -> engine.eval("b := a; b := 1;"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage("Dataset b has already been assigned");
   }
 
   @Test
-  public void testDagMultipleAssignments() {
+  void testDagMultipleAssignments() {
     Dataset ds = new InMemoryDataset(List.of());
     ScriptContext context = engine.getContext();
     context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
 
     VtlScriptException exception =
-        assertThrows(
-            VtlScriptException.class,
-            () -> {
-              engine.eval("ds1 := ds; ds1 <- ds;");
-            });
+        assertThrows(VtlScriptException.class, () -> engine.eval("ds1 := ds; ds1 <- ds;"));
     assertThat(exception).isInstanceOf(VtlScriptException.class);
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
-    assertThat(exception.getPosition().startLine).isEqualTo(0);
+    assertThat(exception.getPosition().startLine).isZero();
     assertThat(exception.getPosition().startColumn).isEqualTo(11);
   }
 
   @ParameterizedTest
   @MethodSource("shuffledListSource")
-  public void testDagShuffledList(final String script) throws ScriptException {
+  void testDagShuffledList(final String script) throws ScriptException {
     // Script is permutation of statements ("b := a", "c := b", "d := c", "e := d + c")
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
@@ -168,12 +159,12 @@ public class DagTest {
   }
 
   @Test
-  public void testDagLeftJoin() throws ScriptException {
+  void testDagLeftJoin() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval("result := left_join(tmp1, tmp2 as aliasDs using id1); tmp1 := ds1; tmp2 := ds2;");
 
-    var result = (Dataset) engine.getContext().getAttribute("result");
+    Dataset result = (Dataset) engine.getContext().getAttribute("result");
     assertThat(result.getColumnNames()).containsExactlyInAnyOrder("id1", "id2", "m1", "m2");
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(
@@ -190,7 +181,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagInnerJoin() throws ScriptException {
+  void testDagInnerJoin() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval("result := inner_join(tmp1, tmp2 as aliasDs using id1); tmp1 := ds1; tmp2 := ds2;");
@@ -210,7 +201,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagInnerJoinOnTwoCols() throws ScriptException {
+  void testDagInnerJoinOnTwoCols() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds3", ds3, ScriptContext.ENGINE_SCOPE);
     engine.eval(
@@ -227,7 +218,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagInnerJoinWithFunctions() throws ScriptException {
+  void testDagInnerJoinWithFunctions() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds3", ds3, ScriptContext.ENGINE_SCOPE);
     engine.eval(
@@ -245,7 +236,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagConcatFunction() throws ScriptException {
+  void testDagConcatFunction() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("result := tmp1[calc m2:=id1||id1]; tmp1 := ds1;");
 
@@ -262,7 +253,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagComponentProjection() throws ScriptException {
+  void testDagComponentProjection() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("result := tmp1#m1; tmp1 := ds1;");
 
@@ -279,7 +270,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagIfExpr() throws ScriptException {
+  void testDagIfExpr() throws ScriptException {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
@@ -296,7 +287,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagCaseExpr() throws ScriptException {
+  void testDagCaseExpr() throws ScriptException {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
@@ -325,8 +316,8 @@ public class DagTest {
         "ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
             + "res_ds <- case when ds1 < 30 then ds1 else ds2; "
             + "ds2 := ds_2[keep id, long1][rename long1 to bool_var];");
-    Object res_ds = engine.getContext().getAttribute("res_ds");
-    assertThat(((Dataset) res_ds).getDataAsMap())
+    Object resDs = engine.getContext().getAttribute("res_ds");
+    assertThat(((Dataset) resDs).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "bool_var", 10L),
             Map.of("id", "Nico", "bool_var", 20L),
@@ -334,7 +325,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagNvlExpr() throws ScriptException {
+  void testDagNvlExpr() throws ScriptException {
     engine.getContext().setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("res <- nvl(tmp1[keep id, long1], 0); tmp1 := ds1;");
     var res = engine.getContext().getAttribute("res");
@@ -348,7 +339,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagNvlImplicitCast() throws ScriptException {
+  void testDagNvlImplicitCast() throws ScriptException {
     engine.getContext().setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("res := nvl(tmp1[keep id, long1], 0.1); tmp1 <- ds1;");
     var res = engine.getContext().getAttribute("res");
@@ -362,7 +353,7 @@ public class DagTest {
   }
 
   @Test
-  public void testDagUnaryExpr() throws ScriptException {
+  void testDagUnaryExpr() throws ScriptException {
     ScriptContext context = engine.getContext();
 
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);

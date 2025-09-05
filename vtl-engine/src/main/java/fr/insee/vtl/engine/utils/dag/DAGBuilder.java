@@ -3,7 +3,10 @@ package fr.insee.vtl.engine.utils.dag;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
@@ -28,18 +31,18 @@ public class DAGBuilder {
   /**
    * Builds a DAG from a list of VTL statements
    *
-   * @param DAGStatements List of DAGStatements created from VTL statements
+   * @param dagStatements List of DAGStatements created from VTL statements
    */
-  private static Graph<DAGStatement, DefaultEdge> buildDAG(List<DAGStatement> DAGStatements) {
+  private static Graph<DAGStatement, DefaultEdge> buildDAG(List<DAGStatement> dagStatements) {
     // Init graph
     Graph<DAGStatement, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
-    for (DAGStatement stmt : DAGStatements) {
+    for (DAGStatement stmt : dagStatements) {
       graph.addVertex(stmt);
     }
 
     // Find dependencies and add edges
-    for (DAGStatement stmt1 : DAGStatements) {
-      for (DAGStatement stmt2 : DAGStatements) {
+    for (DAGStatement stmt1 : dagStatements) {
+      for (DAGStatement stmt2 : dagStatements) {
         if (!stmt1.equals(stmt2) && dependsOn(stmt2, stmt1)) {
           graph.addEdge(stmt1, stmt2);
         }
