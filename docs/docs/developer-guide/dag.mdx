@@ -1,0 +1,44 @@
+---
+id: dag
+title: DAG (Directed acyclic graph) - Statement reordering
+sidebar_label: DAG - Statement reordering
+slug: /developer-guide/dag
+custom_edit_url: null
+---
+
+### Statement reordering
+
+Suppose we have two Transformations:
+
+1. Create an intermediate dataset `DS_np`
+2. Use `DS_np` to calculate another dataset `DS_p`
+
+Even if we write them in "reverse" order, the VTL standard requires executing them in the correct dependency order.
+
+```
+-- Transformation Scheme Example
+
+-- (i) This depends on DS_np
+DS_p <- if DS_np >= 0 then DS_np else DS_1;
+
+-- (ii) This produces DS_np
+DS_np := (DS_1 - DS_2) * 2;
+```
+
+Execution Order (resolved by the engine)
+
+1. (ii) must run first because DS_np is required before evaluating (i).
+
+2. (i) runs afterwards, since it consumes DS_np.
+
+So even though we wrote (i) before (ii), the engine reorders them automatically, **when reordering is activated**.
+
+### Activate reordering
+
+The current behavior of Trevas is that statement reordering is **deactivated per default**.
+Statement reordering can be activated via the following config flag ("$vtl.engine.use_dag")
+
+```java
+ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
+engine.put("$vtl.engine.use_dag", "true");
+```
