@@ -2,7 +2,8 @@ package fr.insee.vtl.engine;
 
 import static fr.insee.vtl.model.Dataset.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -43,12 +44,16 @@ class TemporalFunctionsTest {
             );
     var d = PeriodDuration.parse("P1DT1H");
     engine.put("d", d);
+    int index = 0;
     for (Temporal t : ts) {
       engine.put("t", t);
-      engine.eval("r := t + d;");
-      assertThat(engine.get("r")).isEqualTo(t.plus(d));
-      engine.eval("r := t - d;");
-      assertThat(engine.get("r")).isEqualTo(t.minus(d));
+      String resName = "r_" + index;
+      engine.eval(resName + " := t + d;");
+      assertThat(engine.get(resName)).isEqualTo(t.plus(d));
+      String resName1 = "r1_" + index;
+      engine.eval(resName1 + " := t - d;");
+      assertThat(engine.get(resName1)).isEqualTo(t.minus(d));
+      index++;
     }
     // TODO: Negative cases (unsupported unit etc).
   }
@@ -72,13 +77,15 @@ class TemporalFunctionsTest {
                 "2023-04-15T01:00:00+01:00"), // 1 hour after the OffsetDateTime in 'as'
             ZonedDateTime.parse("2023-10-29T02:00:00+01:00[Europe/Paris]") // 2 hours after DST ends
             );
-
+    int index = 0;
     for (Temporal a : as) {
       for (Temporal b : bs) {
         engine.put("a", a);
         engine.put("b", b);
-        engine.eval("r := a - b;");
-        assertThat(engine.get("r")).isEqualTo(PeriodDuration.between(b, a));
+        String resName = "r_" + index;
+        engine.eval(resName + " := a - b;");
+        assertThat(engine.get(resName)).isEqualTo(PeriodDuration.between(b, a));
+        index++;
       }
     }
   }
@@ -90,10 +97,13 @@ class TemporalFunctionsTest {
             PeriodDuration.parse("P1Y"),
             PeriodDuration.parse("PT1H"),
             PeriodDuration.parse("P1YT1H"));
+    int index = 0;
     for (PeriodDuration d : ds) {
       engine.put("d", d);
-      engine.eval("r := d * 2;");
-      assertThat(engine.get("r")).isEqualTo(d.multipliedBy(2));
+      String resName = "r_" + index;
+      engine.eval(resName + " := d * 2;");
+      assertThat(engine.get(resName)).isEqualTo(d.multipliedBy(2));
+      index++;
     }
   }
 
@@ -182,15 +192,18 @@ class TemporalFunctionsTest {
 
     var r = new ArrayList<Temporal>();
     var rr = new LinkedHashMap<String, List<Temporal>>();
+    int index = 0;
     for (Temporal t : ts) {
       for (String u : us) {
         engine.put("t", t);
         engine.put("u", u);
-        engine.eval("r := truncate_time(t, u);");
-        assertThat(engine.get("r")).isInstanceOf(Temporal.class);
+        String resName = "r_" + index;
+        engine.eval(resName + " := truncate_time(t, u);");
+        assertThat(engine.get(resName)).isInstanceOf(Temporal.class);
         r.add((Temporal) engine.get("r"));
         rr.computeIfAbsent((String) engine.get("u"), s -> new ArrayList<>())
-            .add((Temporal) engine.get("r"));
+            .add((Temporal) engine.get(resName));
+        index++;
       }
     }
     assertThat(rr.get("day"))
@@ -239,29 +252,32 @@ class TemporalFunctionsTest {
     Map<String, ZonedDateTime> testCases =
         Map.of(
             "Europe/London",
-                ZonedDateTime.ofInstant(
-                    Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Europe/London")),
+            ZonedDateTime.ofInstant(
+                Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Europe/London")),
             "Asia/Kolkata",
-                ZonedDateTime.ofInstant(
-                    Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Asia/Kolkata")),
+            ZonedDateTime.ofInstant(
+                Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("Asia/Kolkata")),
             "America/New_York",
-                ZonedDateTime.ofInstant(
-                    Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("America/New_York")));
+            ZonedDateTime.ofInstant(
+                Instant.parse("2020-04-04T10:15:30.00Z"), ZoneId.of("America/New_York")));
 
     Instant testInstant = Instant.parse("2020-04-04T10:15:30.00Z");
     engine.put("t", testInstant);
 
+    int index = 0;
     for (Map.Entry<String, ZonedDateTime> testCase : testCases.entrySet()) {
       var zone = testCase.getKey();
       var expected = testCase.getValue();
-      engine.eval("r := at_zone(t, \"" + zone + "\");");
-      var actual = engine.get("r");
+      String resName = "r_" + index;
+      engine.eval(resName + " := at_zone(t, \"" + zone + "\");");
+      var actual = engine.get(resName);
       assertEquals(expected, actual, "Failed for zone: " + zone);
+      index++;
     }
 
     // Negative test: Invalid time zone
     try {
-      engine.eval("r := at_zone(t, \"Invalid/Zone\");");
+      engine.eval("r1 := at_zone(t, \"Invalid/Zone\");");
       fail();
     } catch (VtlScriptException vsee) {
       assertThat(vsee).hasCauseInstanceOf(DateTimeException.class);

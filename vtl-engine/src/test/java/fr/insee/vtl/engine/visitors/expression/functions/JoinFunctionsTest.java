@@ -133,9 +133,9 @@ public class JoinFunctionsTest {
             () ->
                 engine.eval(
                     """
-                ds_1 := ds_1[calc measure Id_2 := Id_2];
-                result := left_join(ds_1, ds_2 using Id_2);\
-                """))
+                                        ds_1_1 := ds_1[calc measure Id_2 := Id_2];
+                                        result2 := left_join(ds_1_1, ds_2 using Id_2);\
+                                        """))
         .isInstanceOf(InvalidArgumentException.class)
         .hasMessage("using component Id_2 has to be an identifier");
   }
@@ -260,9 +260,9 @@ public class JoinFunctionsTest {
 
     engine.getContext().setAttribute("ds_1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", ds2, ScriptContext.ENGINE_SCOPE);
-    engine.eval("result := inner_join(ds_1[keep id1, id2, m1] as ds1, ds_2 as ds2);");
+    engine.eval("result1 := inner_join(ds_1[keep id1, id2, m1] as ds1, ds_2 as ds2);");
 
-    var result = (Dataset) engine.getContext().getAttribute("result");
+    var result = (Dataset) engine.getContext().getAttribute("result1");
     assertThat(result.getColumnNames()).containsExactlyInAnyOrder("id1", "id2", "m1", "m2");
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(
@@ -273,14 +273,15 @@ public class JoinFunctionsTest {
 
     assertThatThrownBy(
             () ->
-                engine.eval("ds_3 := ds_2[rename m2 to m1];" + "result := inner_join(ds_1, ds_3);"))
+                engine.eval(
+                    "ds_3 := ds_2[rename m2 to m1];" + "result2 := inner_join(ds_1, ds_3);"))
         .isInstanceOf(InvalidArgumentException.class)
         .hasMessage(
             "It is not allowed that two or more Components in the virtual Data Set have the same name (m1)");
 
-    engine.eval("result := inner_join(ds_1 as ds1, ds_2 as ds2 using id1);");
+    engine.eval("result3 := inner_join(ds_1 as ds1, ds_2 as ds2 using id1);");
 
-    result = (Dataset) engine.getContext().getAttribute("result");
+    result = (Dataset) engine.getContext().getAttribute("result3");
     assertThat(result.getColumnNames()).containsExactlyInAnyOrder("id1", "m1", "id2", "m2");
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(

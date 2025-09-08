@@ -26,22 +26,22 @@ public class VarIdExprTest {
     engine.eval("bar := foo;");
     assertThat(context.getAttribute("bar")).isEqualTo(context.getAttribute("foo"));
 
-    context.setAttribute("foo", 123D, ScriptContext.ENGINE_SCOPE);
-    engine.eval("bar := foo;");
-    assertThat(context.getAttribute("bar")).isEqualTo(context.getAttribute("foo"));
+    context.setAttribute("foo1", 123D, ScriptContext.ENGINE_SCOPE);
+    engine.eval("bar1 := foo1;");
+    assertThat(context.getAttribute("bar1")).isEqualTo(context.getAttribute("foo1"));
 
-    context.setAttribute("foo", null, ScriptContext.ENGINE_SCOPE);
-    engine.eval("bar := foo;");
+    context.setAttribute("foo2", null, ScriptContext.ENGINE_SCOPE);
+    engine.eval("bar2 := foo2;");
 
-    assertThat(context.getAttribute("bar")).isSameAs(context.getAttribute("foo"));
+    assertThat(context.getAttribute("bar2")).isSameAs(context.getAttribute("foo2"));
   }
 
   @Test
   public void testAutoCastVariables() throws ScriptException {
     ScriptContext context = engine.getContext();
 
-    context.setAttribute("anInt", Integer.valueOf(123), ScriptContext.ENGINE_SCOPE);
-    context.setAttribute("aFloat", Float.valueOf(1.5F), ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("anInt", 123, ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("aFloat", 1.5F, ScriptContext.ENGINE_SCOPE);
 
     engine.eval("theInt := anInt; theFloat := aFloat;");
 

@@ -46,25 +46,33 @@ public class BooleanExprTest {
     List<Boolean> or = Arrays.asList(false, true, null, true, true, true, null, true, null);
     List<Boolean> xor = Arrays.asList(false, true, null, true, false, null, null, null, null);
 
+    int index = 0;
     for (int i = 0; i < a.size(); i++) {
       context.setAttribute("a", a.get(i), ScriptContext.ENGINE_SCOPE);
       context.setAttribute("b", b.get(i), ScriptContext.ENGINE_SCOPE);
 
       engine.eval(
-          "andRes := cast(a, boolean) and cast(b, boolean);"
-              + "orRes := cast(a, boolean) or cast(b, boolean);"
-              + "xorRes := cast(a, boolean) xor cast(b, boolean);");
-      assertThat(context.getAttribute("andRes"))
+          "andRes_"
+              + index
+              + " := cast(a, boolean) and cast(b, boolean);"
+              + "orRes_"
+              + index
+              + " := cast(a, boolean) or cast(b, boolean);"
+              + "xorRes_"
+              + index
+              + " := cast(a, boolean) xor cast(b, boolean);");
+      assertThat(context.getAttribute("andRes_" + index))
           .as("%s && %s -> %s", a.get(i), b.get(i), and.get(i))
           .isEqualTo(and.get(i));
 
-      assertThat(context.getAttribute("orRes"))
+      assertThat(context.getAttribute("orRes_" + index))
           .as("%s || %s -> %s", a.get(i), b.get(i), or.get(i))
           .isEqualTo(or.get(i));
 
-      assertThat(context.getAttribute("xorRes"))
+      assertThat(context.getAttribute("xorRes_" + index))
           .as("%s ^ %s -> %s", a.get(i), b.get(i), xor.get(i))
           .isEqualTo(xor.get(i));
+      index++;
     }
   }
 

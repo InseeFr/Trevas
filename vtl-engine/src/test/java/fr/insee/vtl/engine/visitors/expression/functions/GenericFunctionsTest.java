@@ -98,11 +98,11 @@ public class GenericFunctionsTest {
 
     // SPEC-4879
     engine.eval("d1 := cast(\"2012-12-23\", date, \"YYYY-MM-DD\");");
-
-    engine.eval("d1 := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
-    assertThat((Instant) context.getAttribute("d1")).isEqualTo("1998-12-01T00:00:00.000Z");
-    engine.eval("d2 := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
-    assertThat((Instant) context.getAttribute("d2")).isEqualTo("1998-12-31T00:00:00.000Z");
+    assertThat((Instant) context.getAttribute("d1")).isEqualTo("2012-12-23T00:00:00.000Z");
+    engine.eval("d2 := cast(\"1998-12-01\", date, \"YYYY-MM-DD\");");
+    assertThat((Instant) context.getAttribute("d2")).isEqualTo("1998-12-01T00:00:00.000Z");
+    engine.eval("d3 := cast(\"1998/31/12\", date, \"YYYY/DD/MM\");");
+    assertThat((Instant) context.getAttribute("d3")).isEqualTo("1998-12-31T00:00:00.000Z");
   }
 
   @Test
@@ -124,70 +124,70 @@ public class GenericFunctionsTest {
     assertThat((Instant) context.getAttribute("f")).isEqualTo("1998-12-31T00:00:00.000Z");
     assertThatThrownBy(
             () -> {
-              engine.eval("a := cast(\"\", integer);");
+              engine.eval("g := cast(\"\", integer);");
             })
         .isInstanceOf(NumberFormatException.class)
         .hasMessage("For input string: \"\"");
     assertThatThrownBy(
             () -> {
-              engine.eval("a := cast(\"\", number);");
+              engine.eval("h := cast(\"\", number);");
             })
         .isInstanceOf(NumberFormatException.class)
         .hasMessage("empty String");
 
     // Cast Boolean to...
-    engine.eval("a := cast(true, integer);");
-    assertThat(context.getAttribute("a")).isEqualTo(1L);
-    engine.eval("a := cast(false, integer);");
-    assertThat(context.getAttribute("a")).isEqualTo(0L);
-    engine.eval("b := cast(true, number);");
-    assertThat(context.getAttribute("b")).isEqualTo(1D);
-    engine.eval("b := cast(false, number);");
-    assertThat(context.getAttribute("b")).isEqualTo(0D);
-    engine.eval("c := cast(true, string);");
-    assertThat(context.getAttribute("c")).isEqualTo("true");
-    engine.eval("c := cast(false, string);");
-    assertThat(context.getAttribute("c")).isEqualTo("false");
-    engine.eval("d := cast(true, boolean);");
-    assertThat(context.getAttribute("d")).isEqualTo(true);
+    engine.eval("i := cast(true, integer);");
+    assertThat(context.getAttribute("i")).isEqualTo(1L);
+    engine.eval("j := cast(false, integer);");
+    assertThat(context.getAttribute("j")).isEqualTo(0L);
+    engine.eval("k := cast(true, number);");
+    assertThat(context.getAttribute("k")).isEqualTo(1D);
+    engine.eval("l := cast(false, number);");
+    assertThat(context.getAttribute("l")).isEqualTo(0D);
+    engine.eval("m := cast(true, string);");
+    assertThat(context.getAttribute("m")).isEqualTo("true");
+    engine.eval("n := cast(false, string);");
+    assertThat(context.getAttribute("n")).isEqualTo("false");
+    engine.eval("o := cast(true, boolean);");
+    assertThat(context.getAttribute("o")).isEqualTo(true);
 
     // Cast Integer to...
-    engine.eval("a := cast(1, integer);");
-    assertThat(context.getAttribute("a")).isEqualTo(1L);
-    engine.eval("b := cast(1, number);");
-    assertThat(context.getAttribute("b")).isEqualTo(1D);
-    engine.eval("c := cast(1, string);");
-    assertThat(context.getAttribute("c")).isEqualTo("1");
-    engine.eval("d := cast(2, boolean);");
-    assertThat(context.getAttribute("d")).isEqualTo(true);
-    engine.eval("d := cast(0, boolean);");
-    assertThat(context.getAttribute("d")).isEqualTo(false);
+    engine.eval("p := cast(1, integer);");
+    assertThat(context.getAttribute("p")).isEqualTo(1L);
+    engine.eval("q := cast(1, number);");
+    assertThat(context.getAttribute("q")).isEqualTo(1D);
+    engine.eval("r := cast(1, string);");
+    assertThat(context.getAttribute("r")).isEqualTo("1");
+    engine.eval("s := cast(2, boolean);");
+    assertThat(context.getAttribute("s")).isEqualTo(true);
+    engine.eval("t := cast(0, boolean);");
+    assertThat(context.getAttribute("t")).isEqualTo(false);
 
     // Cast Number to...
-    engine.eval("a := cast(1.0, integer);");
-    assertThat(context.getAttribute("a")).isEqualTo(1L);
+    engine.eval("u := cast(1.0, integer);");
+    assertThat(context.getAttribute("u")).isEqualTo(1L);
     assertThatThrownBy(
             () -> {
-              engine.eval("a := cast(1.1, integer);");
+              engine.eval("v := cast(1.1, integer);");
             })
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("1.1 can not be casted into integer");
-    engine.eval("b := cast(1.1, number);");
-    assertThat(context.getAttribute("b")).isEqualTo(1.1D);
-    engine.eval("c := cast(1.1, string);");
-    assertThat(context.getAttribute("c")).isEqualTo("1.1");
-    engine.eval("d := cast(0.1, boolean);");
-    assertThat(context.getAttribute("d")).isEqualTo(true);
-    engine.eval("d := cast(0.0, boolean);");
-    assertThat(context.getAttribute("d")).isEqualTo(false);
+    engine.eval("w := cast(1.1, number);");
+    assertThat(context.getAttribute("w")).isEqualTo(1.1D);
+    engine.eval("x := cast(1.1, string);");
+    assertThat(context.getAttribute("x")).isEqualTo("1.1");
+    engine.eval("y := cast(0.1, boolean);");
+    assertThat(context.getAttribute("y")).isEqualTo(true);
+    engine.eval("z := cast(0.0, boolean);");
+    assertThat(context.getAttribute("z")).isEqualTo(false);
 
     // Cast Date to...
-    engine.eval("d := cast(\"1998-31-12\", date, \"YYYY-DD-MM\");");
-    engine.eval("strDate := cast(d, string, \"YYYY/MM\");");
+    engine.eval("aa := cast(\"1998-31-12\", date, \"YYYY-DD-MM\");");
+    engine.eval("strDate := cast(aa, string, \"YYYY/MM\");");
     assertThat(context.getAttribute("strDate")).isEqualTo("1998/12");
     assertThatThrownBy(
             () -> {
-              engine.eval("a := cast(current_date(), string);");
+              engine.eval("ab := cast(current_date(), string);");
             })
         .isInstanceOf(InvalidArgumentException.class)
         .hasMessage("cannot cast date: no mask specified");
