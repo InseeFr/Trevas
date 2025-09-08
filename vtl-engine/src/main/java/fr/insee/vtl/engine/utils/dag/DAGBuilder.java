@@ -3,16 +3,15 @@ package fr.insee.vtl.engine.utils.dag;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.cycle.CycleDetector;
+import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector;
+import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
@@ -68,20 +67,46 @@ public class DAGBuilder {
   }
 
   private Optional<VtlScriptException> checkForCycles() {
-    CycleDetector<DAGStatement, DefaultEdge> cycleDetector = new CycleDetector<>(graph);
-    Set<DAGStatement> statementsInCycle = cycleDetector.findCycles();
-    if (statementsInCycle.isEmpty()) {
+    StrongConnectivityAlgorithm<DAGStatement, DefaultEdge> inspector =
+        new GabowStrongConnectivityInspector<>(graph);
+    List<Set<DAGStatement>> stronglyConnectedSets = inspector.stronglyConnectedSets();
+
+    List<Set<DAGStatement>> cycles =
+        stronglyConnectedSets.stream().filter(s -> s.size() > 1 || hasSelfLoop(s)).toList();
+
+    if (cycles.isEmpty()) {
       return Optional.empty();
     }
-    String dagStatementsInCycle =
-        statementsInCycle.stream()
-            .map(d -> parseTreeToText(startContext.getChild(d.unsortedIndex())))
-            .collect(Collectors.joining(";", "", ""));
+
+    String cyclesDescription =
+        cycles.stream()
+            .map(
+                cycle ->
+                    cycle.stream()
+                        .map(
+                            statement ->
+                                parseTreeToText(startContext.getChild(statement.unsortedIndex()))
+                                    .trim())
+                        .collect(Collectors.joining("; ", "[", ";]")))
+            .collect(Collectors.joining(" "));
+
     return Optional.of(
         new VtlScriptException(
-            "Cycle detected in Script. The following statements form at least one cycle: "
-                + dagStatementsInCycle,
-            VtlScriptEngine.fromContext(startContext)));
+            "Cycle detected in Script. The following statements form "
+                + cycles.size()
+                + " cycle(s): "
+                + cyclesDescription,
+            cycles.stream()
+                .flatMap(Collection::stream)
+                .map(statement -> startContext.getChild(statement.unsortedIndex()))
+                .map(VtlScriptEngine::fromContext)
+                .collect(Collectors.toSet())));
+  }
+
+  private boolean hasSelfLoop(Set<DAGStatement> set) {
+    if (set.size() != 1) return false;
+    DAGStatement v = set.iterator().next();
+    return graph.containsEdge(v, v);
   }
 
   private String parseTreeToText(ParseTree child) {

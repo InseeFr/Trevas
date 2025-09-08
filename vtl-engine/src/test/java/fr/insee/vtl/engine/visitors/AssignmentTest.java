@@ -59,8 +59,8 @@ public class AssignmentTest {
             });
     assertThat(exception).isInstanceOf(VtlScriptException.class);
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
-    assertThat(exception.getPosition().startLine).isEqualTo(0);
-    assertThat(exception.getPosition().startColumn).isEqualTo(11);
+    assertThat(exception.getPositions().get(0).startLine).isEqualTo(0);
+    assertThat(exception.getPositions().get(0).startColumn).isEqualTo(11);
   }
 
   @Test

@@ -75,6 +75,29 @@ public class DagTest {
         .map(Arguments::of);
   }
 
+  private static String buildScriptFromStatements(final List<String> statements) {
+    return String.join(";", statements) + ";";
+  }
+
+  public static <E> Stream<List<E>> permutations(List<E> input) {
+    List<List<E>> results = new ArrayList<>();
+    List<E> arr = new ArrayList<>(input);
+    backtrack(arr, 0, results);
+    return results.stream();
+  }
+
+  private static <E> void backtrack(List<E> arr, int index, List<List<E>> results) {
+    if (index == arr.size() - 1) {
+      results.add(new ArrayList<>(arr));
+      return;
+    }
+    for (int i = index; i < arr.size(); i++) {
+      Collections.swap(arr, index, i);
+      backtrack(arr, index + 1, results);
+      Collections.swap(arr, index, i);
+    }
+  }
+
   @BeforeEach
   void setUp() {
     engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -119,7 +142,30 @@ public class DagTest {
     assertThatThrownBy(() -> engine.eval("e := a; b := a; c := b; a := c; f := a;"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage(
-            "Cycle detected in Script. The following statements form at least one cycle: b := a ;c := b ;a := c ");
+            "Cycle detected in Script. The following statements form 1 cycle(s): [a := c; b := a; c := b;]");
+  }
+
+  @Test
+  void testMultipleCycles() {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+    assertThatThrownBy(
+            () -> engine.eval("e := a; b := a; c := b; a := c; f := a; h := g ;i := h ;g := i;"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage(
+            "Cycle detected in Script. The following statements form 2 cycle(s): [g := i; h := g; i := h;] [a := c; b := a; c := b;]")
+        .satisfies(
+            ex -> {
+              VtlScriptException vtlEx = (VtlScriptException) ex;
+              assertThat(vtlEx.getPositions())
+                  .hasSize(6)
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(8))
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(16))
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(24))
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(40))
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(48))
+                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(56));
+            });
   }
 
   @Test
@@ -143,8 +189,8 @@ public class DagTest {
         assertThrows(VtlScriptException.class, () -> engine.eval("ds1 := ds; ds1 <- ds;"));
     assertThat(exception).isInstanceOf(VtlScriptException.class);
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
-    assertThat(exception.getPosition().startLine).isZero();
-    assertThat(exception.getPosition().startColumn).isEqualTo(11);
+    assertThat(exception.getPositions().get(0).startLine).isZero();
+    assertThat(exception.getPositions().get(0).startColumn).isEqualTo(11);
   }
 
   @ParameterizedTest
@@ -373,28 +419,5 @@ public class DagTest {
             Map.of("id", "Nico", "long1", -20L, "double1", -2.2D),
             Map.of("id", "Franck", "long1", -100L, "double1", 1.21D));
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
-  }
-
-  private static String buildScriptFromStatements(final List<String> statements) {
-    return String.join(";", statements) + ";";
-  }
-
-  public static <E> Stream<List<E>> permutations(List<E> input) {
-    List<List<E>> results = new ArrayList<>();
-    List<E> arr = new ArrayList<>(input);
-    backtrack(arr, 0, results);
-    return results.stream();
-  }
-
-  private static <E> void backtrack(List<E> arr, int index, List<List<E>> results) {
-    if (index == arr.size() - 1) {
-      results.add(new ArrayList<>(arr));
-      return;
-    }
-    for (int i = index; i < arr.size(); i++) {
-      Collections.swap(arr, index, i);
-      backtrack(arr, index + 1, results);
-      Collections.swap(arr, index, i);
-    }
   }
 }

@@ -3,18 +3,31 @@ package fr.insee.vtl.engine.visitors;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
 
 /** <code>DagbuildingVisitor</code> is the visitor for creating a DAG from VTL statements. */
 public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
 
+  private static int getParentStatementIndex(final RuleNode node) {
+    final ParseTree parent = node.getParent();
+    for (int i = 0; i < parent.getChildCount(); ++i) {
+      final ParseTree child = parent.getChild(i);
+      if (child == node) {
+        return i;
+      }
+    }
+    throw new AssertionError("Statement must always be part of the its parent node");
+  }
+
   @Override
   public List<DAGStatement> visitChildren(RuleNode node) {
-    throw new IllegalStateException(
-        "Unreachable state: DAGBuildingVisitor can only visit and top level children of StartContext which can be reordered!");
+    throw new AssertionError(
+        "DAGBuildingVisitor only supports StartContext, Assignments and DefineExpressions");
   }
 
   @Override // explicit call to super, as visiting children is only supported for the start node
@@ -50,18 +63,6 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
 
     final int statementIndex = getParentStatementIndex(node);
     return List.of(new DAGStatement(statementIndex, assignmentOutVarId, assignmentInVarIds));
-  }
-
-  private static int getParentStatementIndex(final RuleNode node) {
-    final ParseTree parent = node.getParent();
-    for (int i = 0; i < parent.getChildCount(); ++i) {
-      final ParseTree child = parent.getChild(i);
-      if (child == node) {
-        return i;
-      }
-    }
-    throw new IllegalStateException(
-        "Unreachable state: Statement must always be part of the its parent node!");
   }
 
   @Override
