@@ -14,6 +14,7 @@ import javax.script.ScriptException;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class AnalyticAvgTest {
@@ -55,8 +56,8 @@ public class AnalyticAvgTest {
   private static SparkSession spark;
   private static ScriptEngine engine;
 
-  @BeforeAll
-  public static void setUp() {
+  @BeforeEach
+  public void setUp() {
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
