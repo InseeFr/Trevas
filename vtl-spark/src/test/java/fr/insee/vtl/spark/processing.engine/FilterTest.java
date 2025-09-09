@@ -1,8 +1,10 @@
 package fr.insee.vtl.spark.processing.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -51,6 +53,22 @@ public class FilterTest {
   @AfterEach
   public void tearDown() {
     if (spark != null) spark.close();
+  }
+
+  @Test
+  public void testLessThanBadTypes() {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
+    assertThatThrownBy(() -> engine.eval("ds_out := ds[filter name < 1];"))
+        .isInstanceOf(ConflictingTypesException.class)
+        .hasMessage("conflicting types: [String, Long]");
+  }
+
+  @Test
+  public void testLessThanGoodTypes() throws ScriptException {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
+    engine.eval("ds_out := ds[filter 18.1 < age];");
   }
 
   @Test
