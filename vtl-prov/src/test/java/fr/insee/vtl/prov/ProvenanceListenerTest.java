@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
@@ -222,8 +222,7 @@ public class ProvenanceListenerTest {
               ProvenanceListener.run(
                   engine, failedExpr, "trevas-failed-test", "Trevas failed test");
             })
-        .isInstanceOf(VtlRuntimeException.class)
-        .hasMessage(
-            "fr.insee.vtl.model.exceptions.VtlScriptException: Dataset ds1 has already been assigned");
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("Dataset ds1 has already been assigned");
   }
 }
