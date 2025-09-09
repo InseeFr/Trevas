@@ -755,7 +755,7 @@ public class ValidationTest {
                         + "   my_rule_2 : long1 > 0 errorcode \"Long <= 0\" errorlevel 100 "
                         + "end datapoint ruleset; "
                         + "ds_check_datapoint := check_datapoint(ds1_num, dpr1 all); "
-                        + "ds_check := check(ds1_1#long1 > ds2_1#long1 errorcode \"error\" errorlevel 1 imbalance ds1#long1 + ds2#long1 invalid);");
+                        + "ds_check := check(ds1_1#long1 > ds2_1#long1 errorcode \"error\" errorlevel 1 imbalance ds1_1#long1 + ds2_1#long1 invalid);");
         List<Structured.DataPoint> dsCheckDatapoint =
                 ((Dataset) engine.getContext().getAttribute("ds_check_datapoint")).getDataPoints();
     }
