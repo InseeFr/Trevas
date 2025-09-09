@@ -27,18 +27,18 @@ public class ArithmeticExprOrConcatTest {
     // Plus
     engine.eval("res := 1 + cast(null, integer);");
     assertThat((Long) context.getAttribute("res")).isNull();
-    engine.eval("res := cast(null, integer) + 1;");
-    assertThat((Long) context.getAttribute("res")).isNull();
+    engine.eval("res1 := cast(null, integer) + 1;");
+    assertThat((Long) context.getAttribute("res1")).isNull();
     // Minus
-    engine.eval("res := 1 - cast(null, integer);");
-    assertThat((Long) context.getAttribute("res")).isNull();
-    engine.eval("res := cast(null, integer) - 1;");
-    assertThat((Long) context.getAttribute("res")).isNull();
+    engine.eval("res2 := 1 - cast(null, integer);");
+    assertThat((Long) context.getAttribute("res2")).isNull();
+    engine.eval("res3 := cast(null, integer) - 1;");
+    assertThat((Long) context.getAttribute("res3")).isNull();
     // Concat
-    engine.eval("res := \"\" || cast(null, string);");
-    assertThat((Boolean) context.getAttribute("res")).isNull();
-    engine.eval("res := cast(null, string) || \"\";");
-    assertThat((Boolean) context.getAttribute("res")).isNull();
+    engine.eval("res4 := \"\" || cast(null, string);");
+    assertThat((Boolean) context.getAttribute("res4")).isNull();
+    engine.eval("res5 := cast(null, string) || \"\";");
+    assertThat((Boolean) context.getAttribute("res5")).isNull();
   }
 
   @Test
@@ -46,10 +46,10 @@ public class ArithmeticExprOrConcatTest {
     ScriptContext context = engine.getContext();
     engine.eval("plus := 2 + 3;");
     assertThat(context.getAttribute("plus")).isEqualTo(5L);
-    engine.eval("plus := 2 + 3.0;");
-    assertThat(context.getAttribute("plus")).isEqualTo(5.0);
-    engine.eval("plus := 2.0 + 3;");
-    assertThat(context.getAttribute("plus")).isEqualTo(5.0);
+    engine.eval("plus1 := 2 + 3.0;");
+    assertThat(context.getAttribute("plus1")).isEqualTo(5.0);
+    engine.eval("plus2 := 2.0 + 3;");
+    assertThat(context.getAttribute("plus2")).isEqualTo(5.0);
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res = engine.eval("res := ds1[keep id, long1, long2] + ds1[keep id, long1, long2];");
@@ -68,10 +68,10 @@ public class ArithmeticExprOrConcatTest {
     ScriptContext context = engine.getContext();
     engine.eval("minus := 3 - 2;");
     assertThat(context.getAttribute("minus")).isEqualTo(1L);
-    engine.eval("minus := 3.0 - 2;");
-    assertThat(context.getAttribute("minus")).isEqualTo(1.0);
-    engine.eval("minus := 3 - 2.0;");
-    assertThat(context.getAttribute("minus")).isEqualTo(1.0);
+    engine.eval("minus2 := 3.0 - 2;");
+    assertThat(context.getAttribute("minus2")).isEqualTo(1.0);
+    engine.eval("minus3 := 3 - 2.0;");
+    assertThat(context.getAttribute("minus3")).isEqualTo(1.0);
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);

@@ -14,20 +14,17 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.apache.spark.api.java.function.FilterFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SaveMode;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class SparkDatasetTest {
 
-  private SparkSession spark;
+  private static SparkSession spark;
   private ScriptEngine engine;
 
   @BeforeEach
@@ -37,6 +34,11 @@ public class SparkDatasetTest {
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
     engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    if (spark != null) spark.close();
   }
 
   @Test

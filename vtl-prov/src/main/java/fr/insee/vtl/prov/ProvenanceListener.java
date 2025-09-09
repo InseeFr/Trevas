@@ -187,15 +187,12 @@ public class ProvenanceListener extends VtlBaseListener {
     return provenanceListener.getProgram();
   }
 
-  private static Program refineProgram(ScriptEngine engine, String expr, Program program) {
+  private static Program refineProgram(ScriptEngine engine, String expr, Program program)
+      throws ScriptException {
 
     Map<String, String> defineStatements = AntlrUtils.getDefineStatements(expr);
 
-    try {
-      engine.eval(expr);
-    } catch (ScriptException e) {
-      throw new RuntimeException(e);
-    }
+    engine.eval(expr);
 
     program
         .getProgramSteps()
@@ -299,9 +296,9 @@ public class ProvenanceListener extends VtlBaseListener {
     return program;
   }
 
-  public static Program run(ScriptEngine engine, String expr, String id, String programName) {
+  public static Program run(ScriptEngine engine, String expr, String id, String programName)
+      throws ScriptException {
     Program initialProgram = initProgram(expr, id, programName);
-    Program refinedProgram = refineProgram(engine, expr, initialProgram);
-    return refinedProgram;
+    return refineProgram(engine, expr, initialProgram);
   }
 }

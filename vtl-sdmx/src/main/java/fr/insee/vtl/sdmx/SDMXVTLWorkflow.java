@@ -99,8 +99,8 @@ public class SDMXVTLWorkflow {
     return String.join("\n\n", getTransformations().values());
   }
 
-  public Map<String, Dataset> getEmptyDatasets() {
-    return TrevasSDMXUtils.parseDataStructure(sdmxBeans).entrySet().stream()
+  public Map<String, Dataset> getMappedEmptyDatasets() {
+    return TrevasSDMXUtils.parseMappedDataStructure(sdmxBeans).entrySet().stream()
         .map(
             e ->
                 new AbstractMap.SimpleEntry<>(

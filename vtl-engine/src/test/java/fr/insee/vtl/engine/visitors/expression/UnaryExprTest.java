@@ -28,10 +28,10 @@ public class UnaryExprTest {
     ScriptContext context = engine.getContext();
     engine.eval("res := - cast(null, number);");
     assertThat(context.getAttribute("res")).isNull();
-    engine.eval("res := + cast(null, number);");
-    assertThat(context.getAttribute("res")).isNull();
-    engine.eval("res := not cast(null, boolean);");
-    assertThat(context.getAttribute("res")).isNull();
+    engine.eval("res1 := + cast(null, number);");
+    assertThat(context.getAttribute("res1")).isNull();
+    engine.eval("res2 := not cast(null, boolean);");
+    assertThat(context.getAttribute("res2")).isNull();
   }
 
   @Test
@@ -40,11 +40,11 @@ public class UnaryExprTest {
 
     engine.eval("plus := +1;");
     assertThat(context.getAttribute("plus")).isEqualTo(1L);
-    engine.eval("plus := + 1.5;");
-    assertThat(context.getAttribute("plus")).isEqualTo(1.5D);
+    engine.eval("plus1 := + 1.5;");
+    assertThat(context.getAttribute("plus1")).isEqualTo(1.5D);
 
-    context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := + ds[keep id, long1, double1];");
+    context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
+    Object res = engine.eval("res1 := + ds2[keep id, long1, double1];");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 150L, "double1", 1.1D),
@@ -52,13 +52,12 @@ public class UnaryExprTest {
             Map.of("id", "Franck", "long1", 100L, "double1", -1.21D));
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
-    engine.eval("plus := -1;");
-    assertThat(context.getAttribute("plus")).isEqualTo(-1L);
-    engine.eval("plus := - 1.5;");
-    assertThat(context.getAttribute("plus")).isEqualTo(-1.5D);
+    engine.eval("plus2 := -1;");
+    assertThat(context.getAttribute("plus2")).isEqualTo(-1L);
+    engine.eval("plus3 := - 1.5;");
+    assertThat(context.getAttribute("plus3")).isEqualTo(-1.5D);
 
-    context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    res = engine.eval("res := - ds[keep id, long1, double1];");
+    res = engine.eval("res2 := - ds2[keep id, long1, double1];");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", -150L, "double1", -1.1D),
@@ -68,7 +67,7 @@ public class UnaryExprTest {
 
     assertThatThrownBy(
             () -> {
-              engine.eval("plus := + \"ko\";");
+              engine.eval("plus4 := + \"ko\";");
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .hasMessage("function 'plus(String)' not found");

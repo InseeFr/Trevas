@@ -46,15 +46,15 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[filter age > 10 and age < 12];");
+    engine.eval("ds2 := ds1[filter age > 10 and age < 12];");
 
-    assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-    assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(engine.getContext().getAttribute("ds2")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("ds2")).getDataAsMap())
         .isEqualTo(List.of(Map.of("name", "Nico", "age", 11L, "weight", 10L)));
 
-    engine.eval("ds := ds1[filter age > 10 or age < 12];");
+    engine.eval("ds3 := ds1[filter age > 10 or age < 12];");
 
-    assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(((Dataset) engine.getContext().getAttribute("ds3")).getDataAsMap())
         .isEqualTo(
             List.of(
                 Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
@@ -137,19 +137,19 @@ public class ClauseVisitorTest {
             Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
 
     ScriptContext context = engine.getContext();
-    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[rename age to weight, weight to age, name to pseudo];");
+    engine.eval("ds1 := ds[rename age to weight, weight to age, name to pseudo];");
 
-    assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-    assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(engine.getContext().getAttribute("ds1")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("ds1")).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
             Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
             Map.of("pseudo", "Franck", "weight", 12L, "age", 9L));
 
     assertThatThrownBy(
-            () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
+            () -> engine.eval("ds2 := ds[rename age to weight, weight to age, name to age];"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage("duplicate column: age")
         .is(atPosition(0, 47, 58));
@@ -194,19 +194,19 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[keep name, age];");
+    engine.eval("ds2 := ds1[keep name, age];");
 
-    assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-    assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(engine.getContext().getAttribute("ds2")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("ds2")).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
             Map.of("name", "Franck", "age", 12L));
 
-    engine.eval("ds := ds1[drop weight];");
+    engine.eval("ds3 := ds1[drop weight];");
 
-    assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
-    assertThat(((Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(engine.getContext().getAttribute("ds3")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("ds3")).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
@@ -288,7 +288,7 @@ public class ClauseVisitorTest {
     assertThat(res.getDataStructure().get("country").getRole()).isEqualTo(Role.IDENTIFIER);
 
     engine.eval(
-        "res := ds1[aggr "
+        "res1 := ds1[aggr "
             + "sumAge := sum(age),"
             + "avgWeight := avg(age),"
             + "countVal := count(null),"
@@ -299,8 +299,8 @@ public class ClauseVisitorTest {
             + "medianAge := median(age),"
             + "medianWeight := median(weight)"
             + " group by country];");
-    assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
-    assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
+    assertThat(engine.getContext().getAttribute("res1")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("res1")).getDataAsMap())
         .containsExactly(
             Map.of(
                 "country",
@@ -375,7 +375,7 @@ public class ClauseVisitorTest {
     context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
 
     engine.eval(
-        "res := ds2[aggr "
+        "res2 := ds2[aggr "
             + "stddev_popAge := stddev_pop(age), "
             + "stddev_popWeight := stddev_pop(weight), "
             + "stddev_sampAge := stddev_samp(age), "
@@ -386,9 +386,9 @@ public class ClauseVisitorTest {
             + "var_sampWeight := var_samp(weight)"
             + " group by country];");
 
-    assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
+    assertThat(engine.getContext().getAttribute("res2")).isInstanceOf(Dataset.class);
 
-    var fr = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0);
+    var fr = ((Dataset) engine.getContext().getAttribute("res2")).getDataAsMap().get(0);
 
     assertThat((Double) fr.get("stddev_popAge")).isCloseTo(1.118, Percentage.withPercentage(2));
     assertThat((Double) fr.get("stddev_popWeight")).isCloseTo(3.640, Percentage.withPercentage(2));
@@ -399,7 +399,7 @@ public class ClauseVisitorTest {
     assertThat((Double) fr.get("var_sampAge")).isCloseTo(1.666, Percentage.withPercentage(2));
     assertThat((Double) fr.get("var_sampWeight")).isCloseTo(17.666, Percentage.withPercentage(2));
 
-    var no = ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(1);
+    var no = ((Dataset) engine.getContext().getAttribute("res2")).getDataAsMap().get(1);
 
     assertThat((Double) no.get("stddev_popAge")).isEqualTo(0.0);
     assertThat((Double) no.get("stddev_popWeight")).isEqualTo(0.0);

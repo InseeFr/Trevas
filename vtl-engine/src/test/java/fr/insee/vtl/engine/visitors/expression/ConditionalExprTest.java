@@ -63,12 +63,12 @@ public class ConditionalExprTest {
     ScriptContext context = engine.getContext();
     engine.eval("s := case when true then \"no\" else \"else\";");
     assertThat(context.getAttribute("s")).isEqualTo("no");
-    engine.eval("s := case when false then \"no\" else \"else\";");
-    assertThat(context.getAttribute("s")).isEqualTo("else");
-    engine.eval("s := case when false then \"no\" when true then \"yes\" else \"else\";");
-    assertThat(context.getAttribute("s")).isEqualTo("yes");
-    engine.eval("s := case when false then \"no\" when 1=2 then \"yes\" else \"else\";");
-    assertThat(context.getAttribute("s")).isEqualTo("else");
+    engine.eval("s1 := case when false then \"no\" else \"else\";");
+    assertThat(context.getAttribute("s1")).isEqualTo("else");
+    engine.eval("s2 := case when false then \"no\" when true then \"yes\" else \"else\";");
+    assertThat(context.getAttribute("s2")).isEqualTo("yes");
+    engine.eval("s3 := case when false then \"no\" when 1=2 then \"yes\" else \"else\";");
+    assertThat(context.getAttribute("s3")).isEqualTo("else");
 
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
@@ -84,20 +84,20 @@ public class ConditionalExprTest {
             Map.of("id", "Franck", "c", "ok"));
     assertThat(((Dataset) res).getDataStructure().get("c").getType()).isEqualTo(String.class);
     engine.eval(
-        "ds1 := ds_1[keep id, long1]; "
-            + "res1 <- ds1[calc c := case when long1 > 30 then 1 else 0][drop long1];");
-    Object res1 = engine.getContext().getAttribute("res1");
-    assertThat(((Dataset) res1).getDataAsMap())
+        "ds2 := ds_1[keep id, long1]; "
+            + "res2 <- ds2[calc c := case when long1 > 30 then 1 else 0][drop long1];");
+    Object res2 = engine.getContext().getAttribute("res2");
+    assertThat(((Dataset) res2).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "c", 0L),
             Map.of("id", "Hadrien", "c", 0L),
             Map.of("id", "Nico", "c", 0L),
             Map.of("id", "Franck", "c", 1L));
-    assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
+    assertThat(((Dataset) res2).getDataStructure().get("c").getType()).isEqualTo(Long.class);
     engine.eval(
-        "ds1 := ds_1[keep id, long1][rename long1 to bool_var];"
-            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; "
-            + "res_ds <- case when ds1 < 30 then ds1 else ds2;");
+        "ds3 := ds_1[keep id, long1][rename long1 to bool_var];"
+            + "ds4 := ds_2[keep id, long1][rename long1 to bool_var]; "
+            + "res_ds <- case when ds3 < 30 then ds3 else ds4;");
     Object res_ds = engine.getContext().getAttribute("res_ds");
     assertThat(((Dataset) res_ds).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -109,10 +109,10 @@ public class ConditionalExprTest {
   @Test
   public void testNvlExpr() throws ScriptException {
     ScriptContext context = engine.getContext();
-    engine.eval("s := nvl(\"toto\", \"default\");");
-    assertThat(context.getAttribute("s")).isEqualTo("toto");
-    engine.eval("s := nvl(cast(null, string), \"default\");");
-    assertThat(context.getAttribute("s")).isEqualTo("default");
+    engine.eval("s1 := nvl(\"toto\", \"default\");");
+    assertThat(context.getAttribute("s1")).isEqualTo("toto");
+    engine.eval("s2 := nvl(cast(null, string), \"default\");");
+    assertThat(context.getAttribute("s2")).isEqualTo("default");
 
     engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("res := nvl(ds[keep id, long1], 0);");
@@ -127,7 +127,7 @@ public class ConditionalExprTest {
 
     assertThatThrownBy(
             () -> {
-              engine.eval("s := nvl(3, \"toto\");");
+              engine.eval("s3 := nvl(3, \"toto\");");
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .hasMessage("function 'nvl(Long, String)' not found");
@@ -136,10 +136,10 @@ public class ConditionalExprTest {
   @Test
   public void testNvlImplicitCast() throws ScriptException {
     ScriptContext context = engine.getContext();
-    engine.eval("s := nvl(0, 1.1);");
-    assertThat(context.getAttribute("s")).isEqualTo(0D);
-    engine.eval("s := nvl(1.1, 0);");
-    assertThat(context.getAttribute("s")).isEqualTo(1.1D);
+    engine.eval("s1 := nvl(0, 1.1);");
+    assertThat(context.getAttribute("s1")).isEqualTo(0D);
+    engine.eval("s2 := nvl(1.1, 0);");
+    assertThat(context.getAttribute("s2")).isEqualTo(1.1D);
 
     engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("res := nvl(ds[keep id, long1], 0.1);");

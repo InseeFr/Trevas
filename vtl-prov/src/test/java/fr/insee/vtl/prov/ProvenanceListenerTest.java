@@ -1,10 +1,12 @@
 package fr.insee.vtl.prov;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
@@ -13,6 +15,7 @@ import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +35,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  public void simpleTest() {
+  public void simpleTest() throws ScriptException {
     String simpleScript =
         """
                         ds_sum := ds1 + ds2;
@@ -87,7 +90,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  public void testWithEmptyLines() {
+  public void testWithEmptyLines() throws ScriptException {
     String script =
         """
 
@@ -140,7 +143,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  void testValidation() {
+  void testValidation() throws ScriptException {
     String validationExpr =
         """
                               define datapoint ruleset test (variable sex) is
@@ -170,7 +173,7 @@ public class ProvenanceListenerTest {
   }
 
   @Test
-  void testJoin() {
+  void testJoin() throws ScriptException {
     String validationExpr =
         """
                               ds2 := ds1[rename sex to sex_old];
@@ -195,5 +198,31 @@ public class ProvenanceListenerTest {
     Program programWithBindings =
         ProvenanceListener.run(engine, validationExpr, "trevas-join-test", "Trevas join test");
     assertThat(programWithBindings.getProgramSteps()).hasSize(3);
+  }
+
+  @Test
+  void testScriptError() {
+    String failedExpr = "ds1 := ds1;";
+
+    Map<String, Class<?>> types = Map.of("id", String.class, "sex", String.class);
+    Map<String, Dataset.Role> roles =
+        Map.of("id", Dataset.Role.IDENTIFIER, "sex", Dataset.Role.MEASURE);
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("id", "1", "sex", "M"),
+                Map.of("id", "2", "sex", "F"),
+                Map.of("id", "3", "sex", "M")),
+            types,
+            roles);
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    assertThatThrownBy(
+            () -> {
+              ProvenanceListener.run(
+                  engine, failedExpr, "trevas-failed-test", "Trevas failed test");
+            })
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("Dataset ds1 has already been assigned");
   }
 }

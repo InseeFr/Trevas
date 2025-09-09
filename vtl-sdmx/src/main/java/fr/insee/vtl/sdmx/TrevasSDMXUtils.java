@@ -37,6 +37,13 @@ public class TrevasSDMXUtils {
         .collect(Collectors.toMap(Map.Entry::getKey, e -> convertStructure(e.getValue())));
   }
 
+  public static Map<String, Structured.DataStructure> parseMappedDataStructure(
+      SdmxBeans sdmxBeans) {
+    Map<String, DataStructureBean> mapping = vtlMapping(sdmxBeans);
+    return mapping.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> convertStructure(e.getValue())));
+  }
+
   private static Structured.DataStructure convertStructure(DataStructureBean sdmxStructure) {
     List<Component> components =
         sdmxStructure.getComponents().stream()
@@ -114,9 +121,7 @@ public class TrevasSDMXUtils {
     // Find the structure using the mapping.
     // mapping -> dataflow -> structure.
     List<IVtlMappingBean> mappings =
-        sdmxBeans.getVtlMappingSchemeBean().stream()
-            .flatMap(m -> m.getItems().stream())
-            .collect(Collectors.toList());
+        sdmxBeans.getVtlMappingSchemeBean().stream().flatMap(m -> m.getItems().stream()).toList();
     return mappings.stream()
         .collect(
             Collectors.toMap(

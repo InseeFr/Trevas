@@ -43,14 +43,13 @@ public class SDMXVTLWorkflowTest {
         "https://registry.sdmx.io/sdmx/v2/structure/transformationscheme/FR1/BPE_CENSUS/+/?format=sdmx-3.0&references=all";
     ReadableDataLocation rdl = new ReadableDataLocationTmp(url);
     SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
-    System.out.println(sdmxVtlWorkflow.getEmptyDatasets());
 
     System.out.println(sdmxVtlWorkflow.getTransformationsVTL());
 
     // Invalid step definition for:CHECK_MUNICIPALITY
     // - Caused by: fr.insee.vtl.engine.exceptions.UndefinedVariableException: undefined variable
     // UNIQUE_MUNICIPALITY
-    engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(sdmxVtlWorkflow.getEmptyDatasets());
+    engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(sdmxVtlWorkflow.getMappedEmptyDatasets());
     Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();
     assertThat(result).containsKeys("BPE_CENSUS_NUTS3_2021", "BPE_MUNICIPALITY", "BPE_NUTS3");
   }
@@ -59,7 +58,7 @@ public class SDMXVTLWorkflowTest {
   void testGetEmptyDataset() {
     ReadableDataLocation rdl = new ReadableDataLocationTmp("src/test/resources/DSD_BPE_CENSUS.xml");
     SDMXVTLWorkflow sdmxVtlWorkflow = new SDMXVTLWorkflow(engine, rdl, Map.of());
-    Map<String, Dataset> emptyDatasets = sdmxVtlWorkflow.getEmptyDatasets();
+    Map<String, Dataset> emptyDatasets = sdmxVtlWorkflow.getMappedEmptyDatasets();
 
     engine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(emptyDatasets);
     Map<String, PersistentDataset> result = sdmxVtlWorkflow.run();

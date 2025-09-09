@@ -150,7 +150,7 @@ public class AssignmentTest {
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
     assertThat(res.getDataStructure()).hasSize(2);
 
-    assertThatThrownBy(() -> engine.eval("res := ds#baaaddd;"))
+    assertThatThrownBy(() -> engine.eval("res1 := ds#baaaddd;"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage("column baaaddd not found in ds");
   }

@@ -28,50 +28,48 @@ public class NumericFunctionsTest {
   public void testNull() throws ScriptException {
     // Ceil
     engine.eval("a := ceil(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    assertThat(engine.getContext().getAttribute("a")).isNull();
     // Floor
-    engine.eval("a := floor(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("b := floor(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("b")).isNull();
     // Abs
-    engine.eval("a := abs(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("c := abs(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("c")).isNull();
     // Exp
-    engine.eval("a := exp(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("d := exp(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("d")).isNull();
     // Ln
-    engine.eval("a := ln(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("e := ln(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("e")).isNull();
     // Round
-    engine.eval("a := round(cast(null, number), 10);");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := round(10.55, cast(null, integer));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("f := round(cast(null, number), 10);");
+    assertThat(engine.getContext().getAttribute("f")).isNull();
     // Trunc
-    engine.eval("a := trunc(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("h := trunc(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("h")).isNull();
     // Sqrt
-    engine.eval("a := sqrt(cast(null, number));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
+    engine.eval("i := sqrt(cast(null, number));");
+    assertThat(engine.getContext().getAttribute("i")).isNull();
     // Mod
-    engine.eval("a := mod(cast(null, number), 10);");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := mod(10, cast(null, integer));");
-    assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    engine.eval("j := mod(cast(null, number), 10);");
+    assertThat(engine.getContext().getAttribute("j")).isNull();
+    engine.eval("k := mod(10, cast(null, integer));");
+    assertThat(engine.getContext().getAttribute("k")).isNull();
     // Power
-    engine.eval("a := power(cast(null, number), 10);");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := power(10, cast(null, integer));");
-    assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    engine.eval("l := power(cast(null, number), 10);");
+    assertThat(engine.getContext().getAttribute("l")).isNull();
+    engine.eval("m := power(10, cast(null, integer));");
+    assertThat(engine.getContext().getAttribute("m")).isNull();
     // Random
-    engine.eval("a := random(cast(null, integer), 10);");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := random(10, cast(null, integer));");
-    assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    engine.eval("n := random(cast(null, integer), 10);");
+    assertThat(engine.getContext().getAttribute("n")).isNull();
+    engine.eval("o := random(10, cast(null, integer));");
+    assertThat(engine.getContext().getAttribute("o")).isNull();
     // Log
-    engine.eval("a := log(cast(null, number), 10);");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := log(10, cast(null, integer));");
-    assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    engine.eval("p := log(cast(null, number), 10);");
+    assertThat(engine.getContext().getAttribute("p")).isNull();
+    engine.eval("q := log(10, cast(null, integer));");
+    assertThat(engine.getContext().getAttribute("q")).isNull();
   }
 
   @Test

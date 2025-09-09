@@ -18,12 +18,13 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SparkSQLTest {
 
-  private SparkSession spark;
+  private static SparkSession spark;
   private ScriptEngine engine;
   private File databaseFile;
 
@@ -65,6 +66,11 @@ public class SparkSQLTest {
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
     engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    if (spark != null) spark.close();
   }
 
   @Test

@@ -57,23 +57,24 @@ public class ProjectTest {
   public void testProjection() throws ScriptException {
 
     ScriptContext context = engine.getContext();
-    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[keep name, age];");
+    engine.eval("ds1 := ds[keep name, age];");
 
     assertThat(engine.getContext().getAttribute("ds"))
         .isInstanceOf(fr.insee.vtl.model.Dataset.class);
-    assertThat(((fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds")).getDataAsMap())
+    assertThat(
+            ((fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds1")).getDataAsMap())
         .containsExactly(
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
             Map.of("name", "Franck", "age", 12L));
 
-    engine.eval("ds := ds1[drop weight];");
+    engine.eval("ds2 := ds[drop weight];");
 
-    assertThat(engine.getContext().getAttribute("ds"))
+    assertThat(engine.getContext().getAttribute("ds2"))
         .isInstanceOf(fr.insee.vtl.model.Dataset.class);
-    var ds = (Dataset) engine.getContext().getAttribute("ds");
+    var ds = (Dataset) engine.getContext().getAttribute("ds2");
     assertThat(ds.getDataAsMap())
         .containsExactly(
             Map.of("name", "Hadrien", "age", 10L),
