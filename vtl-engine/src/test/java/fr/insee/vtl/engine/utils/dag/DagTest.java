@@ -1,14 +1,16 @@
 package fr.insee.vtl.engine.utils.dag;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.model.exceptions.VtlMultiErrorScriptException;
+import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.util.*;
 import java.util.stream.Stream;
@@ -98,6 +100,57 @@ public class DagTest {
     }
   }
 
+  private static Positioned.Position getPositionOfStatementInScript(
+      String statement, String script) {
+
+    int startOffset = script.indexOf(statement);
+    if (startOffset < 0) {
+      throw new IllegalArgumentException("Statement not found in script");
+    }
+    int endOffset = startOffset + statement.length(); // exclusive char index
+
+    // compute start line/column (0-based)
+    int startLine = 0;
+    int startColumn = 0;
+    for (int i = 0; i < startOffset; i++) {
+      char c = script.charAt(i);
+      if (c == '\r') {
+        // handle CRLF as single newline
+        if (i + 1 < script.length() && script.charAt(i + 1) == '\n') {
+          i++;
+        }
+        startLine++;
+        startColumn = 0;
+      } else if (c == '\n') {
+        startLine++;
+        startColumn = 0;
+      } else {
+        startColumn++;
+      }
+    }
+
+    // compute end line/column (0-based, endColumn is exclusive)
+    int endLine = startLine;
+    int endColumn = startColumn;
+    for (int i = startOffset; i < endOffset; i++) {
+      char c = script.charAt(i);
+      if (c == '\r') {
+        if (i + 1 < script.length() && script.charAt(i + 1) == '\n') {
+          i++;
+        }
+        endLine++;
+        endColumn = 0;
+      } else if (c == '\n') {
+        endLine++;
+        endColumn = 0;
+      } else {
+        endColumn++;
+      }
+    }
+
+    return new Positioned.Position(startLine, endLine, startColumn, endColumn);
+  }
+
   @BeforeEach
   void setUp() {
     engine = new ScriptEngineManager().getEngineByName("vtl");
@@ -139,32 +192,103 @@ public class DagTest {
   void testDagCycle() {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-    assertThatThrownBy(() -> engine.eval("e := a; b := a; c := b; a := c; f := a;"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessage(
-            "Cycle detected in Script. The following statements form 1 cycle(s): [a := c; b := a; c := b;]");
+
+    final String script =
+        """
+                            e := a;
+                            b := a;
+                            c := b;
+                            a := c;
+                            f := a;""";
+
+    final Positioned.Position mainPosition = getPositionOfStatementInScript("a := c", script);
+    final List<Positioned.Position> otherPositions =
+        List.of(
+            getPositionOfStatementInScript("b := a", script),
+            getPositionOfStatementInScript("c := b", script));
+
+    assertThatExceptionOfType(VtlMultiStatementScriptException.class)
+        .isThrownBy(() -> engine.eval(script))
+        .withMessage("assignment creates a cycle: [a <- c <- b <- a]")
+        .satisfies(
+            ex -> {
+              assertThat(ex.getPosition()).isEqualTo(mainPosition);
+              assertThat(ex.getOtherPositions())
+                  .containsExactlyInAnyOrderElementsOf(otherPositions);
+              assertThat(ex.getAllPositions())
+                  .containsExactlyInAnyOrderElementsOf(
+                      Stream.of(List.of(mainPosition), otherPositions)
+                          .flatMap(Collection::stream)
+                          .toList());
+            });
   }
 
   @Test
   void testMultipleCycles() {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-    assertThatThrownBy(
-            () -> engine.eval("e := a; b := a; c := b; a := c; f := a; h := g ;i := h ;g := i;"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessage(
-            "Cycle detected in Script. The following statements form 2 cycle(s): [g := i; h := g; i := h;] [a := c; b := a; c := b;]")
+
+    final String script =
+        """
+                            h := g;
+                            i := join(h, input_ds);
+                            g := i;
+                            e := a;
+                            b := a;
+                            c := b;
+                            a := c;
+                            f := a;""";
+
+    final Positioned.Position mainExceptionMainPosition =
+        getPositionOfStatementInScript("g := i", script);
+    final List<Positioned.Position> mainExceptionOtherPositions =
+        List.of(
+            getPositionOfStatementInScript("h := g", script),
+            getPositionOfStatementInScript("i := join(h, input_ds)", script));
+    final Positioned.Position otherCycleExceptionMainPosition =
+        getPositionOfStatementInScript("a := c", script);
+    final List<Positioned.Position> otherCycleExceptionOtherPositions =
+        List.of(
+            getPositionOfStatementInScript("b := a", script),
+            getPositionOfStatementInScript("c := b", script));
+    assertThatExceptionOfType(VtlMultiErrorScriptException.class)
+        .isThrownBy(() -> engine.eval(script))
+        .withMessage(
+            "fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException: assignment creates a cycle: [g <- i <- h <- g]")
         .satisfies(
             ex -> {
-              VtlScriptException vtlEx = (VtlScriptException) ex;
-              assertThat(vtlEx.getPositions())
-                  .hasSize(6)
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(8))
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(16))
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(24))
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(40))
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(48))
-                  .anySatisfy(stmt -> assertThat(stmt.startColumn).isEqualTo(56));
+              assertThat(ex.getPosition()).isEqualTo(mainExceptionMainPosition);
+              assertThat(ex.getAllPositions())
+                  .containsExactlyInAnyOrderElementsOf(
+                      Stream.of(
+                              List.of(mainExceptionMainPosition, otherCycleExceptionMainPosition),
+                              mainExceptionOtherPositions,
+                              otherCycleExceptionOtherPositions)
+                          .flatMap(Collection::stream)
+                          .toList());
+
+              Throwable cause = ex.getCause();
+              assertThat(cause).isInstanceOf(VtlMultiStatementScriptException.class);
+
+              VtlMultiStatementScriptException vtlCause = (VtlMultiStatementScriptException) cause;
+
+              assertThat(vtlCause.getOtherPositions())
+                  .containsExactlyInAnyOrderElementsOf(mainExceptionOtherPositions);
+
+              // Other cycle
+              Collection<? extends VtlScriptException> otherCycleExs = ex.getOtherExceptions();
+              assertThat(otherCycleExs).size().isEqualTo(1);
+
+              assertThat((VtlMultiStatementScriptException) otherCycleExs.iterator().next())
+                  .hasMessage("assignment creates a cycle: [a <- c <- b <- a]")
+                  .satisfies(
+                      otherCycleEx -> {
+                        assertThat(otherCycleEx.getPosition())
+                            .isEqualTo(otherCycleExceptionMainPosition);
+
+                        assertThat(otherCycleEx.getOtherPositions())
+                            .containsExactlyInAnyOrderElementsOf(otherCycleExceptionOtherPositions);
+                      });
             });
   }
 
@@ -189,8 +313,8 @@ public class DagTest {
         assertThrows(VtlScriptException.class, () -> engine.eval("ds1 := ds; ds1 <- ds;"));
     assertThat(exception).isInstanceOf(VtlScriptException.class);
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
-    assertThat(exception.getPositions().get(0).startLine).isZero();
-    assertThat(exception.getPositions().get(0).startColumn).isEqualTo(11);
+    assertThat(exception.getPosition().startLine()).isZero();
+    assertThat(exception.getPosition().startColumn()).isEqualTo(11);
   }
 
   @ParameterizedTest

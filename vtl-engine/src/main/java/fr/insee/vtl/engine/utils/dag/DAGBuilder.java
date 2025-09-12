@@ -1,14 +1,12 @@
 package fr.insee.vtl.engine.utils.dag;
 
-import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.model.exceptions.VtlMultiErrorScriptException;
+import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector;
 import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
@@ -56,6 +54,12 @@ public class DAGBuilder {
     return stmt2.consumes().contains(produced);
   }
 
+  /**
+   * Sorts the DAGStatements according to the topological dependency order
+   *
+   * @return DAGStatements sorted according to the topological dependency order
+   * @throws VtlScriptException when the script contains a cycle
+   */
   public List<DAGStatement> topologicalSortedStatements() throws VtlScriptException {
     Optional<VtlScriptException> cycleError = checkForCycles();
     if (cycleError.isPresent()) {
@@ -78,47 +82,80 @@ public class DAGBuilder {
       return Optional.empty();
     }
 
-    String cyclesDescription =
+    return Optional.of(buildVTLScriptExceptionForCycles(cycles));
+  }
+
+  private VtlScriptException buildVTLScriptExceptionForCycles(List<Set<DAGStatement>> cycles) {
+    List<VtlMultiStatementScriptException> cycleExceptions =
         cycles.stream()
             .map(
                 cycle ->
-                    cycle.stream()
-                        .map(
-                            statement ->
-                                parseTreeToText(startContext.getChild(statement.unsortedIndex()))
-                                    .trim())
-                        .collect(Collectors.joining("; ", "[", ";]")))
-            .collect(Collectors.joining(" "));
+                    DAGStatement.buildMultiStatementExceptionUsingTheLastDAGStatementAsMainPosition(
+                        "assignment creates a cycle: " + buildAssignmentChain(cycle),
+                        cycle,
+                        startContext))
+            .toList();
 
-    return Optional.of(
-        new VtlScriptException(
-            "Cycle detected in Script. The following statements form "
-                + cycles.size()
-                + " cycle(s): "
-                + cyclesDescription,
-            cycles.stream()
-                .flatMap(Collection::stream)
-                .map(statement -> startContext.getChild(statement.unsortedIndex()))
-                .map(VtlScriptEngine::fromContext)
-                .collect(Collectors.toSet())));
+    return VtlMultiErrorScriptException.usingTheFirstMainPositionExceptionAsCause(cycleExceptions);
+  }
+
+  private String buildAssignmentChain(Set<DAGStatement> cycle) {
+    // Collect all produced variable names in this cycle
+    Set<String> producedVars =
+        cycle.stream().map(DAGStatement::produces).collect(Collectors.toSet());
+
+    // Pick a stable start
+    String startVar =
+        producedVars.stream()
+            .sorted()
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Cycle contains out of at least two statements"));
+
+    StringBuilder sb = new StringBuilder();
+    String current = startVar;
+
+    do {
+      sb.append(current).append(" <- ");
+
+      // Find the unique statement that produces 'current'
+      String finalCurrent = current;
+      DAGStatement producer =
+          cycle.stream()
+              .filter(stmt -> stmt.produces().equals(finalCurrent))
+              .reduce(
+                  (a, b) -> {
+                    throw new AssertionError(
+                        "Multiple producers of "
+                            + finalCurrent
+                            + " cannot occur here, this is already validated before");
+                  })
+              .orElseThrow(
+                  () ->
+                      new AssertionError(
+                          "A cycle is always closed, there must be a consumer for  "
+                              + finalCurrent));
+
+      // Choose the next consumed variable that stays inside the cycle
+      current =
+          producer.consumes().stream()
+              .filter(producedVars::contains)
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      new AssertionError(
+                          "Broken cycle at "
+                              + finalCurrent
+                              + ": no consumed var stays inside cycle"));
+    } while (!current.equals(startVar));
+
+    // close the loop
+    sb.append(startVar);
+    return "[" + sb + "]";
   }
 
   private boolean hasSelfLoop(Set<DAGStatement> set) {
     if (set.size() != 1) return false;
     DAGStatement v = set.iterator().next();
     return graph.containsEdge(v, v);
-  }
-
-  private String parseTreeToText(ParseTree child) {
-    StringBuilder result = new StringBuilder();
-    if (child instanceof TerminalNode) {
-      result.append(child.getText());
-      result.append(" ");
-    } else if (child instanceof RuleNode && child.getChildCount() != 0) {
-      for (int i = 0; i < child.getChildCount(); ++i) {
-        result.append(parseTreeToText(child.getChild(i)));
-      }
-    }
-    return result.toString();
   }
 }

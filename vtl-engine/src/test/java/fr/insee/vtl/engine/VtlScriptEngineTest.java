@@ -2,7 +2,6 @@ package fr.insee.vtl.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.hervian.reflection.Fun;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
@@ -37,13 +36,11 @@ public class VtlScriptEngineTest {
     return new Condition<>(
         throwable -> {
           var scriptException = (VtlScriptException) throwable;
-          var positions = scriptException.getPositions();
-          assertEquals(1, positions.size());
-          var position = positions.get(0);
-          return position.startLine.equals(startLine)
-              && position.endLine.equals(endLine)
-              && position.startColumn.equals(startColumn)
-              && position.endColumn.equals(endColumn);
+          var position = scriptException.getPosition();
+          return position.startLine().equals(startLine)
+              && position.endLine().equals(endLine)
+              && position.startColumn().equals(startColumn)
+              && position.endColumn().equals(endColumn);
         },
         "at position <%d:%d-%d:%d>",
         startLine,

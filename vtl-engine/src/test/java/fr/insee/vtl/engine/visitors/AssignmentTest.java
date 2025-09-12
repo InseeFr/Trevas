@@ -46,21 +46,17 @@ public class AssignmentTest {
   }
 
   @Test
-  public void testMultipleAssignments() throws ScriptException {
+  public void testMultipleAssignments() {
     Dataset ds = new InMemoryDataset(List.of());
     ScriptContext context = engine.getContext();
     context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
 
     VtlScriptException exception =
-        assertThrows(
-            VtlScriptException.class,
-            () -> {
-              engine.eval("ds1 := ds; ds1 <- ds;");
-            });
+        assertThrows(VtlScriptException.class, () -> engine.eval("ds1 := ds; ds1 <- ds;"));
     assertThat(exception).isInstanceOf(VtlScriptException.class);
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
-    assertThat(exception.getPositions().get(0).startLine).isEqualTo(0);
-    assertThat(exception.getPositions().get(0).startColumn).isEqualTo(11);
+    assertThat(exception.getPosition().startLine()).isEqualTo(0);
+    assertThat(exception.getPosition().startColumn()).isEqualTo(11);
   }
 
   @Test

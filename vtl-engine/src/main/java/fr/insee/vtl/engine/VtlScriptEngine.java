@@ -244,9 +244,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         throw first;
       }
 
+      VtlSyntaxPreprocessor syntaxPreprocessor = new VtlSyntaxPreprocessor(start);
+
       if (isUseDag()) {
         // Reorder Script code
-        start = DAGScriptReordering.reorderScript(start);
+        start = syntaxPreprocessor.checkForMultipleAssignmentsAndReorderScript();
+      } else {
+        syntaxPreprocessor.checkForMultipleAssignments();
       }
 
       AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, getProcessingEngine());
