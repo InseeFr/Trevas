@@ -244,7 +244,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         throw first;
       }
 
-      VtlSyntaxPreprocessor syntaxPreprocessor = new VtlSyntaxPreprocessor(start);
+      VtlSyntaxPreprocessor syntaxPreprocessor =
+          new VtlSyntaxPreprocessor(
+              start, context.getBindings(ScriptContext.ENGINE_SCOPE).keySet());
 
       if (isUseDag()) {
         // Reorder Script code

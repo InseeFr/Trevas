@@ -9,6 +9,7 @@ import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.HierarchicalRuleset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.util.List;
 import javax.script.*;
@@ -57,6 +58,44 @@ public class AssignmentTest {
     assertThat(exception.getMessage()).isEqualTo("Dataset ds1 has already been assigned");
     assertThat(exception.getPosition().startLine()).isEqualTo(0);
     assertThat(exception.getPosition().startColumn()).isEqualTo(11);
+  }
+
+  @Test
+  public void testAssignmentOfBinding() {
+    Dataset ds = new InMemoryDataset(List.of());
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    VtlScriptException exceptionNonPersistent =
+        assertThrows(VtlScriptException.class, () -> engine.eval("ds := ds;"));
+    assertThat(exceptionNonPersistent.getMessage())
+        .isEqualTo("Dataset ds is part of the bindings and therefore cannot be assigned");
+    assertThat(exceptionNonPersistent.getPosition().startLine()).isEqualTo(0);
+    assertThat(exceptionNonPersistent.getPosition().startColumn()).isEqualTo(0);
+    assertThat(exceptionNonPersistent.getPosition().endColumn()).isEqualTo(8);
+
+    VtlScriptException exceptionPersistent =
+        assertThrows(VtlScriptException.class, () -> engine.eval("ds <- ds;"));
+    assertThat(exceptionPersistent.getMessage())
+        .isEqualTo("Dataset ds is part of the bindings and therefore cannot be assigned");
+    assertThat(exceptionPersistent.getPosition().startLine()).isEqualTo(0);
+    assertThat(exceptionPersistent.getPosition().startColumn()).isEqualTo(0);
+    assertThat(exceptionPersistent.getPosition().endColumn()).isEqualTo(8);
+
+    VtlMultiStatementScriptException exceptionMulti =
+        assertThrows(
+            VtlMultiStatementScriptException.class, () -> engine.eval("ds <- ds; ds := ds;"));
+    assertThat(exceptionMulti.getMessage())
+        .isEqualTo(
+            "Dataset ds has already been assigned and is part of the bindings and therefore cannot be assigned");
+    assertThat(exceptionMulti.getPosition().startLine()).isEqualTo(0);
+    assertThat(exceptionMulti.getPosition().startColumn()).isEqualTo(10);
+    assertThat(exceptionMulti.getPosition().endColumn()).isEqualTo(18);
+
+    assertThat(exceptionMulti.getOtherPositions().size()).isEqualTo(1);
+    assertThat(exceptionMulti.getOtherPositions().get(0).startLine()).isEqualTo(0);
+    assertThat(exceptionMulti.getOtherPositions().get(0).startColumn()).isEqualTo(0);
+    assertThat(exceptionMulti.getOtherPositions().get(0).endColumn()).isEqualTo(8);
   }
 
   @Test

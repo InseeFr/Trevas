@@ -190,9 +190,6 @@ public class DagTest {
 
   @Test
   void testDagCycle() {
-    ScriptContext context = engine.getContext();
-    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-
     final String script =
         """
                             e := a;
@@ -225,9 +222,6 @@ public class DagTest {
 
   @Test
   void testMultipleCycles() {
-    ScriptContext context = engine.getContext();
-    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-
     final String script =
         """
                             h := g;
@@ -461,19 +455,19 @@ public class DagTest {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "res <- ds1[calc c := case when long1 > 30 then \"ok\" else \"ko\"][drop long1]; "
-            + "ds1 := ds_1[keep id, long1];");
-    Object res = engine.getContext().getAttribute("res");
-    assertThat(((Dataset) res).getDataAsMap())
+        "res0 <- tmp0[calc c := case when long1 > 30 then \"ok\" else \"ko\"][drop long1]; "
+            + "tmp0 := ds_1[keep id, long1];");
+    Object res0 = engine.getContext().getAttribute("res0");
+    assertThat(((Dataset) res0).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "c", "ko"),
             Map.of("id", "Hadrien", "c", "ko"),
             Map.of("id", "Nico", "c", "ko"),
             Map.of("id", "Franck", "c", "ok"));
-    assertThat(((Dataset) res).getDataStructure().get("c").getType()).isEqualTo(String.class);
+    assertThat(((Dataset) res0).getDataStructure().get("c").getType()).isEqualTo(String.class);
     engine.eval(
-        "res1 <- ds1[calc c := case when long1 > 30 then 1 else 0][drop long1]; "
-            + "ds1 := ds_1[keep id, long1];");
+        "res1 <- tmp1[calc c := case when long1 > 30 then 1 else 0][drop long1]; "
+            + "tmp1 := ds_1[keep id, long1];");
     Object res1 = engine.getContext().getAttribute("res1");
     assertThat(((Dataset) res1).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -483,10 +477,10 @@ public class DagTest {
             Map.of("id", "Franck", "c", 1L));
     assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
     engine.eval(
-        "ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
-            + "res_ds <- case when ds1 < 30 then ds1 else ds2; "
-            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var];");
-    Object resDs = engine.getContext().getAttribute("res_ds");
+        "tmp2_alt_ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
+            + "res2 <- case when tmp2_alt_ds1 < 30 then tmp2_alt_ds1 else tmp2_alt_ds2; "
+            + "tmp2_alt_ds2 := ds_2[keep id, long1][rename long1 to bool_var];");
+    Object resDs = engine.getContext().getAttribute("res2");
     assertThat(((Dataset) resDs).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "bool_var", 10L),
@@ -527,7 +521,7 @@ public class DagTest {
     ScriptContext context = engine.getContext();
 
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := + tmp2[keep id, long1, double1]; tmp2 <- ds2;");
+    Object res = engine.eval("res := + tmp1[keep id, long1, double1]; tmp1 <- ds2;");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 150L, "double1", 1.1D),
@@ -536,8 +530,8 @@ public class DagTest {
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    res = engine.eval("res := - tmp2[keep id, long1, double1]; tmp2 := ds2;");
-    assertThat(((Dataset) res).getDataAsMap())
+    Object res2 = engine.eval("res2 := - tmp2[keep id, long1, double1]; tmp2 := ds2;");
+    assertThat(((Dataset) res2).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", -150L, "double1", -1.1D),
             Map.of("id", "Nico", "long1", -20L, "double1", -2.2D),

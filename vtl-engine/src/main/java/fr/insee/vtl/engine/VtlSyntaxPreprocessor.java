@@ -4,11 +4,11 @@ import fr.insee.vtl.engine.utils.dag.DAGBuilder;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.engine.visitors.DAGBuildingVisitor;
 import fr.insee.vtl.model.exceptions.VtlMultiErrorScriptException;
-import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
@@ -18,10 +18,12 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public class VtlSyntaxPreprocessor {
 
   private final VtlParser.StartContext startContext;
+  private final Set<String> bindingVarIds;
   private final List<DAGStatement> unsortedStatements;
 
-  public VtlSyntaxPreprocessor(VtlParser.StartContext startContext) {
+  public VtlSyntaxPreprocessor(VtlParser.StartContext startContext, Set<String> bindingVarIds) {
     this.startContext = startContext;
+    this.bindingVarIds = bindingVarIds;
     DAGBuildingVisitor visitor = new DAGBuildingVisitor();
     this.unsortedStatements = visitor.visit(startContext);
   }
@@ -67,23 +69,52 @@ public class VtlSyntaxPreprocessor {
    * @throws VtlScriptException when variables are assigned multiple times.
    */
   public void checkForMultipleAssignments() throws VtlScriptException {
+    List<DAGStatement> bindingPseudoStatements =
+        bindingVarIds.stream()
+            .map(
+                bindingVar ->
+                    new DAGStatement(DAGStatement.PSEUDO_BINDING_POSITION, bindingVar, Set.of()))
+            .toList();
     Map<String, List<DAGStatement>> groupedByProducedVar =
-        unsortedStatements.stream().collect(Collectors.groupingBy(DAGStatement::produces));
+        Stream.concat(bindingPseudoStatements.stream(), unsortedStatements.stream())
+            .collect(Collectors.groupingBy(DAGStatement::produces));
 
-    List<VtlMultiStatementScriptException> multiProducedExceptions =
+    List<VtlScriptException> multiProducedExceptions =
         groupedByProducedVar.entrySet().stream()
             .filter(produced -> produced.getValue().size() > 1)
             .map(
                 multiProduced ->
-                    DAGStatement.buildMultiStatementExceptionUsingTheLastDAGStatementAsMainPosition(
-                        "Dataset " + multiProduced.getKey() + " has already been assigned",
-                        multiProduced.getValue(),
-                        startContext))
+                    buildScriptExceptionFromMultipleAssignment(
+                        multiProduced.getKey(), multiProduced.getValue()))
             .toList();
 
     if (!multiProducedExceptions.isEmpty()) {
       throw VtlMultiErrorScriptException.usingTheFirstMainPositionExceptionAsCause(
           multiProducedExceptions);
     }
+  }
+
+  private VtlScriptException buildScriptExceptionFromMultipleAssignment(
+      String varId, List<DAGStatement> statements) {
+    final List<DAGStatement> statementsWithoutBinding =
+        statements.stream()
+            .filter(statement -> statement.unsortedIndex() != DAGStatement.PSEUDO_BINDING_POSITION)
+            .toList();
+
+    if (statementsWithoutBinding.size() == 1) {
+      return new VtlScriptException(
+          "Dataset " + varId + " is part of the bindings and therefore cannot be assigned",
+          statementsWithoutBinding.get(0).getPosition(startContext));
+    }
+
+    return DAGStatement.buildMultiStatementExceptionUsingTheLastDAGStatementAsMainPosition(
+        "Dataset "
+            + varId
+            + " has already been assigned"
+            + (statements.size() == statementsWithoutBinding.size()
+                ? ""
+                : " and is part of the bindings and therefore cannot be assigned"),
+        statementsWithoutBinding,
+        startContext);
   }
 }

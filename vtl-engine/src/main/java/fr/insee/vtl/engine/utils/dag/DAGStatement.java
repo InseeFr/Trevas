@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
  */
 public record DAGStatement(int unsortedIndex, String produces, Set<String> consumes) {
 
+  public static int PSEUDO_BINDING_POSITION = Integer.MIN_VALUE;
+
   public static VtlMultiStatementScriptException
       buildMultiStatementExceptionUsingTheLastDAGStatementAsMainPosition(
           final String message,
