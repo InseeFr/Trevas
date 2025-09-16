@@ -35,10 +35,10 @@ So even though we wrote (i) before (ii), the engine reorders them automatically,
 
 ### Activate reordering
 
-The current behavior of Trevas is that statement reordering is **deactivated per default**.
-Statement reordering can be activated via the following config flag ("$vtl.engine.use_dag")
+The current behavior of Trevas is that statement reordering is **activated per default**, as this is the behavior required by the VTL standard.
+Statement reordering can be **deactivated** via the following config flag ("$vtl.engine.use_dag")
 
 ```java
 ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
-engine.put("$vtl.engine.use_dag", "true");
+engine.put("$vtl.engine.use_dag", "false");
 ```

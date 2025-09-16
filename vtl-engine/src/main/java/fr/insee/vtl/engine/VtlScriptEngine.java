@@ -169,7 +169,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    */
   public boolean isUseDag() {
     Object useDag = get(USE_DAG);
-    return useDag != null && "true".equalsIgnoreCase(useDag.toString());
+    return useDag == null || "true".equalsIgnoreCase(useDag.toString());
   }
 
   /**

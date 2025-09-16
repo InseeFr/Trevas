@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -15,7 +16,6 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.util.*;
 import java.util.stream.Stream;
 import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +69,7 @@ public class DagTest {
               new Structured.Component("id2", Long.class, Dataset.Role.IDENTIFIER),
               new Structured.Component("m2", Long.class, Dataset.Role.MEASURE)));
 
-  private ScriptEngine engine;
+  private VtlScriptEngine engine;
 
   public static Stream<Arguments> shuffledListSource() {
     return permutations(List.of("b := a", "c := b", "d := c", "e := d + c"))
@@ -153,21 +153,28 @@ public class DagTest {
 
   @BeforeEach
   void setUp() {
-    engine = new ScriptEngineManager().getEngineByName("vtl");
-    engine.put(VTL_ENGINE_USE_DAG, "true");
+    engine = (VtlScriptEngine) new ScriptEngineManager().getEngineByName("vtl");
   }
 
   @Test
   void testNoDagConfig() {
-    VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
     engine.put(VTL_ENGINE_USE_DAG, "false");
-    assertThat(vtlScriptEngine.isUseDag()).isFalse();
+    assertThat(engine.isUseDag()).isFalse();
   }
 
   @Test
   void testUseDagConfig() {
-    VtlScriptEngine vtlScriptEngine = (VtlScriptEngine) engine;
-    assertThat(vtlScriptEngine.isUseDag()).isTrue();
+    assertThat(engine.isUseDag()).isTrue();
+  }
+
+  @Test
+  void testNoReorderingWhenDAGDeactivated() {
+    engine.put(VTL_ENGINE_USE_DAG, "false");
+    ScriptContext context = engine.getContext();
+    context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
+    assertThatExceptionOfType(UndefinedVariableException.class)
+        .isThrownBy(() -> engine.eval("b := a; d := c; c := b;"))
+        .withMessage("undefined variable c");
   }
 
   @Test
