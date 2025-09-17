@@ -136,7 +136,8 @@ public class JoinFunctionsTest {
                 ds_1 := ds_1[calc measure Id_2 := Id_2];
                 result := left_join(ds_1, ds_2 using Id_2);\
                 """))
-        .isInstanceOf(InvalidArgumentException.class);
+        .isInstanceOf(InvalidArgumentException.class)
+        .hasMessageContaining("CALC cannot overwrite IDENTIFIER");
   }
 
   @Test

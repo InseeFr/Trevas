@@ -107,235 +107,205 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
   @Override
   public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
 
-    // Error reporting context
-    final int line = ctx.getStart().getLine();
-    final int charPosition = ctx.getStart().getCharPositionInLine();
-    final String statement = ctx.getText();
+    // The type of the op can either be KEEP or DROP.
+    final boolean keep = ctx.op.getType() == VtlParser.KEEP;
 
-    try {
-      // Why is this variable set to 'KEEP'? Where is it suppose to be called the drop function?
-      final boolean keep = ctx.op.getType() == VtlParser.KEEP;
+    // Columns explicitly requested in the KEEP/DROP clause
+    final Set<String> requestedNames =
+        ctx.componentID().stream()
+            .map(ClauseVisitor::getName)
+            .collect(Collectors.toCollection(LinkedHashSet::new)); // preserve user order
 
-      // Columns explicitly requested in the KEEP/DROP clause
-      final Set<String> requestedNames =
-          ctx.componentID().stream()
-              .map(ClauseVisitor::getName)
-              .collect(Collectors.toCollection(LinkedHashSet::new)); // preserve user order
+    // All available dataset components (ordered as in DataStructure)
+    final List<Dataset.Component> componentsInOrder =
+        new ArrayList<>(datasetExpression.getDataStructure().values());
+    final List<String> allColumnsInOrder =
+        componentsInOrder.stream().map(Dataset.Component::getName).collect(Collectors.toList());
+    final Set<String> availableColumns = new LinkedHashSet<>(allColumnsInOrder);
 
-      // All available dataset components (ordered as in DataStructure)
-      final List<Dataset.Component> componentsInOrder =
-          new ArrayList<>(datasetExpression.getDataStructure().values());
-      final List<String> allColumnsInOrder =
-          componentsInOrder.stream().map(Dataset.Component::getName).collect(Collectors.toList());
-      final Set<String> availableColumns = new LinkedHashSet<>(allColumnsInOrder);
+    // Dataset identifiers (role = IDENTIFIER)
+    final Map<String, Dataset.Component> identifiers =
+        componentsInOrder.stream()
+            .filter(c -> c.getRole() == Dataset.Role.IDENTIFIER)
+            .collect(
+                Collectors.toMap(
+                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
 
-      // Dataset identifiers (role = IDENTIFIER)
-      final Map<String, Dataset.Component> identifiers =
-          componentsInOrder.stream()
-              .filter(c -> c.getRole() == Dataset.Role.IDENTIFIER)
-              .collect(
-                  Collectors.toMap(
-                      Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
-
-      // Evaluate that all requested columns must exist in the dataset or raise an error
-      for (String requested : requestedNames) {
-        if (!availableColumns.contains(requested)) {
-          String errorMsg =
-              String.format(
-                  "Error: column '%s' not found in dataset. Line %d, position %d. Statement: [%s]",
-                  requested, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
+    // Evaluate that all requested columns must exist in the dataset or raise an error
+    for (String requested : requestedNames) {
+      if (!availableColumns.contains(requested)) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                String.format(
+                    "'%s' not found in dataset. Line %d, Statement: [%s]",
+                    requested, ctx.getStart().getLine(), ctx.getText()),
+                fromContext(ctx)));
       }
-
-      // VTL specification: identifiers must not appear explicitly in KEEP
-      final Set<String> forbidden =
-          requestedNames.stream()
-              .filter(identifiers::containsKey)
-              .collect(Collectors.toCollection(LinkedHashSet::new));
-
-      if (!forbidden.isEmpty()) {
-        StringBuilder details = new StringBuilder();
-        for (String id : forbidden) {
-          Dataset.Component comp = identifiers.get(id);
-          details.append(
-              String.format(
-                  "%s(role=%s, type=%s) ",
-                  id, comp.getRole(), comp.getType() != null ? comp.getType() : "n/a"));
-        }
-
-        String errorMsg =
-            String.format(
-                "Error: identifiers %s must not be explicitly listed in KEEP/DROP. Line %d, position %d. Statement: [%s]. Details: %s",
-                forbidden, line, charPosition, statement, details.toString().trim());
-        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-      }
-
-      // Build result set:
-      //  + KEEP: identifiers + requested columns
-      //  + DROP: (all columns - requested) + identifiers
-      final Set<String> resultSet = new LinkedHashSet<>();
-      if (keep) {
-        resultSet.addAll(identifiers.keySet());
-        resultSet.addAll(requestedNames);
-      } else {
-        for (String col : allColumnsInOrder) {
-          if (!requestedNames.contains(col)) {
-            resultSet.add(col);
-          }
-        }
-        // Ensure identifiers are always present
-        resultSet.addAll(identifiers.keySet());
-      }
-
-      // Materialize result respecting dataset structure order
-      final List<String> columnNames =
-          allColumnsInOrder.stream().filter(resultSet::contains).collect(Collectors.toList());
-
-      return processingEngine.executeProject(datasetExpression, columnNames);
-
-    } catch (VtlRuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      String errorMsg =
-          String.format(
-              "Unexpected error while processing KEEP/DROP clause at line %d, position %d. Statement: [%s]. Cause: %s",
-              line, charPosition, statement, e.getMessage());
-      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
+
+    // VTL specification: identifiers must not appear explicitly in KEEP
+    final Set<String> forbidden =
+        requestedNames.stream()
+            .filter(identifiers::containsKey)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    if (!forbidden.isEmpty()) {
+      StringBuilder details = new StringBuilder();
+      for (String id : forbidden) {
+        Dataset.Component comp = identifiers.get(id);
+        details.append(
+            String.format(
+                "%s(role=%s, type=%s) ",
+                id, comp.getRole(), comp.getType() != null ? comp.getType() : "n/a"));
+      }
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              String.format(
+                  "identifiers %s must not be explicitly listed in KEEP/DROP. Details: %s . Line %d, Statement: [%s]",
+                  forbidden, details.toString().trim(), ctx.getStart().getLine(), ctx.getText()),
+              fromContext(ctx)));
+    }
+
+    // Build result set:
+    //  + KEEP: identifiers + requested columns
+    //  + DROP: (all columns - requested) + identifiers
+    final Set<String> resultSet = new LinkedHashSet<>();
+    if (keep) {
+      resultSet.addAll(identifiers.keySet());
+      resultSet.addAll(requestedNames);
+    } else {
+      for (String col : allColumnsInOrder) {
+        if (!requestedNames.contains(col)) {
+          resultSet.add(col);
+        }
+      }
+      // Ensure identifiers are always present
+      resultSet.addAll(identifiers.keySet());
+    }
+
+    // Materialize result respecting dataset structure order
+    final List<String> columnNames =
+        allColumnsInOrder.stream().filter(resultSet::contains).collect(Collectors.toList());
+    return processingEngine.executeProject(datasetExpression, columnNames);
   }
 
   @Override
   public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
-    // Error reporting context
-    final int line = ctx.getStart().getLine();
-    final int charPosition = ctx.getStart().getCharPositionInLine();
-    final String statement = ctx.getText();
+    // Dataset structure (ordered) and quick lookups
+    final List<Dataset.Component> componentsInOrder =
+        new ArrayList<>(datasetExpression.getDataStructure().values());
 
-    try {
+    final Map<String, Dataset.Component> byName =
+        componentsInOrder.stream()
+            .collect(
+                Collectors.toMap(
+                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
 
-      // Dataset structure (ordered) and quick lookups
-      final List<Dataset.Component> componentsInOrder =
-          new ArrayList<>(datasetExpression.getDataStructure().values());
+    // Accumulators for non-analytic calc items
+    final LinkedHashMap<String, ResolvableExpression> expressions = new LinkedHashMap<>();
+    final LinkedHashMap<String, String> expressionStrings = new LinkedHashMap<>();
+    final LinkedHashMap<String, Dataset.Role> roles = new LinkedHashMap<>();
 
-      final Map<String, Dataset.Component> byName =
-          componentsInOrder.stream()
-              .collect(
-                  Collectors.toMap(
-                      Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
+    // Tracks duplicates in the same clause (target names)
+    final Set<String> targetsSeen = new LinkedHashSet<>();
 
-      // Accumulators for non-analytic calc items
-      final LinkedHashMap<String, ResolvableExpression> expressions = new LinkedHashMap<>();
-      final LinkedHashMap<String, String> expressionStrings = new LinkedHashMap<>();
-      final LinkedHashMap<String, Dataset.Role> roles = new LinkedHashMap<>();
+    // We need a rolling dataset expression to chain analytics items
+    DatasetExpression currentDatasetExpression = datasetExpression;
 
-      // Tracks duplicates in the same clause (target names)
-      final Set<String> targetsSeen = new LinkedHashSet<>();
+    // TODO: Refactor so we call executeCalc per CalcClauseItemContext (as analytics do).
+    for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
 
-      // We need a rolling dataset expression to chain analytics items
-      DatasetExpression currentDatasetExpression = datasetExpression;
+      // ----  Resolve target name and desired role ----
+      final String columnName = getName(calcCtx.componentID());
+      final Dataset.Role columnRole =
+          (calcCtx.componentRole() == null)
+              ? Dataset.Role.MEASURE
+              : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
 
-      // TODO: Refactor so we call executeCalc per CalcClauseItemContext (as analytics do).
-      for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
+      // ---- Validate: duplicate target in the same clause ----
+      if (!targetsSeen.add(columnName)) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                String.format(
+                    "duplicate target '%s' in CALC clause. Line %d, Statement: [%s]",
+                    columnName, ctx.getStart().getLine(), ctx.getText()),
+                fromContext(ctx)));
+      }
 
-        // ----  Resolve target name and desired role ----
-        final String columnName = getName(calcCtx.componentID());
-        final Dataset.Role columnRole =
-            (calcCtx.componentRole() == null)
-                ? Dataset.Role.MEASURE
-                : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
-
-        // ---- Validate: duplicate target in the same clause ----
-        if (!targetsSeen.add(columnName)) {
-          final String errorMsg =
+      // If the target already exists in the dataset, check its role
+      final Dataset.Component existing = byName.get(columnName);
+      if (existing != null) {
+        // Explicitly block overwriting identifiers (already handled above if role==IDENTIFIER).
+        if (existing.getRole() == Dataset.Role.IDENTIFIER) {
+          final String meta =
               String.format(
-                  "Error: duplicate target '%s' in CALC clause. Line %d, position %d. Statement: [%s]",
-                  columnName, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
-
-        // If the target already exists in the dataset, check its role
-        final Dataset.Component existing = byName.get(columnName);
-        if (existing != null) {
-          // Explicitly block overwriting identifiers (already handled above if role==IDENTIFIER).
-          if (existing.getRole() == Dataset.Role.IDENTIFIER) {
-            final String meta =
-                String.format(
-                    "(role=%s, type=%s)",
-                    existing.getRole(), existing.getType() != null ? existing.getType() : "n/a");
-            final String errorMsg =
-                String.format(
-                    "Error: CALC cannot overwrite IDENTIFIER '%s' %s. Line %d, position %d. Statement: [%s]",
-                    columnName, meta, line, charPosition, statement);
-            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-          }
-        }
-
-        // ---- Dispatch: analytics vs. regular calc ----
-        final boolean isAnalytic =
-            (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext)
-                && ((VtlParser.FunctionsExpressionContext) calcCtx.expr()).functions()
-                    instanceof VtlParser.AnalyticFunctionsContext;
-
-        if (isAnalytic) {
-          // Analytics are executed immediately and update the rolling dataset expression
-          final AnalyticsVisitor analyticsVisitor =
-              new AnalyticsVisitor(processingEngine, currentDatasetExpression, columnName);
-          final VtlParser.FunctionsExpressionContext functionExprCtx =
-              (VtlParser.FunctionsExpressionContext) calcCtx.expr();
-          final VtlParser.AnalyticFunctionsContext anFuncCtx =
-              (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
-
-          currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
-        } else {
-          // Regular calc expression – build resolvable expression and capture its source text
-          final ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
-
-          final String exprSource = getSource(calcCtx.expr());
-          if (exprSource == null || exprSource.isEmpty()) {
-            final String errorMsg =
-                String.format(
-                    "Error: empty or unavailable source expression for '%s' in CALC. Line %d, position %d. Statement: [%s]",
-                    columnName, line, charPosition, statement);
-            throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-          }
-
-          // Store in insertion order (deterministic column creation)
-          expressions.put(columnName, calc);
-          expressionStrings.put(columnName, exprSource);
-          roles.put(columnName, columnRole);
+                  "(role=%s, type=%s)",
+                  existing.getRole(), existing.getType() != null ? existing.getType() : "n/a");
+          throw new VtlRuntimeException(
+              new InvalidArgumentException(
+                  String.format(
+                      "CALC cannot overwrite IDENTIFIER '%s' %s. Line %d, Statement: [%s]",
+                      columnName, meta, ctx.getStart().getLine(), ctx.getText()),
+                  fromContext(ctx)));
         }
       }
 
-      // ---- Consistency checks before execution ----
-      if (!(expressions.keySet().equals(expressionStrings.keySet())
-          && expressions.keySet().equals(roles.keySet()))) {
-        final String errorMsg =
-            String.format(
-                "Error: internal CALC maps out of sync (expressions/expressionStrings/roles). Line %d, position %d. Statement: [%s]",
-                line, charPosition, statement);
-        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
+      // ---- Dispatch: analytics vs. regular calc ----
+      final boolean isAnalytic =
+          (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext)
+              && ((VtlParser.FunctionsExpressionContext) calcCtx.expr()).functions()
+                  instanceof VtlParser.AnalyticFunctionsContext;
+
+      if (isAnalytic) {
+        // Analytics are executed immediately and update the rolling dataset expression
+        final AnalyticsVisitor analyticsVisitor =
+            new AnalyticsVisitor(processingEngine, currentDatasetExpression, columnName);
+        final VtlParser.FunctionsExpressionContext functionExprCtx =
+            (VtlParser.FunctionsExpressionContext) calcCtx.expr();
+        final VtlParser.AnalyticFunctionsContext anFuncCtx =
+            (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
+
+        currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
+      } else {
+        // Regular calc expression – build resolvable expression and capture its source text
+        final ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
+
+        final String exprSource = getSource(calcCtx.expr());
+        if (exprSource == null || exprSource.isEmpty()) {
+          throw new VtlRuntimeException(
+              new InvalidArgumentException(
+                  String.format(
+                      "empty or unavailable source expression for '%s' in CALC. Line %d, Statement: [%s]",
+                      columnName, ctx.getStart().getLine(), ctx.getText()),
+                  fromContext(ctx)));
+        }
+
+        // Store in insertion order (deterministic column creation)
+        expressions.put(columnName, calc);
+        expressionStrings.put(columnName, exprSource);
+        roles.put(columnName, columnRole);
       }
-
-      // ---- Execute the batch calc if any non-analytic expressions were collected ----
-      if (!expressionStrings.isEmpty()) {
-        currentDatasetExpression =
-            processingEngine.executeCalc(
-                currentDatasetExpression, expressions, roles, expressionStrings);
-      }
-
-      return currentDatasetExpression;
-
-    } catch (VtlRuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      final String errorMsg =
-          String.format(
-              "Unexpected error while processing CALC clause at line %d, position %d. Statement: [%s]. Cause: %s",
-              line, charPosition, statement, e.getMessage());
-      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
     }
+
+    // ---- Consistency checks before execution ----
+    if (!(expressions.keySet().equals(expressionStrings.keySet())
+        && expressions.keySet().equals(roles.keySet()))) {
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              String.format(
+                  "internal CALC maps out of sync (expressions/expressionStrings/roles). Line %d, Statement: [%s]",
+                  ctx.getStart().getLine(), ctx.getText()),
+              fromContext(ctx)));
+    }
+
+    // ---- Execute the batch calc if any non-analytic expressions were collected ----
+    if (!expressionStrings.isEmpty()) {
+      currentDatasetExpression =
+          processingEngine.executeCalc(
+              currentDatasetExpression, expressions, roles, expressionStrings);
+    }
+    return currentDatasetExpression;
   }
 
   @Override
@@ -346,134 +316,104 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     final int charPosition = ctx.getStart().getCharPositionInLine();
     final String statement = ctx.getText();
 
-    try {
-
-      ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
-      return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
-
-    } catch (VtlRuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      String errorMsg =
-          String.format(
-              "Unexpected error while processing FILTER clause at line %d, position %d. Statement: [%s]. Cause: %s",
-              line, charPosition, statement, e.getMessage());
-      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-    }
+    ResolvableExpression filter = componentExpressionVisitor.visit(ctx.expr());
+    return processingEngine.executeFilter(datasetExpression, filter, getSource(ctx.expr()));
   }
 
   @Override
   public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
 
-    // Error reporting context
-    final int line = ctx.getStart().getLine();
-    final int charPosition = ctx.getStart().getCharPositionInLine();
-    final String statement = ctx.getText();
+    // Dataset structure in order + lookup maps
+    final List<Dataset.Component> componentsInOrder =
+        new ArrayList<>(datasetExpression.getDataStructure().values());
+    final Set<String> availableColumns =
+        componentsInOrder.stream()
+            .map(Dataset.Component::getName)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    try {
+    // Map for detailed error reporting (includes role/type if available)
+    final Map<String, Dataset.Component> byName =
+        componentsInOrder.stream()
+            .collect(
+                Collectors.toMap(
+                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
 
-      // Dataset structure in order + lookup maps
-      final List<Dataset.Component> componentsInOrder =
-          new ArrayList<>(datasetExpression.getDataStructure().values());
-      final Set<String> availableColumns =
-          componentsInOrder.stream()
-              .map(Dataset.Component::getName)
-              .collect(Collectors.toCollection(LinkedHashSet::new));
+    // Parse the RENAME clause and validate
+    Map<String, String> fromTo = new LinkedHashMap<>();
+    Set<String> toSeen = new LinkedHashSet<>();
+    Set<String> fromSeen = new LinkedHashSet<>();
 
-      // Map for detailed error reporting (includes role/type if available)
-      final Map<String, Dataset.Component> byName =
-          componentsInOrder.stream()
-              .collect(
-                  Collectors.toMap(
-                      Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
+    for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
+      final String toNameString = getName(renameCtx.toName);
+      final String fromNameString = getName(renameCtx.fromName);
 
-      // Parse the RENAME clause and validate
-      Map<String, String> fromTo = new LinkedHashMap<>();
-      Set<String> toSeen = new LinkedHashSet<>();
-      Set<String> fromSeen = new LinkedHashSet<>();
-
-      for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-        final String toNameString = getName(renameCtx.toName);
-        final String fromNameString = getName(renameCtx.fromName);
-
-        // Validate: no duplicate "from" names inside the clause
-        if (!fromSeen.add(fromNameString)) {
-          String errorMsg =
-              String.format(
-                  "Error: duplicate source name in RENAME clause: '%s'. Line %d, position %d. Statement: [%s]",
-                  fromNameString, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
-
-        // Validate: "from" must exist in dataset
-        if (!availableColumns.contains(fromNameString)) {
-          Dataset.Component comp = byName.get(fromNameString);
-          String meta =
-              (comp != null)
-                  ? String.format(
-                      " (role=%s, type=%s)",
-                      comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
-                  : "";
-          String errorMsg =
-              String.format(
-                  "Error: source column to rename not found: '%s'%s. Line %d, position %d. Statement: [%s]",
-                  fromNameString, meta, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
-
-        // Validate: no duplicate "to" names inside the clause
-        if (!toSeen.add(toNameString)) {
-          String errorMsg =
-              String.format(
-                  "Error: duplicate output column name in RENAME clause: '%s'. Line %d, position %d. Statement: [%s]",
-                  fromNameString, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
-
-        fromTo.put(fromNameString, toNameString);
+      // Validate: no duplicate "from" names inside the clause
+      if (!fromSeen.add(fromNameString)) {
+        String errorMsg =
+            String.format(
+                "Error: duplicate source name in RENAME clause: '%s. Line %d, Statement: [%s]",
+                fromNameString, ctx.getStart().getLine(), ctx.getText());
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
       }
 
-      // Validate collisions with untouched dataset columns ("Untouched" = columns that are not
-      // being renamed)
-      final Set<String> untouched =
-          availableColumns.stream()
-              .filter(c -> !fromTo.containsKey(c))
-              .collect(Collectors.toCollection(LinkedHashSet::new));
-
-      for (Map.Entry<String, String> e : fromTo.entrySet()) {
-        final String from = e.getKey();
-        final String to = e.getValue();
-
-        // If target already exists as untouched, it would cause a collision
-        if (untouched.contains(to)) {
-          Dataset.Component comp = byName.get(to);
-          String meta =
-              (comp != null)
-                  ? String.format(
-                      " (role=%s, type=%s)",
-                      comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
-                  : "";
-          String errorMsg =
-              String.format(
-                  "Error: target name '%s'%s already exists in dataset and is not being renamed. "
-                      + "Line %d, position %d. Statement: [%s]",
-                  to, meta, line, charPosition, statement);
-          throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
-        }
+      // Validate: "from" must exist in dataset
+      if (!availableColumns.contains(fromNameString)) {
+        Dataset.Component comp = byName.get(fromNameString);
+        String meta =
+            (comp != null)
+                ? String.format(
+                    " (role=%s, type=%s)",
+                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
+                : "";
+        String errorMsg =
+            String.format(
+                "Error: source column to rename not found: '%s'%s. Line %d, Statement: [%s]",
+                fromNameString, meta, ctx.getStart().getLine(), ctx.getText());
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
       }
 
-      // Execute rename in processing engine
-      return processingEngine.executeRename(datasetExpression, fromTo);
+      // Validate: no duplicate "to" names inside the clause
+      if (!toSeen.add(toNameString)) {
+        String errorMsg =
+            String.format(
+                "Error: duplicate output column name in RENAME clause: '%s. Line %d, Statement: [%s]",
+                fromNameString, ctx.getStart().getLine(), ctx.getText());
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
+      }
 
-    } catch (VtlRuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      String errorMsg =
-          String.format(
-              "Unexpected error while processing RENAME clause at line %d, position %d. Statement: [%s]. Cause: %s",
-              line, charPosition, statement, e.getMessage());
-      throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
+      fromTo.put(fromNameString, toNameString);
     }
+
+    // Validate collisions with untouched dataset columns ("Untouched" = columns that are not
+    // being renamed)
+    final Set<String> untouched =
+        availableColumns.stream()
+            .filter(c -> !fromTo.containsKey(c))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    for (Map.Entry<String, String> e : fromTo.entrySet()) {
+      final String from = e.getKey();
+      final String to = e.getValue();
+
+      // If target already exists as untouched, it would cause a collision
+      if (untouched.contains(to)) {
+        Dataset.Component comp = byName.get(to);
+        String meta =
+            (comp != null)
+                ? String.format(
+                    " (role=%s, type=%s)",
+                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
+                : "";
+        String errorMsg =
+            String.format(
+                "Error: target name '%s'%s already exists in dataset and is not being renamed. Line %d, Statement: [%s]",
+                to, meta, ctx.getStart().getLine(), ctx.getText());
+        throw new VtlRuntimeException(new InvalidArgumentException(errorMsg, fromContext(ctx)));
+      }
+    }
+
+    // Execute rename in processing engine
+    return processingEngine.executeRename(datasetExpression, fromTo);
   }
 
   @Override
