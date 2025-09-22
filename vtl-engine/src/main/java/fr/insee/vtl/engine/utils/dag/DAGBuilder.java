@@ -50,7 +50,7 @@ public class DAGBuilder {
 
   private static boolean dependsOn(DAGStatement stmt2, DAGStatement stmt1) {
     // Check if stmt2 consumes data from stmt1
-    String produced = stmt1.produces();
+    DAGStatement.Identifier produced = stmt1.produces();
     return stmt2.consumes().contains(produced);
   }
 
@@ -101,55 +101,54 @@ public class DAGBuilder {
 
   private String buildAssignmentChain(Set<DAGStatement> cycle) {
     // Collect all produced variable names in this cycle
-    Set<String> producedVars =
+    Set<DAGStatement.Identifier> producedIdentifiers =
         cycle.stream().map(DAGStatement::produces).collect(Collectors.toSet());
 
     // Pick a stable start
-    String startVar =
-        producedVars.stream()
-            .sorted()
-            .findFirst()
+    DAGStatement.Identifier startIdentifier =
+        producedIdentifiers.stream()
+            .min(Comparator.comparing(DAGStatement.Identifier::name))
             .orElseThrow(() -> new AssertionError("Cycle contains out of at least two statements"));
 
     StringBuilder sb = new StringBuilder();
-    String current = startVar;
+    DAGStatement.Identifier currentIdentifier = startIdentifier;
 
     do {
-      sb.append(current).append(" <- ");
+      sb.append(currentIdentifier.name()).append(" <- ");
 
       // Find the unique statement that produces 'current'
-      String finalCurrent = current;
+      DAGStatement.Identifier finalCurrentIdentifier = currentIdentifier;
       DAGStatement producer =
           cycle.stream()
-              .filter(stmt -> stmt.produces().equals(finalCurrent))
+              .filter(stmt -> stmt.produces().equals(finalCurrentIdentifier))
               .reduce(
                   (a, b) -> {
                     throw new AssertionError(
                         "Multiple producers of "
-                            + finalCurrent
+                            + finalCurrentIdentifier.name()
                             + " cannot occur here, this is already validated before");
                   })
               .orElseThrow(
                   () ->
                       new AssertionError(
                           "A cycle is always closed, there must be a consumer for  "
-                              + finalCurrent));
+                              + finalCurrentIdentifier.name()));
 
       // Choose the next consumed variable that stays inside the cycle
-      current =
+      currentIdentifier =
           producer.consumes().stream()
-              .filter(producedVars::contains)
+              .filter(producedIdentifiers::contains)
               .findFirst()
               .orElseThrow(
                   () ->
                       new AssertionError(
                           "Broken cycle at "
-                              + finalCurrent
+                              + finalCurrentIdentifier.name()
                               + ": no consumed var stays inside cycle"));
-    } while (!current.equals(startVar));
+    } while (!currentIdentifier.equals(startIdentifier));
 
     // close the loop
-    sb.append(startVar);
+    sb.append(startIdentifier.name());
     return "[" + sb + "]";
   }
 

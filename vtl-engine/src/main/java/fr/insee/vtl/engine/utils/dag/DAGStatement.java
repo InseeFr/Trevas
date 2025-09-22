@@ -9,6 +9,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * Representation of a VTL Statement
@@ -17,7 +21,7 @@ import java.util.stream.Collectors;
  * @param produces Produced data
  * @param consumes Consumed data
  */
-public record DAGStatement(int unsortedIndex, String produces, Set<String> consumes) {
+public record DAGStatement(int unsortedIndex, Identifier produces, Set<Identifier> consumes) {
 
   public static int PSEUDO_BINDING_POSITION = Integer.MIN_VALUE;
 
@@ -45,6 +49,28 @@ public record DAGStatement(int unsortedIndex, String produces, Set<String> consu
         message, lastDagStatement.getPosition(startContext), restPositions);
   }
 
+  public static DAGStatement of(
+      Identifier.Type outIdentifierType,
+      TerminalNode outIdentifierNode,
+      Set<Identifier> inIdentifiers,
+      ParserRuleContext node) {
+    Identifier rulesetOutIdentifier =
+        new Identifier(outIdentifierType, outIdentifierNode.getSymbol().getText());
+    final int statementIndex = getParentStatementIndex(node);
+    return new DAGStatement(statementIndex, rulesetOutIdentifier, inIdentifiers);
+  }
+
+  private static int getParentStatementIndex(final RuleNode node) {
+    final ParseTree parent = node.getParent();
+    for (int i = 0; i < parent.getChildCount(); ++i) {
+      final ParseTree child = parent.getChild(i);
+      if (child == node) {
+        return i;
+      }
+    }
+    throw new AssertionError("Statement must always be part of the its parent node");
+  }
+
   @Override
   public String toString() {
     return "Statement{"
@@ -60,5 +86,14 @@ public record DAGStatement(int unsortedIndex, String produces, Set<String> consu
 
   public Positioned getPosition(final VtlParser.StartContext startContext) {
     return VtlScriptEngine.fromContext(startContext.getChild(unsortedIndex));
+  }
+
+  public record Identifier(Type identifierType, String name) {
+    public enum Type {
+      VARIABLE,
+      OPERATOR,
+      RULESET_HIERARCHICAL,
+      RULESET_DATAPOINT
+    }
   }
 }

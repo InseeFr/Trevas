@@ -72,15 +72,19 @@ public class VtlSyntaxPreprocessor {
     List<DAGStatement> bindingPseudoStatements =
         bindingVarIds.stream()
             .map(
-                bindingVar ->
-                    new DAGStatement(DAGStatement.PSEUDO_BINDING_POSITION, bindingVar, Set.of()))
+                bindingVarId ->
+                    new DAGStatement(
+                        DAGStatement.PSEUDO_BINDING_POSITION,
+                        new DAGStatement.Identifier(
+                            DAGStatement.Identifier.Type.VARIABLE, bindingVarId),
+                        Set.of()))
             .toList();
-    Map<String, List<DAGStatement>> groupedByProducedVar =
+    Map<DAGStatement.Identifier, List<DAGStatement>> groupedByProducedIdentifier =
         Stream.concat(bindingPseudoStatements.stream(), unsortedStatements.stream())
             .collect(Collectors.groupingBy(DAGStatement::produces));
 
     List<VtlScriptException> multiProducedExceptions =
-        groupedByProducedVar.entrySet().stream()
+        groupedByProducedIdentifier.entrySet().stream()
             .filter(produced -> produced.getValue().size() > 1)
             .map(
                 multiProduced ->
@@ -95,7 +99,7 @@ public class VtlSyntaxPreprocessor {
   }
 
   private VtlScriptException buildScriptExceptionFromMultipleAssignment(
-      String varId, List<DAGStatement> statements) {
+      DAGStatement.Identifier identifier, List<DAGStatement> statements) {
     final List<DAGStatement> statementsWithoutBinding =
         statements.stream()
             .filter(statement -> statement.unsortedIndex() != DAGStatement.PSEUDO_BINDING_POSITION)
@@ -103,13 +107,15 @@ public class VtlSyntaxPreprocessor {
 
     if (statementsWithoutBinding.size() == 1) {
       return new VtlScriptException(
-          "Dataset " + varId + " is part of the bindings and therefore cannot be assigned",
+          "Dataset "
+              + identifier.name()
+              + " is part of the bindings and therefore cannot be assigned",
           statementsWithoutBinding.get(0).getPosition(startContext));
     }
 
     return DAGStatement.buildMultiStatementExceptionUsingTheLastDAGStatementAsMainPosition(
         "Dataset "
-            + varId
+            + identifier.name()
             + " has already been assigned"
             + (statements.size() == statementsWithoutBinding.size()
                 ? ""
