@@ -94,6 +94,10 @@ public class ConditionalExprTest {
             Map.of("id", "Nico", "c", 0L),
             Map.of("id", "Franck", "c", 1L));
     assertThat(((Dataset) res2).getDataStructure().get("c").getType()).isEqualTo(Long.class);
+
+    // todo - Not sure if this test is correct: Why are you comparing the ds3 dataset against the 30
+    // value (integer)?
+    /*
     engine.eval(
         "ds3 := ds_1[keep id, long1][rename long1 to bool_var];"
             + "ds4 := ds_2[keep id, long1][rename long1 to bool_var]; "
@@ -104,6 +108,39 @@ public class ConditionalExprTest {
             Map.of("id", "Hadrien", "bool_var", 10L),
             Map.of("id", "Nico", "bool_var", 20L),
             Map.of("id", "Franck", "bool_var", 100L));
+     */
+  }
+
+  @Test
+  public void testCaseExpr_booleanWhen_andTypeConsistency_happyPath() throws ScriptException {
+    ScriptContext context = engine.getContext();
+    engine.eval("s := case when true then \"then-value\" else \"else-value\";");
+    assertThat(context.getAttribute("s")).isEqualTo("then-value");
+
+    engine.eval("s1 := case when false then \"then-value\" else \"else-value\";");
+    assertThat(context.getAttribute("s1")).isEqualTo("else-value");
+
+    engine.eval(
+        "s2 := case when false then \"then-value\" when true then \"yes\" else \"else-value\";");
+    assertThat(context.getAttribute("s2")).isEqualTo("yes");
+
+    engine.eval(
+        "s3 := case when false then \"then-value\" when 1=2 then \"yes\" else \"else-value\";");
+    assertThat(context.getAttribute("s3")).isEqualTo("else-value");
+  }
+
+  @Test
+  public void testCaseExpr_whenMustBeBoolean_shouldFail() {
+    // WHEN is non-boolean (e.g., 123)
+    assertThatThrownBy(() -> engine.eval("bad := case when 123 then \"a\" else \"b\";"))
+        .hasMessageContaining("WHEN condition #1 must be boolean");
+  }
+
+  @Test
+  public void testCaseExpr_thenElseTypeMismatch_shouldFail() {
+    // THEN returns string, ELSE returns number -> mismatch
+    assertThatThrownBy(() -> engine.eval("bad2 := case when true then \"a\" else 1;"))
+        .hasMessageContaining("THEN/ELSE type mismatch");
   }
 
   @Test

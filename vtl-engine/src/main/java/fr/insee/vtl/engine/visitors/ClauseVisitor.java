@@ -61,7 +61,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     return text;
   }
 
-  static String getSource(ParserRuleContext ctx) {
+  public static String getSource(ParserRuleContext ctx) {
     var stream = ctx.getStart().getInputStream();
     return stream.getText(
         new Interval(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex()));

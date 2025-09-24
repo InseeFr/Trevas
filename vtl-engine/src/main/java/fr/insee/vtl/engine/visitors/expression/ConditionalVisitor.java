@@ -2,12 +2,12 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
+import static fr.insee.vtl.engine.visitors.ClauseVisitor.getSource;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -121,6 +121,15 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     try {
       Positioned pos = fromContext(ctx);
       List<VtlParser.ExprContext> exprs = ctx.expr();
+
+      // Check if the case-when expression is well-structured: (WHEN, THEN)* + ELSE
+      if (exprs == null || exprs.size() < 3 || (exprs.size() % 2) != 1) {
+        throw new RuntimeException(
+            String.format(
+                "Error: malformed CASE expression [%s]. Expected at least one WHEN/THEN pair and a final ELSE ",
+                exprs));
+      }
+
       List<VtlParser.ExprContext> whenExprs = new ArrayList<>();
       List<VtlParser.ExprContext> thenExprs = new ArrayList<>();
       for (int i = 0; i < exprs.size() - 1; i = i + 2) {
@@ -132,18 +141,44 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
       List<ResolvableExpression> thenExpressions =
           thenExprs.stream().map(exprVisitor::visit).collect(Collectors.toList());
       ResolvableExpression elseExpression = exprVisitor.visit(exprs.get(exprs.size() - 1));
-      List<ResolvableExpression> forTypeCheck = (new ArrayList<>(thenExpressions));
-      forTypeCheck.add(elseExpression);
+
       // TODO: handle better the default element position
-      if (!hasSameTypeOrNull(forTypeCheck)) {
-        try {
-          throw new InvalidTypeException(
-              forTypeCheck.get(0).getClass(), Boolean.class, fromContext(ctx.expr(0)));
-        } catch (InvalidTypeException e) {
-          throw new RuntimeException(e);
+
+      // Type validation
+      // Check the WHEN conditions. It always must be a boolean
+      for (int i = 0; i < whenExpressions.size(); i++) {
+        ResolvableExpression when = whenExpressions.get(i);
+        Class<?> t = when.getType();
+        if (t != Boolean.class && t != boolean.class) {
+          String whenSrc = getSource(whenExprs.get(i));
+          String msg =
+              String.format(
+                  "Error: WHEN condition #%d must be boolean but was '%s'. WHEN: [%s]",
+                  i + 1,
+                  t != null ? t.getSimpleName() : "null",
+                  whenSrc != null ? whenSrc : whenExprs.get(i).getText());
+          throw new RuntimeException(msg);
         }
       }
 
+      // Check the THEN/ELSE types must be compatible (same type or null)
+      final List<ResolvableExpression> forTypeCheck = new ArrayList<>(thenExpressions);
+      forTypeCheck.add(elseExpression);
+
+      if (!hasSameTypeOrNull(forTypeCheck)) {
+        String thenTypes =
+            thenExpressions.stream()
+                .map(r -> r.getType() != null ? r.getType().getSimpleName() : "null")
+                .collect(Collectors.joining(", "));
+        String elseType =
+            elseExpression.getType() != null ? elseExpression.getType().getSimpleName() : "null";
+        throw new RuntimeException(
+            String.format(
+                "Error: THEN/ELSE type mismatch in CASE expression. THEN types: [%s]; ELSE type: [%s].",
+                thenTypes, elseType));
+      }
+
+      // Build the CASE as nested if-then-else
       Class<?> outputType = elseExpression.getType();
       return new CastExpression(
           pos,
