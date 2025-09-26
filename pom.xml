@@ -163,9 +163,7 @@
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <!-- Suppress UnresolvedMavenProperty. -->
-                    <argLine>-Xms1g -Xmx2g --add-opens fr.insee.vtl.engine/fr.insee.vtl.engine.utils.dag=ALL-UNNAMED
-                        @{surefireArgLine}
-                    </argLine>
+                    <argLine>-Xms1g -Xmx2g @{surefireArgLine}</argLine>
                     <useSystemClassLoader>false</useSystemClassLoader>
                     <forkedProcessExitTimeoutInSeconds>180</forkedProcessExitTimeoutInSeconds>
                     <forkCount>1</forkCount>

@@ -96,7 +96,7 @@ public class DAGBuilder {
                         startContext))
             .toList();
 
-    return VtlMultiErrorScriptException.usingTheFirstMainPositionExceptionAsCause(cycleExceptions);
+    return VtlMultiErrorScriptException.of(cycleExceptions.toArray(new VtlScriptException[] {}));
   }
 
   private String buildAssignmentChain(Set<DAGStatement> cycle) {

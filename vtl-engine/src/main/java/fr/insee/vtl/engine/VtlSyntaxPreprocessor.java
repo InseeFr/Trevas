@@ -93,8 +93,8 @@ public class VtlSyntaxPreprocessor {
             .toList();
 
     if (!multiProducedExceptions.isEmpty()) {
-      throw VtlMultiErrorScriptException.usingTheFirstMainPositionExceptionAsCause(
-          multiProducedExceptions);
+      throw VtlMultiErrorScriptException.of(
+          multiProducedExceptions.toArray(new VtlScriptException[] {}));
     }
   }
 
