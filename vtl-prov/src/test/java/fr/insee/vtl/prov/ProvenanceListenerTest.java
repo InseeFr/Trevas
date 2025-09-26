@@ -223,6 +223,6 @@ public class ProvenanceListenerTest {
                   engine, failedExpr, "trevas-failed-test", "Trevas failed test");
             })
         .isInstanceOf(VtlScriptException.class)
-        .hasMessage("Dataset ds1 has already been assigned");
+        .hasMessage("Dataset ds1 is part of the bindings and therefore cannot be assigned");
   }
 }
