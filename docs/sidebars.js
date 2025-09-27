@@ -8,11 +8,13 @@ module.exports = {
 		{
 			type: 'category',
 			label: 'Introduction',
+			key: 'introduction',
 			items: [
 				'introduction/index-introduction',
 				{
 					type: 'category',
 					label: 'Modules',
+					key: 'introduction-modules',
 					items: [
 						'introduction/modules/index-modules',
 						'introduction/modules/engine',
@@ -29,6 +31,7 @@ module.exports = {
 				{
 					type: 'category',
 					label: 'Releases',
+					key: 'introduction-releases',
 					items: [
 						'introduction/releases/index-releases',
 						'introduction/releases/1.x.x',
@@ -39,19 +42,23 @@ module.exports = {
 		{
 			type: 'category',
 			label: 'User guide',
+			key: 'user-guide',
 			items: [
 				{
 					type: 'category',
 					label: 'VTL playground',
+					key: 'user-guide-vtl-playground',
 					items: [
 						{
 							type: 'category',
 							label: 'Learn VTL',
+							key: 'user-guide-learn-vtl',
 							items: [
 								'user-guide/vtl/index-vtl',
 								{
 									type: 'category',
 									label: 'Sas vs VTL',
+									key: 'user-guide-sas-vtl',
 									items: [
 										'user-guide/vtl/sas-vtl/index-sas-vtl',
 										'user-guide/vtl/sas-vtl/keep',
@@ -64,6 +71,7 @@ module.exports = {
 						{
 							type: 'category',
 							label: 'Client apps',
+							key: 'user-guide-client-apps',
 							items: [
 								'user-guide/vtl/client-apps/index-client-apps',
 								'user-guide/vtl/client-apps/jupyter/index-jupyter',
@@ -75,6 +83,7 @@ module.exports = {
 				{
 					type: 'category',
 					label: 'Coverage',
+					key: 'user-guide-coverage',
 					items: [
 						'user-guide/coverage/index-coverage',
 						'user-guide/coverage/general-operators',
@@ -98,18 +107,21 @@ module.exports = {
 		{
 			type: 'category',
 			label: 'Developer guide',
+			key: 'developer-guide',
 			items: [
 				'developer-guide/index-developer-guide',
 				'developer-guide/developer-javadoc',
-                'developer-guide/dag',
+				'developer-guide/dag',
 				{
 					type: 'category',
 					label: 'Basic mode',
+					key: 'developer-guide-basic-mode',
 					items: [
 						'developer-guide/basic-mode/index-basic-mode',
 						{
 							type: 'category',
 							label: 'Data sources',
+							key: 'basic-mode-data-sources',
 							items: [
 								'developer-guide/basic-mode/data-sources/index-data-sources',
 								'developer-guide/basic-mode/data-sources/jdbc',
@@ -122,11 +134,13 @@ module.exports = {
 				{
 					type: 'category',
 					label: 'Spark mode',
+					key: 'developer-guide-spark-mode',
 					items: [
 						'developer-guide/spark-mode/index-spark-mode',
 						{
 							type: 'category',
 							label: 'Data sources',
+							key: 'spark-mode-data-sources',
 							items: [
 								'developer-guide/spark-mode/data-sources/index-data-sources',
 								'developer-guide/spark-mode/data-sources/csv',
@@ -144,6 +158,7 @@ module.exports = {
 		{
 			type: 'category',
 			label: 'Administrator guide',
+			key: 'administrator-guide',
 			items: ['administrator-guide/grammar/index-grammar'],
 		},
 	],
