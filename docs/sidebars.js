@@ -35,6 +35,7 @@ module.exports = {
 					items: [
 						'introduction/releases/index-releases',
 						'introduction/releases/1.x.x',
+						'introduction/releases/2.x.x',
 					],
 				},
 			],
