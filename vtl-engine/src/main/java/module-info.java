@@ -36,6 +36,7 @@ module fr.insee.vtl.engine {
   requires org.apache.commons.text;
   requires safety.mirror;
   requires org.threeten.extra;
+  requires org.jgrapht.core;
 
   provides ScriptEngineFactory with
       VtlScriptEngineFactory;

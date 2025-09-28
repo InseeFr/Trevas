@@ -33,10 +33,10 @@ public class ComparisonFunctionsTest {
     engine.eval("c := between(10, 1, cast(null, integer));");
     assertThat((Boolean) engine.getContext().getAttribute("c")).isNull();
     // CharsetMatch
-    engine.eval("a := match_characters(\"ko\", cast(null, string));");
-    assertThat((Boolean) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := match_characters(cast(null, string), \"test\");");
-    assertThat((Boolean) engine.getContext().getAttribute("b")).isNull();
+    engine.eval("d := match_characters(\"ko\", cast(null, string));");
+    assertThat((Boolean) engine.getContext().getAttribute("d")).isNull();
+    engine.eval("e := match_characters(cast(null, string), \"test\");");
+    assertThat((Boolean) engine.getContext().getAttribute("e")).isNull();
   }
 
   @Test
@@ -44,10 +44,10 @@ public class ComparisonFunctionsTest {
     ScriptContext context = engine.getContext();
     engine.eval("b := between(10, 1,100);");
     assertThat((Boolean) context.getAttribute("b")).isTrue();
-    engine.eval("b := between(10, 20,100);");
-    assertThat((Boolean) context.getAttribute("b")).isFalse();
-    engine.eval("b := between(10.5, 20,100);");
-    assertThat((Boolean) context.getAttribute("b")).isFalse();
+    engine.eval("b1 := between(10, 20,100);");
+    assertThat((Boolean) context.getAttribute("b1")).isFalse();
+    engine.eval("b2 := between(10.5, 20,100);");
+    assertThat((Boolean) context.getAttribute("b2")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res = engine.eval("res := between(ds[keep id, long1, double2], 5, 15);");
@@ -61,7 +61,7 @@ public class ComparisonFunctionsTest {
 
     assertThatThrownBy(
             () -> {
-              engine.eval("b := between(10.5, \"ko\", true);");
+              engine.eval("b3 := between(10.5, \"ko\", true);");
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .hasMessage("function 'between(Double, String, Boolean)' not found");
@@ -72,12 +72,12 @@ public class ComparisonFunctionsTest {
     ScriptContext context = engine.getContext();
     engine.eval("t := match_characters(\"test\", \"(.*)(es)(.*)?\");");
     assertThat((Boolean) context.getAttribute("t")).isTrue();
-    engine.eval("t := match_characters(\"test\", \"tes.\");");
-    assertThat((Boolean) context.getAttribute("t")).isTrue();
-    engine.eval("t := match_characters(\"test\", \"tes\");");
-    assertThat((Boolean) context.getAttribute("t")).isFalse();
-    engine.eval("t := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
-    assertThat((Boolean) context.getAttribute("t")).isFalse();
+    engine.eval("t1 := match_characters(\"test\", \"tes.\");");
+    assertThat((Boolean) context.getAttribute("t1")).isTrue();
+    engine.eval("t2 := match_characters(\"test\", \"tes\");");
+    assertThat((Boolean) context.getAttribute("t2")).isFalse();
+    engine.eval("t3 := match_characters(\"test\", \"(.*)(aaaaa)(.*)?\");");
+    assertThat((Boolean) context.getAttribute("t3")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res =
@@ -93,13 +93,13 @@ public class ComparisonFunctionsTest {
 
     assertThatThrownBy(
             () -> {
-              engine.eval("t := match_characters(\"test\", true);");
+              engine.eval("t4 := match_characters(\"test\", true);");
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .hasMessage("function 'charsetMatch(String, Boolean)' not found");
     assertThatThrownBy(
             () -> {
-              engine.eval("t := match_characters(10.5, \"pattern\");");
+              engine.eval("t5 := match_characters(10.5, \"pattern\");");
             })
         .isInstanceOf(FunctionNotFoundException.class)
         .hasMessage("function 'charsetMatch(Double, String)' not found");
@@ -110,8 +110,8 @@ public class ComparisonFunctionsTest {
     ScriptContext context = engine.getContext();
     engine.eval("n := isnull(null);");
     assertThat((Boolean) context.getAttribute("n")).isTrue();
-    engine.eval("n := isnull(\"null\");");
-    assertThat((Boolean) context.getAttribute("n")).isFalse();
+    engine.eval("n1 := isnull(\"null\");");
+    assertThat((Boolean) context.getAttribute("n1")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res = engine.eval("res := isnull(ds[keep id, string1, bool1]);");

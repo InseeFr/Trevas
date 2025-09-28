@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.utils;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -117,6 +118,28 @@ public class TypeChecking {
             .distinct()
             .count()
         <= 1;
+  }
+
+  /**
+   * Checks if expressions have the same type, all are numbers, or all are null.
+   *
+   * @param expressions List of resolvable expressions to check.
+   * @return A boolean which is <code>true</code> if the expressions have the same type, are all
+   *     numbers, or are all null, <code>false</code> otherwise.
+   */
+  public static boolean hasSameTypeOrNumberOrNull(List<ResolvableExpression> expressions) {
+    var types =
+        expressions.stream()
+            .map(ResolvableExpression::getType)
+            .filter(
+                clazz ->
+                    clazz != null && !Object.class.equals(clazz) && !clazz.equals(Dataset.class))
+            .distinct()
+            .toList();
+
+    return types.isEmpty()
+        || types.stream().allMatch(Number.class::isAssignableFrom)
+        || types.size() == 1; // même type
   }
 
   /**

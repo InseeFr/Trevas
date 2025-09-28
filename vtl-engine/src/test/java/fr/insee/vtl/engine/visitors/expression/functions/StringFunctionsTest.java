@@ -29,43 +29,43 @@ public class StringFunctionsTest {
     engine.eval("a := trim(cast(null, string));");
     assertThat((String) engine.getContext().getAttribute("a")).isNull();
     // Ltrim
-    engine.eval("a := ltrim(cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    // Rtrim
-    engine.eval("a := rtrim(cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    // Upper
-    engine.eval("a := upper(cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    // Lower
-    engine.eval("a := lower(cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    // Length
-    engine.eval("a := length(cast(null, string));");
-    assertThat((Long) engine.getContext().getAttribute("a")).isNull();
-    // Substr
-    engine.eval("a := substr(cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := substr(\"ok\", cast(null, integer), 2);");
-    assertThat((String) engine.getContext().getAttribute("b")).isEqualTo("ok");
-    engine.eval("c := substr(\"ok\", 1, cast(null, integer));");
-    assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
-    // Replace
-    engine.eval("a := replace(cast(null, string), \"ooo\", \"ttt\");");
-    assertThat((String) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := replace(\"ok\", cast(null, string), \"ttt\");");
+    engine.eval("b := ltrim(cast(null, string));");
     assertThat((String) engine.getContext().getAttribute("b")).isNull();
-    engine.eval("c := replace(\"ok\", \"ooo\", cast(null, string));");
-    assertThat((String) engine.getContext().getAttribute("c")).isEqualTo("ok");
+    // Rtrim
+    engine.eval("c := rtrim(cast(null, string));");
+    assertThat((String) engine.getContext().getAttribute("c")).isNull();
+    // Upper
+    engine.eval("d := upper(cast(null, string));");
+    assertThat((String) engine.getContext().getAttribute("d")).isNull();
+    // Lower
+    engine.eval("e := lower(cast(null, string));");
+    assertThat((String) engine.getContext().getAttribute("e")).isNull();
+    // Length
+    engine.eval("f := length(cast(null, string));");
+    assertThat((Long) engine.getContext().getAttribute("f")).isNull();
+    // Substr
+    engine.eval("g := substr(cast(null, string));");
+    assertThat((String) engine.getContext().getAttribute("g")).isNull();
+    engine.eval("h := substr(\"ok\", cast(null, integer), 2);");
+    assertThat((String) engine.getContext().getAttribute("h")).isEqualTo("ok");
+    engine.eval("i := substr(\"ok\", 1, cast(null, integer));");
+    assertThat((String) engine.getContext().getAttribute("i")).isEqualTo("ok");
+    // Replace
+    engine.eval("j := replace(cast(null, string), \"ooo\", \"ttt\");");
+    assertThat((String) engine.getContext().getAttribute("j")).isNull();
+    engine.eval("k := replace(\"ok\", cast(null, string), \"ttt\");");
+    assertThat((String) engine.getContext().getAttribute("k")).isNull();
+    engine.eval("l := replace(\"ok\", \"ooo\", cast(null, string));");
+    assertThat((String) engine.getContext().getAttribute("l")).isEqualTo("ok");
     // Instr
-    engine.eval("a := instr(cast(null, string), \"ooo\", 1, 2);");
-    assertThat((Long) engine.getContext().getAttribute("a")).isNull();
-    engine.eval("b := instr(\"ok\", cast(null, string), 1, 2);");
-    assertThat((Long) engine.getContext().getAttribute("b")).isNull();
-    engine.eval("c := instr(\"ok\", \"ooo\", cast(null, integer), 2);");
-    assertThat((Long) engine.getContext().getAttribute("c")).isZero();
-    engine.eval("d := instr(\"ok\", \"ooo\", 1, cast(null, integer));");
-    assertThat((Long) engine.getContext().getAttribute("d")).isZero();
+    engine.eval("m := instr(cast(null, string), \"ooo\", 1, 2);");
+    assertThat((Long) engine.getContext().getAttribute("m")).isNull();
+    engine.eval("n := instr(\"ok\", cast(null, string), 1, 2);");
+    assertThat((Long) engine.getContext().getAttribute("n")).isNull();
+    engine.eval("o := instr(\"ok\", \"ooo\", cast(null, integer), 2);");
+    assertThat((Long) engine.getContext().getAttribute("o")).isZero();
+    engine.eval("p := instr(\"ok\", \"ooo\", 1, cast(null, integer));");
+    assertThat((Long) engine.getContext().getAttribute("p")).isZero();
   }
 
   @Test
@@ -117,14 +117,14 @@ public class StringFunctionsTest {
     ScriptContext context = engine.getContext();
     engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\");");
     assertThat(context.getAttribute("s1")).isEqualTo("abcdefghijklmnopqrstuvwxyz");
-    engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 2);");
-    assertThat(context.getAttribute("s1")).isEqualTo("bcdefghijklmnopqrstuvwxyz");
-    engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 5, 10);");
-    assertThat(context.getAttribute("s1")).isEqualTo("efghijklmn");
-    engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 25, 10);");
-    assertThat(context.getAttribute("s1")).isEqualTo("yz");
-    engine.eval("s1 := substr(\"abcdefghijklmnopqrstuvwxyz\", 30, 10);");
-    assertThat(context.getAttribute("s1")).isEqualTo("");
+    engine.eval("s2 := substr(\"abcdefghijklmnopqrstuvwxyz\", 2);");
+    assertThat(context.getAttribute("s2")).isEqualTo("bcdefghijklmnopqrstuvwxyz");
+    engine.eval("s3 := substr(\"abcdefghijklmnopqrstuvwxyz\", 5, 10);");
+    assertThat(context.getAttribute("s3")).isEqualTo("efghijklmn");
+    engine.eval("s4 := substr(\"abcdefghijklmnopqrstuvwxyz\", 25, 10);");
+    assertThat(context.getAttribute("s4")).isEqualTo("yz");
+    engine.eval("s5 := substr(\"abcdefghijklmnopqrstuvwxyz\", 30, 10);");
+    assertThat(context.getAttribute("s5")).isEqualTo("");
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res = engine.eval("res := substr(ds[keep id, string1, string2], 2, 4);");

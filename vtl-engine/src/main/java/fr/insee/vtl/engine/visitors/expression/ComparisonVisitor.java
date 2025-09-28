@@ -4,6 +4,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.utils.TypeChecking;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
@@ -12,11 +13,7 @@ import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -138,7 +135,13 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     try {
       Token type = ((TerminalNode) ctx.op.getChild(0)).getSymbol();
       var leftExpression = exprVisitor.visit(ctx.left);
-      List<ResolvableExpression> parameters = List.of(leftExpression, exprVisitor.visit(ctx.right));
+      var rightExpression = exprVisitor.visit(ctx.right);
+      List<ResolvableExpression> parameters = List.of(leftExpression, rightExpression);
+      // Check 2 parameters have the same types
+      if (!TypeChecking.hasSameTypeOrNumberOrNull(parameters)) {
+        var types = List.of(leftExpression.getType(), rightExpression.getType());
+        throw new ConflictingTypesException(types, fromContext(ctx));
+      }
       // If a parameter is the null token
       if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
         return ResolvableExpression.withType(Boolean.class)

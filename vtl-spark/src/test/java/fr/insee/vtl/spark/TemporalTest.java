@@ -1,6 +1,7 @@
 package fr.insee.vtl.spark;
 
 import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.spark.processing.engine.analytic.AnalyticTest.spark;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
@@ -12,6 +13,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,10 +24,14 @@ public class TemporalTest {
   @BeforeEach
   public void setUp() {
     SparkSession spark = SparkSession.builder().appName("test").master("local").getOrCreate();
-
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
     engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    if (spark != null) spark.close();
   }
 
   @Test

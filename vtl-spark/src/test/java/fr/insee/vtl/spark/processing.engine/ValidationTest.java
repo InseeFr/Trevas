@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import javax.script.*;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -112,20 +112,20 @@ public class ValidationTest {
               new Structured.Component("imbalance_1", Long.class, Dataset.Role.MEASURE)));
   private final String hierarchicalRulesetDef =
       """
-            define hierarchical ruleset HR_1 (variable rule Me_1) is\s
-            R010 : A = J + K + L errorlevel 5;
-            R020 : B = M + N + O errorlevel 5;
-            R030 : C = P + Q errorcode "XX" errorlevel 5;
-            R040 : D = R + S errorlevel 1;
-            R050 : E = T + U + V errorlevel 0;
-            R060 : F = Y + W + Z errorlevel 7;
-            R070 : G = B + C;
-            R080 : H = D + E errorlevel 0;
-            R090 : I = D + G errorcode "YY" errorlevel 0;
-            R100 : M >= N errorlevel 5;
-            R110 : M <= G errorlevel 5
-            end hierarchical ruleset;\s
-            """;
+                    define hierarchical ruleset HR_1 (variable rule Me_1) is\s
+                    R010 : A = J + K + L errorlevel 5;
+                    R020 : B = M + N + O errorlevel 5;
+                    R030 : C = P + Q errorcode "XX" errorlevel 5;
+                    R040 : D = R + S errorlevel 1;
+                    R050 : E = T + U + V errorlevel 0;
+                    R060 : F = Y + W + Z errorlevel 7;
+                    R070 : G = B + C;
+                    R080 : H = D + E errorlevel 0;
+                    R090 : I = D + G errorcode "YY" errorlevel 0;
+                    R100 : M >= N errorlevel 5;
+                    R110 : M <= G errorlevel 5
+                    end hierarchical ruleset;\s
+                    """;
   private final Dataset DS_1_HR =
       new InMemoryDataset(
           List.of(
@@ -148,7 +148,7 @@ public class ValidationTest {
               new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
               new Structured.Component("Id_2", String.class, Dataset.Role.IDENTIFIER),
               new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)));
-  private SparkSession spark;
+  private static SparkSession spark;
   private ScriptEngine engine;
 
   private static <T, K> Map<K, T> replaceNullValues(Map<K, T> map, T defaultValue) {
@@ -178,8 +178,8 @@ public class ValidationTest {
     engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
   }
 
-  @AfterEach
-  public void tearDown() {
+  @AfterAll
+  public static void tearDown() {
     if (spark != null) spark.close();
   }
 
@@ -741,11 +741,11 @@ public class ValidationTest {
     context.setAttribute("ds2", sparkDataset2, ScriptContext.ENGINE_SCOPE);
 
     engine.eval(
-        "ds1 := ds1[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
-            + "ds2 := ds2[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
-            + "ds_concat := ds1#string1 || \" and \" || ds2#string1; "
-            + "ds1_num := ds1[keep id, long1, double1]; "
-            + "ds2_num := ds2[keep id, long1, double1]; "
+        "ds1_1 := ds1[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
+            + "ds2_1 := ds2[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
+            + "ds_concat := ds1_1#string1 || \" and \" || ds2_1#string1; "
+            + "ds1_num := ds1_1[keep id, long1, double1]; "
+            + "ds2_num := ds2_1[keep id, long1, double1]; "
             + "ds_mod := mod(ds1_num, 2); "
             + "ds_sum := ds1_num + ds2_num; "
             + "ds_compare := ds1_num = ds2_num; "
@@ -754,7 +754,7 @@ public class ValidationTest {
             + "   my_rule_2 : long1 > 0 errorcode \"Long <= 0\" errorlevel 100 "
             + "end datapoint ruleset; "
             + "ds_check_datapoint := check_datapoint(ds1_num, dpr1 all); "
-            + "ds_check := check(ds1#long1 > ds2#long1 errorcode \"error\" errorlevel 1 imbalance ds1#long1 + ds2#long1 invalid);");
+            + "ds_check := check(ds1_1#long1 > ds2_1#long1 errorcode \"error\" errorlevel 1 imbalance ds1_1#long1 + ds2_1#long1 invalid);");
     List<Structured.DataPoint> dsCheckDatapoint =
         ((Dataset) engine.getContext().getAttribute("ds_check_datapoint")).getDataPoints();
   }
@@ -2006,21 +2006,21 @@ public class ValidationTest {
 
     engine.eval(
         """
-                // Ensure ds1 metadata definition is good
-                ds1 := ds1[calc identifier id := id, Me := cast(Me, integer)];\
-                ds2 := ds1[filter id = "A"];
+                        // Ensure ds1 metadata definition is good
+                        ds1_1 := ds1[calc identifier id := id, Me := cast(Me, integer)];\
+                        ds2_1 := ds1_1[filter id = "A"];
 
-                // Define hierarchical ruleset
-                define hierarchical ruleset hr (variable rule Me) is
-                    My_Rule : ABC = A + B + C errorcode "ABC is not sum of A,B,C" errorlevel 1;
-                    DEF = D + E + F errorcode "DEF is not sum of D,E,F";
-                    HIJ : HIJ = H + I - J errorcode "HIJ is not H + I - J" errorlevel 10
-                end hierarchical ruleset;
-                ds_all := check_hierarchy(ds1, hr rule id all);
-                ds_all_empty := check_hierarchy(ds2, hr rule id all);
-                ds_invalid := check_hierarchy(ds1, hr rule id always_zero invalid);
-                ds_all_measures := check_hierarchy(ds1, hr rule id always_null all_measures);\
-                """);
+                        // Define hierarchical ruleset
+                        define hierarchical ruleset hr (variable rule Me) is
+                            My_Rule : ABC = A + B + C errorcode "ABC is not sum of A,B,C" errorlevel 1;
+                            DEF = D + E + F errorcode "DEF is not sum of D,E,F";
+                            HIJ : HIJ = H + I - J errorcode "HIJ is not H + I - J" errorlevel 10
+                        end hierarchical ruleset;
+                        ds_all := check_hierarchy(ds1_1, hr rule id all);
+                        ds_all_empty := check_hierarchy(ds2_1, hr rule id all);
+                        ds_invalid := check_hierarchy(ds1_1, hr rule id always_zero invalid);
+                        ds_all_measures := check_hierarchy(ds1_1, hr rule id always_null all_measures);\
+                        """);
 
     fr.insee.vtl.model.Dataset ds_all =
         (fr.insee.vtl.model.Dataset) engine.getContext().getAttribute("ds_all");

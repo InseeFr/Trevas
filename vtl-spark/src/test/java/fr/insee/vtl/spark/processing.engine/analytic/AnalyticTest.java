@@ -13,7 +13,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AnalyticTest {
 
@@ -131,8 +131,8 @@ public abstract class AnalyticTest {
   public static SparkSession spark;
   public static ScriptEngine engine;
 
-  @BeforeAll
-  public static void setUp() {
+  @BeforeEach
+  public void setUp() {
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
