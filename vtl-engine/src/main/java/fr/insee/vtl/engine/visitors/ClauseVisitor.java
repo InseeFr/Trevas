@@ -133,6 +133,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       if (!inputColumns.contains(requested)) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
+// TODO: use actual column context. 
                 String.format("'%s' not found in dataset.", requested), fromContext(ctx)));
       }
     }
@@ -157,6 +158,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
               String.format(
                   "identifiers %s must not be explicitly listed in KEEP/DROP. Details: %s",
                   forbidden, details.toString().trim()),
+// TODO: use actual column context. 
               fromContext(ctx)));
     }
 
@@ -226,6 +228,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
                   existing.getRole(), existing.getType() != null ? existing.getType() : "n/a");
           throw new VtlRuntimeException(
               new InvalidArgumentException(
+// TODO: see if other cases are the same error (already defined in assignment for example). 
                   String.format("CALC cannot overwrite IDENTIFIER '%s' %s.", columnName, meta),
                   fromContext(ctx)));
         }
