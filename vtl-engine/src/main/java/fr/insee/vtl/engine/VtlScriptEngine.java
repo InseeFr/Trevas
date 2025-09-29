@@ -5,11 +5,7 @@ import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
-import fr.insee.vtl.model.FunctionProvider;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ProcessingEngineFactory;
-import fr.insee.vtl.model.VtlMethod;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
@@ -19,37 +15,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.script.AbstractScriptEngine;
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.Token;
+import javax.script.*;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -70,6 +40,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
   /** Script engine property giving the (comma-separated) list of engine names. */
   public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
+
+  /** Script engine property to switch on DAG generation. */
+  public static final String USE_DAG = "$vtl.engine.use_dag";
 
   private final ScriptEngineFactory factory;
   private Map<String, Method> methodCache;
@@ -190,6 +163,16 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   }
 
   /**
+   * Returns whether to create and use the DAG or not.
+   *
+   * @return true if the DAG is to be used.
+   */
+  public boolean isUseDag() {
+    Object useDag = get(USE_DAG);
+    return useDag == null || "true".equalsIgnoreCase(useDag.toString());
+  }
+
+  /**
    * Returns an instance of the processing engine for the script engine.
    *
    * @return an instance of the processing engine for the script engine.
@@ -259,6 +242,17 @@ public class VtlScriptEngine extends AbstractScriptEngine {
           first.addSuppressed(suppressed);
         }
         throw first;
+      }
+
+      VtlSyntaxPreprocessor syntaxPreprocessor =
+          new VtlSyntaxPreprocessor(
+              start, context.getBindings(ScriptContext.ENGINE_SCOPE).keySet());
+
+      if (isUseDag()) {
+        // Reorder Script code
+        start = syntaxPreprocessor.checkForMultipleAssignmentsAndReorderScript();
+      } else {
+        syntaxPreprocessor.checkForMultipleAssignments();
       }
 
       AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, getProcessingEngine());

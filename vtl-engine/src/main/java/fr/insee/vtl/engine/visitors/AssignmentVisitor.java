@@ -27,8 +27,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   private final ProcessingEngine processingEngine;
   private final ExpressionVisitor expressionVisitor;
 
-  private final Set<String> seenVarIds = new HashSet<>();
-
   /**
    * Constructor taking a scripting engine and a processing engine.
    *
@@ -38,7 +36,6 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   public AssignmentVisitor(VtlScriptEngine engine, ProcessingEngine processingEngine) {
     this.engine = Objects.requireNonNull(engine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
-    this.seenVarIds.addAll(this.engine.getBindings(ScriptContext.ENGINE_SCOPE).keySet());
     expressionVisitor =
         new ExpressionVisitor(
             engine.getBindings(ScriptContext.ENGINE_SCOPE), processingEngine, engine);
@@ -51,15 +48,9 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
 
   @Override
   public Object visitTemporaryAssignment(VtlParser.TemporaryAssignmentContext ctx) {
-    String variableIdentifier = ctx.varID().getText();
-    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-    if (!seenVarIds.add(variableIdentifier)) {
-      throw new VtlRuntimeException(
-          new VtlScriptException(
-              "Dataset " + variableIdentifier + " has already been assigned",
-              fromContext(ctx.varID())));
-    }
     var result = visitAssignment(ctx.expr());
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    String variableIdentifier = ctx.varID().getText();
     bindings.put(variableIdentifier, result);
     return result;
   }
@@ -68,15 +59,9 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   public Object visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
     var result = visitAssignment(ctx.expr());
     if (result instanceof Dataset resultDataset) {
-      String variableIdentifier = ctx.varID().getText();
-      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-      if (!seenVarIds.add(variableIdentifier)) {
-        throw new VtlRuntimeException(
-            new VtlScriptException(
-                "Dataset " + variableIdentifier + " has already been assigned",
-                fromContext(ctx.varID())));
-      }
       result = new PersistentDataset(resultDataset);
+      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+      String variableIdentifier = ctx.varID().getText();
       bindings.put(variableIdentifier, result);
       return result;
     }

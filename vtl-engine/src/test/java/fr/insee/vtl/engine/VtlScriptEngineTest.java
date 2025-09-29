@@ -37,10 +37,10 @@ public class VtlScriptEngineTest {
         throwable -> {
           var scriptException = (VtlScriptException) throwable;
           var position = scriptException.getPosition();
-          return position.startLine.equals(startLine)
-              && position.endLine.equals(endLine)
-              && position.startColumn.equals(startColumn)
-              && position.endColumn.equals(endColumn);
+          return position.startLine().equals(startLine)
+              && position.endLine().equals(endLine)
+              && position.startColumn().equals(startColumn)
+              && position.endColumn().equals(endColumn);
         },
         "at position <%d:%d-%d:%d>",
         startLine,
