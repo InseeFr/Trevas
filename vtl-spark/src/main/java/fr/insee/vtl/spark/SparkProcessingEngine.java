@@ -72,23 +72,24 @@ public class SparkProcessingEngine implements ProcessingEngine {
       throws UnsupportedOperationException {
     Column column;
     if (expression instanceof MinAggregationExpression) {
-      column = min(columnName);
+      column = min(SparkUtils.safeCol(columnName));
     } else if (expression instanceof MaxAggregationExpression) {
-      column = max(columnName);
+      column = max(SparkUtils.safeCol(columnName));
     } else if (expression instanceof AverageAggregationExpression) {
-      column = avg(columnName);
+      column = avg(SparkUtils.safeCol(columnName));
     } else if (expression instanceof SumAggregationExpression) {
-      column = sum(columnName);
+      column = sum(SparkUtils.safeCol(columnName));
     } else if (expression instanceof CountAggregationExpression) {
       column = count("*");
     } else if (expression instanceof MedianAggregationExpression) {
-      column = percentile_approx(col(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+      column =
+          percentile_approx(SparkUtils.safeCol(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
     } else if (expression instanceof StdDevSampAggregationExpression) {
-      column = stddev_samp(columnName);
+      column = stddev_samp(SparkUtils.safeCol(columnName));
     } else if (expression instanceof VarPopAggregationExpression) {
-      column = var_pop(columnName);
+      column = var_pop(SparkUtils.safeCol(columnName));
     } else if (expression instanceof VarSampAggregationExpression) {
-      column = var_samp(columnName);
+      column = var_samp(SparkUtils.safeCol(columnName));
     } else {
       throw new UnsupportedOperationException("unknown aggregation " + expression.getClass());
     }
@@ -132,7 +133,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
   public static Seq<Column> colNameToCol(List<String> inputColNames) {
     List<Column> cols = new ArrayList<>();
     for (String colName : inputColNames) {
-      cols.add(col(colName));
+      cols.add(SparkUtils.safeCol(colName));
     }
     return JavaConverters.asScalaIteratorConverter(cols.iterator()).asScala().toSeq();
   }
@@ -142,9 +143,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     List<Column> orders = new ArrayList<>();
     for (Map.Entry<String, Analytics.Order> entry : orderCols.entrySet()) {
       if (entry.getValue().equals(Analytics.Order.DESC)) {
-        orders.add(col(entry.getKey()).desc());
+        orders.add(SparkUtils.safeCol(entry.getKey()).desc());
       } else {
-        orders.add(col(entry.getKey()));
+        orders.add(SparkUtils.safeCol(entry.getKey()));
       }
     }
     return JavaConverters.asScalaIteratorConverter(orders.iterator()).asScala().toSeq();
@@ -282,9 +283,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     List<Column> columns = new ArrayList<>();
     for (String name : dataset.columns()) {
       if (fromTo.containsKey(name)) {
-        columns.add(col(name).as(fromTo.get(name)));
+        columns.add(SparkUtils.safeCol(name).as(fromTo.get(name)));
       } else if (!fromTo.containsValue(name)) {
-        columns.add(col(name));
+        columns.add(SparkUtils.safeCol(name));
       }
     }
     return dataset.select(iterableAsScalaIterable(columns).toSeq());
@@ -366,7 +367,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
             .map(e -> convertAggregation(e.getKey(), e.getValue()))
             .collect(Collectors.toList());
     List<Column> groupByColumns =
-        groupBy.stream().map(name -> col(name)).collect(Collectors.toList());
+        groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
     Dataset<Row> result =
         sparkDataset
             .getSparkDataset()
@@ -395,22 +396,23 @@ public class SparkProcessingEngine implements ProcessingEngine {
     // step 2: call analytic func on window spec
     // 2.1 get all measurement column
 
+    Column safeCol = SparkUtils.safeCol(sourceColName);
+
     Column column =
         switch (function) {
-          case COUNT -> count(sourceColName).over(windowSpec);
-          case SUM -> sum(sourceColName).over(windowSpec);
-          case MIN -> min(sourceColName).over(windowSpec);
-          case MAX -> max(sourceColName).over(windowSpec);
-          case AVG -> avg(sourceColName).over(windowSpec);
+          case COUNT -> count(safeCol).over(windowSpec);
+          case SUM -> sum(safeCol).over(windowSpec);
+          case MIN -> min(safeCol).over(windowSpec);
+          case MAX -> max(safeCol).over(windowSpec);
+          case AVG -> avg(safeCol).over(windowSpec);
           case MEDIAN ->
-              percentile_approx(col(sourceColName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY))
-                  .over(windowSpec);
-          case STDDEV_POP -> stddev_pop(sourceColName).over(windowSpec);
-          case STDDEV_SAMP -> stddev_samp(sourceColName).over(windowSpec);
-          case VAR_POP -> var_pop(sourceColName).over(windowSpec);
-          case VAR_SAMP -> var_samp(sourceColName).over(windowSpec);
-          case FIRST_VALUE -> first(sourceColName).over(windowSpec);
-          case LAST_VALUE -> last(sourceColName).over(windowSpec);
+              percentile_approx(safeCol, lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec);
+          case STDDEV_POP -> stddev_pop(safeCol).over(windowSpec);
+          case STDDEV_SAMP -> stddev_samp(safeCol).over(windowSpec);
+          case VAR_POP -> var_pop(safeCol).over(windowSpec);
+          case VAR_SAMP -> var_samp(safeCol).over(windowSpec);
+          case FIRST_VALUE -> first(safeCol).over(windowSpec);
+          case LAST_VALUE -> last(safeCol).over(windowSpec);
           default -> throw UNKNOWN_ANALYTIC_FUNCTION;
         };
     var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
@@ -461,8 +463,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     Dataset<Row> result =
         sparkDataset
             .getSparkDataset()
-            .withColumn(totalColName, sum(sourceColName).over(windowSpec))
-            .withColumn(targetColName, col(sourceColName).divide(col(totalColName)))
+            .withColumn(totalColName, sum(SparkUtils.safeCol(sourceColName)).over(windowSpec))
+            .withColumn(targetColName, SparkUtils.safeCol(sourceColName).divide(col(totalColName)))
             .drop(totalColName);
     // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
     return new SparkDatasetExpression(new SparkDataset(result), dataset);
@@ -1101,11 +1103,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
     List<String> groupByIdentifiers = new ArrayList<>(dsExpr.getIdentifierNames());
     groupByIdentifiers.remove(idName);
 
-    Column[] groupByCols = groupByIdentifiers.stream().map(functions::col).toArray(Column[]::new);
+    Column[] groupByCols =
+        groupByIdentifiers.stream().map(SparkUtils::safeCol).toArray(Column[]::new);
 
     // TODO: fail if any values needs to be aggregated
     Dataset<Row> result =
-        sparkDataset.groupBy(groupByCols).pivot(idName).agg(functions.first(meName));
+        sparkDataset
+            .groupBy(groupByCols)
+            .pivot(SparkUtils.safeCol(idName))
+            .agg(functions.first(meName));
 
     return new SparkDatasetExpression(new SparkDataset(result), pos);
   }
