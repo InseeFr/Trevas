@@ -84,7 +84,8 @@ public class AnalyticFirstTest extends AnalyticTest {
     // will also test dot espacing
     context.setAttribute("ds.ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("res :=  first_value ( ds.ds2 over ( partition by Id_1, Id_2 order by Year desc) );");
+    engine.eval(
+        "res :=  first_value ( ds.ds2 over ( partition by Id_1, Id_2 order by Year desc) );");
     assertThat(engine.getContext().getAttribute("res")).isInstanceOf(Dataset.class);
 
     /*
