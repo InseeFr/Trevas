@@ -93,13 +93,12 @@ public class SparkDataset implements Dataset {
       org.apache.spark.sql.Dataset<Row> sparkDataset) {
     StructType schema = sparkDataset.schema();
 
-    // Se construye una lista de expresiones para castear en una sola transformación
     List<Column> castedColumns =
         Arrays.stream(schema.fields())
             .map(
                 field -> {
                   DataType type = field.dataType();
-                  Column col = sparkDataset.col(field.name());
+                  Column col = SparkUtils.safeCol(field.name());
                   if (type instanceof IntegerType
                       || type instanceof FloatType
                       || type instanceof DecimalType) {
@@ -109,7 +108,7 @@ public class SparkDataset implements Dataset {
                   }
                   return col;
                 })
-            .collect(Collectors.toList());
+            .toList();
 
     return sparkDataset.select(castedColumns.toArray(new Column[0]));
   }
@@ -137,7 +136,7 @@ public class SparkDataset implements Dataset {
 
     return sparkDataset.select(
         Arrays.stream(updatedSchema.fields())
-            .map(field -> sparkDataset.col(field.name()).as(field.name(), field.metadata()))
+            .map(field -> SparkUtils.safeCol(field.name()).as(field.name(), field.metadata()))
             .toArray(Column[]::new));
   }
 
@@ -151,7 +150,6 @@ public class SparkDataset implements Dataset {
     List<StructField> schema = new ArrayList<>();
     for (Component component : structure.values()) {
       Object vd = null == component.getValuedomain() ? null : component.getValuedomain();
-      // TODO: refine nullable strategy
       Map<String, Object> map = new HashMap<>();
       map.put("vtlRole", component.getRole().name());
       map.put("vtlValuedomain", vd);
