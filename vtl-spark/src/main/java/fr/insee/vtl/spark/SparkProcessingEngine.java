@@ -14,6 +14,7 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -218,18 +219,29 @@ public class SparkProcessingEngine implements ProcessingEngine {
       }
       // Execute the ResolvableExpression by wrapping it in a UserDefinedFunction.
       ResolvableExpression expression = expressions.get(name);
-      try {
-        UserDefinedFunction exprFunction =
-            udf(
-                (Row row) -> {
+      UserDefinedFunction exprFunction =
+          udf(
+              (Row row) -> {
+                try {
                   SparkRowMap context = new SparkRowMap(row);
-                  return expression.resolve(context);
-                },
-                fromVtlType(expression.getType()));
-        interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
-      } catch (Exception e) {
-        System.out.println(name);
-      }
+                  Object result = expression.resolve(context);
+                  // Convert java.time.Instant to java.sql.Date for Spark compatibility
+                  if (result instanceof java.time.Instant instant) {
+                    return java.sql.Date.valueOf(
+                        instant.atZone(java.time.ZoneOffset.UTC).toLocalDate());
+                  }
+                  return result;
+                } catch (VtlRuntimeException e) {
+                  // VtlRuntimeException already wraps the real VTL error, re-throw it
+                  throw e;
+                } catch (Exception e) {
+                  // Wrap any other exception to provide context
+                  throw new RuntimeException(
+                      "Error in UDF for column '" + name + "': " + e.getMessage(), e);
+                }
+              },
+              fromVtlType(expression.getType()));
+      interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
     }
     return interpreted;
   }
@@ -241,7 +253,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
         String expression = expressionStrings.get(name);
         if (expression == null) continue;
         result = result.withColumn(name, expr(expression));
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        // Silently ignore expressions that Spark SQL cannot interpret directly.
+        // These will be evaluated as ResolvableExpressions in executeCalcEvaluated instead.
       }
     }
     return result;
