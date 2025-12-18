@@ -1,6 +1,8 @@
 package fr.insee.vtl.engine.expressions;
 
+import fr.insee.vtl.engine.exceptions.CastException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -76,7 +78,8 @@ public class CastExpression extends ResolvableExpression {
                 return exprValue ? 1D : 0D;
               });
     }
-    throw new ClassCastException("Cast Boolean to " + outputClass + isNotSupported);
+    throw new VtlRuntimeException(
+        new CastException("Cast Boolean to " + outputClass + isNotSupported, this));
   }
 
   private ResolvableExpression castDouble(ResolvableExpression expr) {
@@ -98,8 +101,9 @@ public class CastExpression extends ResolvableExpression {
                 Double exprValue = (Double) expr.resolve(context);
                 if (exprValue == null) return null;
                 if (exprValue % 1 != 0)
-                  throw new UnsupportedOperationException(
-                      exprValue + " can not be casted into integer");
+                  throw new VtlRuntimeException(
+                      new CastException(
+                          exprValue + " can not be casted into integer", CastExpression.this));
                 return exprValue.longValue();
               });
     if (outputClass.equals(Double.class))
@@ -115,7 +119,8 @@ public class CastExpression extends ResolvableExpression {
                 if (exprValue == null) return null;
                 return !exprValue.equals(0D);
               });
-    throw new ClassCastException("Cast Double to " + outputClass + isNotSupported);
+    throw new VtlRuntimeException(
+        new CastException("Cast Double to " + outputClass + isNotSupported, this));
   }
 
   private ResolvableExpression castInstant(ResolvableExpression expr, String mask) {
@@ -125,18 +130,24 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
-                var value = expr.resolve(context);
-                Instant exprValue;
-                if (value instanceof LocalDate date) {
-                  exprValue = date.atStartOfDay().toInstant(ZoneOffset.UTC);
-                } else {
-                  exprValue = (Instant) value;
+                try {
+                  var value = expr.resolve(context);
+                  Instant exprValue;
+                  if (value instanceof LocalDate date) {
+                    exprValue = date.atStartOfDay().toInstant(ZoneOffset.UTC);
+                  } else {
+                    exprValue = (Instant) value;
+                  }
+                  if (exprValue == null) return null;
+                  DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
+                  return maskFormatter.format(exprValue.atOffset(ZoneOffset.UTC));
+                } catch (Exception e) {
+                  throw new VtlRuntimeException(
+                      new CastException("Failed to cast date to string", e, CastExpression.this));
                 }
-                if (exprValue == null) return null;
-                DateTimeFormatter maskFormatter = DateTimeFormatter.ofPattern(mask);
-                return maskFormatter.format(exprValue.atOffset(ZoneOffset.UTC));
               });
-    throw new ClassCastException("Cast Date to " + outputClass + isNotSupported);
+    throw new VtlRuntimeException(
+        new CastException("Cast Date to " + outputClass + isNotSupported, this));
   }
 
   private ResolvableExpression castLong(ResolvableExpression expr) {
@@ -168,7 +179,8 @@ public class CastExpression extends ResolvableExpression {
                 if (exprValue == null) return null;
                 return !exprValue.equals(0L);
               });
-    throw new ClassCastException("Cast Long to " + outputClass + isNotSupported);
+    throw new VtlRuntimeException(
+        new CastException("Cast Long to " + outputClass + isNotSupported, this));
   }
 
   private ResolvableExpression castString(ResolvableExpression expr, String mask) {
@@ -178,18 +190,29 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
-                String exprValue = (String) expr.resolve(context);
-                if (exprValue == null) return null;
-                return Long.valueOf(exprValue);
+                try {
+                  String exprValue = (String) expr.resolve(context);
+                  if (exprValue == null) return null;
+                  return Long.valueOf(exprValue);
+                } catch (NumberFormatException e) {
+                  throw new VtlRuntimeException(
+                      new CastException(
+                          "Failed to cast string to integer", e, CastExpression.this));
+                }
               });
     } else if (outputClass.equals(Double.class)) {
       return ResolvableExpression.withType(Double.class)
           .withPosition(expr)
           .using(
               context -> {
-                String exprValue = (String) expr.resolve(context);
-                if (exprValue == null) return null;
-                return Double.valueOf(exprValue);
+                try {
+                  String exprValue = (String) expr.resolve(context);
+                  if (exprValue == null) return null;
+                  return Double.valueOf(exprValue);
+                } catch (NumberFormatException e) {
+                  throw new VtlRuntimeException(
+                      new CastException("Failed to cast string to number", e, CastExpression.this));
+                }
               });
     } else if (outputClass.equals(Boolean.class)) {
       return ResolvableExpression.withType(Boolean.class)
@@ -205,22 +228,29 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
-                if (mask == null) return null;
-                String exprValue = (String) expr.resolve(context);
-                if (exprValue == null) return null;
-                // The spec is pretty vague about date and time. Apparently, date is a point in time
-                // so a good java
-                // representation is Instant. But date can be created using only year/month and date
-                // mask, leaving
-                // any time information.
-                DateTimeFormatter maskFormatter =
-                    DateTimeFormatter.ofPattern(mask).withZone(ZoneOffset.UTC);
                 try {
-                  return LocalDateTime.parse(exprValue, maskFormatter).toInstant(ZoneOffset.UTC);
-                } catch (DateTimeParseException dtp) {
-                  return LocalDate.parse(exprValue, maskFormatter)
-                      .atStartOfDay()
-                      .toInstant(ZoneOffset.UTC);
+                  if (mask == null) return null;
+                  String exprValue = (String) expr.resolve(context);
+                  if (exprValue == null) return null;
+                  // The spec is pretty vague about date and time. Apparently, date is a point in
+                  // time
+                  // so a good java
+                  // representation is Instant. But date can be created using only year/month and
+                  // date
+                  // mask, leaving
+                  // any time information.
+                  DateTimeFormatter maskFormatter =
+                      DateTimeFormatter.ofPattern(mask).withZone(ZoneOffset.UTC);
+                  try {
+                    return LocalDateTime.parse(exprValue, maskFormatter).toInstant(ZoneOffset.UTC);
+                  } catch (DateTimeParseException dtp) {
+                    return LocalDate.parse(exprValue, maskFormatter)
+                        .atStartOfDay()
+                        .toInstant(ZoneOffset.UTC);
+                  }
+                } catch (Exception e) {
+                  throw new VtlRuntimeException(
+                      new CastException("Failed to cast string to date", e, CastExpression.this));
                 }
               });
     } else if (outputClass.equals(PeriodDuration.class)) {
@@ -228,19 +258,32 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
-                String value = (String) expr.tryCast(String.class).resolve(context);
-                return PeriodDuration.parse(value).normalizedYears().normalizedStandardDays();
+                try {
+                  String value = (String) expr.tryCast(String.class).resolve(context);
+                  return PeriodDuration.parse(value).normalizedYears().normalizedStandardDays();
+                } catch (Exception e) {
+                  throw new VtlRuntimeException(
+                      new CastException(
+                          "Failed to cast string to duration", e, CastExpression.this));
+                }
               });
     } else if (outputClass.equals(Interval.class)) {
       return ResolvableExpression.withType(Interval.class)
           .withPosition(expr)
           .using(
               context -> {
-                String value = (String) expr.tryCast(String.class).resolve(context);
-                return Interval.parse(value);
+                try {
+                  String value = (String) expr.tryCast(String.class).resolve(context);
+                  return Interval.parse(value);
+                } catch (Exception e) {
+                  throw new VtlRuntimeException(
+                      new CastException(
+                          "Failed to cast string to interval", e, CastExpression.this));
+                }
               });
     } else {
-      throw new ClassCastException("Cast String to " + outputClass + isNotSupported);
+      throw new VtlRuntimeException(
+          new CastException("Cast String to " + outputClass + isNotSupported, this));
     }
   }
 
