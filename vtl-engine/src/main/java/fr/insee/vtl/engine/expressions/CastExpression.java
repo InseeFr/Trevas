@@ -190,22 +190,26 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
+                String exprValue = null;
                 try {
-                  String exprValue = (String) expr.resolve(context);
+                  exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
                   if (exprValue.isEmpty()) {
                     throw new VtlRuntimeException(
                         new CastException(
-                            "Cannot cast empty string to integer", CastExpression.this));
+                            "Cannot cast empty string \"\" to integer", CastExpression.this));
                   }
                   return Long.valueOf(exprValue);
                 } catch (VtlRuntimeException e) {
                   // Re-throw VtlRuntimeException as-is
                   throw e;
                 } catch (NumberFormatException e) {
+                  String value = exprValue != null ? exprValue : "null";
                   throw new VtlRuntimeException(
                       new CastException(
-                          "Failed to cast string to integer", e, CastExpression.this));
+                          "Failed to cast string \"" + value + "\" to integer",
+                          e,
+                          CastExpression.this));
                 }
               });
     } else if (outputClass.equals(Double.class)) {
@@ -213,21 +217,26 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
+                String exprValue = null;
                 try {
-                  String exprValue = (String) expr.resolve(context);
+                  exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
                   if (exprValue.isEmpty()) {
                     throw new VtlRuntimeException(
                         new CastException(
-                            "Cannot cast empty string to number", CastExpression.this));
+                            "Cannot cast empty string \"\" to number", CastExpression.this));
                   }
                   return Double.valueOf(exprValue);
                 } catch (VtlRuntimeException e) {
                   // Re-throw VtlRuntimeException as-is
                   throw e;
                 } catch (NumberFormatException e) {
+                  String value = exprValue != null ? exprValue : "null";
                   throw new VtlRuntimeException(
-                      new CastException("Failed to cast string to number", e, CastExpression.this));
+                      new CastException(
+                          "Failed to cast string \"" + value + "\" to number",
+                          e,
+                          CastExpression.this));
                 }
               });
     } else if (outputClass.equals(Boolean.class)) {
@@ -244,22 +253,20 @@ public class CastExpression extends ResolvableExpression {
           .withPosition(expr)
           .using(
               context -> {
+                String exprValue = null;
                 try {
                   if (mask == null) return null;
-                  String exprValue = (String) expr.resolve(context);
+                  exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
                   if (exprValue.isEmpty()) {
                     throw new VtlRuntimeException(
                         new CastException(
-                            "Cannot cast empty string to date", CastExpression.this));
+                            "Cannot cast empty string \"\" to date (mask: \"" + mask + "\")",
+                            CastExpression.this));
                   }
-                  // The spec is pretty vague about date and time. Apparently, date is a point in
-                  // time
-                  // so a good java
-                  // representation is Instant. But date can be created using only year/month and
-                  // date
-                  // mask, leaving
-                  // any time information.
+                  // The spec is pretty vague about date and time. Apparently, date is a point
+                  // in time so a good Java representation is Instant. But date can be created
+                  // using only year/month and date mask, leaving any time information.
                   DateTimeFormatter maskFormatter =
                       DateTimeFormatter.ofPattern(mask).withZone(ZoneOffset.UTC);
                   try {
@@ -273,8 +280,16 @@ public class CastExpression extends ResolvableExpression {
                   // Re-throw VtlRuntimeException as-is
                   throw e;
                 } catch (Exception e) {
+                  String value = exprValue != null ? exprValue : "null";
                   throw new VtlRuntimeException(
-                      new CastException("Failed to cast string to date", e, CastExpression.this));
+                      new CastException(
+                          "Failed to cast string \""
+                              + value
+                              + "\" to date with mask \""
+                              + mask
+                              + "\"",
+                          e,
+                          CastExpression.this));
                 }
               });
     } else if (outputClass.equals(PeriodDuration.class)) {
