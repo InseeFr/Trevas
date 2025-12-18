@@ -193,7 +193,15 @@ public class CastExpression extends ResolvableExpression {
                 try {
                   String exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
+                  if (exprValue.isEmpty()) {
+                    throw new VtlRuntimeException(
+                        new CastException(
+                            "Cannot cast empty string to integer", CastExpression.this));
+                  }
                   return Long.valueOf(exprValue);
+                } catch (VtlRuntimeException e) {
+                  // Re-throw VtlRuntimeException as-is
+                  throw e;
                 } catch (NumberFormatException e) {
                   throw new VtlRuntimeException(
                       new CastException(
@@ -208,7 +216,15 @@ public class CastExpression extends ResolvableExpression {
                 try {
                   String exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
+                  if (exprValue.isEmpty()) {
+                    throw new VtlRuntimeException(
+                        new CastException(
+                            "Cannot cast empty string to number", CastExpression.this));
+                  }
                   return Double.valueOf(exprValue);
+                } catch (VtlRuntimeException e) {
+                  // Re-throw VtlRuntimeException as-is
+                  throw e;
                 } catch (NumberFormatException e) {
                   throw new VtlRuntimeException(
                       new CastException("Failed to cast string to number", e, CastExpression.this));
@@ -232,6 +248,11 @@ public class CastExpression extends ResolvableExpression {
                   if (mask == null) return null;
                   String exprValue = (String) expr.resolve(context);
                   if (exprValue == null) return null;
+                  if (exprValue.isEmpty()) {
+                    throw new VtlRuntimeException(
+                        new CastException(
+                            "Cannot cast empty string to date", CastExpression.this));
+                  }
                   // The spec is pretty vague about date and time. Apparently, date is a point in
                   // time
                   // so a good java
@@ -248,6 +269,9 @@ public class CastExpression extends ResolvableExpression {
                         .atStartOfDay()
                         .toInstant(ZoneOffset.UTC);
                   }
+                } catch (VtlRuntimeException e) {
+                  // Re-throw VtlRuntimeException as-is
+                  throw e;
                 } catch (Exception e) {
                   throw new VtlRuntimeException(
                       new CastException("Failed to cast string to date", e, CastExpression.this));
