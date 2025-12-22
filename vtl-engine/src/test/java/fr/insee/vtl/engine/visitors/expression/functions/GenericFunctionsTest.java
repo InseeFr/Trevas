@@ -128,13 +128,13 @@ public class GenericFunctionsTest {
               engine.eval("g := cast(\"\", integer);");
             })
         .isInstanceOf(CastException.class)
-        .hasMessage("Failed to cast string to integer: For input string: \"\"");
+        .hasMessage("Cannot cast empty string \"\" to integer");
     assertThatThrownBy(
             () -> {
               engine.eval("h := cast(\"\", number);");
             })
         .isInstanceOf(CastException.class)
-        .hasMessage("Failed to cast string to number: empty String");
+        .hasMessage("Cannot cast empty string \"\" to number");
 
     // Cast Boolean to...
     engine.eval("i := cast(true, integer);");
