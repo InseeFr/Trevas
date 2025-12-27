@@ -133,7 +133,8 @@ jobs:
   publish-release:
     name: Publish Trevas modules on Maven
     if: startsWith(github.event.ref, 'refs/tags/v')
-    needs: test-sonar-package
+    # Temp update because of sonar token issue
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
