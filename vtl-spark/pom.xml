@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.0.0</version>
+        <version>2.1.0</version>
     </parent>
 
     <artifactId>vtl-spark</artifactId>
     <name>VTL Spark</name>
     <description>Trevas engine for Apache Spark</description>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -25,14 +25,14 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.0.0</version>
-            <scope>test</scope>
+            <version>2.1.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>

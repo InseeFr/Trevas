@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.0.0</version>
+        <version>2.1.0</version>
     </parent>
 
     <artifactId>vtl-sdmx</artifactId>
     <name>VTL SDMX</name>
     <description>Dataset wrapper around SDMX</description>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 
     <repositories>
         <repository>
@@ -40,24 +40,24 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-csv</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-spark</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.0</version>
             <scope>test</scope>
         </dependency>
 
