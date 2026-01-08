@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -246,5 +247,37 @@ public class SetFunctionsVisitorTest {
             Map.of("name", "Franck", "age", 12L, "weight", 9L),
             Map.of("name", "Franck2", "age", 12L, "weight", 9L),
             Map.of("name", "Hadrien2", "age", 10L, "weight", 11L));
+  }
+
+  @Test
+  public void testUnion456Issue() throws ScriptException {
+    InMemoryDataset MULTIMODE =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("interrogationId", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("LOOP", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("LOOP.FOO1", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("FOO", String.class, Dataset.Role.MEASURE)),
+            Arrays.asList("T01", "LOOP-01", "foo11", "foo1"),
+            Arrays.asList("T01", "LOOP-02", "foo12", "foo1"),
+            Arrays.asList("T02", null, "foo21", "foo2"));
+
+    engine.put("$vtl.engine.use_dag", "false");
+    ScriptContext context = engine.getContext();
+    context.getBindings(ScriptContext.ENGINE_SCOPE).put("MULTIMODE", MULTIMODE);
+
+    engine.eval(
+        "TEMP_RACINE := MULTIMODE [keep interrogationId, FOO];\n"
+            + "RACINE := union(TEMP_RACINE, TEMP_RACINE) ;\n"
+            + "TEMP_LOOP := MULTIMODE [keep interrogationId, LOOP, LOOP.FOO1]\n"
+            + "                       [filter LOOP <> \"\"]\n"
+            + "                       [rename LOOP.FOO1 to FOO1];\n"
+            + "LOOP := union(TEMP_LOOP, TEMP_LOOP);");
+
+    Object result = engine.getContext().getAttribute("LOOP");
+    assertThat(result).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) result).getDataAsList().size()).isEqualTo(2);
+    assertThat(((Dataset) result).getDataAsList().stream().map(l -> l.get(1)))
+        .isEqualTo(List.of("LOOP-01", "LOOP-02"));
   }
 }
