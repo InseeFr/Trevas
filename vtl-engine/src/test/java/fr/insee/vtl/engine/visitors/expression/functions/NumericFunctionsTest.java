@@ -85,7 +85,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("d")).isEqualTo(0L);
 
     context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := ceil(ds[keep id, long1, double1]);");
+    Object res = engine.eval("res := ceil(ds[keep long1, double1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 150L, "double1", 2L),
@@ -112,7 +112,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("d")).isEqualTo(-1L);
 
     context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := floor(ds[keep id, double1]);");
+    Object res = engine.eval("res := floor(ds[keep double1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "double1", 1L),
@@ -135,7 +135,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("b")).isEqualTo(5.5D);
 
     context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := abs(ds[keep id, double1]);");
+    Object res = engine.eval("res := abs(ds[keep double1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "double1", 1.1D),
@@ -164,7 +164,7 @@ public class NumericFunctionsTest {
     assertThat(((Double) context.getAttribute("d")))
         .isCloseTo(0.367D, Percentage.withPercentage(1));
     context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := floor(exp(ds[keep id, double1, long1]));");
+    Object res = engine.eval("res := floor(exp(ds[keep double1, long1]));");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "double1", 3L, "long1", 9223372036854775807L),
@@ -192,7 +192,7 @@ public class NumericFunctionsTest {
         .isCloseTo(-0.69D, Percentage.withPercentage(1));
 
     context.setAttribute("ds", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := floor(ln(abs(ds[keep id, double1])));");
+    Object res = engine.eval("res := floor(ln(abs(ds[keep double1])));");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "double1", 0L),
@@ -221,7 +221,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("e")).isEqualTo(12350D);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := round(ds[keep id, long1, double2], 1);");
+    Object res = engine.eval("res := round(ds[keep long1, double2], 1);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
@@ -258,7 +258,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("e")).isEqualTo(12340D);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := trunc(ds[keep id, long1, double2], 1);");
+    Object res = engine.eval("res := trunc(ds[keep long1, double2], 1);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 30.0D, "double2", 1.2D),
@@ -289,7 +289,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("c")).isEqualTo(0D);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := round(sqrt(ds[keep id, long1, double2]));");
+    Object res = engine.eval("res := round(sqrt(ds[keep long1, double2]));");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 5.0D, "double2", 1D),
@@ -321,7 +321,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("d")).isEqualTo(9D);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := trunc(mod(ds[keep id, long1, double2], 2), 1);");
+    Object res = engine.eval("res := trunc(mod(ds[keep long1, double2], 2), 1);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 0.0D, "double2", 1.2D),
@@ -353,7 +353,7 @@ public class NumericFunctionsTest {
     assertThat(context.getAttribute("e")).isEqualTo(-125D);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := trunc(power(ds[keep id, long1, double2], 2), 1);");
+    Object res = engine.eval("res := trunc(power(ds[keep long1, double2], 2), 1);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 900.0D, "double2", 1.4D),
@@ -383,7 +383,7 @@ public class NumericFunctionsTest {
     assertThat((Double) context.getAttribute("a")).isCloseTo(0.72D, Percentage.withPercentage(0.2));
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := trunc(random(ds[keep id, long1], 200), 1);");
+    Object res = engine.eval("res := trunc(random(ds[keep long1], 200), 1);");
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
 
     assertThatThrownBy(
@@ -410,7 +410,7 @@ public class NumericFunctionsTest {
         .isCloseTo(3.01D, Percentage.withPercentage(0.01));
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := trunc(log(ds[keep id, long1, double2], 2), 1);");
+    Object res = engine.eval("res := trunc(log(ds[keep long1, double2], 2), 1);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", 4.9D, "double2", 0.2D),
