@@ -13,6 +13,7 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -108,28 +109,20 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
   public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
 
     // The type of the op can either be KEEP or DROP.
-    final boolean keep = ctx.op.getType() == VtlParser.KEEP;
+    boolean keep = ctx.op.getType() == VtlParser.KEEP;
 
     // Columns explicitly requested in the KEEP/DROP clause
-    final List<String> columnNames =
-        ctx.componentID().stream().map(ClauseVisitor::getName).toList();
+    List<String> cleanColumnNames = ctx.componentID().stream().map(ClauseVisitor::getName).toList();
 
-    // All available dataset components
-    final List<Dataset.Component> inputColumnDataTypes =
-        new ArrayList<>(datasetExpression.getDataStructure().values());
-    final List<String> inputColumns =
-        inputColumnDataTypes.stream().map(Dataset.Component::getName).toList();
+    Collection<String> inputColumns = datasetExpression.getDataStructure().keySet();
 
     // Dataset identifiers (role = IDENTIFIER)
-    final Map<String, Dataset.Component> identifiers =
-        inputColumnDataTypes.stream()
-            .filter(c -> c.getRole() == Dataset.Role.IDENTIFIER)
-            .collect(
-                Collectors.toMap(
-                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
+    Map<String, Dataset.Component> identifiers =
+        datasetExpression.getDataStructure().getIdentifiers().stream()
+            .collect(Collectors.toMap(Structured.Component::getName, Function.identity()));
 
     // Evaluate that all requested columns must exist in the dataset or raise an error
-    for (String requested : columnNames) {
+    for (String requested : cleanColumnNames) {
       if (!inputColumns.contains(requested)) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
@@ -139,8 +132,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     // VTL specification: identifiers must not appear explicitly in KEEP
-    final Set<String> forbidden =
-        columnNames.stream()
+    Set<String> forbidden =
+        cleanColumnNames.stream()
             .filter(identifiers::containsKey)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -168,10 +161,10 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     final Set<String> resultSet = new LinkedHashSet<>();
     resultSet.addAll(identifiers.keySet());
     if (keep) {
-      resultSet.addAll(columnNames);
+      resultSet.addAll(cleanColumnNames);
     } else {
       for (String col : inputColumns) {
-        if (!columnNames.contains(col)) {
+        if (!cleanColumnNames.contains(col)) {
           resultSet.add(col);
         }
       }
