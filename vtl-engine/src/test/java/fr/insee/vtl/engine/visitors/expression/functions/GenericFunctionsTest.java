@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import fr.insee.vtl.engine.exceptions.CastException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import java.time.Instant;
 import java.time.Period;
@@ -126,14 +127,14 @@ public class GenericFunctionsTest {
             () -> {
               engine.eval("g := cast(\"\", integer);");
             })
-        .isInstanceOf(NumberFormatException.class)
-        .hasMessage("For input string: \"\"");
+        .isInstanceOf(CastException.class)
+        .hasMessage("Cannot cast empty string \"\" to integer");
     assertThatThrownBy(
             () -> {
               engine.eval("h := cast(\"\", number);");
             })
-        .isInstanceOf(NumberFormatException.class)
-        .hasMessage("empty String");
+        .isInstanceOf(CastException.class)
+        .hasMessage("Cannot cast empty string \"\" to number");
 
     // Cast Boolean to...
     engine.eval("i := cast(true, integer);");
@@ -170,7 +171,7 @@ public class GenericFunctionsTest {
             () -> {
               engine.eval("v := cast(1.1, integer);");
             })
-        .isInstanceOf(UnsupportedOperationException.class)
+        .isInstanceOf(CastException.class)
         .hasMessage("1.1 can not be casted into integer");
     engine.eval("w := cast(1.1, number);");
     assertThat(context.getAttribute("w")).isEqualTo(1.1D);

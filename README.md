@@ -5,7 +5,8 @@ Transformation engine and validator for statistics.
 [![Build Status](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Trevas/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=alert_status)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=InseeFr_Trevas&metric=coverage)](https://sonarcloud.io/dashboard?id=InseeFr_Trevas)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.insee.trevas/trevas-parent)
+[![Maven Central](https://img.shields.io/maven-central/v/fr.insee.trevas/trevas-parent.svg)](
+https://central.sonatype.com/artifact/fr.insee.trevas/trevas-parent)
 [![Javadoc](https://img.shields.io/badge/Javadoc-fr.insee.trevas-ff69b4?logo=java&style=flat-square)](https://javadoc.io/doc/fr.insee.trevas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Mentioned in Awesome Official Statistics ](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)

@@ -15,7 +15,6 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.*;
 import scala.Predef;
-import scala.collection.JavaConverters;
 
 /** The <code>SparkDataset</code> class is a wrapper around a Spark dataframe. */
 public class SparkDataset implements Dataset {
@@ -31,7 +30,9 @@ public class SparkDataset implements Dataset {
    * @param sparkDataset a Spark dataset.
    */
   public SparkDataset(org.apache.spark.sql.Dataset<Row> sparkDataset) {
-    this.sparkDataset = castIfNeeded(sparkDataset);
+    org.apache.spark.sql.Dataset<Row> casted = castIfNeeded(sparkDataset);
+    this.sparkDataset = casted;
+    this.dataStructure = fromSparkSchema(casted.schema(), Map.of(), Map.of());
   }
 
   /**
@@ -44,6 +45,7 @@ public class SparkDataset implements Dataset {
     org.apache.spark.sql.Dataset<Row> castedSparkDataset =
         castIfNeeded(Objects.requireNonNull(sparkDataset));
     this.sparkDataset = addMetadata(castedSparkDataset, structure);
+    this.dataStructure = structure;
     this.roles =
         Objects.requireNonNull(
             structure.entrySet().stream()
@@ -66,12 +68,28 @@ public class SparkDataset implements Dataset {
   public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
     List<Row> rows =
         vtlDataset.getDataPoints().stream()
-            .map(points -> RowFactory.create(points.toArray(new Object[] {})))
+            .map(
+                dataPoint -> {
+                  // Convert Instant to Date for Spark compatibility
+                  Object[] values =
+                      dataPoint.stream()
+                          .map(
+                              obj -> {
+                                if (obj instanceof java.time.Instant instant) {
+                                  return java.sql.Date.valueOf(
+                                      instant.atZone(java.time.ZoneOffset.UTC).toLocalDate());
+                                }
+                                return obj;
+                              })
+                          .toArray();
+                  return RowFactory.create(values);
+                })
             .collect(Collectors.toList());
     // TODO: Handle nullable with component
     StructType schema = toSparkSchema(vtlDataset.getDataStructure());
     this.sparkDataset = spark.createDataFrame(rows, schema);
     this.roles = Objects.requireNonNull(roles);
+    this.dataStructure = vtlDataset.getDataStructure();
   }
 
   /**
@@ -85,6 +103,7 @@ public class SparkDataset implements Dataset {
         castIfNeeded(Objects.requireNonNull(sparkDataset));
     DataStructure dataStructure = fromSparkSchema(sparkDataset.schema(), roles, Map.of());
     this.sparkDataset = addMetadata(castedSparkDataset, dataStructure);
+    this.dataStructure = dataStructure;
     this.roles = Objects.requireNonNull(roles);
   }
 
@@ -93,13 +112,12 @@ public class SparkDataset implements Dataset {
       org.apache.spark.sql.Dataset<Row> sparkDataset) {
     StructType schema = sparkDataset.schema();
 
-    // Se construye una lista de expresiones para castear en una sola transformación
     List<Column> castedColumns =
         Arrays.stream(schema.fields())
             .map(
                 field -> {
                   DataType type = field.dataType();
-                  Column col = sparkDataset.col(field.name());
+                  Column col = SparkUtils.safeCol(field.name());
                   if (type instanceof IntegerType
                       || type instanceof FloatType
                       || type instanceof DecimalType) {
@@ -109,7 +127,7 @@ public class SparkDataset implements Dataset {
                   }
                   return col;
                 })
-            .collect(Collectors.toList());
+            .toList();
 
     return sparkDataset.select(castedColumns.toArray(new Column[0]));
   }
@@ -123,7 +141,7 @@ public class SparkDataset implements Dataset {
                 field ->
                     new Component(
                         field.name(),
-                        toVtlType(field.dataType()),
+                        extractVtlType(field),
                         handleRole(field, roles),
                         null,
                         handleValuedomain(field, valuedomains)))
@@ -137,7 +155,7 @@ public class SparkDataset implements Dataset {
 
     return sparkDataset.select(
         Arrays.stream(updatedSchema.fields())
-            .map(field -> sparkDataset.col(field.name()).as(field.name(), field.metadata()))
+            .map(field -> SparkUtils.safeCol(field.name()).as(field.name(), field.metadata()))
             .toArray(Column[]::new));
   }
 
@@ -151,10 +169,10 @@ public class SparkDataset implements Dataset {
     List<StructField> schema = new ArrayList<>();
     for (Component component : structure.values()) {
       Object vd = null == component.getValuedomain() ? null : component.getValuedomain();
-      // TODO: refine nullable strategy
       Map<String, Object> map = new HashMap<>();
       map.put("vtlRole", component.getRole().name());
       map.put("vtlValuedomain", vd);
+      map.put("vtlType", component.getType().getName());
       scala.collection.immutable.Map<String, Object> md =
           mapAsScalaMap(map).toMap(Predef.$conforms());
       schema.add(
@@ -210,9 +228,7 @@ public class SparkDataset implements Dataset {
       return Boolean.class;
     } else if (DecimalType.class.equals(dataType.getClass())) {
       return Double.class;
-    } else if (DateType.sameType(dataType)) {
-      return Instant.class;
-    } else if (TimestampType.sameType(dataType)) {
+    } else if (DateType.sameType(dataType) || TimestampType.sameType(dataType)) {
       return Instant.class;
     } else {
       throw new UnsupportedOperationException("unsupported type " + dataType);
@@ -234,13 +250,22 @@ public class SparkDataset implements Dataset {
       return DoubleType;
     } else if (Boolean.class.equals(type)) {
       return BooleanType;
-    } else if (Instant.class.equals(type)) {
-      return TimestampType;
-    } else if (LocalDate.class.equals(type)) {
+    } else if (Instant.class.equals(type) || LocalDate.class.equals(type)) {
       return DateType;
     } else {
       throw new UnsupportedOperationException("unsupported type " + type);
     }
+  }
+
+  private static Class<?> extractVtlType(StructField field) {
+    if (field.metadata().contains("vtlType")) {
+      try {
+        return Class.forName(field.metadata().getString("vtlType"));
+      } catch (ClassNotFoundException e) {
+        throw new IllegalStateException("Unknown VTL type in metadata", e);
+      }
+    }
+    return toVtlType(field.dataType());
   }
 
   /**
@@ -256,8 +281,28 @@ public class SparkDataset implements Dataset {
   public List<DataPoint> getDataPoints() {
     List<Row> rows = sparkDataset.collectAsList();
     return rows.stream()
-        .map(row -> JavaConverters.seqAsJavaList(row.toSeq()))
-        .map(row -> new DataPoint(getDataStructure(), row))
+        .map(
+            row -> {
+              List<Object> values = new ArrayList<>();
+              int i = 0;
+              for (Component component : getDataStructure().values()) {
+                Object v = row.get(i++);
+                if (component.getType().equals(Instant.class)) {
+                  if (v instanceof java.time.LocalDate ld) {
+                    values.add(ld.atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
+                  } else if (v instanceof java.sql.Date d) {
+                    values.add(d.toLocalDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
+                  } else if (v instanceof java.sql.Timestamp ts) {
+                    values.add(ts.toInstant());
+                  } else {
+                    values.add(v);
+                  }
+                } else {
+                  values.add(v);
+                }
+              }
+              return new DataPoint(getDataStructure(), values);
+            })
         .collect(Collectors.toList());
   }
 

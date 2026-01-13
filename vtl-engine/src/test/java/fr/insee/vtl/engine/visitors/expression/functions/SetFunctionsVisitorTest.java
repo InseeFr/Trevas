@@ -6,14 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.PersistentDataset;
 import fr.insee.vtl.model.Structured;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -246,5 +245,46 @@ public class SetFunctionsVisitorTest {
             Map.of("name", "Franck", "age", 12L, "weight", 9L),
             Map.of("name", "Franck2", "age", 12L, "weight", 9L),
             Map.of("name", "Hadrien2", "age", 10L, "weight", 11L));
+  }
+
+  @Test
+  public void testUnion456Issue() throws ScriptException {
+    InMemoryDataset multimodeDs =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("interrogationId", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("LOOP", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("LOOP.FOO1", String.class, Dataset.Role.MEASURE),
+                new Structured.Component("FOO", String.class, Dataset.Role.MEASURE)),
+            Arrays.asList("T01", "LOOP-01", "foo11", "foo1"),
+            Arrays.asList("T01", "LOOP-02", "foo12", "foo1"),
+            Arrays.asList("T02", null, "foo21", "foo2"));
+
+    engine.put("$vtl.engine.use_dag", "false");
+    ScriptContext context = engine.getContext();
+    context.getBindings(ScriptContext.ENGINE_SCOPE).put("MULTIMODE", multimodeDs);
+
+    engine.eval(
+        "TEMP_RACINE := MULTIMODE [keep interrogationId, FOO];\n"
+            + "RACINE := union(TEMP_RACINE, TEMP_RACINE) ;\n"
+            + "TEMP_LOOP := MULTIMODE [keep interrogationId, LOOP, LOOP.FOO1]\n"
+            + "                       [filter LOOP <> \"\"]\n"
+            + "                       [rename LOOP.FOO1 to FOO1];\n"
+            + "LOOP <- union(TEMP_LOOP, TEMP_LOOP);");
+
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    Map<String, PersistentDataset> persitentDatasets =
+        bindings.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof PersistentDataset)
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> (PersistentDataset) e.getValue()));
+
+    assertThat(persitentDatasets.keySet().size()).isEqualTo(1);
+    assertThat(persitentDatasets.containsKey("LOOP")).isTrue();
+
+    Dataset loopDs = persitentDatasets.get("LOOP");
+
+    assertThat(loopDs.getDataAsList().size()).isEqualTo(2);
+    assertThat(loopDs.getDataAsList().stream().map(l -> l.get(1)))
+        .isEqualTo(List.of("LOOP-01", "LOOP-02"));
   }
 }
