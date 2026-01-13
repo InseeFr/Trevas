@@ -167,13 +167,14 @@ public class RDFTest {
                         CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, TIME_PERIOD to year, POP_TOT to pop]
                                                             [filter year = "2021"]
                                                             [calc pop := cast(pop, integer)]
-                                                            [drop NB_COM, POP_MUNI];
+                                                            [drop year, NB_COM, POP_MUNI];
 
                         // Extract dataset on general practitioners from BPE by NUTS 3 in 2021
-                        GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3   [filter facility_type = "D201" and year = "2021"];
+                        GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3   [filter facility_type = "D201" and year = "2021"]
+                                                    [drop facility_type, year];
 
                         // Merge practitioners and legal population datasets by NUTS 3 in 2021 and compute an indicator
-                        BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021 using nuts3)
+                        BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)
                                                 [calc pract_per_10000_inhabitants := nb / pop * 10000]
                                                 [drop nb, pop];\
                         """;

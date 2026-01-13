@@ -59,7 +59,7 @@ public class ProjectTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds1 := ds[keep age];");
+    engine.eval("ds1 := ds[keep name, age];");
 
     assertThat(engine.getContext().getAttribute("ds"))
         .isInstanceOf(fr.insee.vtl.model.Dataset.class);

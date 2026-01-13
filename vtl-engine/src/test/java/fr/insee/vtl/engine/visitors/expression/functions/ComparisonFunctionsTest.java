@@ -50,7 +50,7 @@ public class ComparisonFunctionsTest {
     assertThat((Boolean) context.getAttribute("b2")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := between(ds[keep long1, double2], 5, 15);");
+    Object res = engine.eval("res := between(ds[keep id, long1, double2], 5, 15);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "long1", false, "double2", false),
@@ -80,7 +80,8 @@ public class ComparisonFunctionsTest {
     assertThat((Boolean) context.getAttribute("t3")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := match_characters(ds[keep string1, string2], \"(.*)o(.*)\");");
+    Object res =
+        engine.eval("res := match_characters(ds[keep id, string1, string2], \"(.*)o(.*)\");");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "string1", true, "string2", false),
@@ -113,7 +114,7 @@ public class ComparisonFunctionsTest {
     assertThat((Boolean) context.getAttribute("n1")).isFalse();
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := isnull(ds[keep string1, bool1]);");
+    Object res = engine.eval("res := isnull(ds[keep id, string1, bool1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "string1", false, "bool1", false),

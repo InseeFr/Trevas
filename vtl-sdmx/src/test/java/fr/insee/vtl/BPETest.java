@@ -168,7 +168,7 @@ public class BPETest {
         "CENSUS_NUTS3_2021 := LEGAL_POP   [rename REF_AREA to nuts3, POP_TOT to pop]\n"
             + "[filter TIME_PERIOD = \"2021\"]\n"
             + "[calc pop := cast(pop, integer)]\n"
-            + "[drop NB_COM, POP_MUNI];");
+            + "[drop TIME_PERIOD, NB_COM, POP_MUNI];");
 
     Dataset censusNuts2021 = (Dataset) engine.getContext().getAttribute("CENSUS_NUTS3_2021");
     Structured.DataStructure censusNuts2021Structure = censusNuts2021.getDataStructure();
@@ -181,7 +181,8 @@ public class BPETest {
 
     // Step 7
     engine.eval(
-        "GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3[filter facility_type = \"D201\" and TIME_PERIOD = \"2021\"];");
+        "GENERAL_PRACT_NUTS3_2021 := BPE_NUTS3[filter facility_type = \"D201\" and TIME_PERIOD = \"2021\"]\n"
+            + "[drop facility_type, TIME_PERIOD];");
 
     Dataset generalNuts = (Dataset) engine.getContext().getAttribute("GENERAL_PRACT_NUTS3_2021");
     Structured.DataStructure generalNutsStructure = generalNuts.getDataStructure();
@@ -194,7 +195,7 @@ public class BPETest {
 
     // Step 8
     engine.eval(
-        "BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021 using nuts3)\n"
+        "BPE_CENSUS_NUTS3_2021 <- inner_join(GENERAL_PRACT_NUTS3_2021, CENSUS_NUTS3_2021)\n"
             + "[calc pract_per_10000_inhabitants := nb / pop * 10000]\n"
             + "[drop nb, pop];");
 

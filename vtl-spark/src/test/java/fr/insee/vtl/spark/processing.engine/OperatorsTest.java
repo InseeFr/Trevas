@@ -47,7 +47,7 @@ public class OperatorsTest {
     engine.eval(
         "res := ds1#long1; "
             + "res1 := isnull(ds1); "
-            + "ds_1 := ds1[keep long1, double1]; ds_2 := ds2[keep long1, double1]; "
+            + "ds_1 := ds1[keep id, long1, double1]; ds_2 := ds2[keep id, long1, double1]; "
             + "res2 := ds_1 + ds_2; "
             + "res3 := ds_1 - ds_2; "
             + "res4 := ds_1 * ds_2; "
@@ -67,8 +67,7 @@ public class OperatorsTest {
             + "res18 := mod(ds_1, 5); "
             + "res19 := power(ds_1, 5); "
             + "res20 := log(abs(ds_1), 5); "
-            + "ds_11 := ds1[keep string1, string2]; "
-            + "ds_22 := ds2[keep string1][calc string2 := string1]; "
+            + "ds_11 := ds1[keep id, string1, string2]; ds_22 := ds2[keep id, string1][calc string2 := string1]; "
             + "res21 := ds_11 || ds_22; ");
     var res = engine.getContext().getAttribute("res21");
     assertThat(((Dataset) res).getDataStructure().get("string1").getType()).isEqualTo(String.class);
@@ -79,8 +78,8 @@ public class OperatorsTest {
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "ds1 := ds_1[keep long1][rename long1 to bool_var]; "
-            + "ds2 := ds_2[keep long1][rename long1 to bool_var]; "
+        "ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
+            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var]; "
             + "res := if ds1 > ds2 then ds1 else ds2;");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())

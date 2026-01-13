@@ -86,12 +86,12 @@ public class StringFunctionsTest {
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval(
-        "dsTrim := trim(ds[keep string1]); "
-            + "dsLTrim := ltrim(ds[keep string1]); "
-            + "dsRTrim := rtrim(ds[keep string1]); "
-            + "dsUpper := upper(ds[keep string1]); "
-            + "dsLower := lower(ds[keep string1]); "
-            + "dsLen := length(ds[keep string1]);");
+        "dsTrim := trim(ds[keep id, string1]); "
+            + "dsLTrim := ltrim(ds[keep id, string1]); "
+            + "dsRTrim := rtrim(ds[keep id, string1]); "
+            + "dsUpper := upper(ds[keep id, string1]); "
+            + "dsLower := lower(ds[keep id, string1]); "
+            + "dsLen := length(ds[keep id, string1]);");
     assertThat(((Dataset) context.getAttribute("dsTrim")).getDataAsMap().get(0))
         .isEqualTo(Map.of("id", "Toto", "string1", "toto"));
     assertThat(((Dataset) context.getAttribute("dsLTrim")).getDataAsMap().get(0))
@@ -127,7 +127,7 @@ public class StringFunctionsTest {
     assertThat(context.getAttribute("s5")).isEqualTo("");
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := substr(ds[keep string1, string2], 2, 4);");
+    Object res = engine.eval("res := substr(ds[keep id, string1, string2], 2, 4);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "string1", "oto", "string2", ""),
@@ -146,7 +146,7 @@ public class StringFunctionsTest {
     assertThat(context.getAttribute("r2")).isEqualTo("de");
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := replace(ds[keep string1, string2], \"o\", \"O\");");
+    Object res = engine.eval("res := replace(ds[keep id, string1, string2], \"o\", \"O\");");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "string1", "tOtO", "string2", "t"),
@@ -182,7 +182,7 @@ public class StringFunctionsTest {
     assertThat(context.getAttribute("i4")).isEqualTo(0L);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := instr(ds[keep string1, string2], \"o\", 0, 2);");
+    Object res = engine.eval("res := instr(ds[keep id, string1, string2], \"o\", 0, 2);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Toto", "string1", 4L, "string2", 0L),

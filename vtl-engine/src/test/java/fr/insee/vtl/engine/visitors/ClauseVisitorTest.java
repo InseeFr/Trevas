@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.visitors;
 
+import static fr.insee.vtl.engine.VtlScriptEngineTest.atPosition;
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,9 +86,8 @@ public class ClauseVisitorTest {
             Map.of("name", "Franck", "weight", 9L, "wisdom", 24L));
   }
 
-  /** CALC: measures/attributes are allowed and should be created as requested. */
   @Test
-  public void testCalcRoleModifier_measuresAndAttributesOk() throws ScriptException {
+  public void testCalcRoleModifier() throws ScriptException {
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(
@@ -125,9 +125,8 @@ public class ClauseVisitorTest {
     assertThat(unitComponent.getRole()).isEqualTo(Role.ATTRIBUTE);
   }
 
-  /** RENAME: duplicate "to" name inside the clause must raise a detailed script error. */
   @Test
-  public void testRenameClause_duplicateToNameShouldFail() {
+  public void testRenameClause() throws ScriptException {
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(
@@ -137,67 +136,23 @@ public class ClauseVisitorTest {
             Map.of("name", String.class, "age", Long.class, "weight", Long.class),
             Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
 
-    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval("ds1 := ds[rename age to weight, weight to age, name to pseudo];");
+
+    assertThat(engine.getContext().getAttribute("ds1")).isInstanceOf(Dataset.class);
+    assertThat(((Dataset) engine.getContext().getAttribute("ds1")).getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
+            Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
+            Map.of("pseudo", "Franck", "weight", 12L, "age", 9L));
 
     assertThatThrownBy(
-            () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
+            () -> engine.eval("ds2 := ds[rename age to weight, weight to age, name to age];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("duplicate output column name in RENAME clause");
-  }
-
-  /** RENAME: duplicate "from" name inside the clause must raise a detailed script error. */
-  @Test
-  public void testRenameClause_duplicateFromNameShouldFail() {
-    InMemoryDataset dataset =
-        new InMemoryDataset(
-            List.of(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                Map.of("name", "Nico", "age", 11L, "weight", 10L)),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
-
-    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to weight, age to weight2];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("duplicate source name in RENAME clause");
-  }
-
-  /** RENAME: "from" column must exist in dataset. */
-  @Test
-  public void testRenameClause_fromColumnNotFoundShouldFail() {
-    InMemoryDataset dataset =
-        new InMemoryDataset(
-            List.of(Map.of("name", "Hadrien", "age", 10L, "weight", 11L)),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
-
-    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    assertThatThrownBy(() -> engine.eval("ds := ds1[rename unknown to something];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("source column to rename not found: 'unknown'");
-  }
-
-  /**
-   * RENAME: target collides with an untouched existing column -> must error with details
-   * (role/type).
-   */
-  @Test
-  public void testRenameClause_targetCollidesWithUntouchedShouldFail() {
-    InMemoryDataset dataset =
-        new InMemoryDataset(
-            List.of(Map.of("name", "Hadrien", "age", 10L, "weight", 11L)),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
-
-    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    assertThatThrownBy(() -> engine.eval("ds := ds1[rename name to age];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("target name 'age'") // main message
-        .hasMessageContaining("already exists in dataset and is not being renamed")
-        .hasMessageContaining("(role=MEASURE, type=class java.lang.Long)");
+        .hasMessage("duplicate column: age")
+        .is(atPosition(0, 47, 58));
   }
 
   @Test
@@ -239,8 +194,7 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    // KEEP: identifiers must not be listed explicitly; they are implicitly preserved.
-    engine.eval("ds2 := ds1[keep age];");
+    engine.eval("ds2 := ds1[keep name, age];");
 
     assertThat(engine.getContext().getAttribute("ds2")).isInstanceOf(Dataset.class);
     assertThat(((Dataset) engine.getContext().getAttribute("ds2")).getDataAsMap())
@@ -257,26 +211,6 @@ public class ClauseVisitorTest {
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
             Map.of("name", "Franck", "age", 12L));
-  }
-
-  /** KEEP/DROP: listing identifiers explicitly must raise a script error. */
-  @Test
-  public void testKeepDropClause_identifierExplicitShouldFail() {
-    InMemoryDataset dataset =
-        new InMemoryDataset(
-            List.of(
-                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
-                Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
-            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
-            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
-
-    ScriptContext context = engine.getContext();
-    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
-
-    assertThatThrownBy(() -> engine.eval("ds := ds1[keep name, age];"))
-        .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("identifiers [name] must not be explicitly listed in KEEP/DROP");
   }
 
   @Test

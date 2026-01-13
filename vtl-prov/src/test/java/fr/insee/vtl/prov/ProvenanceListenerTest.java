@@ -95,10 +95,10 @@ public class ProvenanceListenerTest {
         """
 
 
-                            ds1 := data.ds1[calc var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                            ds1 := data.ds1[calc identifier id := id, var1 := cast(var1, integer), var2 := cast(var2, integer)];
 
 
-                            ds2_out := other.ds2[calc var1 := cast(var1, integer), var2 := cast(var2, integer)];
+                            ds2_out := other.ds2[calc identifier id := id, var1 := cast(var1, integer), var2 := cast(var2, integer)];
                             ds_sum := ds1 + ds2_out;
                             ds_mul <- ds_sum * 3;
                                     'data.ds_res' <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];

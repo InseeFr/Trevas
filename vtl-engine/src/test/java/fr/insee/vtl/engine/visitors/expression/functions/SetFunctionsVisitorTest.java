@@ -265,9 +265,9 @@ public class SetFunctionsVisitorTest {
     context.getBindings(ScriptContext.ENGINE_SCOPE).put("MULTIMODE", multimodeDs);
 
     engine.eval(
-        "TEMP_RACINE := MULTIMODE [keep FOO];\n"
+        "TEMP_RACINE := MULTIMODE [keep interrogationId, FOO];\n"
             + "RACINE := union(TEMP_RACINE, TEMP_RACINE) ;\n"
-            + "TEMP_LOOP := MULTIMODE [keep LOOP.FOO1]\n"
+            + "TEMP_LOOP := MULTIMODE [keep interrogationId, LOOP, LOOP.FOO1]\n"
             + "                       [filter LOOP <> \"\"]\n"
             + "                       [rename LOOP.FOO1 to FOO1];\n"
             + "LOOP <- union(TEMP_LOOP, TEMP_LOOP);");
