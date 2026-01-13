@@ -199,11 +199,11 @@ public class DagTest {
   void testDagCycle() {
     final String script =
         """
-                            e := a;
-                            b := a;
-                            c := b;
-                            a := c;
-                            f := a;""";
+                        e := a;
+                        b := a;
+                        c := b;
+                        a := c;
+                        f := a;""";
 
     final Positioned.Position mainPosition = getPositionOfStatementInScript("a := c", script);
     final List<Positioned.Position> otherPositions =
@@ -231,14 +231,14 @@ public class DagTest {
   void testMultipleCycles() {
     final String script =
         """
-                            h := g;
-                            i := join(h, input_ds);
-                            g := i;
-                            e := a;
-                            b := a;
-                            c := b;
-                            a := c;
-                            f := a;""";
+                        h := g;
+                        i := join(h, input_ds);
+                        g := i;
+                        e := a;
+                        b := a;
+                        c := b;
+                        a := c;
+                        f := a;""";
 
     final Positioned.Position mainExceptionMainPosition =
         getPositionOfStatementInScript("g := i", script);
@@ -446,8 +446,8 @@ public class DagTest {
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
         "res := if ds1 > ds2 then ds1 else ds2; "
-            + "ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
-            + "ds2 := ds_2[keep id, long1][rename long1 to bool_var];");
+            + "ds1 := ds_1[keep long1][rename long1 to bool_var]; "
+            + "ds2 := ds_2[keep long1][rename long1 to bool_var];");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -463,7 +463,7 @@ public class DagTest {
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(
         "res0 <- tmp0[calc c := case when long1 > 30 then \"ok\" else \"ko\"][drop long1]; "
-            + "tmp0 := ds_1[keep id, long1];");
+            + "tmp0 := ds_1[keep long1];");
     Object res0 = engine.getContext().getAttribute("res0");
     assertThat(((Dataset) res0).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -474,7 +474,7 @@ public class DagTest {
     assertThat(((Dataset) res0).getDataStructure().get("c").getType()).isEqualTo(String.class);
     engine.eval(
         "res1 <- tmp1[calc c := case when long1 > 30 then 1 else 0][drop long1]; "
-            + "tmp1 := ds_1[keep id, long1];");
+            + "tmp1 := ds_1[keep long1];");
     Object res1 = engine.getContext().getAttribute("res1");
     assertThat(((Dataset) res1).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -484,9 +484,9 @@ public class DagTest {
             Map.of("id", "Franck", "c", 1L));
     assertThat(((Dataset) res1).getDataStructure().get("c").getType()).isEqualTo(Long.class);
     engine.eval(
-        "tmp2_alt_ds1 := ds_1[keep id, long1][rename long1 to bool_var]; "
+        "tmp2_alt_ds1 := ds_1[keep long1][rename long1 to bool_var]; "
             + "res2 <- case when tmp2_alt_ds1 < 30 then tmp2_alt_ds1 else tmp2_alt_ds2; "
-            + "tmp2_alt_ds2 := ds_2[keep id, long1][rename long1 to bool_var];");
+            + "tmp2_alt_ds2 := ds_2[keep long1][rename long1 to bool_var];");
     Object resDs = engine.getContext().getAttribute("res2");
     assertThat(((Dataset) resDs).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -498,7 +498,7 @@ public class DagTest {
   @Test
   void testDagNvlExpr() throws ScriptException {
     engine.getContext().setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    engine.eval("res <- nvl(tmp1[keep id, long1], 0); tmp1 := ds1;");
+    engine.eval("res <- nvl(tmp1[keep long1], 0); tmp1 := ds1;");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -512,7 +512,7 @@ public class DagTest {
   @Test
   void testDagNvlImplicitCast() throws ScriptException {
     engine.getContext().setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
-    engine.eval("res := nvl(tmp1[keep id, long1], 0.1); tmp1 <- ds1;");
+    engine.eval("res := nvl(tmp1[keep long1], 0.1); tmp1 <- ds1;");
     var res = engine.getContext().getAttribute("res");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
@@ -528,7 +528,7 @@ public class DagTest {
     ScriptContext context = engine.getContext();
 
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res = engine.eval("res := + tmp1[keep id, long1, double1]; tmp1 <- ds2;");
+    Object res = engine.eval("res := + tmp1[keep long1, double1]; tmp1 <- ds2;");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 150L, "double1", 1.1D),
@@ -537,7 +537,7 @@ public class DagTest {
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res2 = engine.eval("res2 := - tmp2[keep id, long1, double1]; tmp2 := ds2;");
+    Object res2 = engine.eval("res2 := - tmp2[keep long1, double1]; tmp2 := ds2;");
     assertThat(((Dataset) res2).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", -150L, "double1", -1.1D),
