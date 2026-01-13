@@ -290,18 +290,98 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
   @Override
   public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
+
+    // Dataset structure in order + lookup maps
+    final List<Dataset.Component> componentsInOrder =
+        new ArrayList<>(datasetExpression.getDataStructure().values());
+    final Set<String> availableColumns =
+        componentsInOrder.stream()
+            .map(Dataset.Component::getName)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    // Map for detailed error reporting (includes role/type if available)
+    final Map<String, Dataset.Component> byName =
+        componentsInOrder.stream()
+            .collect(
+                Collectors.toMap(
+                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
+
+    // Parse the RENAME clause and validate
     Map<String, String> fromTo = new LinkedHashMap<>();
-    Set<String> renamed = new HashSet<>();
+    Set<String> toSeen = new LinkedHashSet<>();
+    Set<String> fromSeen = new LinkedHashSet<>();
+
     for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
-      var toNameString = getName(renameCtx.toName);
-      var fromNameString = getName(renameCtx.fromName);
-      if (!renamed.add(toNameString)) {
+      final String toNameString = getName(renameCtx.toName);
+      final String fromNameString = getName(renameCtx.fromName);
+
+      // Validate: no duplicate "from" names inside the clause
+      if (!fromSeen.add(fromNameString)) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
-                "duplicate column: %s".formatted(toNameString), fromContext(renameCtx)));
+                String.format("Error: duplicate source name in RENAME clause: '%s", fromNameString),
+                fromContext(ctx)));
       }
+
+      // Validate: "from" must exist in dataset
+      if (!availableColumns.contains(fromNameString)) {
+        Dataset.Component comp = byName.get(fromNameString);
+        String meta =
+            (comp != null)
+                ? String.format(
+                    " (role=%s, type=%s)",
+                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
+                : "";
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                String.format(
+                    "Error: source column to rename not found: '%s'%s", fromNameString, meta),
+                fromContext(ctx)));
+      }
+
+      // Validate: no duplicate "to" names inside the clause
+      if (!toSeen.add(toNameString)) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                String.format(
+                    "Error: duplicate output column name in RENAME clause: '%s.", fromNameString),
+                fromContext(ctx)));
+      }
+
       fromTo.put(fromNameString, toNameString);
     }
+
+    // Validate collisions with untouched dataset columns ("Untouched" = columns that are not
+    // being renamed)
+    final Set<String> untouched =
+        availableColumns.stream()
+            .filter(c -> !fromTo.containsKey(c))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    for (Map.Entry<String, String> e : fromTo.entrySet()) {
+      final String from = e.getKey();
+      final String to = e.getValue();
+
+      // If target already exists as untouched, it would cause a collision
+      if (untouched.contains(to)) {
+        Dataset.Component comp = byName.get(to);
+        String meta =
+            (comp != null)
+                ? String.format(
+                    " (role=%s, type=%s)",
+                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
+                : "";
+
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                String.format(
+                    "Error: target name '%s'%s already exists in dataset and is not being renamed.",
+                    to, meta),
+                fromContext(ctx)));
+      }
+    }
+
+    // Execute rename in processing engine
     return processingEngine.executeRename(datasetExpression, fromTo);
   }
 
