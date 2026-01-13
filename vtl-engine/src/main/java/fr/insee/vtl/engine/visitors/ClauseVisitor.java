@@ -179,45 +179,106 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
   @Override
   public DatasetExpression visitCalcClause(VtlParser.CalcClauseContext ctx) {
 
-    var expressions = new LinkedHashMap<String, ResolvableExpression>();
-    var expressionStrings = new LinkedHashMap<String, String>();
-    var roles = new LinkedHashMap<String, Dataset.Role>();
-    var currentDatasetExpression = datasetExpression;
-    // TODO: Refactor so we call the executeCalc for each CalcClauseItemContext the same way we call
-    // the
-    //  analytics functions.
+    // Dataset structure (ordered) and quick lookups
+    final List<Dataset.Component> componentsInOrder =
+        new ArrayList<>(datasetExpression.getDataStructure().values());
+
+    final Map<String, Dataset.Component> byName =
+        componentsInOrder.stream()
+            .collect(
+                Collectors.toMap(
+                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
+
+    // Accumulators for non-analytic calc items
+    final LinkedHashMap<String, ResolvableExpression> expressions = new LinkedHashMap<>();
+    final LinkedHashMap<String, String> expressionStrings = new LinkedHashMap<>();
+    final LinkedHashMap<String, Dataset.Role> roles = new LinkedHashMap<>();
+
+    // Tracks duplicates in the same clause (target names)
+    final Set<String> targetsSeen = new LinkedHashSet<>();
+
+    // We need a rolling dataset expression to chain analytics items
+    DatasetExpression currentDatasetExpression = datasetExpression;
+
+    // TODO: Refactor so we call executeCalc per CalcClauseItemContext (as analytics do).
     for (VtlParser.CalcClauseItemContext calcCtx : ctx.calcClauseItem()) {
-      var columnName = getName(calcCtx.componentID());
-      var columnRole =
-          calcCtx.componentRole() == null
+
+      // ----  Resolve target name and desired role ----
+      final String columnName = getName(calcCtx.componentID());
+      final Dataset.Role columnRole =
+          (calcCtx.componentRole() == null)
               ? Dataset.Role.MEASURE
               : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
 
-      if ((calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext)
-          && ((VtlParser.FunctionsExpressionContext) calcCtx.expr()).functions()
-              instanceof VtlParser.AnalyticFunctionsContext) {
-        AnalyticsVisitor analyticsVisitor =
+      // If the target already exists in the dataset, check its role
+      final Dataset.Component existing = byName.get(columnName);
+      if (existing != null) {
+        // Explicitly block overwriting identifiers (already handled above if role==IDENTIFIER).
+        if (existing.getRole() == Dataset.Role.IDENTIFIER) {
+          final String meta =
+              String.format(
+                  "(role=%s, type=%s)",
+                  existing.getRole(), existing.getType() != null ? existing.getType() : "n/a");
+          throw new VtlRuntimeException(
+              new InvalidArgumentException(
+                  // TODO: see if other cases are the same error (already defined in assignment for
+                  // example).
+                  String.format("CALC cannot overwrite IDENTIFIER '%s' %s.", columnName, meta),
+                  fromContext(ctx)));
+        }
+      }
+
+      // ---- Dispatch: analytics vs. regular calc ----
+      final boolean isAnalytic =
+          (calcCtx.expr() instanceof VtlParser.FunctionsExpressionContext)
+              && ((VtlParser.FunctionsExpressionContext) calcCtx.expr()).functions()
+                  instanceof VtlParser.AnalyticFunctionsContext;
+
+      if (isAnalytic) {
+        // Analytics are executed immediately and update the rolling dataset expression
+        final AnalyticsVisitor analyticsVisitor =
             new AnalyticsVisitor(processingEngine, currentDatasetExpression, columnName);
-        VtlParser.FunctionsExpressionContext functionExprCtx =
+        final VtlParser.FunctionsExpressionContext functionExprCtx =
             (VtlParser.FunctionsExpressionContext) calcCtx.expr();
-        VtlParser.AnalyticFunctionsContext anFuncCtx =
+        final VtlParser.AnalyticFunctionsContext anFuncCtx =
             (VtlParser.AnalyticFunctionsContext) functionExprCtx.functions();
+
         currentDatasetExpression = analyticsVisitor.visit(anFuncCtx);
       } else {
-        ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
+        // Regular calc expression – build resolvable expression and capture its source text
+        final ResolvableExpression calc = componentExpressionVisitor.visit(calcCtx);
 
+        final String exprSource = getSource(calcCtx.expr());
+        if (exprSource == null || exprSource.isEmpty()) {
+          throw new VtlRuntimeException(
+              new InvalidArgumentException(
+                  String.format(
+                      "empty or unavailable source expression for '%s' in CALC.", columnName),
+                  fromContext(ctx)));
+        }
+
+        // Store in insertion order (deterministic column creation)
         expressions.put(columnName, calc);
-        expressionStrings.put(columnName, getSource(calcCtx.expr()));
+        expressionStrings.put(columnName, exprSource);
         roles.put(columnName, columnRole);
       }
     }
 
+    // ---- Consistency checks before execution ----
+    if (!(expressions.keySet().equals(expressionStrings.keySet())
+        && expressions.keySet().equals(roles.keySet()))) {
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              "internal CALC maps out of sync (expressions/expressionStrings/roles)",
+              fromContext(ctx)));
+    }
+
+    // ---- Execute the batch calc if any non-analytic expressions were collected ----
     if (!expressionStrings.isEmpty()) {
       currentDatasetExpression =
           processingEngine.executeCalc(
               currentDatasetExpression, expressions, roles, expressionStrings);
     }
-
     return currentDatasetExpression;
   }
 
