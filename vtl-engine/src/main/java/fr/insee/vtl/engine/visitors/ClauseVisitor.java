@@ -13,6 +13,7 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -106,16 +107,73 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
   @Override
   public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
-    // Normalize to keep operation.
-    var keep = ctx.op.getType() == VtlParser.KEEP;
-    var names = ctx.componentID().stream().map(ClauseVisitor::getName).collect(Collectors.toSet());
-    List<String> columnNames =
-        datasetExpression.getDataStructure().values().stream()
-            .map(Dataset.Component::getName)
-            .filter(name -> keep == names.contains(name))
-            .collect(Collectors.toList());
 
-    return processingEngine.executeProject(datasetExpression, columnNames);
+    // The type of the op can either be KEEP or DROP.
+    boolean keep = ctx.op.getType() == VtlParser.KEEP;
+
+    // Columns explicitly requested in the KEEP/DROP clause
+    List<String> cleanColumnNames = ctx.componentID().stream().map(ClauseVisitor::getName).toList();
+
+    Collection<String> inputColumns = datasetExpression.getDataStructure().keySet();
+
+    // Dataset identifiers (role = IDENTIFIER)
+    Map<String, Dataset.Component> identifiers =
+        datasetExpression.getDataStructure().getIdentifiers().stream()
+            .collect(Collectors.toMap(Structured.Component::getName, Function.identity()));
+
+    // Evaluate that all requested columns must exist in the dataset or raise an error
+    for (String requested : cleanColumnNames) {
+      if (!inputColumns.contains(requested)) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                // TODO: use actual column context.
+                String.format("'%s' not found in dataset.", requested), fromContext(ctx)));
+      }
+    }
+
+    // VTL specification: identifiers must not appear explicitly in KEEP
+    Set<String> forbidden =
+        cleanColumnNames.stream()
+            .filter(identifiers::containsKey)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    if (!forbidden.isEmpty()) {
+      StringBuilder details = new StringBuilder();
+      for (String id : forbidden) {
+        Dataset.Component comp = identifiers.get(id);
+        details.append(
+            String.format(
+                "%s(role=%s, type=%s) ",
+                id, comp.getRole(), comp.getType() != null ? comp.getType() : "n/a"));
+      }
+      throw new VtlRuntimeException(
+          new InvalidArgumentException(
+              String.format(
+                  "identifiers %s must not be explicitly listed in KEEP/DROP. Details: %s",
+                  forbidden, details.toString().trim()),
+              // TODO: use actual column context.
+              fromContext(ctx)));
+    }
+
+    // Build result set:
+    //  + KEEP: identifiers + requested columns
+    //  + DROP: (all columns - requested) + identifiers
+    final Set<String> resultSet = new LinkedHashSet<>();
+    resultSet.addAll(identifiers.keySet());
+    if (keep) {
+      resultSet.addAll(cleanColumnNames);
+    } else {
+      for (String col : inputColumns) {
+        if (!cleanColumnNames.contains(col)) {
+          resultSet.add(col);
+        }
+      }
+    }
+
+    // Retrieve the output column names (identifiers + requested)
+    final List<String> outputColumns =
+        inputColumns.stream().filter(resultSet::contains).collect(Collectors.toList());
+    return processingEngine.executeProject(datasetExpression, outputColumns);
   }
 
   @Override

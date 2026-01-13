@@ -713,9 +713,9 @@ public class ValidationTest {
     Dataset DS_r_to_rename = (Dataset) engine.getContext().getAttribute("DS_r_to_rename");
     List<String> DS_r_to_renameMeasure =
         DS_r_to_rename.getDataStructure().values().stream()
-            .filter(c -> c.isMeasure())
-            .map(c -> c.getName())
-            .collect(Collectors.toList());
+            .filter(Structured.Component::isMeasure)
+            .map(Structured.Component::getName)
+            .toList();
     assertThat(DS_r_to_renameMeasure.size()).isEqualTo(4);
     assertThat(DS_r_to_renameMeasure.contains("imbalance")).isTrue();
   }
@@ -744,8 +744,8 @@ public class ValidationTest {
         "ds1_1 := ds1[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
             + "ds2_1 := ds2[calc identifier id := id, long1 := cast(long1, integer), double1 := cast(double1, number), bool1 := cast(bool1, boolean)]; "
             + "ds_concat := ds1_1#string1 || \" and \" || ds2_1#string1; "
-            + "ds1_num := ds1_1[keep id, long1, double1]; "
-            + "ds2_num := ds2_1[keep id, long1, double1]; "
+            + "ds1_num := ds1_1[keep long1, double1]; "
+            + "ds2_num := ds2_1[keep long1, double1]; "
             + "ds_mod := mod(ds1_num, 2); "
             + "ds_sum := ds1_num + ds2_num; "
             + "ds_compare := ds1_num = ds2_num; "
