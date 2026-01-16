@@ -276,7 +276,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[keep name, age];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("identifiers [name] must not be explicitly listed in KEEP/DROP");
+        .hasMessage("cannot keep/drop identifiers")
+        .is(atPosition(0, 15, 19));
   }
 
   @Test

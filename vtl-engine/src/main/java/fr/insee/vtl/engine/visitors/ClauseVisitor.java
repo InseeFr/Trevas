@@ -6,6 +6,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
@@ -111,48 +112,34 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     // The type of the op can either be KEEP or DROP.
     boolean keep = ctx.op.getType() == VtlParser.KEEP;
 
-    // Columns explicitly requested in the KEEP/DROP clause
-    List<String> cleanColumnNames = ctx.componentID().stream().map(ClauseVisitor::getName).toList();
-
-    Collection<String> inputColumns = datasetExpression.getDataStructure().keySet();
-
     // Dataset identifiers (role = IDENTIFIER)
     Map<String, Dataset.Component> identifiers =
         datasetExpression.getDataStructure().getIdentifiers().stream()
             .collect(Collectors.toMap(Structured.Component::getName, Function.identity()));
 
+    var columns =
+        ctx.componentID().stream()
+            .collect(Collectors.toMap(ClauseVisitor::getName, Function.identity()));
+
+    var structure = datasetExpression.getDataStructure();
+
     // Evaluate that all requested columns must exist in the dataset or raise an error
-    for (String requested : cleanColumnNames) {
-      if (!inputColumns.contains(requested)) {
+    // TODO: Is that no handled already?
+    for (String col : columns.keySet()) {
+      if (!structure.containsKey(col)) {
         throw new VtlRuntimeException(
-            new InvalidArgumentException(
-                // TODO: use actual column context.
-                String.format("'%s' not found in dataset.", requested), fromContext(ctx)));
+            new UndefinedVariableException(col, fromContext(columns.get(col))));
       }
     }
 
     // VTL specification: identifiers must not appear explicitly in KEEP
-    Set<String> forbidden =
-        cleanColumnNames.stream()
-            .filter(identifiers::containsKey)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-
-    if (!forbidden.isEmpty()) {
-      StringBuilder details = new StringBuilder();
-      for (String id : forbidden) {
-        Dataset.Component comp = identifiers.get(id);
-        details.append(
-            String.format(
-                "%s(role=%s, type=%s) ",
-                id, comp.getRole(), comp.getType() != null ? comp.getType() : "n/a"));
+    // TODO: Use multi errors that noah created?
+    for (String col : columns.keySet()) {
+      if (structure.get(col).isIdentifier()) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                "cannot keep/drop identifiers", fromContext(columns.get(col))));
       }
-      throw new VtlRuntimeException(
-          new InvalidArgumentException(
-              String.format(
-                  "identifiers %s must not be explicitly listed in KEEP/DROP. Details: %s",
-                  forbidden, details.toString().trim()),
-              // TODO: use actual column context.
-              fromContext(ctx)));
     }
 
     // Build result set:
@@ -161,10 +148,10 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     final Set<String> resultSet = new LinkedHashSet<>();
     resultSet.addAll(identifiers.keySet());
     if (keep) {
-      resultSet.addAll(cleanColumnNames);
+      resultSet.addAll(columns.keySet());
     } else {
-      for (String col : inputColumns) {
-        if (!cleanColumnNames.contains(col)) {
+      for (String col : structure.keySet()) {
+        if (!columns.keySet().contains(col)) {
           resultSet.add(col);
         }
       }
@@ -172,7 +159,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     // Retrieve the output column names (identifiers + requested)
     final List<String> outputColumns =
-        inputColumns.stream().filter(resultSet::contains).collect(Collectors.toList());
+        structure.keySet().stream().filter(resultSet::contains).collect(Collectors.toList());
     return processingEngine.executeProject(datasetExpression, outputColumns);
   }
 
