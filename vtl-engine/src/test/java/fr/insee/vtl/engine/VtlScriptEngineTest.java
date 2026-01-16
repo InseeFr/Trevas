@@ -33,24 +33,36 @@ public class VtlScriptEngineTest {
 
   public static <T extends Throwable> Condition<T> atPosition(
       Integer startLine, Integer endLine, Integer startColumn, Integer endColumn) {
-    return new Condition<>(
-        throwable -> {
-          var scriptException = (VtlScriptException) throwable;
-          var position = scriptException.getPosition();
-          return position.startLine().equals(startLine)
-              && position.endLine().equals(endLine)
-              && position.startColumn().equals(startColumn)
-              && position.endColumn().equals(endColumn);
-        },
-        "at position <%d:%d-%d:%d>",
-        startLine,
-        endLine,
-        startColumn,
-        endColumn);
-  }
+    return new Condition<T>() {
+      @Override
+      public boolean matches(T throwable) {
+        if (!(throwable instanceof VtlScriptException scriptException)) {
+          return false;
+        }
+        var position = scriptException.getPosition();
+        boolean matches = position.startLine().equals(startLine)
+            && position.endLine().equals(endLine)
+            && position.startColumn().equals(startColumn)
+            && position.endColumn().equals(endColumn);
 
-  public static <T extends Comparable<T>> Boolean test(T left, T right) {
-    return true;
+        // Set description that includes actual position if it doesn't match
+        if (matches) {
+          describedAs("at position <%d:%d-%d:%d>", startLine, startColumn, endLine, endColumn);
+        } else {
+          describedAs(
+              "at position <%d:%d-%d:%d> but was <%d:%d-%d:%d>",
+              startLine,
+              startColumn,
+              endLine,
+              endColumn,
+              position.startLine(),
+              position.startColumn(),
+              position.endLine(),
+              position.endColumn());
+        }
+        return matches;
+      }
+    };
   }
 
   @BeforeEach
