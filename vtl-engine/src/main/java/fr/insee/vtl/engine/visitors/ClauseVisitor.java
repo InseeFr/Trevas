@@ -6,6 +6,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
@@ -13,6 +14,7 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -106,16 +108,59 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
   @Override
   public DatasetExpression visitKeepOrDropClause(VtlParser.KeepOrDropClauseContext ctx) {
-    // Normalize to keep operation.
-    var keep = ctx.op.getType() == VtlParser.KEEP;
-    var names = ctx.componentID().stream().map(ClauseVisitor::getName).collect(Collectors.toSet());
-    List<String> columnNames =
-        datasetExpression.getDataStructure().values().stream()
-            .map(Dataset.Component::getName)
-            .filter(name -> keep == names.contains(name))
-            .collect(Collectors.toList());
 
-    return processingEngine.executeProject(datasetExpression, columnNames);
+    // The type of the op can either be KEEP or DROP.
+    boolean keep = ctx.op.getType() == VtlParser.KEEP;
+
+    // Dataset identifiers (role = IDENTIFIER)
+    Map<String, Dataset.Component> identifiers =
+        datasetExpression.getDataStructure().getIdentifiers().stream()
+            .collect(Collectors.toMap(Structured.Component::getName, Function.identity()));
+
+    var columns =
+        ctx.componentID().stream()
+            .collect(Collectors.toMap(ClauseVisitor::getName, Function.identity()));
+
+    var structure = datasetExpression.getDataStructure();
+
+    // Evaluate that all requested columns must exist in the dataset or raise an error
+    // TODO: Is that no handled already?
+    for (String col : columns.keySet()) {
+      if (!structure.containsKey(col)) {
+        throw new VtlRuntimeException(
+            new UndefinedVariableException(col, fromContext(columns.get(col))));
+      }
+    }
+
+    // VTL specification: identifiers must not appear explicitly in KEEP
+    // TODO: Use multi errors that noah created?
+    for (String col : columns.keySet()) {
+      if (structure.get(col).isIdentifier()) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                "cannot keep/drop identifiers", fromContext(columns.get(col))));
+      }
+    }
+
+    // Build result set:
+    //  + KEEP: identifiers + requested columns
+    //  + DROP: (all columns - requested) + identifiers
+    final Set<String> resultSet = new LinkedHashSet<>();
+    resultSet.addAll(identifiers.keySet());
+    if (keep) {
+      resultSet.addAll(columns.keySet());
+    } else {
+      for (String col : structure.keySet()) {
+        if (!columns.keySet().contains(col)) {
+          resultSet.add(col);
+        }
+      }
+    }
+
+    // Retrieve the output column names (identifiers + requested)
+    final List<String> outputColumns =
+        structure.keySet().stream().filter(resultSet::contains).collect(Collectors.toList());
+    return processingEngine.executeProject(datasetExpression, outputColumns);
   }
 
   @Override

@@ -87,7 +87,7 @@ public class ClauseVisitorTest {
   }
 
   @Test
-  public void testCalcRoleModifier() throws ScriptException {
+  public void testCalcRoleModifier_measuresAndAttributesOk() throws ScriptException {
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(
@@ -194,7 +194,8 @@ public class ClauseVisitorTest {
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds2 := ds1[keep name, age];");
+    // KEEP: identifiers must not be listed explicitly; they are implicitly preserved.
+    engine.eval("ds2 := ds1[keep age];");
 
     assertThat(engine.getContext().getAttribute("ds2")).isInstanceOf(Dataset.class);
     assertThat(((Dataset) engine.getContext().getAttribute("ds2")).getDataAsMap())
@@ -211,6 +212,27 @@ public class ClauseVisitorTest {
             Map.of("name", "Hadrien", "age", 10L),
             Map.of("name", "Nico", "age", 11L),
             Map.of("name", "Franck", "age", 12L));
+  }
+
+  /** KEEP/DROP: listing identifiers explicitly must raise a script error. */
+  @Test
+  public void testKeepDropClause_identifierExplicitShouldFail() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(() -> engine.eval("ds := ds1[keep name, age];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("cannot keep/drop identifiers")
+        .is(atPosition(0, 15, 19));
   }
 
   @Test

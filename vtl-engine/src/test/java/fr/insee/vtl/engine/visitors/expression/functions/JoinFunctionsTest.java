@@ -230,9 +230,8 @@ public class JoinFunctionsTest {
     engine.getContext().setAttribute("ds1", dataset1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval(
-        "unionData := union(ds1[keep id, measure1, measure2], ds2[keep id, measure1, measure2]);");
-    engine.eval("ds1_keep := ds1[keep id, color];");
+    engine.eval("unionData := union(ds1[keep measure1, measure2], ds2[keep measure1, measure2]);");
+    engine.eval("ds1_keep := ds1[keep color];");
     engine.eval("joinData := left_join(unionData, ds1_keep);");
 
     Dataset joinData = (Dataset) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("joinData");
@@ -260,7 +259,7 @@ public class JoinFunctionsTest {
 
     engine.getContext().setAttribute("ds_1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", ds2, ScriptContext.ENGINE_SCOPE);
-    engine.eval("result1 := inner_join(ds_1[keep id1, id2, m1] as ds1, ds_2 as ds2);");
+    engine.eval("result1 := inner_join(ds_1[keep m1] as ds1, ds_2 as ds2);");
 
     var result = (Dataset) engine.getContext().getAttribute("result1");
     assertThat(result.getColumnNames()).containsExactlyInAnyOrder("id1", "id2", "m1", "m2");

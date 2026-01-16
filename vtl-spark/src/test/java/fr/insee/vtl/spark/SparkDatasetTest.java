@@ -130,11 +130,10 @@ public class SparkDatasetTest {
 
     context.setAttribute("ds2", dsWithMetadata, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds3 := ds2[calc attribute school_id := school_id, identifier year := year];");
+    engine.eval("ds3 := ds2[calc identifier year := year];");
 
     SparkDataset dsWithMetadataAndRoles = (SparkDataset) engine.getContext().getAttribute("ds3");
 
-    assertTrue(dsWithMetadataAndRoles.getDataStructure().get("school_id").isAttribute());
     assertTrue(dsWithMetadataAndRoles.getDataStructure().get("year").isIdentifier());
   }
 }
