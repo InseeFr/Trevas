@@ -40,10 +40,11 @@ public class VtlScriptEngineTest {
           return false;
         }
         var position = scriptException.getPosition();
-        boolean matches = position.startLine().equals(startLine)
-            && position.endLine().equals(endLine)
-            && position.startColumn().equals(startColumn)
-            && position.endColumn().equals(endColumn);
+        boolean matches =
+            position.startLine().equals(startLine)
+                && position.endLine().equals(endLine)
+                && position.startColumn().equals(startColumn)
+                && position.endColumn().equals(endColumn);
 
         // Set description that includes actual position if it doesn't match
         if (matches) {

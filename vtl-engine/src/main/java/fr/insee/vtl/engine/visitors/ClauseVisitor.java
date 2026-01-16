@@ -117,29 +117,29 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         datasetExpression.getDataStructure().getIdentifiers().stream()
             .collect(Collectors.toMap(Structured.Component::getName, Function.identity()));
 
-    var columns = ctx.componentID().stream()
-        .collect(Collectors.toMap(ClauseVisitor::getName, Function.identity()));
+    var columns =
+        ctx.componentID().stream()
+            .collect(Collectors.toMap(ClauseVisitor::getName, Function.identity()));
 
     var structure = datasetExpression.getDataStructure();
 
     // Evaluate that all requested columns must exist in the dataset or raise an error
     // TODO: Is that no handled already?
     for (String col : columns.keySet()) {
-        if (!structure.containsKey(col)) {
-            throw new VtlRuntimeException(
-                new UndefinedVariableException(col, fromContext(columns.get(col)))
-            );
-        }
+      if (!structure.containsKey(col)) {
+        throw new VtlRuntimeException(
+            new UndefinedVariableException(col, fromContext(columns.get(col))));
+      }
     }
 
     // VTL specification: identifiers must not appear explicitly in KEEP
     // TODO: Use multi errors that noah created?
     for (String col : columns.keySet()) {
-        if (structure.get(col).isIdentifier()) {
-            throw new VtlRuntimeException(
-                new InvalidArgumentException("cannot keep/drop identifiers", fromContext(columns.get(col)))
-            );
-        }
+      if (structure.get(col).isIdentifier()) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                "cannot keep/drop identifiers", fromContext(columns.get(col))));
+      }
     }
 
     // Build result set:
