@@ -306,7 +306,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       if (!fromSeen.add(fromNameString)) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
-                String.format("Error: duplicate source name in RENAME clause: '%s", fromNameString),
+                String.format("Error: duplicate source name in RENAME clause: '%s'", fromNameString),
                 fromContext(ctx)));
       }
 
@@ -331,7 +331,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
                 String.format(
-                    "Error: duplicate output column name in RENAME clause: '%s.", fromNameString),
+                    "Error: duplicate output column name in RENAME clause: '%s'", fromNameString),
                 fromContext(ctx)));
       }
 

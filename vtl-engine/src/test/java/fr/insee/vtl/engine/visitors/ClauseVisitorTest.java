@@ -125,7 +125,69 @@ public class ClauseVisitorTest {
     assertThat(unitComponent.getRole()).isEqualTo(Role.ATTRIBUTE);
   }
 
-  /** RENAME: duplicate "to" name inside the clause must raise a detailed script error. */
+  @Test
+  public void testRenameClause_unknownVariable() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+            ),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () -> engine.eval("ds := ds1[rename missing to foo];"))
+        .isInstanceOf(VtlScriptException.class)
+        .is(atPosition(0, 47, 58))
+        .hasMessageContaining("Error: source column to rename not found: 'missing'");
+  }
+
+  @Test
+  public void testRenameClause_duplicateToNamesShouldFail() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+            ),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () -> engine.eval("ds := ds1[rename age to dup, weight to dup];"))
+        .isInstanceOf(VtlScriptException.class)
+        .is(atPosition(0, 47, 58))
+        .hasMessageContaining("Error: source column to rename not found: 'missing'");
+  }
+
+  @Test
+  public void testRenameClause_duplicateFromNamesShouldFail() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
+                Map.of("name", "Nico", "age", 11L, "weight", 10L),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+            ),
+            Map.of("name", String.class, "age", Long.class, "weight", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () -> engine.eval("ds := ds1[rename age to foo, age to bar];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessageContaining("Error: duplicate source name in RENAME clause: 'age'")
+        .is(atPosition(0, 47, 58));
+  }
+
   @Test
   public void testRenameClause_duplicateToNameShouldFail() {
     InMemoryDataset dataset =
@@ -133,7 +195,8 @@ public class ClauseVisitorTest {
             List.of(
                 Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
                 Map.of("name", "Nico", "age", 11L, "weight", 10L),
-                Map.of("name", "Franck", "age", 12L, "weight", 9L)),
+                Map.of("name", "Franck", "age", 12L, "weight", 9L)
+            ),
             Map.of("name", String.class, "age", Long.class, "weight", Long.class),
             Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE, "weight", Role.MEASURE));
 
@@ -142,7 +205,8 @@ public class ClauseVisitorTest {
     assertThatThrownBy(
             () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("duplicate output column name in RENAME clause");
+        .is(atPosition(0, 47, 58))
+        .hasMessageContaining("TODO: Improve: Error: duplicate output column name in RENAME clause: 'name'");
   }
 
   /** RENAME: duplicate "from" name inside the clause must raise a detailed script error. */
@@ -160,7 +224,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to weight, age to weight2];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("duplicate source name in RENAME clause");
+        .is(atPosition(0, 0, 0, 0))
+        .hasMessage("TODO: Improve: duplicate source name in RENAME clause");
   }
 
   /** RENAME: "from" column must exist in dataset. */
@@ -176,7 +241,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename unknown to something];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("source column to rename not found: 'unknown'");
+        .is(atPosition(0, 0, 0, 0))
+        .hasMessageContaining("TODO: Improve: source column to rename not found: 'unknown'");
   }
 
   /**
@@ -195,6 +261,7 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename name to age];"))
         .isInstanceOf(VtlScriptException.class)
+        .is(atPosition(0, 0, 0, 0))
         .hasMessageContaining("target name 'age'") // main message
         .hasMessageContaining("already exists in dataset and is not being renamed")
         .hasMessageContaining("(role=MEASURE, type=class java.lang.Long)");
