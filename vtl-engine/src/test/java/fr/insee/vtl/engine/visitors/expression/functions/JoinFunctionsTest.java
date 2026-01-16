@@ -138,7 +138,7 @@ public class JoinFunctionsTest {
                                         """))
         .isInstanceOf(InvalidArgumentException.class)
         .hasMessage(
-            "CALC cannot overwrite IDENTIFIER 'Id_2' (role=IDENTIFIER, type=class java.lang.Long).");
+            "using component Id_2 has to be an identifier");
   }
 
   @Test
