@@ -260,7 +260,6 @@ public class SetFunctionsVisitorTest {
             Arrays.asList("T01", "LOOP-02", "foo12", "foo1"),
             Arrays.asList("T02", null, "foo21", "foo2"));
 
-    engine.put("$vtl.engine.use_dag", "false");
     ScriptContext context = engine.getContext();
     context.getBindings(ScriptContext.ENGINE_SCOPE).put("MULTIMODE", multimodeDs);
 

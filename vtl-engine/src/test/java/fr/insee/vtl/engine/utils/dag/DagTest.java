@@ -297,8 +297,6 @@ public class DagTest {
   void testDagDoubleAssignment() {
     ScriptContext context = engine.getContext();
     context.setAttribute("a", 1L, ScriptContext.ENGINE_SCOPE);
-    // Note that the double assignment is not detected while building the DAG but later during
-    // execution
     assertThatThrownBy(() -> engine.eval("b := a; b := 1;"))
         .isInstanceOf(VtlScriptException.class)
         .hasMessage("Dataset b has already been assigned");
