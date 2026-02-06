@@ -279,19 +279,27 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
   public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
 
     // Dataset structure in order + lookup maps
-    final List<Dataset.Component> componentsInOrder =
-        new ArrayList<>(datasetExpression.getDataStructure().values());
-    final Set<String> availableColumns =
-        componentsInOrder.stream()
-            .map(Dataset.Component::getName)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+    //final List<Dataset.Component> componentsInOrder =
+    //    new ArrayList<>(datasetExpression.getDataStructure().values());
+    // final Set<String> availableColumns =
+    //    componentsInOrder.stream()
+    //        .map(Dataset.Component::getName)
+    //        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    var structure = datasetExpression.getDataStructure();
 
     // Parse the RENAME clause and validate
     Map<String, String> fromTo = new LinkedHashMap<>();
     Set<String> toSeen = new LinkedHashSet<>();
     Set<String> fromSeen = new LinkedHashSet<>();
 
+    Map<String, ParserRuleContext> toCtxMap = new HashMap<>();
+    Map<String, ParserRuleContext> fromCtxMap = new HashMap<>();
+
     for (VtlParser.RenameClauseItemContext renameCtx : ctx.renameClauseItem()) {
+      toCtxMap.put(getName(renameCtx.toName), renameCtx.toName);
+      fromCtxMap.put(getName(renameCtx.fromName), renameCtx.fromName);
+
       final String toNameString = getName(renameCtx.toName);
       final String fromNameString = getName(renameCtx.fromName);
 
@@ -304,7 +312,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       }
 
       // Validate: "from" must exist in dataset
-      if (!availableColumns.contains(fromNameString)) {
+      if (!structure.containsKey(fromNameString)) {
         throw new VtlRuntimeException(
             new UndefinedVariableException(toPositioned(renameCtx.fromName), datasetExpression));
       }
@@ -318,10 +326,10 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       fromTo.put(fromNameString, toNameString);
     }
 
-    // Validate collisions with untouched dataset columns ("Untouched" = columns that are not
-    // being renamed)
+    // Check that the renamed columns do not collide with the remaining columns. This
+    // is done so that swapping variables works: a -> b, b -> a.
     final Set<String> untouched =
-        availableColumns.stream()
+        structure.keySet().stream()
             .filter(c -> !fromTo.containsKey(c))
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -331,20 +339,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
       // If target already exists as untouched, it would cause a collision
       if (untouched.contains(to)) {
-        Dataset.Component comp = datasetExpression.getDataStructure().get(to);
-        String meta =
-            (comp != null)
-                ? String.format(
-                    " (role=%s, type=%s)",
-                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
-                : "";
-
         throw new VtlRuntimeException(
-            new InvalidArgumentException(
-                String.format(
-                    "Error: target name '%s'%s already exists in dataset and is not being renamed.",
-                    to, meta),
-                fromContext(ctx)));
+            new AlreadyDefinedException(
+                toPositioned(toCtxMap.get(to)),
+                datasetExpression
+            )
+        );
       }
     }
 

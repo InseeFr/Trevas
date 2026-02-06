@@ -21,7 +21,7 @@ public class UndefinedVariableException extends VtlScriptException {
 
   public UndefinedVariableException(Positioned identifier, Positioned container) {
     super(
-        "undefined variable '%s' in '%'"
+        "undefined variable '%s' in '%s'"
             .formatted(identifier.getPosition().text(), container.getPosition().text()),
         identifier);
   }
