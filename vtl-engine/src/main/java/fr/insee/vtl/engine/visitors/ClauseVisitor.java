@@ -279,7 +279,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
   public DatasetExpression visitRenameClause(VtlParser.RenameClauseContext ctx) {
 
     // Dataset structure in order + lookup maps
-    //final List<Dataset.Component> componentsInOrder =
+    // final List<Dataset.Component> componentsInOrder =
     //    new ArrayList<>(datasetExpression.getDataStructure().values());
     // final Set<String> availableColumns =
     //    componentsInOrder.stream()
@@ -340,11 +340,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       // If target already exists as untouched, it would cause a collision
       if (untouched.contains(to)) {
         throw new VtlRuntimeException(
-            new AlreadyDefinedException(
-                toPositioned(toCtxMap.get(to)),
-                datasetExpression
-            )
-        );
+            new AlreadyDefinedException(toPositioned(toCtxMap.get(to)), datasetExpression));
       }
     }
 

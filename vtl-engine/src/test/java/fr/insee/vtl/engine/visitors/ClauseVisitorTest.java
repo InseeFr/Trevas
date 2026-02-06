@@ -197,8 +197,7 @@ public class ClauseVisitorTest {
     assertThatThrownBy(
             () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessage(
-            "'age', is already defined in 'ds1'");
+        .hasMessage("'age', is already defined in 'ds1'");
   }
 
   /** RENAME: duplicate "from" name inside the clause must raise a detailed script error. */
