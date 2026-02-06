@@ -1,10 +1,12 @@
 package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.VtlScriptEngine.toPositioned;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -124,7 +126,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     var structure = datasetExpression.getDataStructure();
 
     // Evaluate that all requested columns must exist in the dataset or raise an error
-    // TODO: Is that no handled already?
     for (String col : columns.keySet()) {
       if (!structure.containsKey(col)) {
         throw new VtlRuntimeException(
@@ -133,7 +134,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
     }
 
     // VTL specification: identifiers must not appear explicitly in KEEP
-    // TODO: Use multi errors that noah created?
     for (String col : columns.keySet()) {
       if (structure.get(col).isIdentifier()) {
         throw new VtlRuntimeException(
@@ -286,13 +286,6 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
             .map(Dataset.Component::getName)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    // Map for detailed error reporting (includes role/type if available)
-    final Map<String, Dataset.Component> byName =
-        componentsInOrder.stream()
-            .collect(
-                Collectors.toMap(
-                    Dataset.Component::getName, c -> c, (a, b) -> a, LinkedHashMap::new));
-
     // Parse the RENAME clause and validate
     Map<String, String> fromTo = new LinkedHashMap<>();
     Set<String> toSeen = new LinkedHashSet<>();
@@ -306,33 +299,20 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       if (!fromSeen.add(fromNameString)) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
-                String.format("Error: duplicate source name in RENAME clause: '%s'", fromNameString),
-                fromContext(ctx)));
+                "duplicate from name '%s'".formatted(renameCtx.fromName.getText()),
+                toPositioned(renameCtx.fromName)));
       }
 
       // Validate: "from" must exist in dataset
       if (!availableColumns.contains(fromNameString)) {
-        Dataset.Component comp = byName.get(fromNameString);
-        String meta =
-            (comp != null)
-                ? String.format(
-                    " (role=%s, type=%s)",
-                    comp.getRole(), comp.getType() != null ? comp.getType() : "n/a")
-                : "";
         throw new VtlRuntimeException(
-            new InvalidArgumentException(
-                String.format(
-                    "Error: source column to rename not found: '%s'%s", fromNameString, meta),
-                fromContext(ctx)));
+            new UndefinedVariableException(toPositioned(renameCtx.fromName), datasetExpression));
       }
 
       // Validate: no duplicate "to" names inside the clause
       if (!toSeen.add(toNameString)) {
         throw new VtlRuntimeException(
-            new InvalidArgumentException(
-                String.format(
-                    "Error: duplicate output column name in RENAME clause: '%s'", fromNameString),
-                fromContext(ctx)));
+            new AlreadyDefinedException(toPositioned(renameCtx.toName), datasetExpression));
       }
 
       fromTo.put(fromNameString, toNameString);
@@ -351,7 +331,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
       // If target already exists as untouched, it would cause a collision
       if (untouched.contains(to)) {
-        Dataset.Component comp = byName.get(to);
+        Dataset.Component comp = datasetExpression.getDataStructure().get(to);
         String meta =
             (comp != null)
                 ? String.format(
