@@ -140,8 +140,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename missing to foo];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 47, 58))
-        .hasMessageContaining("Error: source column to rename not found: 'missing'");
+        .is(atPosition(0, 17, 24))
+        .hasMessage("undefined variable 'missing' in 'ds1'");
   }
 
   @Test
@@ -159,8 +159,7 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to dup, weight to dup];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 47, 58))
-        .hasMessageContaining("Error: source column to rename not found: 'missing'");
+        .hasMessage("'dup', is already defined in 'ds1'");
   }
 
   @Test
@@ -178,8 +177,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to foo, age to bar];"))
         .isInstanceOf(VtlScriptException.class)
-        .hasMessageContaining("Error: duplicate source name in RENAME clause: 'age'")
-        .is(atPosition(0, 47, 58));
+        .hasMessageContaining("duplicate from name 'age'")
+        .is(atPosition(0, 29, 32));
   }
 
   @Test
@@ -198,9 +197,8 @@ public class ClauseVisitorTest {
     assertThatThrownBy(
             () -> engine.eval("ds := ds1[rename age to weight, weight to age, name to age];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 47, 58))
-        .hasMessageContaining(
-            "TODO: Improve: Error: duplicate output column name in RENAME clause: 'name'");
+        .hasMessage(
+            "'age', is already defined in 'ds1'");
   }
 
   /** RENAME: duplicate "from" name inside the clause must raise a detailed script error. */
@@ -218,8 +216,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename age to weight, age to weight2];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 0, 0, 0))
-        .hasMessage("TODO: Improve: duplicate source name in RENAME clause");
+        .is(atPosition(0, 32, 35))
+        .hasMessageContaining("duplicate from name 'age'");
   }
 
   /** RENAME: "from" column must exist in dataset. */
@@ -235,8 +233,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename unknown to something];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 0, 0, 0))
-        .hasMessageContaining("TODO: Improve: source column to rename not found: 'unknown'");
+        .is(atPosition(0, 17, 24))
+        .hasMessage("undefined variable 'unknown' in 'ds1'");
   }
 
   /**
@@ -255,10 +253,8 @@ public class ClauseVisitorTest {
 
     assertThatThrownBy(() -> engine.eval("ds := ds1[rename name to age];"))
         .isInstanceOf(VtlScriptException.class)
-        .is(atPosition(0, 0, 0, 0))
-        .hasMessageContaining("target name 'age'") // main message
-        .hasMessageContaining("already exists in dataset and is not being renamed")
-        .hasMessageContaining("(role=MEASURE, type=class java.lang.Long)");
+        .is(atPosition(0, 25, 28))
+        .hasMessage("'age', is already defined in 'ds1'");
   }
 
   @Test

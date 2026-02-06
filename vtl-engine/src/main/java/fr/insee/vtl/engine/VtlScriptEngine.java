@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.script.*;
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -103,9 +104,11 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     if (to == null) {
       to = from;
     }
+    var stream = from.getInputStream();
+    var text = stream.getText(new Interval(from.getStartIndex(), to.getStopIndex()));
     var position =
         new Positioned.Position(
-            "",
+            text,
             from.getLine() - 1,
             to.getLine() - 1,
             from.getCharPositionInLine(),
