@@ -58,9 +58,24 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     this.factory = factory;
   }
 
+  public static Positioned toPositioned(ParseTree tree) {
+    return fromContext(tree);
+  }
+
+  public static Positioned toPositioned(Token tree) {
+    return fromToken(tree);
+  }
+
+  /**
+   * Convert a Token to Positioned.
+   *
+   * @deprecated This method is no longer acceptable to compute time between versions.
+   *     <p>Use {@link VtlScriptEngine#toPositioned(Token)} instead.
+   */
   public static Positioned fromToken(Token token) {
     Positioned.Position position =
         new Positioned.Position(
+            token.getText(),
             token.getLine() - 1,
             token.getLine() - 1,
             token.getCharPositionInLine(),
@@ -68,6 +83,12 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     return () -> position;
   }
 
+  /**
+   * Convert a ParseTree to Positioned.
+   *
+   * @deprecated This method is no longer acceptable to compute time between versions.
+   *     <p>Use {@link VtlScriptEngine#toPositioned(ParseTree)} instead.
+   */
   public static Positioned fromContext(ParseTree tree) {
     if (tree instanceof ParserRuleContext parserRuleContext) {
       return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
@@ -84,6 +105,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
     var position =
         new Positioned.Position(
+            "",
             from.getLine() - 1,
             to.getLine() - 1,
             from.getCharPositionInLine(),
@@ -218,7 +240,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
                   errors.add(new VtlSyntaxException(msg, fromToken(offendingSymbolToken)));
                 } else {
                   var pos =
-                      new Positioned.Position(startLine, startLine, startColumn, startColumn + 1);
+                      new Positioned.Position(
+                          "", startLine, startLine, startColumn, startColumn + 1);
                   errors.add(new VtlScriptException(msg, () -> pos));
                 }
               }

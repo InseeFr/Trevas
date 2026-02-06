@@ -148,7 +148,7 @@ public class DagTest {
       }
     }
 
-    return new Positioned.Position(startLine, endLine, startColumn, endColumn);
+    return new Positioned.Position("", startLine, endLine, startColumn, endColumn);
   }
 
   @BeforeEach

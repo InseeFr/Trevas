@@ -7,8 +7,10 @@ public interface Positioned {
 
   Position getPosition();
 
-  record Position(Integer startLine, Integer endLine, Integer startColumn, Integer endColumn)
+  record Position(
+      String text, Integer startLine, Integer endLine, Integer startColumn, Integer endColumn)
       implements Serializable, Comparable<Position> {
+
     @Override
     public int compareTo(Position other) {
       return Comparator.nullsLast(
