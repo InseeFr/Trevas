@@ -14,7 +14,7 @@ public class TypeCheckingUtilsTest {
       new Positioned() {
         @Override
         public Position getPosition() {
-          return new Position(1, 1, 1, 1);
+          return new Position("", 1, 1, 1, 1);
         }
       };
 
