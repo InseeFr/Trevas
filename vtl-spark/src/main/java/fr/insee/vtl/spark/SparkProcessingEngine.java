@@ -164,6 +164,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
       return datasetExpression.resolve(Map.of());
     } else {
       var dataset = expression.resolve(Map.of());
+      if (dataset instanceof PersistentDataset persistentDataset) {
+        dataset = persistentDataset.getDelegate();
+      }
       if (dataset instanceof SparkDataset sparkDataset) {
         return sparkDataset;
       } else {

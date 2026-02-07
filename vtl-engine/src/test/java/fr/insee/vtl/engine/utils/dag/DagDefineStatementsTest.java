@@ -6,10 +6,12 @@ import fr.insee.vtl.engine.VtlSyntaxPreprocessor;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.*;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.script.ScriptException;
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -21,13 +23,17 @@ public class DagDefineStatementsTest {
 
   private static String performDagReordering(final String script, final Set<String> bindingVars)
       throws VtlScriptException {
-    final CodePointCharStream stream = CharStreams.fromString(script);
-    VtlLexer lexer = new VtlLexer(stream);
-    VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
-    var start = parser.start();
+    VtlParser.StartContext start = parseScript(script);
     VtlSyntaxPreprocessor syntaxPreprocessor = new VtlSyntaxPreprocessor(start, bindingVars);
     VtlParser.StartContext res = syntaxPreprocessor.checkForMultipleAssignmentsAndReorderScript();
     return parseTreeToText(res);
+  }
+
+  public static VtlParser.StartContext parseScript(String script) {
+    final CodePointCharStream stream = CharStreams.fromString(script);
+    VtlLexer lexer = new VtlLexer(stream);
+    VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
+    return parser.start();
   }
 
   private static String parseTreeToText(ParseTree child) {
