@@ -64,8 +64,7 @@ public class ArithmeticExprTest {
 
     context.setAttribute("ds1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
-    Object res =
-        engine.eval("res := round(ds1[keep id, long1, double1] * ds2[keep id, long1, double1]);");
+    Object res = engine.eval("res := round(ds1[keep long1, double1] * ds2[keep long1, double1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 1500.0, "double1", 1.0),
@@ -83,8 +82,7 @@ public class ArithmeticExprTest {
     engine.eval("div4 := 3.0 / 1.5;");
     assertThat(context.getAttribute("div4")).isEqualTo(2.0);
 
-    res =
-        engine.eval("res2 := round(ds1[keep id, long1, double1] / ds2[keep id, long1, double1]);");
+    res = engine.eval("res2 := round(ds1[keep long1, double1] / ds2[keep long1, double1]);");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of("id", "Hadrien", "long1", 0.0, "double1", 1.0),

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -154,10 +155,10 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
    * <code>VarIDsExtractingVisitor</code> is the visitor for extracting the used VarIds from VTL
    * statements.
    */
-  private static class IdentifierExtractingVisitor
-      extends VtlBaseVisitor<Set<DAGStatement.Identifier>> {
+  static class IdentifierExtractingVisitor extends VtlBaseVisitor<Set<DAGStatement.Identifier>> {
 
     private final Set<String> ignoreInnerScopedVarIdentifiers;
+    private int componentContextDepth = 0;
 
     public IdentifierExtractingVisitor() {
       this(Set.of());
@@ -168,51 +169,127 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
       this.ignoreInnerScopedVarIdentifiers = ignoreInnerScopedVarIdentifiers;
     }
 
-    @Override
-    public Set<DAGStatement.Identifier> visitVarID(VtlParser.VarIDContext node) {
-      final var currentVarIdentifier = node.IDENTIFIER().getSymbol().getText();
-      final Set<DAGStatement.Identifier> thisResult =
-          ignoreInnerScopedVarIdentifiers.contains(currentVarIdentifier)
-              ? Set.of()
-              : Set.of(
-                  new DAGStatement.Identifier(
-                      DAGStatement.Identifier.Type.VARIABLE, currentVarIdentifier));
-      final Set<DAGStatement.Identifier> subResult = this.visitChildren(node);
-      return aggregateResult(thisResult, subResult);
+    private Set<DAGStatement.Identifier> enterRestrictedContext(RuleContext ctx) {
+      componentContextDepth++;
+      Set<DAGStatement.Identifier> result = super.visitChildren(ctx);
+      componentContextDepth--;
+      return result;
     }
 
     @Override
-    public Set<DAGStatement.Identifier> visitOperatorID(VtlParser.OperatorIDContext node) {
-      final Set<DAGStatement.Identifier> thisResult =
-          Set.of(
+    public Set<DAGStatement.Identifier> visitVarID(VtlParser.VarIDContext node) {
+      final var currentVarIdentifier = node.IDENTIFIER().getSymbol().getText();
+
+      // If we are inside a component context (depth > 0), we ignore this identifier
+      // because it is a component name, not a dataset dependency, according to the unadjusted VTL
+      // syntax
+      if (componentContextDepth > 0) {
+        return Set.of();
+      }
+
+      return ignoreInnerScopedVarIdentifiers.contains(currentVarIdentifier)
+          ? Set.of()
+          : Set.of(
               new DAGStatement.Identifier(
-                  DAGStatement.Identifier.Type.OPERATOR, node.IDENTIFIER().getSymbol().getText()));
-      final Set<DAGStatement.Identifier> subResult = this.visitChildren(node);
-      return aggregateResult(thisResult, subResult);
+                  DAGStatement.Identifier.Type.VARIABLE, currentVarIdentifier));
+    }
+
+    // Workaround for https://github.com/InseeFr/Trevas/issues/457, as long the open points in here
+    // are not clarified and https://github.com/InseeFr/Trevas/issues/355 is not implemented
+    // If we are inside a component context (depth > 0), we ignore this identifier
+    // because it is a component name, not a dataset dependency, according to the unadjusted VTL
+    // syntax
+    @Override
+    public Set<DAGStatement.Identifier> visitFilterClause(VtlParser.FilterClauseContext ctx) {
+      return enterRestrictedContext(ctx);
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitCalcClauseItem(VtlParser.CalcClauseItemContext ctx) {
+      return enterRestrictedContext(ctx);
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitHavingClause(VtlParser.HavingClauseContext ctx) {
+      return enterRestrictedContext(ctx);
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitJoinApplyClause(VtlParser.JoinApplyClauseContext ctx) {
+      return enterRestrictedContext(ctx);
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitAggrFunctionClause(
+        VtlParser.AggrFunctionClauseContext ctx) {
+      return enterRestrictedContext(ctx);
+    }
+
+    // Aggregate & Analytic Functions (First arg is Dataset, rest are components)
+    @Override
+    public Set<DAGStatement.Identifier> visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+      Set<DAGStatement.Identifier> datasetRef = visit(ctx.expr());
+      return aggregateResult(datasetRef, enterRestrictedContext(ctx));
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitAnSimpleFunction(
+        VtlParser.AnSimpleFunctionContext ctx) {
+      Set<DAGStatement.Identifier> datasetRef = visit(ctx.expr());
+      return aggregateResult(datasetRef, enterRestrictedContext(ctx));
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
+      Set<DAGStatement.Identifier> datasetRef = visit(ctx.expr());
+      return aggregateResult(datasetRef, enterRestrictedContext(ctx));
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
+      Set<DAGStatement.Identifier> datasetRef = visit(ctx.expr());
+      return aggregateResult(datasetRef, enterRestrictedContext(ctx));
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitRankAn(VtlParser.RankAnContext ctx) {
+
+      return enterRestrictedContext(ctx);
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+      // Only visit the dataset (left side), ignore the component (right side)
+      return visit(ctx.expr());
     }
 
     @Override
     public Set<DAGStatement.Identifier> visitValidateDPruleset(
         VtlParser.ValidateDPrulesetContext node) {
-      final Set<DAGStatement.Identifier> thisResult =
+      Set<DAGStatement.Identifier> rulesetRef =
           Set.of(
               new DAGStatement.Identifier(
                   DAGStatement.Identifier.Type.RULESET_DATAPOINT,
                   node.IDENTIFIER().getSymbol().getText()));
-      final Set<DAGStatement.Identifier> subResult = this.visitChildren(node);
-      return aggregateResult(thisResult, subResult);
+      return aggregateResult(rulesetRef, visit(node.expr()));
     }
 
     @Override
     public Set<DAGStatement.Identifier> visitValidateHRruleset(
         VtlParser.ValidateHRrulesetContext node) {
-      final Set<DAGStatement.Identifier> thisResult =
+      Set<DAGStatement.Identifier> rulesetRef =
           Set.of(
               new DAGStatement.Identifier(
                   DAGStatement.Identifier.Type.RULESET_HIERARCHICAL,
                   node.IDENTIFIER().getSymbol().getText()));
-      final Set<DAGStatement.Identifier> subResult = this.visitChildren(node);
-      return aggregateResult(thisResult, subResult);
+      return aggregateResult(rulesetRef, visit(node.expr()));
+    }
+
+    @Override
+    public Set<DAGStatement.Identifier> visitOperatorID(VtlParser.OperatorIDContext node) {
+      return Set.of(
+          new DAGStatement.Identifier(
+              DAGStatement.Identifier.Type.OPERATOR, node.IDENTIFIER().getSymbol().getText()));
     }
 
     @Override
