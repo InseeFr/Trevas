@@ -40,6 +40,8 @@ jobs:
         with:
           java-version: 17
           distribution: "adopt"
+      - name: Package vtl-parser
+        run: mvn clean package -pl vtl-parser
       # Also exclude vtl-prov because of vtl-sdmx scope test dependency
       - name: Test
         run: mvn test -pl '!vtl-sdmx,!vtl-prov'
@@ -70,6 +72,8 @@ jobs:
                 "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
+      - name: Package vtl-parser
+        run: mvn clean package -pl vtl-parser
       - name: Test
         run: mvn test
   package:
