@@ -1,5 +1,9 @@
 package fr.insee.vtl.engine.utils.dag;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.ParserRuleContext;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.RuleNode;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
@@ -9,10 +13,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * Representation of a VTL Statement

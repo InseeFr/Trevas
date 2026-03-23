@@ -5,6 +5,8 @@ import static fr.insee.vtl.engine.VtlScriptEngine.toPositioned;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.ParserRuleContext;
+import fr.insee.trevas.antlr.shaded.v4.runtime.misc.Interval;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
@@ -18,8 +20,6 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
 
 /**
  * <code>ClauseVisitor</code> is the visitor for VTL clause expressions (component filter, aggr,

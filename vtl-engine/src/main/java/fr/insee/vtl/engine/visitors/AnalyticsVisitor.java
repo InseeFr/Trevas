@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.Token;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Analytics;
@@ -14,8 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 public class AnalyticsVisitor extends VtlBaseVisitor<DatasetExpression> {
 

@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.RuleContext;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.RuleContext;
 
 /**
  * <code>SetFunctionsVisitor</code> is the visitor for expressions involving set functions (i.e.

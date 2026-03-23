@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.threeten.extra.Interval;
 
 /**

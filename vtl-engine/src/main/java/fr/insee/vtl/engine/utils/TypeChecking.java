@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.utils;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 

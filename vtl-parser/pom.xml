@@ -51,6 +51,49 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-antlr</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+
+                            <!-- Do NOT generate dependency-reduced POM -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                            <!-- Only shade ANTLR -->
+                            <artifactSet>
+                                <includes>
+                                    <include>org.antlr:antlr4-runtime</include>
+                                </includes>
+                            </artifactSet>
+
+                            <!-- Relocate ANTLR -->
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.antlr.v4</pattern>
+                                    <shadedPattern>fr.insee.trevas.antlr.shaded.v4</shadedPattern>
+                                </relocation>
+                            </relocations>
+
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Automatic-Module-Name>fr.insee.vtl.parser.shaded</Automatic-Module-Name>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <!-- Needed so that the mvn test goal finds the ANTLR g4 files. -->

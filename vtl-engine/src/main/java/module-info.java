@@ -11,7 +11,7 @@ module fr.insee.vtl.engine {
   exports fr.insee.vtl.engine.exceptions;
 
   requires transitive java.scripting;
-  requires transitive fr.insee.vtl.parser;
+  requires transitive fr.insee.vtl.parser.shaded;
   requires transitive fr.insee.vtl.model;
 
   uses ProcessingEngine;

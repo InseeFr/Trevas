@@ -1,5 +1,9 @@
 package fr.insee.vtl.engine.visitors;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.RuleContext;
+import fr.insee.trevas.antlr.shaded.v4.runtime.Token;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.RuleNode;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -9,10 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.RuleNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /** <code>DagbuildingVisitor</code> is the visitor for creating a DAG from VTL statements. */
 public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {

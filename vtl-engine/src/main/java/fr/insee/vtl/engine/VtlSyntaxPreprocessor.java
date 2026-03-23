@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.utils.dag.DAGBuilder;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.engine.visitors.DAGBuildingVisitor;
@@ -9,7 +10,6 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Class for preprocessing the VTL script for resolving script errors and reordering statements

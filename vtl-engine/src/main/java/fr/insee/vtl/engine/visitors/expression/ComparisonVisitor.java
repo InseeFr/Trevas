@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.Token;
+import fr.insee.trevas.antlr.shaded.v4.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
@@ -15,8 +17,6 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list

@@ -12,6 +12,7 @@
         <module>vtl-engine</module>
         <module>vtl-jackson</module>
         <module>vtl-spark</module>
+        <module>vtl-spark4</module>
         <module>vtl-jdbc</module>
         <module>vtl-sdmx</module>
         <module>vtl-csv</module>
