@@ -13,6 +13,7 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -33,7 +34,8 @@ class TCKTest {
   }
 
   /**
-   * Each invocation is named after the TCK path (first parameter), not {@code generateTests()[n]}.
+   * {@link Named} is required so runners (e.g. IDEA) use the TCK path as the invocation title; a
+   * bare {@code String} as first argument only yields {@code tckLeaf(String, Test)[n]}.
    */
   @ParameterizedTest(name = "{0}")
   @MethodSource("leafCases")
@@ -48,7 +50,12 @@ class TCKTest {
     try (InputStream in = raw) {
       List<Folder> roots = TCK.runTCK(in);
       List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
-      return leaves.stream().map(leaf -> Arguments.of(leaf.displayPath(), leaf.payload()));
+      return leaves.stream()
+          .map(
+              leaf -> {
+                String path = leaf.displayPath();
+                return Arguments.of(Named.of(path, path), leaf.payload());
+              });
     }
   }
 }
