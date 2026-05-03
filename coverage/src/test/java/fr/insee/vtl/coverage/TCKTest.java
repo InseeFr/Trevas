@@ -32,9 +32,10 @@ class TCKTest {
   @TestFactory
   @DisplayName("TCK v2.1 (Spark)")
   Stream<DynamicTest> generateTests() {
-    try (InputStream in = getClass().getClassLoader().getResourceAsStream("v2.1.zip")) {
-      Assumptions.assumeTrue(in != null, "Skipping TCK tests: v2.1.zip not on classpath");
+    InputStream raw = getClass().getClassLoader().getResourceAsStream("v2.1.zip");
+    Assumptions.assumeTrue(raw != null, "Skipping TCK tests: v2.1.zip not on classpath");
 
+    try (InputStream in = raw) {
       List<Folder> roots = TCK.runTCK(in);
       List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
       return leaves.stream()
@@ -42,6 +43,8 @@ class TCKTest {
               leaf ->
                   DynamicTest.dynamicTest(
                       leaf.displayPath(), () -> executor.run(leaf.payload(), leaf.displayPath())));
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
       throw new IllegalStateException("Failed to load or schedule TCK tests", e);
     }
