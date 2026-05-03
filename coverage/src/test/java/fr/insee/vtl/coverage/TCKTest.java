@@ -1,7 +1,5 @@
 package fr.insee.vtl.coverage;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.insee.vtl.coverage.model.Folder;
 import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.engine.VtlScriptEngine;
@@ -13,9 +11,13 @@ import java.util.Map;
 import java.util.stream.Stream;
 import javax.script.*;
 import org.apache.spark.sql.SparkSession;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.*;
 
 class TCKTest {
+
+  /** Separator for hierarchical names (JUnit / Surefire friendly, readable in GitHub reports). */
+  private static final String PATH_SEP = " \u00BB ";
 
   private ScriptEngine engine;
 
@@ -36,51 +38,62 @@ class TCKTest {
     Assumptions.assumeTrue(in != null, "Skipping TCK tests: resource file not found");
 
     List<Folder> tests = TCK.runTCK(in);
-    Folder root = new Folder();
-    root.setName("root");
-    root.setFolders(tests);
-    return Stream.of(toDynamicNode(root));
+    return tests.stream().map(f -> toDynamicNode(f, ""));
   }
 
-  private DynamicNode toDynamicNode(Folder folder) {
+  private static String displayPath(String prefix, String segment) {
+    return prefix.isEmpty() ? segment : prefix + PATH_SEP + segment;
+  }
+
+  private DynamicNode toDynamicNode(Folder folder, String prefix) {
+    String name = folder.getName();
+    String path = displayPath(prefix, name);
+
+    if (folder.getTest() != null) {
+      return DynamicTest.dynamicTest(path, () -> runTckCase(folder.getTest(), path));
+    }
+
     List<DynamicNode> children = new ArrayList<>();
     if (folder.getFolders() != null) {
       for (Folder sub : folder.getFolders()) {
-        children.add(toDynamicNode(sub));
+        children.add(toDynamicNode(sub, path));
       }
     }
+    return DynamicContainer.dynamicContainer(path, children.stream());
+  }
 
-    if (folder.getTest() != null) {
-      children.add(
-          DynamicTest.dynamicTest(
-              folder.getName(),
-              () -> {
-                Test test = folder.getTest();
-                String script = test.getScript();
-                Map<String, Dataset> inputs = test.getInput();
+  private void runTckCase(Test test, String displayPath) throws Exception {
+    String script = test.getScript();
+    Map<String, Dataset> inputs = test.getInput();
 
-                Bindings bindings = new SimpleBindings();
-                bindings.putAll(inputs);
+    Bindings bindings = new SimpleBindings();
+    bindings.putAll(inputs);
 
-                engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-                engine.eval(script);
+    engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+    engine.eval(script);
 
-                Map<String, Dataset> outputs = test.getOutputs();
-                outputs.forEach(
-                    (name, tckDataset) -> {
-                      Object trevasValue = engine.getContext().getAttribute(name);
-                      assertThat(trevasValue).isInstanceOf(Dataset.class);
-                      Dataset trevasDataset = (Dataset) trevasValue;
-                      assertThat(trevasDataset.getDataStructure())
-                          .as(script)
-                          .isEqualTo(tckDataset.getDataStructure());
-                      assertThat(trevasDataset.getDataAsMap())
-                          .as(script)
-                          .containsExactlyElementsOf(tckDataset.getDataAsMap());
-                    });
-              }));
-    }
-
-    return DynamicContainer.dynamicContainer(folder.getName(), children.stream());
+    Map<String, Dataset> outputs = test.getOutputs();
+    SoftAssertions softly = new SoftAssertions();
+    outputs.forEach(
+        (outputName, tckDataset) -> {
+          Object trevasValue = engine.getContext().getAttribute(outputName);
+          softly
+              .assertThat(trevasValue)
+              .as("[%s] output `%s` must be a Dataset", displayPath, outputName)
+              .isInstanceOf(Dataset.class);
+          if (!(trevasValue instanceof Dataset)) {
+            return;
+          }
+          Dataset trevasDataset = (Dataset) trevasValue;
+          softly
+              .assertThat(trevasDataset.getDataStructure())
+              .as("[%s] output `%s` data structure", displayPath, outputName)
+              .isEqualTo(tckDataset.getDataStructure());
+          softly
+              .assertThat(trevasDataset.getDataAsMap())
+              .as("[%s] output `%s` row data", displayPath, outputName)
+              .containsExactlyElementsOf(tckDataset.getDataAsMap());
+        });
+    softly.assertAll();
   }
 }
