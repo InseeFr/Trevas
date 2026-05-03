@@ -8,6 +8,7 @@ import fr.insee.vtl.coverage.tck.TckLeafCase;
 import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
@@ -34,10 +35,11 @@ class TCKTest {
   }
 
   /**
-   * {@link Named} is required so runners (e.g. IDEA) use the TCK path as the invocation title; a
-   * bare {@code String} as first argument only yields {@code tckLeaf(String, Test)[n]}.
+   * {@code Test {index}} is expanded by JUnit (visible in Surefire / GitHub Actions). {@code {0}}
+   * is the TCK path via {@link Named}. Some UIs ignore custom names and only show {@code
+   * tckLeaf(...)[n]}.
    */
-  @ParameterizedTest(name = "{0}")
+  @ParameterizedTest(name = "Test {index} — {0}")
   @MethodSource("leafCases")
   void tckLeaf(String displayPath, Test payload) throws Exception {
     executor.run(payload, displayPath);
@@ -50,9 +52,10 @@ class TCKTest {
     try (InputStream in = raw) {
       List<Folder> roots = TCK.runTCK(in);
       List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
-      return leaves.stream()
-          .map(
-              leaf -> {
+      return IntStream.range(0, leaves.size())
+          .mapToObj(
+              i -> {
+                TckLeafCase leaf = leaves.get(i);
                 String path = leaf.displayPath();
                 return Arguments.of(Named.of(path, path), leaf.payload());
               });
