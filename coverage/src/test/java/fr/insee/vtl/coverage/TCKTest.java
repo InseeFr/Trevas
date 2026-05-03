@@ -1,6 +1,7 @@
 package fr.insee.vtl.coverage;
 
 import fr.insee.vtl.coverage.model.Folder;
+import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.coverage.tck.TckCaseExecutor;
 import fr.insee.vtl.coverage.tck.TckFolders;
 import fr.insee.vtl.coverage.tck.TckLeafCase;
@@ -12,13 +13,15 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Spark-backed conformance run against the packaged TCK ({@code v2.1.zip}). Orchestration only —
  * discovery, naming, and assertions live under {@code fr.insee.vtl.coverage.tck}.
  */
+@DisplayName("TCK v2.1 (Spark)")
 class TCKTest {
 
   private TckCaseExecutor executor;
@@ -29,24 +32,23 @@ class TCKTest {
     executor = new TckCaseExecutor(TckSparkScriptEngines.createVtlOnSpark(spark));
   }
 
-  @TestFactory
-  @DisplayName("TCK v2.1 (Spark)")
-  Stream<DynamicTest> generateTests() {
-    InputStream raw = getClass().getClassLoader().getResourceAsStream("v2.1.zip");
+  /**
+   * Each invocation is named after the TCK path (first parameter), not {@code generateTests()[n]}.
+   */
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("leafCases")
+  void tckLeaf(String displayPath, Test payload) throws Exception {
+    executor.run(payload, displayPath);
+  }
+
+  static Stream<Arguments> leafCases() throws Exception {
+    InputStream raw = TCKTest.class.getClassLoader().getResourceAsStream("v2.1.zip");
     Assumptions.assumeTrue(raw != null, "Skipping TCK tests: v2.1.zip not on classpath");
 
     try (InputStream in = raw) {
       List<Folder> roots = TCK.runTCK(in);
       List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
-      return leaves.stream()
-          .map(
-              leaf ->
-                  DynamicTest.dynamicTest(
-                      leaf.displayPath(), () -> executor.run(leaf.payload(), leaf.displayPath())));
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to load or schedule TCK tests", e);
+      return leaves.stream().map(leaf -> Arguments.of(leaf.displayPath(), leaf.payload()));
     }
   }
 }
