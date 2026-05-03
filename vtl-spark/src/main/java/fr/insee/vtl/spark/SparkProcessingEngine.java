@@ -215,7 +215,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
       Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions) {
     var columnNames = Set.of(interpreted.columns());
     Column structColumns =
-        struct(columnNames.stream().map(colName -> col(colName)).toArray(Column[]::new));
+        struct(columnNames.stream().map(SparkUtils::safeCol).toArray(Column[]::new));
     for (var name : expressions.keySet()) {
       // Ignore the columns that already exist.
       if (columnNames.contains(name)) {
@@ -312,7 +312,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     SparkDataset dataset = asSparkDataset(expression);
 
-    List<Column> columns = columnNames.stream().map(Column::new).collect(Collectors.toList());
+    List<Column> columns =
+        columnNames.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
     Seq<Column> columnSeq = iterableAsScalaIterable(columns).toSeq();
 
     // Project in spark.
@@ -453,8 +454,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     // step 2: call analytic func on window spec
     Column column =
         switch (function) {
-          case LEAD -> lead(sourceColName, offset).over(windowSpec);
-          case LAG -> lag(sourceColName, offset).over(windowSpec);
+          case LEAD -> lead(SparkUtils.safeCol(sourceColName), offset).over(windowSpec);
+          case LAG -> lag(SparkUtils.safeCol(sourceColName), offset).over(windowSpec);
           default -> throw UNKNOWN_ANALYTIC_FUNCTION;
         };
     var result = sparkDataset.getSparkDataset().withColumn(targetColName, column);
@@ -481,8 +482,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
         sparkDataset
             .getSparkDataset()
             .withColumn(totalColName, sum(SparkUtils.safeCol(sourceColName)).over(windowSpec))
-            .withColumn(targetColName, SparkUtils.safeCol(sourceColName).divide(col(totalColName)))
-            .drop(totalColName);
+            .withColumn(
+                targetColName,
+                SparkUtils.safeCol(sourceColName).divide(SparkUtils.safeCol(totalColName)))
+            .drop(SparkUtils.safeCol(totalColName));
     // 2.3 without the calc clause, we need to overwrite the measure columns with the result column
     return new SparkDatasetExpression(new SparkDataset(result), dataset);
   }
@@ -963,7 +966,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     }
     if (validationOutput.equals("all")) {
       String measureName = measure.getName();
-      Dataset<Row> result = asSparkDataset(datasetExpression).getSparkDataset().drop(measureName);
+      Dataset<Row> result =
+          asSparkDataset(datasetExpression).getSparkDataset().drop(SparkUtils.safeCol(measureName));
       return new SparkDatasetExpression(new SparkDataset(result), pos);
     }
     // all_measures
@@ -1128,7 +1132,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
         sparkDataset
             .groupBy(groupByCols)
             .pivot(SparkUtils.safeCol(idName))
-            .agg(functions.first(meName));
+            .agg(functions.first(SparkUtils.safeCol(meName)));
 
     return new SparkDatasetExpression(new SparkDataset(result), pos);
   }

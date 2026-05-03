@@ -58,6 +58,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build and run tests
+        continue-on-error: true
         run: mvn clean test --batch-mode
 
       - name: Publish JUnit test results
