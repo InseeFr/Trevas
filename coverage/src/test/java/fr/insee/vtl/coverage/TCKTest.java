@@ -35,20 +35,24 @@ class TCKTest {
   }
 
   /**
-   * Surefire XML currently persists the technical method signature for parameterized invocations.
-   * Emit explicit, stable labels in stdout and failure wrappers so GitHub logs stay readable.
+   * One argument + {@link Named} so {@code name = "{0}"} resolves to a stable label in Surefire XML
+   * (see {@code coverage/pom.xml} phrased reporters). Stdout uses a two-line layout for CI logs.
    */
-  @ParameterizedTest(name = "tckLeaf[{0}]")
+  @ParameterizedTest(name = "{0}")
   @MethodSource("leafCases")
-  void tckLeaf(int testIndex, String displayPath, Test payload) throws Exception {
-    String label = "Test " + testIndex + " — " + displayPath;
+  void tckCase(TckCase c) throws Exception {
     try {
-      executor.run(payload, displayPath);
-      System.out.println("✅ " + label);
+      executor.run(c.payload(), c.displayPath());
+      logCaseOutcome(c, true);
     } catch (Throwable t) {
-      String details = t.getMessage() == null ? "" : System.lineSeparator() + t.getMessage();
-      throw new AssertionError("❌ " + label + details, t);
+      logCaseOutcome(c, false);
+      throw t;
     }
+  }
+
+  private static void logCaseOutcome(TckCase c, boolean success) {
+    System.out.println((success ? "✅" : "❌") + " Test " + c.index());
+    System.out.println("\t" + c.displayPath());
   }
 
   static Stream<Arguments> leafCases() throws Exception {
@@ -62,9 +66,15 @@ class TCKTest {
           .mapToObj(
               i -> {
                 TckLeafCase leaf = leaves.get(i);
-                String path = leaf.displayPath();
-                return Arguments.of(i + 1, Named.of(path, path), leaf.payload());
+                TckCase c = new TckCase(i + 1, leaf.displayPath(), leaf.payload());
+                return Arguments.of(Named.of(c.label(), c));
               });
+    }
+  }
+
+  private record TckCase(int index, String displayPath, Test payload) {
+    String label() {
+      return "Test " + index + " — " + displayPath;
     }
   }
 }
