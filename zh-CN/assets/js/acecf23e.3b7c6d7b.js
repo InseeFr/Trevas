@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunktrevas_documentation=globalThis.webpackChunktrevas_documentation||[]).push([[1903],{1912(a){a.exports=JSON.parse('{"blogBasePath":"/Trevas/zh-CN/blog","blogTitle":"Blog","authorsListPath":"/Trevas/zh-CN/blog/authors"}')}}]);
