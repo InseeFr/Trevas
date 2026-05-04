@@ -35,14 +35,20 @@ class TCKTest {
   }
 
   /**
-   * {@code Test {index}} is expanded by JUnit (visible in Surefire / GitHub Actions). {@code {0}}
-   * is the TCK path via {@link Named}. Some UIs ignore custom names and only show {@code
-   * tckLeaf(...)[n]}.
+   * Surefire XML currently persists the technical method signature for parameterized invocations.
+   * Emit explicit, stable labels in stdout and failure wrappers so GitHub logs stay readable.
    */
-  @ParameterizedTest(name = "Test {index} — {0}")
+  @ParameterizedTest(name = "tckLeaf[{0}]")
   @MethodSource("leafCases")
-  void tckLeaf(String displayPath, Test payload) throws Exception {
-    executor.run(payload, displayPath);
+  void tckLeaf(int testIndex, String displayPath, Test payload) throws Exception {
+    String label = "Test " + testIndex + " — " + displayPath;
+    try {
+      executor.run(payload, displayPath);
+      System.out.println("✅ " + label);
+    } catch (Throwable t) {
+      String details = t.getMessage() == null ? "" : System.lineSeparator() + t.getMessage();
+      throw new AssertionError("❌ " + label + details, t);
+    }
   }
 
   static Stream<Arguments> leafCases() throws Exception {
@@ -57,7 +63,7 @@ class TCKTest {
               i -> {
                 TckLeafCase leaf = leaves.get(i);
                 String path = leaf.displayPath();
-                return Arguments.of(Named.of(path, path), leaf.payload());
+                return Arguments.of(i + 1, Named.of(path, path), leaf.payload());
               });
     }
   }
