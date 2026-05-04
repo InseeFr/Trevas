@@ -35,6 +35,33 @@ public class VtlParserTest {
     Assertions.assertDoesNotThrow(() -> walker.walk(listener, start));
   }
 
+  @Test
+  public void testParseScriptWithTrailingLineCommentAfterNewline() {
+    VtlParser parser = lexeAndParse("a := 1;\n// end of script\n");
+    VtlParser.StartContext start = parser.start();
+    Assertions.assertEquals(0, parser.getNumberOfSyntaxErrors());
+    ParseTreeWalker walker = new ParseTreeWalker();
+    Assertions.assertDoesNotThrow(() -> walker.walk(new FailingListener(), start));
+  }
+
+  @Test
+  public void testParseScriptWithTrailingLineCommentAtEofWithoutNewline() {
+    VtlParser parser = lexeAndParse("a := 1;\n// end of script");
+    VtlParser.StartContext start = parser.start();
+    Assertions.assertEquals(0, parser.getNumberOfSyntaxErrors());
+    ParseTreeWalker walker = new ParseTreeWalker();
+    Assertions.assertDoesNotThrow(() -> walker.walk(new FailingListener(), start));
+  }
+
+  @Test
+  public void testParseScriptWithTrailingBlockComment() {
+    VtlParser parser = lexeAndParse("a := 1; /* trailing */");
+    VtlParser.StartContext start = parser.start();
+    Assertions.assertEquals(0, parser.getNumberOfSyntaxErrors());
+    ParseTreeWalker walker = new ParseTreeWalker();
+    Assertions.assertDoesNotThrow(() -> walker.walk(new FailingListener(), start));
+  }
+
   private VtlParser lexeAndParse(String expression) {
     CodePointCharStream stream = CharStreams.fromString(expression);
     VtlLexer lexer = new VtlLexer(stream);

@@ -1,86 +1,80 @@
 package fr.insee.vtl.coverage;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.insee.vtl.coverage.model.Folder;
 import fr.insee.vtl.coverage.model.Test;
-import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.coverage.tck.TckCaseExecutor;
+import fr.insee.vtl.coverage.tck.TckFolders;
+import fr.insee.vtl.coverage.tck.TckLeafCase;
+import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.script.*;
 import org.apache.spark.sql.SparkSession;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Spark-backed conformance run against the packaged TCK ({@code v2.1.zip}). Orchestration only —
+ * discovery, naming, and assertions live under {@code fr.insee.vtl.coverage.tck}.
+ */
+@DisplayName("TCK v2.1 (Spark)")
 class TCKTest {
 
-  private ScriptEngine engine;
+  private TckCaseExecutor executor;
 
   @BeforeEach
-  public void setUp() {
-    SparkSession spark = SparkSession.builder().appName("test").master("local").getOrCreate();
-
-    ScriptEngineManager mgr = new ScriptEngineManager();
-    engine = mgr.getEngineByExtension("vtl");
-    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
-    engine.put("$vtl.spark.session", spark);
+  void setUp() {
+    SparkSession spark = SparkSession.builder().appName("tck").master("local").getOrCreate();
+    executor = new TckCaseExecutor(TckSparkScriptEngines.createVtlOnSpark(spark));
   }
 
-  @TestFactory
-  Stream<DynamicNode> generateTests() {
-    InputStream in = getClass().getClassLoader().getResourceAsStream("v2.1.zip");
-    // Skip the test factory entirely if file is not present
-    Assumptions.assumeTrue(in != null, "Skipping TCK tests: resource file not found");
-
-    List<Folder> tests = TCK.runTCK(in);
-    Folder root = new Folder();
-    root.setName("root");
-    root.setFolders(tests);
-    return Stream.of(toDynamicNode(root));
+  /**
+   * One argument + {@link Named} so {@code name = "{0}"} resolves to a stable label in Surefire XML
+   * (see {@code coverage/pom.xml} phrased reporters). Stdout uses a two-line layout for CI logs.
+   */
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("leafCases")
+  void tckCase(TckCase c) throws Exception {
+    try {
+      executor.run(c.payload(), c.displayPath());
+      logCaseOutcome(c, true);
+    } catch (Throwable t) {
+      logCaseOutcome(c, false);
+      throw t;
+    }
   }
 
-  private DynamicNode toDynamicNode(Folder folder) {
-    List<DynamicNode> children = new ArrayList<>();
-    if (folder.getFolders() != null) {
-      for (Folder sub : folder.getFolders()) {
-        children.add(toDynamicNode(sub));
-      }
+  private static void logCaseOutcome(TckCase c, boolean success) {
+    System.out.println((success ? "✅" : "❌") + " Test " + c.index());
+    System.out.println("\t" + c.displayPath());
+  }
+
+  static Stream<Arguments> leafCases() throws Exception {
+    InputStream raw = TCKTest.class.getClassLoader().getResourceAsStream("v2.1.zip");
+    Assumptions.assumeTrue(raw != null, "Skipping TCK tests: v2.1.zip not on classpath");
+
+    try (InputStream in = raw) {
+      List<Folder> roots = TCK.runTCK(in);
+      List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
+      return IntStream.range(0, leaves.size())
+          .mapToObj(
+              i -> {
+                TckLeafCase leaf = leaves.get(i);
+                TckCase c = new TckCase(i + 1, leaf.displayPath(), leaf.payload());
+                return Arguments.of(Named.of(c.label(), c));
+              });
     }
+  }
 
-    if (folder.getTest() != null) {
-      children.add(
-          DynamicTest.dynamicTest(
-              folder.getName(),
-              () -> {
-                Test test = folder.getTest();
-                String script = test.getScript();
-                Map<String, Dataset> inputs = test.getInput();
-
-                Bindings bindings = new SimpleBindings();
-                bindings.putAll(inputs);
-
-                engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-                engine.eval(script);
-
-                Map<String, Dataset> outputs = test.getOutputs();
-                outputs.forEach(
-                    (name, tckDataset) -> {
-                      Object trevasValue = engine.getContext().getAttribute(name);
-                      assertThat(trevasValue).isInstanceOf(Dataset.class);
-                      Dataset trevasDataset = (Dataset) trevasValue;
-                      assertThat(trevasDataset.getDataStructure())
-                          .as(script)
-                          .isEqualTo(tckDataset.getDataStructure());
-                      assertThat(trevasDataset.getDataAsMap())
-                          .as(script)
-                          .containsExactlyElementsOf(tckDataset.getDataAsMap());
-                    });
-              }));
+  private record TckCase(int index, String displayPath, Test payload) {
+    String label() {
+      return "Test " + index + " — " + displayPath;
     }
-
-    return DynamicContainer.dynamicContainer(folder.getName(), children.stream());
   }
 }
