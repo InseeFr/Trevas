@@ -1,5 +1,10 @@
 # Trevas documentation
 
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) **18 or newer** (see `engines` in `package.json`). The `.nvmrc` in this folder and GitHub Actions use **Node 24** so local and CI environments stay aligned.
+- With [nvm](https://github.com/nvm-sh/nvm), from `docs/` run `nvm install` (if needed) then `nvm use` to pick up `.nvmrc`.
+
 ## Local Development
 
 ```console
