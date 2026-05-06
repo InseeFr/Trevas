@@ -1,11 +1,11 @@
 package fr.insee.vtl.prov.utils;
 
+import fr.insee.trevas.antlr.shaded.v4.runtime.*;
+import fr.insee.trevas.antlr.shaded.v4.runtime.misc.Interval;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.HashMap;
 import java.util.Map;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.Interval;
 
 public class AntlrUtils {
 

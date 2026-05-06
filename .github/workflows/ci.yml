@@ -72,11 +72,59 @@ jobs:
             }]
       - name: Test
         run: mvn install -pl vtl-parser && mvn test
+
+  spark-integration:
+    name: Spark ${{ matrix.spark-label }}
+    runs-on: ubuntu-latest
+    needs: format
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: vtl-spark
+            spark-label: "3.x (Scala 2.12)"
+            extra-args: ""
+          - module: vtl-spark4
+            spark-label: "4.x (Scala 2.13)"
+            extra-args: ""
+          - module: vtl-prov
+            spark-label: "vtl-prov + Spark 4 (tests)"
+            extra-args: "-Pspark4-tests"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - uses: s4u/maven-settings-action@v3.0.0
+        with:
+          githubServer: false
+          servers: |
+            [{
+                "id": "Github",
+                "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
+                "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
+            }]
+      # Install shaded vtl-parser first, then exclude it from the reactor so dependent
+      # modules resolve the installed jar (JPMS fr.insee.vtl.parser.shaded), not target/classes.
+      - name: Test ${{ matrix.module }} (and upstream modules)
+        run: mvn install -pl vtl-parser -DskipTests && mvn -B test -pl ${{ matrix.module }} -am --projects '!vtl-parser' ${{ matrix.extra-args }}
+
   package:
     name: Package Trevas modules
     # Filter thanks to test job
     runs-on: ubuntu-latest
-    needs: test
+    needs: [ test, spark-integration ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,7 +182,7 @@ jobs:
     name: Publish Trevas modules on Maven
     if: startsWith(github.event.ref, 'refs/tags/v')
     # Temp update because of sonar token issue
-    needs: test
+    needs: [ test, spark-integration ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -76,6 +76,11 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Published Spark integrations: bump here only (CI spark-matrix exercises both). -->
+        <spark3.version>3.5.8</spark3.version>
+        <spark3.scala.binary>2.12</spark3.scala.binary>
+        <spark4.version>4.0.0</spark4.version>
+        <spark4.scala.binary>2.13</spark4.scala.binary>
     </properties>
 
     <dependencies>
@@ -105,6 +110,16 @@
                 <version>5.14.2</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_2.12</artifactId>
+                <version>${spark3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_2.13</artifactId>
+                <version>${spark4.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -28,6 +28,7 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -53,16 +54,35 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>early-jar</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>pre-shade</classifier>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>shade-antlr</id>
-                        <phase>package</phase>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
 
                             <!-- Do NOT generate dependency-reduced POM -->
                             <createDependencyReducedPom>false</createDependencyReducedPom>
@@ -78,18 +98,34 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.antlr.v4</pattern>
-                                    <shadedPattern>fr.insee.trevas.antlr.shaded.v4</shadedPattern>
+                                    <shadedPattern>fr.insee.vtl.parser.antlr4</shadedPattern>
                                 </relocation>
                             </relocations>
 
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Automatic-Module-Name>fr.insee.vtl.parser.shaded</Automatic-Module-Name>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- After shade, the main jar contains relocated ANTLR; reactor classpath uses
+                 target/classes (not the jar), so merge the shaded artifact back into classes
+                 so downstream modules (vtl-engine tests, etc.) see fr.insee.trevas.antlr.shaded.* -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>merge-shaded-jar-into-classes</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <unzip src="${project.build.directory}/${project.build.finalName}.jar"
+                                       dest="${project.build.outputDirectory}"
+                                       overwrite="true"/>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

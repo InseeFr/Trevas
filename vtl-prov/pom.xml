@@ -20,6 +20,8 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
+        <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
     </properties>
 
     <dependencies>
@@ -64,7 +66,25 @@
             <type>pom</type>
         </dependency>
 
+        <!-- Spark is not a compile dependency: applications add either vtl-spark or vtl-spark4.
+             Tests pick one module via trevas.spark.integration.test.module (profile spark4-tests). -->
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>${trevas.spark.integration.test.module}</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>spark4-tests</id>
+            <properties>
+                <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
