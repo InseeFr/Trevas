@@ -2,12 +2,12 @@ package fr.insee.vtl.engine.utils;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTree;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;

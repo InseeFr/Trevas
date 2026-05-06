@@ -3,7 +3,6 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.RuleContext;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -14,6 +13,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.RuleContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

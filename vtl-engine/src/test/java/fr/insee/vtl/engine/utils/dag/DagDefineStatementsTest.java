@@ -2,16 +2,16 @@ package fr.insee.vtl.engine.utils.dag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.CharStreams;
-import fr.insee.trevas.antlr.shaded.v4.runtime.CodePointCharStream;
-import fr.insee.trevas.antlr.shaded.v4.runtime.CommonTokenStream;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.RuleNode;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlSyntaxPreprocessor;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.CharStreams;
+import fr.insee.vtl.parser.antlr4.runtime.CodePointCharStream;
+import fr.insee.vtl.parser.antlr4.runtime.CommonTokenStream;
+import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTree;
+import fr.insee.vtl.parser.antlr4.runtime.tree.RuleNode;
+import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.script.ScriptException;

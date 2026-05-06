@@ -1,12 +1,12 @@
 package fr.insee.vtl.engine.visitors;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.RuleContext;
-import fr.insee.trevas.antlr.shaded.v4.runtime.Token;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.RuleNode;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.RuleContext;
+import fr.insee.vtl.parser.antlr4.runtime.Token;
+import fr.insee.vtl.parser.antlr4.runtime.tree.RuleNode;
+import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

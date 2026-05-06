@@ -2,8 +2,6 @@ package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.Token;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Analytics;
@@ -12,6 +10,8 @@ import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.Token;
+import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTree;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
