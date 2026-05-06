@@ -53,13 +53,33 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- Build the unshaded jar early (process-classes) so shade can transform it
+                     before tests run. Skip the default jar execution that would otherwise
+                     overwrite the shaded jar at the package phase. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>pre-shade-jar</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>shade-antlr</id>
-                        <phase>package</phase>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
@@ -93,7 +113,7 @@
                 <executions>
                     <execution>
                         <id>add-shaded-module-info</id>
-                        <phase>package</phase>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>add-module-info</goal>
                         </goals>
