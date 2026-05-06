@@ -6,18 +6,22 @@ import java.util.Objects;
 
 /**
  * Row-by-row comparison for TCK outputs: same length, same key sets per row, values equal modulo
- * numeric tolerance (IEEE-754 / Spark vs CSV literals).
+ * numeric tolerance (IEEE-754 noise + TCK reference values rounded in CSV to a few significant
+ * digits).
  */
 public final class TckDatasetComparison {
 
   /**
-   * Absolute tolerance for floating-point noise (e.g. {@code -22.8} vs {@code
+   * Absolute tolerance for small magnitudes and pure rounding noise (e.g. {@code -22.8} vs {@code
    * -22.799999999999997}).
    */
-  private static final double ABS_EPS = 1e-9;
+  private static final double ABS_EPS = 1e-7;
 
-  /** Relative tolerance scaled by magnitude (stable on larger measures). */
-  private static final double REL_EPS = 1e-12;
+  /**
+   * Relative tolerance: TCK expected numbers are often rounded (e.g. {@code 148.413} vs full {@code
+   * exp(5)}), so {@code 1e-12} was far too strict for conformance against packaged reference data.
+   */
+  private static final double REL_EPS = 1e-5;
 
   private TckDatasetComparison() {}
 

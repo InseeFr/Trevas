@@ -61,6 +61,12 @@ jobs:
         continue-on-error: true
         run: mvn clean test --batch-mode
 
+      # dorny/test-reporter titles come from Surefire <testcase name="…">; rewrite TCK names so
+      # passed tests show "Test N" + newline + tab + path (see coverage/scripts/prettify_tck_surefire_xml.py).
+      - name: Prettify TCK Surefire XML for GitHub
+        if: always()
+        run: python3 coverage/scripts/prettify_tck_surefire_xml.py
+
       - name: Publish JUnit test results
         uses: dorny/test-reporter@v2
         if: always()

@@ -393,9 +393,10 @@ ML_COMMENT
   :
   ('/*' (.)*? '*/')-> channel(2);
 
+/* Line comment: do not require a trailing newline (valid at end of file). */
 SL_COMMENT
   :
-  ('//' (.)*? '\n') ->channel(2);
+  '//' ~[\r\n]* ->channel(2);
 
 /*
 
