@@ -22,6 +22,7 @@
         </sonar.coverage.jacoco.xmlReportPaths>
         <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
         <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -43,11 +44,6 @@
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-spark</artifactId>
-            <version>2.4.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
             <version>2.4.0-SNAPSHOT</version>
         </dependency>
@@ -64,6 +60,21 @@
             <artifactId>apache-jena-libs</artifactId>
             <version>3.17.0</version>
             <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Spark is not a compile dependency: applications add either vtl-spark or vtl-spark4.
@@ -82,6 +93,7 @@
             <id>spark4-tests</id>
             <properties>
                 <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
+                <jackson.version>2.18.2</jackson.version>
             </properties>
         </profile>
     </profiles>

@@ -1,8 +1,8 @@
 package fr.insee.vtl.prov;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.ParserRuleContext;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.ParserRuleContext;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;

@@ -2,12 +2,12 @@ package fr.insee.vtl.prov;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import fr.insee.trevas.antlr.shaded.v4.runtime.CharStreams;
-import fr.insee.trevas.antlr.shaded.v4.runtime.CodePointCharStream;
-import fr.insee.trevas.antlr.shaded.v4.runtime.CommonTokenStream;
-import fr.insee.trevas.antlr.shaded.v4.runtime.tree.ParseTreeWalker;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.parser.antlr4.runtime.CharStreams;
+import fr.insee.vtl.parser.antlr4.runtime.CodePointCharStream;
+import fr.insee.vtl.parser.antlr4.runtime.CommonTokenStream;
+import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTreeWalker;
 import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;

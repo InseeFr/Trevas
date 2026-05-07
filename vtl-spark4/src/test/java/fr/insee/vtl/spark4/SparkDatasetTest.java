@@ -30,7 +30,14 @@ public class SparkDatasetTest {
 
   @BeforeEach
   public void setUp() {
-    spark = SparkSession.builder().appName("test").master("local").getOrCreate();
+    spark =
+        SparkSession.builder()
+            .appName("test")
+            .master("local")
+            .config("spark.driver.bindAddress", "127.0.0.1")
+            .config("spark.driver.host", "127.0.0.1")
+            .config("spark.ui.enabled", "false")
+            .getOrCreate();
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
