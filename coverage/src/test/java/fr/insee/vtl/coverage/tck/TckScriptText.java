@@ -48,8 +48,7 @@ public final class TckScriptText {
   }
 
   private static String decodeXmlEntities(String text) {
-    return text
-        .replace("&quot;", "\"")
+    return text.replace("&quot;", "\"")
         .replace("&#34;", "\"")
         .replace("&apos;", "'")
         .replace("&#39;", "'")

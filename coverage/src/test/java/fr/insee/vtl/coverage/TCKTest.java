@@ -76,7 +76,7 @@ class TCKTest {
 
   private record TckCase(int index, String displayPath, Test payload) {
     String label() {
-      return "Test " + index + " — VTL script: " + scriptSummary();
+      return "Test " + index + " — " + displayPath;
     }
 
     String scriptSummary() {

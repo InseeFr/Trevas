@@ -74,4 +74,39 @@ jobs:
           name: JUnit Test Report
           path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
+          list-tests: failed
+          max-annotations: 50
           fail-on-error: 'false'
+
+      - name: Add failed test details to job summary
+        if: always()
+        run: |
+          REPORT_DIR="coverage/target/surefire-reports"
+          if [ ! -d "$REPORT_DIR" ]; then
+            exit 0
+          fi
+          {
+            echo "## Failed test details (Surefire .txt)"
+            shopt -s nullglob
+            files=("$REPORT_DIR"/*.txt)
+            if [ ${#files[@]} -eq 0 ]; then
+              echo ""
+              echo "_No surefire text reports found._"
+              exit 0
+            fi
+            found=0
+            for f in "${files[@]}"; do
+              if rg -q "<<< FAILURE!|ERROR!|Failures:|Errors:" "$f"; then
+                found=1
+                echo ""
+                echo "### $(basename "$f")"
+                echo '```'
+                sed -n '1,220p' "$f"
+                echo '```'
+              fi
+            done
+            if [ "$found" -eq 0 ]; then
+              echo ""
+              echo "_No failed tests detected in surefire .txt files._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
