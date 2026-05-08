@@ -18,10 +18,10 @@ def main() -> None:
     cases: list[tuple[str, str]] = []
     with zipfile.ZipFile(TCK_ZIP_PATH) as zf:
         for name in sorted(zf.namelist()):
-            if not name.endswith("/transformation.vtl"):
+            if not name.endswith("transformation.vtl"):
                 continue
             script = zf.read(name).decode("utf-8", errors="replace").replace("\r", "")
-            display_path = name[: -len("/transformation.vtl")]
+            display_path = name[: -len("transformation.vtl")].rstrip("/")
             cases.append((display_path, script))
 
     with open(FULL_REPORT_PATH, "w", encoding="utf-8") as full_out:
