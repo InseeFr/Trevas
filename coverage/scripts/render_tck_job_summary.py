@@ -7,16 +7,36 @@ from pathlib import Path
 
 FULL_REPORT_PATH = Path("coverage/target/tck-scripts-report.md")
 MAX_SUMMARY_CHARS = 120000
-TCK_ZIP_PATH = Path("coverage/src/main/resources/v2.1.zip")
+TCK_ZIP_CANDIDATES = [
+    Path("coverage/src/main/resources/v2.1.zip"),
+    Path("vtl/tck/v2.1.zip"),
+    Path("coverage/target/classes/v2.1.zip"),
+]
+
+
+def resolve_tck_zip() -> Path | None:
+    for path in TCK_ZIP_CANDIDATES:
+        if path.exists():
+            return path
+    return None
 
 def main() -> None:
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not TCK_ZIP_PATH.exists():
-        return
+    zip_path = resolve_tck_zip()
 
     FULL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if zip_path is None:
+        FULL_REPORT_PATH.write_text(
+            "# TCK scripts output (full)\n\n"
+            "_Unable to locate `v2.1.zip` in expected paths:_\n\n"
+            + "\n".join(f"- `{p}`" for p in TCK_ZIP_CANDIDATES)
+            + "\n",
+            encoding="utf-8",
+        )
+        return
+
     cases: list[tuple[str, str]] = []
-    with zipfile.ZipFile(TCK_ZIP_PATH) as zf:
+    with zipfile.ZipFile(zip_path) as zf:
         for name in sorted(zf.namelist()):
             if not name.endswith("transformation.vtl"):
                 continue
@@ -26,6 +46,7 @@ def main() -> None:
 
     with open(FULL_REPORT_PATH, "w", encoding="utf-8") as full_out:
         full_out.write("# TCK scripts output (full)\n\n")
+        full_out.write(f"Source zip: `{zip_path}`\n\n")
         full_out.write(f"Total cases: {len(cases)}\n\n")
         for i, (display_path, script) in enumerate(cases, start=1):
             full_out.write(f"## Test {i}\n\n")

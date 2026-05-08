@@ -33,6 +33,9 @@ jobs:
           mkdir -p coverage/src/main/resources
           mv vtl/tck/v2.1.zip coverage/src/main/resources/
 
+      - name: Generate full TCK script report from zip
+        run: python3 coverage/scripts/render_tck_job_summary.py
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
