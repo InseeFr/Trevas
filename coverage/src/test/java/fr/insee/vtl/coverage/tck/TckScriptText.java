@@ -18,16 +18,18 @@ public final class TckScriptText {
   public static void appendFull(StringBuilder sb, String script, int maxChars) {
     sb.append("VTL script: ").append(summary(script, 120)).append(System.lineSeparator());
     sb.append("--- transformation.vtl ---").append(System.lineSeparator());
-    String normalized = normalizeScript(script);
-    if (normalized == null) {
+    String full = full(script);
+    if (full == null) {
       sb.append("(null)");
       return;
     }
     String truncated =
-        normalized.length() > maxChars
-            ? normalized.substring(0, maxChars) + "\n… (truncated)"
-            : normalized;
+        full.length() > maxChars ? full.substring(0, maxChars) + "\n… (truncated)" : full;
     sb.append(truncated);
+  }
+
+  public static String full(String script) {
+    return normalizeScript(script);
   }
 
   private static String normalizeScript(String script) {

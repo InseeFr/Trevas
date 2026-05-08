@@ -53,8 +53,10 @@ class TCKTest {
 
   private static void logCaseOutcome(TckCase c, boolean success) {
     System.out.println((success ? "✅" : "❌") + " Test " + c.index());
-    System.out.println("\tVTL script: " + c.scriptSummary());
     System.out.println("\t" + c.displayPath());
+    System.out.println(">>>VTL_SCRIPT_START<<<");
+    System.out.println(TckScriptText.full(c.payload().getScript()));
+    System.out.println(">>>VTL_SCRIPT_END<<<");
   }
 
   static Stream<Arguments> leafCases() throws Exception {
