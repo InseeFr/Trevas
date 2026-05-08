@@ -29,6 +29,9 @@
             <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
             <scope>compile</scope>
+            <!-- Runtime is shaded/relocated into this module artifact;
+                 do not leak the original ANTLR runtime transitively. -->
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -58,6 +61,7 @@
                      overwrite the shaded jar at the package phase. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
                 <executions>
                     <execution>
                         <id>default-jar</id>

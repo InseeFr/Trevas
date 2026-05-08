@@ -26,7 +26,7 @@ public class ProvenanceListenerTest {
 
   @BeforeEach
   public void setUp() {
-    SparkSession spark = SparkSession.builder().appName("test").master("local").getOrCreate();
+    SparkSession spark = TestSparkSessionFactory.create();
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");

@@ -61,7 +61,7 @@ public class RDFTest {
     RDFUtils.loadModelWithCredentials(
         model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
 
-    spark = SparkSession.builder().appName("test").master("local").getOrCreate();
+    spark = TestSparkSessionFactory.create();
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");

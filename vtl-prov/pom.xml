@@ -108,6 +108,10 @@
                 <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                    <environmentVariables>
+                        <SPARK_USER>test</SPARK_USER>
+                        <HADOOP_USER_NAME>test</HADOOP_USER_NAME>
+                    </environmentVariables>
                     <systemPropertyVariables>
                         <trevas.spark.processing.engine>${trevas.spark.processing.engine}</trevas.spark.processing.engine>
                     </systemPropertyVariables>
