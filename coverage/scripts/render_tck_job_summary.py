@@ -5,6 +5,9 @@ import os
 import re
 from pathlib import Path
 
+FULL_REPORT_PATH = Path("coverage/target/tck-scripts-report.md")
+MAX_SUMMARY_CASES = 40
+
 
 def extract_cases(text: str) -> list[dict[str, str]]:
     lines = text.splitlines()
@@ -44,18 +47,41 @@ def extract_cases(text: str) -> list[dict[str, str]]:
 def main() -> None:
     report = Path("coverage/target/surefire-reports/fr.insee.vtl.coverage.TCKTest.txt")
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not summary_path or not report.exists():
+    if not report.exists():
         return
 
     text = report.read_text(encoding="utf-8", errors="replace")
     cases = extract_cases(text)
+    FULL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(FULL_REPORT_PATH, "w", encoding="utf-8") as full_out:
+        full_out.write("# TCK scripts output (full)\n\n")
+        if not cases:
+            full_out.write("_No TCK test case lines found in surefire report._\n")
+        else:
+            full_out.write(f"Parsed {len(cases)} case(s) from surefire report.\n\n")
+            for c in cases:
+                icon = "✅" if c["status"] == "PASS" else "❌"
+                full_out.write(f"## {icon} Test {c['index']}\n\n")
+                if c["path"]:
+                    full_out.write(f"`{c['path']}`\n\n")
+                full_out.write("```vtl\n")
+                full_out.write((c["script"] or "(empty)").replace("\r", ""))
+                full_out.write("\n```\n\n")
+
+    if not summary_path:
+        return
+
     with open(summary_path, "a", encoding="utf-8") as out:
-        out.write("## TCK scripts output\n\n")
+        out.write("## TCK scripts output (preview)\n\n")
         if not cases:
             out.write("_No TCK test case lines found in surefire report._\n")
             return
-        out.write(f"Parsed {len(cases)} case(s) from surefire report.\n\n")
-        for c in cases:
+        out.write(
+            f"Parsed {len(cases)} case(s). Showing first {min(len(cases), MAX_SUMMARY_CASES)} "
+            "in summary; full report is exported as artifact `tck-scripts-report`.\n\n"
+        )
+        for c in cases[:MAX_SUMMARY_CASES]:
             icon = "✅" if c["status"] == "PASS" else "❌"
             out.write(f"### {icon} Test {c['index']}\n\n")
             if c["path"]:
