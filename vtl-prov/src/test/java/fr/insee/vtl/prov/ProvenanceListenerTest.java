@@ -30,7 +30,7 @@ public class ProvenanceListenerTest {
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
-    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, TestSparkEngineConfig.getEngineName());
     engine.put("$vtl.spark.session", spark);
   }
 

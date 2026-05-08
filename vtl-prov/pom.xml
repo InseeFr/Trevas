@@ -22,6 +22,7 @@
         </sonar.coverage.jacoco.xmlReportPaths>
         <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
         <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
+        <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
         <jackson.version>2.15.2</jackson.version>
     </properties>
 
@@ -93,6 +94,7 @@
             <id>spark4-tests</id>
             <properties>
                 <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
+                <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
                 <jackson.version>2.18.2</jackson.version>
             </properties>
         </profile>
@@ -106,6 +108,9 @@
                 <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                    <systemPropertyVariables>
+                        <trevas.spark.processing.engine>${trevas.spark.processing.engine}</trevas.spark.processing.engine>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
