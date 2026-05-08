@@ -34,12 +34,30 @@ public final class TckScriptText {
     if (script == null) {
       return null;
     }
-    // TCK payload may contain XML/HTML entities (e.g. &quot;) in script text.
-    return script
+    // TCK payload may contain XML/HTML entities, sometimes double-escaped
+    // (e.g. &amp;quot;), so decode repeatedly until stable.
+    String decoded = script;
+    for (int i = 0; i < 4; i++) {
+      String next = decodeXmlEntities(decoded);
+      if (next.equals(decoded)) {
+        break;
+      }
+      decoded = next;
+    }
+    return decoded;
+  }
+
+  private static String decodeXmlEntities(String text) {
+    return text
         .replace("&quot;", "\"")
+        .replace("&#34;", "\"")
         .replace("&apos;", "'")
+        .replace("&#39;", "'")
         .replace("&lt;", "<")
+        .replace("&#60;", "<")
         .replace("&gt;", ">")
-        .replace("&amp;", "&");
+        .replace("&#62;", ">")
+        .replace("&amp;", "&")
+        .replace("&#38;", "&");
   }
 }
