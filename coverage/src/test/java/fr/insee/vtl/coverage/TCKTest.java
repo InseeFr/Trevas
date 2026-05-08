@@ -7,12 +7,17 @@ import fr.insee.vtl.coverage.tck.TckFolders;
 import fr.insee.vtl.coverage.tck.TckLeafCase;
 import fr.insee.vtl.coverage.tck.TckScriptText;
 import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
@@ -27,7 +32,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 @DisplayName("TCK v2.1 (Spark)")
 class TCKTest {
 
+  private static final Path TCK_REPORT_PATH = Path.of("target", "tck-scripts-report.md");
   private TckCaseExecutor executor;
+
+  @BeforeAll
+  static void initReport() throws IOException {
+    Files.createDirectories(TCK_REPORT_PATH.getParent());
+    Files.writeString(
+        TCK_REPORT_PATH,
+        "# TCK scripts output (full)\n\n",
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING);
+  }
 
   @BeforeEach
   void setUp() {
@@ -57,6 +73,23 @@ class TCKTest {
     System.out.println(">>>VTL_SCRIPT_START<<<");
     System.out.println(TckScriptText.full(c.payload().getScript()));
     System.out.println(">>>VTL_SCRIPT_END<<<");
+    appendCaseToMarkdownReport(c, success);
+  }
+
+  private static synchronized void appendCaseToMarkdownReport(TckCase c, boolean success) {
+    try {
+      String icon = success ? "✅" : "❌";
+      StringBuilder entry = new StringBuilder();
+      entry.append("## ").append(icon).append(" Test ").append(c.index()).append('\n').append('\n');
+      entry.append('`').append(c.displayPath()).append('`').append('\n').append('\n');
+      entry.append("```vtl").append('\n');
+      entry.append(TckScriptText.full(c.payload().getScript()));
+      entry.append('\n').append("```").append('\n').append('\n');
+      Files.writeString(
+          TCK_REPORT_PATH, entry.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to write TCK markdown report", e);
+    }
   }
 
   static Stream<Arguments> leafCases() throws Exception {
