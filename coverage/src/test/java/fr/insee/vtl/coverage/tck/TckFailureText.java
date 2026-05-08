@@ -45,16 +45,7 @@ public final class TckFailureText {
   }
 
   private static void appendScript(StringBuilder sb, String script) {
-    sb.append("--- transformation.vtl ---").append(System.lineSeparator());
-    if (script == null) {
-      sb.append("(null)");
-      return;
-    }
-    String s =
-        script.length() > MAX_SCRIPT_CHARS
-            ? script.substring(0, MAX_SCRIPT_CHARS) + "\n… (truncated)"
-            : script;
-    sb.append(s);
+    TckScriptText.appendFull(sb, script, MAX_SCRIPT_CHARS);
   }
 
   private static void appendInputs(StringBuilder sb, Map<String, Dataset> inputs) {

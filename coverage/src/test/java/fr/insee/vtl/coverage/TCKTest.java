@@ -5,6 +5,7 @@ import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.coverage.tck.TckCaseExecutor;
 import fr.insee.vtl.coverage.tck.TckFolders;
 import fr.insee.vtl.coverage.tck.TckLeafCase;
+import fr.insee.vtl.coverage.tck.TckScriptText;
 import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
 import java.io.InputStream;
 import java.util.List;
@@ -52,6 +53,7 @@ class TCKTest {
 
   private static void logCaseOutcome(TckCase c, boolean success) {
     System.out.println((success ? "✅" : "❌") + " Test " + c.index());
+    System.out.println("\tVTL script: " + c.scriptSummary());
     System.out.println("\t" + c.displayPath());
   }
 
@@ -74,7 +76,11 @@ class TCKTest {
 
   private record TckCase(int index, String displayPath, Test payload) {
     String label() {
-      return "Test " + index + " — " + displayPath;
+      return "Test " + index + " — VTL script: " + scriptSummary();
+    }
+
+    String scriptSummary() {
+      return TckScriptText.summary(payload.getScript(), 120);
     }
   }
 }
