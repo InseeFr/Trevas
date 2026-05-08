@@ -38,11 +38,7 @@ class TCKTest {
   @BeforeAll
   static void initReport() throws IOException {
     Files.createDirectories(TCK_REPORT_PATH.getParent());
-    Files.writeString(
-        TCK_REPORT_PATH,
-        "# TCK scripts output (full)\n\n",
-        StandardOpenOption.CREATE,
-        StandardOpenOption.TRUNCATE_EXISTING);
+    writeCompleteReportFromTckZip();
   }
 
   @BeforeEach
@@ -73,22 +69,36 @@ class TCKTest {
     System.out.println(">>>VTL_SCRIPT_START<<<");
     System.out.println(TckScriptText.full(c.payload().getScript()));
     System.out.println(">>>VTL_SCRIPT_END<<<");
-    appendCaseToMarkdownReport(c, success);
   }
 
-  private static synchronized void appendCaseToMarkdownReport(TckCase c, boolean success) {
-    try {
-      String icon = success ? "✅" : "❌";
-      StringBuilder entry = new StringBuilder();
-      entry.append("## ").append(icon).append(" Test ").append(c.index()).append('\n').append('\n');
-      entry.append('`').append(c.displayPath()).append('`').append('\n').append('\n');
-      entry.append("```vtl").append('\n');
-      entry.append(TckScriptText.full(c.payload().getScript()));
-      entry.append('\n').append("```").append('\n').append('\n');
+  private static void writeCompleteReportFromTckZip() throws IOException {
+    InputStream raw = TCKTest.class.getClassLoader().getResourceAsStream("v2.1.zip");
+    if (raw == null) {
       Files.writeString(
-          TCK_REPORT_PATH, entry.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to write TCK markdown report", e);
+          TCK_REPORT_PATH,
+          "# TCK scripts output (full)\n\n_v2.1.zip not found on classpath._\n",
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING);
+      return;
+    }
+    try (InputStream in = raw) {
+      List<Folder> roots = TCK.runTCK(in);
+      List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
+      StringBuilder report = new StringBuilder("# TCK scripts output (full)\n\n");
+      report.append("Total cases: ").append(leaves.size()).append("\n\n");
+      for (int i = 0; i < leaves.size(); i++) {
+        TckLeafCase leaf = leaves.get(i);
+        report.append("## Test ").append(i + 1).append("\n\n");
+        report.append('`').append(leaf.displayPath()).append('`').append("\n\n");
+        report.append("```vtl\n");
+        report.append(TckScriptText.full(leaf.payload().getScript()));
+        report.append("\n```\n\n");
+      }
+      Files.writeString(
+          TCK_REPORT_PATH,
+          report.toString(),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.TRUNCATE_EXISTING);
     }
   }
 
