@@ -7,17 +7,12 @@ import fr.insee.vtl.coverage.tck.TckFolders;
 import fr.insee.vtl.coverage.tck.TckLeafCase;
 import fr.insee.vtl.coverage.tck.TckScriptText;
 import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
@@ -32,14 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @DisplayName("TCK v2.1 (Spark)")
 class TCKTest {
 
-  private static final Path TCK_REPORT_PATH = Path.of("target", "tck-scripts-report.md");
   private TckCaseExecutor executor;
-
-  @BeforeAll
-  static void initReport() throws IOException {
-    Files.createDirectories(TCK_REPORT_PATH.getParent());
-    writeCompleteReportFromTckZip();
-  }
 
   @BeforeEach
   void setUp() {
@@ -65,41 +53,8 @@ class TCKTest {
 
   private static void logCaseOutcome(TckCase c, boolean success) {
     System.out.println((success ? "✅" : "❌") + " Test " + c.index());
+    System.out.println("\tVTL script: " + c.scriptSummary());
     System.out.println("\t" + c.displayPath());
-    System.out.println(">>>VTL_SCRIPT_START<<<");
-    System.out.println(TckScriptText.full(c.payload().getScript()));
-    System.out.println(">>>VTL_SCRIPT_END<<<");
-  }
-
-  private static void writeCompleteReportFromTckZip() throws IOException {
-    InputStream raw = TCKTest.class.getClassLoader().getResourceAsStream("v2.1.zip");
-    if (raw == null) {
-      Files.writeString(
-          TCK_REPORT_PATH,
-          "# TCK scripts output (full)\n\n_v2.1.zip not found on classpath._\n",
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
-      return;
-    }
-    try (InputStream in = raw) {
-      List<Folder> roots = TCK.runTCK(in);
-      List<TckLeafCase> leaves = TckFolders.collectLeaves(roots);
-      StringBuilder report = new StringBuilder("# TCK scripts output (full)\n\n");
-      report.append("Total cases: ").append(leaves.size()).append("\n\n");
-      for (int i = 0; i < leaves.size(); i++) {
-        TckLeafCase leaf = leaves.get(i);
-        report.append("## Test ").append(i + 1).append("\n\n");
-        report.append('`').append(leaf.displayPath()).append('`').append("\n\n");
-        report.append("```vtl\n");
-        report.append(TckScriptText.full(leaf.payload().getScript()));
-        report.append("\n```\n\n");
-      }
-      Files.writeString(
-          TCK_REPORT_PATH,
-          report.toString(),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
-    }
   }
 
   static Stream<Arguments> leafCases() throws Exception {
