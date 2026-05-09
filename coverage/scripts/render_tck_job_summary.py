@@ -67,7 +67,7 @@ def main() -> None:
     FULL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     if zip_path is None:
         FULL_REPORT_PATH.write_text(
-            "# TCK scripts output (full)\n\n"
+            "# TCK scripts output\n\n"
             "_Unable to locate `v2.1.zip` in expected paths:_\n\n"
             + "\n".join(f"- `{p}`" for p in TCK_ZIP_CANDIDATES)
             + "\n",
@@ -87,7 +87,7 @@ def main() -> None:
     execution = read_execution_results()
 
     with open(FULL_REPORT_PATH, "w", encoding="utf-8") as full_out:
-        full_out.write("# TCK scripts output (full)\n\n")
+        full_out.write("# TCK scripts output\n\n")
         full_out.write(f"Source zip: `{zip_path}`\n\n")
         full_out.write(f"Total cases: {len(cases)}\n\n")
         for i, (display_path, script) in enumerate(cases, start=1):
@@ -115,12 +115,12 @@ def main() -> None:
     truncated = len(full_markdown) > MAX_SUMMARY_CHARS
 
     with open(summary_path, "a", encoding="utf-8") as out:
-        out.write("## TCK scripts output (preview)\n\n")
-        out.write("Full report is exported as artifact `tck-scripts-report`.\n\n")
+        out.write("## TCK scripts output\n\n")
+        out.write("Report is exported as artifact `tck-scripts-report`.\n\n")
         out.write(preview)
         if truncated:
             out.write(
-                "\n\n_... Preview truncated in job summary due to GitHub size limits. "
+                "\n\n_... Output truncated in job summary due to GitHub size limits. "
                 "Download artifact `tck-scripts-report` for the full content._\n"
             )
 
