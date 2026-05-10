@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+Build a single markdown report: for each TCK case in JUnit execution order, path + script (from zip)
+then pass/fail line(s) from Surefire XML.
+
+Zip entry paths use '/'; display paths in tests use ' » ' (see TckPaths.SEGMENT_SEP).
+"""
 from __future__ import annotations
 
 import os
@@ -8,13 +14,15 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 FULL_REPORT_PATH = Path("coverage/target/tck-scripts-report.md")
-MAX_SUMMARY_CHARS = 120000
 TCK_ZIP_CANDIDATES = [
     Path("coverage/src/main/resources/v2.1.zip"),
     Path("vtl/tck/v2.1.zip"),
     Path("coverage/target/classes/v2.1.zip"),
 ]
 SUREFIRE_XML_PATH = Path("coverage/target/surefire-reports/TEST-fr.insee.vtl.coverage.TCKTest.xml")
+
+# Matches Java TckPaths.SEGMENT_SEP = " \u00bb "
+_DISPLAY_SEP = " \u00bb "
 
 
 def resolve_tck_zip() -> Path | None:
@@ -24,40 +32,104 @@ def resolve_tck_zip() -> Path | None:
     return None
 
 
-def parse_test_index(testcase_name: str) -> int | None:
-    m = re.search(r"\[(\d+)\]\s*$", testcase_name)
+def decode_xml_entities(text: str) -> str:
+    out = text
+    for _ in range(4):
+        nxt = (
+            out.replace("&quot;", '"')
+            .replace("&#34;", '"')
+            .replace("&apos;", "'")
+            .replace("&#39;", "'")
+            .replace("&lt;", "<")
+            .replace("&#60;", "<")
+            .replace("&gt;", ">")
+            .replace("&#62;", ">")
+            .replace("&amp;", "&")
+            .replace("&#38;", "&")
+            .replace("&#10;", "\n")
+            .replace("&#13;", "\r")
+            .replace("&#9;", "\t")
+        )
+        if nxt == out:
+            break
+        out = nxt
+    return out
+
+
+def split_testcase_name(name_attr: str) -> tuple[int, str] | None:
+    """Extract (index, display_path) from Surefire testcase name (before or after prettify)."""
+    s = decode_xml_entities(name_attr).strip()
+    # Prettified: "Test 1\n\tConditional operators » ..."
+    if "\n" in s:
+        lines = [ln.strip() for ln in s.split("\n") if ln.strip()]
+        if len(lines) >= 2:
+            m0 = re.match(r"^Test\s+(\d+)\s*$", lines[0])
+            if m0:
+                path_line = lines[1].lstrip("\t").strip()
+                return int(m0.group(1)), path_line
+    # Original phrased: ... Test 1 — path
+    m = re.search(r"Test\s+(\d+)\s+—\s+(.+)$", s)
     if m:
-        return int(m.group(1))
-    m = re.search(r"\bTest\s+(\d+)\b", testcase_name)
-    if m:
-        return int(m.group(1))
+        return int(m.group(1)), m.group(2).strip()
     return None
 
 
-def read_execution_results() -> dict[int, dict[str, str]]:
-    if not SUREFIRE_XML_PATH.exists():
-        return {}
-    tree = ET.parse(SUREFIRE_XML_PATH)
+def display_path_to_zip_key(display_path: str) -> str:
+    return display_path.replace(_DISPLAY_SEP, "/")
+
+
+def load_scripts_from_zip(zip_path: Path) -> dict[str, str]:
+    scripts: dict[str, str] = {}
+    with zipfile.ZipFile(zip_path) as zf:
+        for name in zf.namelist():
+            if not name.endswith("transformation.vtl"):
+                continue
+            key = name[: -len("transformation.vtl")].rstrip("/")
+            body = zf.read(name).decode("utf-8", errors="replace").replace("\r", "")
+            scripts[key] = body
+    return scripts
+
+
+def parse_ordered_results(xml_path: Path) -> list[dict[str, str]]:
+    """Surefire testcase document order matches parameterized test order."""
+    if not xml_path.exists():
+        return []
+    tree = ET.parse(xml_path)
     root = tree.getroot()
-    results: dict[int, dict[str, str]] = {}
+    out: list[dict[str, str]] = []
     for tc in root.findall(".//testcase"):
         name = tc.attrib.get("name", "")
-        idx = parse_test_index(name)
-        if idx is None:
+        parsed = split_testcase_name(name)
+        if parsed is None:
             continue
+        idx, display_path = parsed
         failure = tc.find("failure")
         error = tc.find("error")
         if failure is not None or error is not None:
             node = error if error is not None else failure
-            message = (node.attrib.get("message", "") if node is not None else "").strip()
-            results[idx] = {
-                "status": "FAIL",
-                "label": name,
-                "error": message or "Unknown failure",
-            }
+            msg = (node.attrib.get("message", "") if node is not None else "").strip()
+            body = (node.text or "").strip() if node is not None else ""
+            detail = msg
+            if body and msg not in body:
+                detail = f"{msg}\n{body}" if msg else body
+            out.append(
+                {
+                    "index": idx,
+                    "display_path": display_path,
+                    "status": "FAIL",
+                    "detail": detail or "Unknown failure",
+                }
+            )
         else:
-            results[idx] = {"status": "PASS", "label": name, "error": ""}
-    return results
+            out.append(
+                {
+                    "index": idx,
+                    "display_path": display_path,
+                    "status": "PASS",
+                    "detail": name,
+                }
+            )
+    return out
 
 
 def main() -> None:
@@ -73,55 +145,50 @@ def main() -> None:
             + "\n",
             encoding="utf-8",
         )
+        if summary_path:
+            with open(summary_path, "a", encoding="utf-8") as out:
+                out.write(
+                    "## TCK report\n\n"
+                    "_Zip not found — could not build report._\n"
+                )
         return
 
-    cases: list[tuple[str, str]] = []
-    with zipfile.ZipFile(zip_path) as zf:
-        for name in sorted(zf.namelist()):
-            if not name.endswith("transformation.vtl"):
-                continue
-            script = zf.read(name).decode("utf-8", errors="replace").replace("\r", "")
-            display_path = name[: -len("transformation.vtl")].rstrip("/")
-            cases.append((display_path, script))
+    scripts = load_scripts_from_zip(zip_path)
+    results = parse_ordered_results(SUREFIRE_XML_PATH)
 
-    execution = read_execution_results()
+    lines: list[str] = []
+    lines.append("# TCK scripts output\n")
+    lines.append(f"\n_Source zip:_ `{zip_path}`  \n")
+    lines.append(f"_Cases (from Surefire):_ {len(results)}\n")
 
-    with open(FULL_REPORT_PATH, "w", encoding="utf-8") as full_out:
-        full_out.write("# TCK scripts output\n\n")
-        full_out.write(f"Source zip: `{zip_path}`\n\n")
-        full_out.write(f"Total cases: {len(cases)}\n\n")
-        for i, (display_path, script) in enumerate(cases, start=1):
-            full_out.write(f"## Test {i}\n\n")
-            full_out.write(f"{display_path}\n\n")
-            full_out.write("```vtl\n")
-            full_out.write(script if script else "(empty)")
-            full_out.write("\n```\n\n")
-            result = execution.get(i)
-            if result is None:
-                full_out.write("Result: ⏳ Test not executed or result unavailable\n\n")
-            elif result["status"] == "PASS":
-                full_out.write(f"✅ Test {i}\n")
-                full_out.write(f"\t{result['label']}\n\n")
-            else:
-                full_out.write(f"❌ Test {i}\n")
-                full_out.write(f"\t{result['label']}\n")
-                full_out.write(f"\t{result['error']}\n\n")
+    for row in results:
+        i = row["index"]
+        display_path = row["display_path"]
+        zip_key = display_path_to_zip_key(display_path)
+        script = scripts.get(zip_key, "(script not found in zip for this path)")
+        lines.append(f"\n## Test {i}\n\n")
+        lines.append(f"{display_path}\n\n")
+        lines.append("```vtl\n")
+        lines.append(script if script else "(empty)")
+        lines.append("\n```\n\n")
+        if row["status"] == "PASS":
+            lines.append(f"✅ Test {i}\n")
+            lines.append(f"\t{display_path}\n")
+        else:
+            lines.append(f"❌ Test {i}\n")
+            lines.append(f"\t{display_path}\n")
+            detail = row["detail"]
+            for ln in detail.split("\n"):
+                lines.append(f"\t{ln}\n")
 
-    if not summary_path:
-        return
+    FULL_REPORT_PATH.write_text("".join(lines), encoding="utf-8")
 
-    full_markdown = FULL_REPORT_PATH.read_text(encoding="utf-8", errors="replace")
-    preview = full_markdown[:MAX_SUMMARY_CHARS]
-    truncated = len(full_markdown) > MAX_SUMMARY_CHARS
-
-    with open(summary_path, "a", encoding="utf-8") as out:
-        out.write("## TCK scripts output\n\n")
-        out.write("Report is exported as artifact `tck-scripts-report`.\n\n")
-        out.write(preview)
-        if truncated:
+    if summary_path:
+        with open(summary_path, "a", encoding="utf-8") as out:
             out.write(
-                "\n\n_... Output truncated in job summary due to GitHub size limits. "
-                "Download artifact `tck-scripts-report` for the full content._\n"
+                "## TCK report\n\n"
+                "Unified scripts + results (same order as tests): download artifact "
+                "**`tck-scripts-report`** (`tck-scripts-report.md`).\n"
             )
 
 
