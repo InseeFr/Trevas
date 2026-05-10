@@ -12,9 +12,9 @@ After `mvn test` (+ optional prettify), build a plain-text-friendly Markdown rep
 
     <script body from zip>
 
-  Failures: script in a ```vtl fence; detail below with AssertJ wrappers and
-  duplicate embedded script stripped. ASCII tables → GFM tables. Lines like
-  [path] output `DS_r` — … become **Cause: output `DS_r` — …**.
+  Failures: one-line header `✅ Test N - path » …`; script in ```vtl`; detail
+  without Java stacks or `--- inputs ---`; subtitles bold (datasets / Trevas / TCK);
+  ASCII tables → GFM; `[path] output …` → **Cause: output …**.
 
 Inputs:
   - Surefire XML (test order = execution order; names carry Test N + path).
@@ -284,6 +284,36 @@ def convert_ascii_tables_to_markdown(text: str) -> str:
 _CAUSE_LINE = re.compile(r"^\s*\[[^\]]+\]\s+(.*)$")
 
 
+_STACK_FRAME = re.compile(r"^\s*at\s+.+")
+_STACK_MORE = re.compile(r"^\s*\.\.\.\s*\d+\s+more\b")
+_SUPPRESSED_HDR = re.compile(r"^\s*Suppressed:\s*")
+
+
+def strip_java_stack_trace(text: str) -> str:
+    """Drop Java stack frames (lines starting with `at …`), Suppressed headers, '… more'."""
+    lines = text.splitlines()
+    out: list[str] = []
+    for ln in lines:
+        if (
+            _SUPPRESSED_HDR.match(ln)
+            or _STACK_FRAME.match(ln)
+            or _STACK_MORE.match(ln)
+            or ln.strip() == "... <omitted />"
+        ):
+            continue
+        out.append(ln)
+    return "\n".join(out)
+
+
+def tidy_failure_section_headers(text: str) -> str:
+    """Remove --- inputs ---; bold compact subtitles for datasets / Trevas / TCK."""
+    t = re.sub(r"^--- inputs ---\s*\n", "", text, flags=re.MULTILINE | re.IGNORECASE)
+    t = re.sub(r"^« ([^»]+) »\s*$", r"**« \1 »**", t, flags=re.MULTILINE)
+    t = re.sub(r"^Trevas \(actual\):\s*$", "**Trevas (actual)**", t, flags=re.MULTILINE)
+    t = re.sub(r"^TCK \(expected\):\s*$", "**TCK (expected)**", t, flags=re.MULTILINE)
+    return t
+
+
 def rewrite_failure_cause_summary(text: str) -> str:
     """[path] output `DS_r` — … → **Cause: output `DS_r` — …** (path already shown above)."""
     out_lines: list[str] = []
@@ -301,7 +331,9 @@ def sanitize_failure_detail(detail: str) -> str:
     """Remove duplicated script and AssertJ noise; keep inputs/tables."""
     t = strip_assertj_noise(detail)
     t = strip_embedded_tck_script_block(t)
+    t = strip_java_stack_trace(t)
     t = convert_ascii_tables_to_markdown(t)
+    t = tidy_failure_section_headers(t)
     t = rewrite_failure_cause_summary(t)
     return re.sub(r"\n{3,}", "\n\n", t).strip()
 
@@ -382,7 +414,7 @@ def render_case_plain(i: int, display_path: str, script: str, row: dict[str, str
         mark = "⏭️"
     else:
         mark = "❌"
-    lines: list[str] = [f"{mark} Test {i}", display_path, "", fenced_vtl(script)]
+    lines: list[str] = [f"{mark} Test {i} - {display_path}", "", fenced_vtl(script)]
     if row["status"] == "FAIL":
         cleaned = sanitize_failure_detail(row["detail"].strip())
         if cleaned:
