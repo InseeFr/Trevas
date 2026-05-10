@@ -67,6 +67,7 @@ jobs:
         if: always()
         run: python3 coverage/scripts/prettify_tck_surefire_xml.py
 
+      # only-summary: table per XML only (no per-test expansion). max-annotations: 0 avoids PR file annotations.
       - name: Publish JUnit test results
         uses: dorny/test-reporter@v3
         if: always()
@@ -74,7 +75,8 @@ jobs:
           name: JUnit Test Report
           path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
-          max-annotations: 50
+          only-summary: 'true'
+          max-annotations: 0
           fail-on-error: 'false'
 
       - name: Generate TCK scripts report
