@@ -133,6 +133,21 @@ def local_tag(elem: ET.Element) -> str:
     return elem.tag
 
 
+_FAILURE_OR_ERROR_TAGS = frozenset(
+    {"failure", "error", "rerunFailure", "rerunError", "flakyFailure"}
+)
+
+
+def find_failure_or_error_node(tc: ET.Element) -> ET.Element | None:
+    """JUnit5Xml30 / Surefire 3.x may nest failure/error under wrappers, not only direct children."""
+    for el in tc.iter():
+        if el is tc:
+            continue
+        if local_tag(el) in _FAILURE_OR_ERROR_TAGS:
+            return el
+    return None
+
+
 def iter_surefire_testcases(root: ET.Element) -> list[ET.Element]:
     """Ordered testcase elements (JUnit5 may wrap testsuite(s))."""
     found: list[ET.Element] = []
@@ -371,14 +386,7 @@ def parse_ordered_results(xml_path: Path) -> list[dict[str, str]]:
         if parsed is None:
             continue
         idx, display_path = parsed
-        failure = None
-        error = None
-        for child in tc:
-            if local_tag(child) == "failure":
-                failure = child
-            elif local_tag(child) == "error":
-                error = child
-        node = error or failure
+        node = find_failure_or_error_node(tc)
         if node is not None:
             detail = failure_or_error_text(node)
             out.append(
@@ -390,7 +398,9 @@ def parse_ordered_results(xml_path: Path) -> list[dict[str, str]]:
                 }
             )
         else:
-            skipped = any(local_tag(c) == "skipped" for c in tc)
+            skipped = any(
+                local_tag(el) == "skipped" for el in tc.iter() if el is not tc
+            )
             out.append(
                 {
                     "index": idx,
