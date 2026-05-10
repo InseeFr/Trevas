@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
 """
-Build a readable markdown report: for each TCK case in JUnit execution order —
-path (slash style), script from zip, then pass/fail with full failure body (tables preserved).
+After `mvn test` (+ optional prettify), build a plain-text-friendly Markdown report:
 
-Zip keys use '/'; display paths in Surefire use ' » ' (TckPaths.SEGMENT_SEP).
+  TCK scripts output
+  Source zip: …
+  Total cases: …
+
+  Per test (same shape for pass / skip / fail):
+    ✅ Test N
+    folder » with » chevrons » ex_k
+
+    <script body from zip>
+
+  Failures: script in a ```vtl fence; detail below with AssertJ wrappers and
+  duplicate embedded script stripped. ASCII tables → GFM tables. Lines like
+  [path] output `DS_r` — … become **Cause: output `DS_r` — …**.
+
+Inputs:
+  - Surefire XML (test order = execution order; names carry Test N + path).
+  - v2.1.zip (transformation.vtl per folder path).
+
+Writes: coverage/target/tck-scripts-report.md
+Appends to GITHUB_STEP_SUMMARY when set (after existing summary from test-reporter).
 """
 from __future__ import annotations
 
@@ -31,9 +49,16 @@ def resolve_tck_zip() -> Path | None:
     return None
 
 
+def zip_path_for_report(zip_path: Path) -> str:
+    try:
+        return str(zip_path.relative_to(Path.cwd()))
+    except ValueError:
+        return str(zip_path)
+
+
 def decode_xml_entities(text: str) -> str:
     out = text
-    for _ in range(4):
+    for _ in range(5):
         nxt = (
             out.replace("&quot;", '"')
             .replace("&#34;", '"')
@@ -56,15 +81,13 @@ def decode_xml_entities(text: str) -> str:
 
 
 def split_testcase_name(name_attr: str) -> tuple[int, str] | None:
-    """Extract (index, display_path) from Surefire testcase name (before or after prettify)."""
     s = decode_xml_entities(name_attr).strip()
     if "\n" in s:
         lines = [ln.strip() for ln in s.split("\n") if ln.strip()]
         if len(lines) >= 2:
             m0 = re.match(r"^Test\s+(\d+)\s*$", lines[0])
             if m0:
-                path_line = lines[1].lstrip("\t").strip()
-                return int(m0.group(1)), path_line
+                return int(m0.group(1)), lines[1].lstrip("\t").strip()
     m = re.search(r"Test\s+(\d+)\s+—\s+(.+)$", s)
     if m:
         return int(m.group(1)), m.group(2).strip()
@@ -73,6 +96,23 @@ def split_testcase_name(name_attr: str) -> tuple[int, str] | None:
 
 def display_path_to_zip_key(display_path: str) -> str:
     return display_path.replace(_DISPLAY_SEP, "/")
+
+
+def lookup_script(scripts: dict[str, str], display_path: str) -> str:
+    """Resolve transformation.vtl folder key in zip (handles trailing duplicate segment, e.g. ex_1/ex_1)."""
+    key = display_path_to_zip_key(display_path)
+    if key in scripts:
+        return scripts[key]
+    parts = key.split("/")
+    if len(parts) >= 2 and parts[-1] == parts[-2]:
+        parent = "/".join(parts[:-1])
+        if parent in scripts:
+            return scripts[parent]
+    for end in range(len(parts), 0, -1):
+        prefix = "/".join(parts[:end])
+        if prefix in scripts:
+            return scripts[prefix]
+    return "(script not found in zip for this path)"
 
 
 def load_scripts_from_zip(zip_path: Path) -> dict[str, str]:
@@ -87,25 +127,204 @@ def load_scripts_from_zip(zip_path: Path) -> dict[str, str]:
     return scripts
 
 
-def failure_detail_text(message: str, body: str) -> str:
-    """Single block for markdown: message + body without awkward duplication."""
-    message = message.strip()
-    body = (body or "").strip()
-    if not body:
-        return message or "Unknown failure"
-    if not message:
-        return body
-    if message in body:
-        return body
-    if body in message:
-        return message
-    return f"{message}\n\n{body}"
+def local_tag(elem: ET.Element) -> str:
+    if elem.tag.startswith("{"):
+        return elem.tag.split("}", 1)[1]
+    return elem.tag
 
 
-def fenced_lang(content: str, lang: str) -> str:
-    inner = content.rstrip("\n")
-    fence = "```"
-    return f"{fence}{lang}\n{inner}\n{fence}\n"
+def iter_surefire_testcases(root: ET.Element) -> list[ET.Element]:
+    """Ordered testcase elements (JUnit5 may wrap testsuite(s))."""
+    found: list[ET.Element] = []
+    for parent in root.iter():
+        if local_tag(parent) != "testsuite":
+            continue
+        for child in parent:
+            if local_tag(child) == "testcase":
+                found.append(child)
+    if found:
+        return found
+    # Fallback: any testcase in document order (namespaced or alternate layout).
+    return [e for e in root.iter() if local_tag(e) == "testcase"]
+
+
+_ASSERTJ_MULTI = re.compile(r"^Multiple Failures\s*\([^)]+\)\s*$", re.IGNORECASE)
+_ASSERTJ_FAILURE_HDR = re.compile(r"^--\s*failure\s+\d+\s*--\s*$", re.IGNORECASE)
+
+
+def strip_assertj_noise(text: str) -> str:
+    """Drop AssertJMultipleFailures boilerplate lines."""
+    lines = text.splitlines()
+    kept: list[str] = []
+    for line in lines:
+        s = line.strip()
+        if _ASSERTJ_MULTI.match(s) or _ASSERTJ_FAILURE_HDR.match(s):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def strip_embedded_tck_script_block(text: str) -> str:
+    """Remove TckScriptText.appendFull section (already printed above from zip)."""
+    key_vtl = "VTL script:"
+    key_sep = "--- transformation.vtl ---"
+    markers = ("--- inputs ---", "Trevas (actual):")
+    i = text.find(key_vtl)
+    if i == -1:
+        return text
+    start_cut = i
+    if start_cut > 0 and text[start_cut - 1] == "\n":
+        start_cut -= 1
+        if start_cut > 0 and text[start_cut - 1] == "\r":
+            start_cut -= 1
+
+    j = text.find(key_sep, i)
+    if j == -1:
+        line_end = text.find("\n", i)
+        if line_end == -1:
+            return text[:start_cut].rstrip()
+        tail = text[line_end + 1 :].lstrip("\n\r")
+        return (text[:start_cut].rstrip() + ("\n\n" + tail if tail else "")).strip()
+
+    after_sep = j + len(key_sep)
+    while after_sep < len(text) and text[after_sep] in "\r\n":
+        after_sep += 1
+
+    next_pos: list[int] = []
+    for mk in markers:
+        k = text.find(mk, after_sep)
+        if k != -1:
+            next_pos.append(k)
+    if not next_pos:
+        head = text[:start_cut].rstrip()
+        return head
+
+    k = min(next_pos)
+    tail = text[k:].lstrip("\n\r")
+    head = text[:start_cut].rstrip()
+    return (head + ("\n\n" + tail if tail else "")).strip()
+
+
+def _split_ascii_pipe_row(line: str) -> list[str]:
+    parts = [p.strip() for p in line.split("|")]
+    while parts and parts[0] == "":
+        parts.pop(0)
+    while parts and parts[-1] == "":
+        parts.pop()
+    return parts
+
+
+def _is_ascii_separator_row(line: str) -> bool:
+    """Java renderTable separator is -----+-----+----- (no '|'); single-column is just dashes."""
+    s = line.strip()
+    if not s or "-" not in s or "|" in s:
+        return False
+    if "+" in s:
+        return bool(re.fullmatch(r"[\s\-+]+", s))
+    return bool(re.fullmatch(r"-+", s))
+
+
+def _ascii_table_block_to_markdown(header_line: str, data_lines: list[str]) -> str | None:
+    headers = _split_ascii_pipe_row(header_line)
+    n = len(headers)
+    if n < 2:
+        return None
+
+    def esc_cell(c: str) -> str:
+        return c.replace("|", "\\|").replace("\n", " ").strip()
+
+    rows_md = [
+        "| " + " | ".join(esc_cell(h) for h in headers) + " |",
+        "| " + " | ".join("---" for _ in headers) + " |",
+    ]
+    for raw in data_lines:
+        cells = _split_ascii_pipe_row(raw)
+        if len(cells) < n:
+            cells = cells + [""] * (n - len(cells))
+        cells = cells[:n]
+        rows_md.append("| " + " | ".join(esc_cell(c) for c in cells) + " |")
+    return "\n".join(rows_md)
+
+
+def convert_ascii_tables_to_markdown(text: str) -> str:
+    """Turn TCK ASCII pipe tables into GFM tables (renders nicely on GitHub)."""
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        header = lines[i]
+        if (
+            "|" in header
+            and not header.strip().startswith("|")
+            and not _is_ascii_separator_row(header)
+            and i + 1 < len(lines)
+            and _is_ascii_separator_row(lines[i + 1])
+        ):
+            j = i + 2
+            data: list[str] = []
+            while j < len(lines):
+                ln = lines[j]
+                if not ln.strip():
+                    break
+                if "|" not in ln or _is_ascii_separator_row(ln):
+                    break
+                data.append(ln)
+                j += 1
+            md = _ascii_table_block_to_markdown(header, data)
+            if md:
+                out.append(md)
+                out.append("")
+                i = j
+                continue
+        out.append(lines[i])
+        i += 1
+    return "\n".join(out).strip()
+
+
+_CAUSE_LINE = re.compile(r"^\s*\[[^\]]+\]\s+(.*)$")
+
+
+def rewrite_failure_cause_summary(text: str) -> str:
+    """[path] output `DS_r` — … → **Cause: output `DS_r` — …** (path already shown above)."""
+    out_lines: list[str] = []
+    for line in text.splitlines():
+        m = _CAUSE_LINE.match(line)
+        if m:
+            rest = m.group(1).strip()
+            if rest.startswith("output"):
+                line = f"**Cause: {rest}**"
+        out_lines.append(line)
+    return "\n".join(out_lines)
+
+
+def sanitize_failure_detail(detail: str) -> str:
+    """Remove duplicated script and AssertJ noise; keep inputs/tables."""
+    t = strip_assertj_noise(detail)
+    t = strip_embedded_tck_script_block(t)
+    t = convert_ascii_tables_to_markdown(t)
+    t = rewrite_failure_cause_summary(t)
+    return re.sub(r"\n{3,}", "\n\n", t).strip()
+
+
+def failure_or_error_text(node: ET.Element | None) -> str:
+    if node is None:
+        return ""
+    msg = (node.attrib.get("message") or "").strip()
+    body = "".join(node.itertext()).strip()
+    typ = (node.attrib.get("type") or "").strip()
+    parts: list[str] = []
+    if msg:
+        parts.append(msg)
+    if body and body != msg and msg not in body:
+        parts.append(body)
+    elif body and not msg:
+        parts.append(body)
+    out = "\n\n".join(parts).strip()
+    if out:
+        return out
+    if typ:
+        return typ
+    return ""
 
 
 def parse_ordered_results(xml_path: Path) -> list[dict[str, str]]:
@@ -114,56 +333,62 @@ def parse_ordered_results(xml_path: Path) -> list[dict[str, str]]:
     tree = ET.parse(xml_path)
     root = tree.getroot()
     out: list[dict[str, str]] = []
-    for tc in root.findall(".//testcase"):
+    for tc in iter_surefire_testcases(root):
         name = tc.attrib.get("name", "")
         parsed = split_testcase_name(name)
         if parsed is None:
             continue
         idx, display_path = parsed
-        failure = tc.find("failure")
-        error = tc.find("error")
-        if failure is not None or error is not None:
-            node = error if error is not None else failure
-            msg = (node.attrib.get("message", "") if node is not None else "").strip()
-            body = (node.text or "").strip() if node is not None else ""
-            detail = failure_detail_text(msg, body)
+        failure = None
+        error = None
+        for child in tc:
+            if local_tag(child) == "failure":
+                failure = child
+            elif local_tag(child) == "error":
+                error = child
+        node = error or failure
+        if node is not None:
+            detail = failure_or_error_text(node)
             out.append(
                 {
                     "index": idx,
                     "display_path": display_path,
                     "status": "FAIL",
-                    "detail": detail,
+                    "detail": detail or "Unknown failure",
                 }
             )
         else:
+            skipped = any(local_tag(c) == "skipped" for c in tc)
             out.append(
                 {
                     "index": idx,
                     "display_path": display_path,
-                    "status": "PASS",
+                    "status": "SKIP" if skipped else "PASS",
                     "detail": "",
                 }
             )
     return out
 
 
-def render_case_md(i: int, display_path: str, path_slash: str, script: str, row: dict[str, str]) -> str:
-    parts: list[str] = []
-    parts.append(f"### Test {i}\n\n")
-    parts.append(f"{path_slash}\n\n")
-    scr = script.strip() if script else "(empty)"
-    parts.append(fenced_lang(scr, "vtl"))
-    parts.append("\n")
+def fenced_vtl(script: str) -> str:
+    body = (script.strip() if script else "(empty)").rstrip()
+    return "```vtl\n" + body + "\n```"
+
+
+def render_case_plain(i: int, display_path: str, script: str, row: dict[str, str]) -> str:
     if row["status"] == "PASS":
-        parts.append(f"✅ **Test {i}**\n\n")
+        mark = "✅"
+    elif row["status"] == "SKIP":
+        mark = "⏭️"
     else:
-        parts.append(f"❌ **Test {i}**\n\n")
-        parts.append(f"Test {i}\n\n")
-        parts.append(f"{display_path}\n\n")
-        detail = row["detail"].strip()
-        parts.append(fenced_lang(detail, "text"))
-        parts.append("\n")
-    return "".join(parts)
+        mark = "❌"
+    lines: list[str] = [f"{mark} Test {i}", display_path, "", fenced_vtl(script)]
+    if row["status"] == "FAIL":
+        cleaned = sanitize_failure_detail(row["detail"].strip())
+        if cleaned:
+            lines.extend(["", cleaned])
+    lines.extend(["", ""])
+    return "\n".join(lines)
 
 
 def main() -> None:
@@ -171,43 +396,41 @@ def main() -> None:
     zip_path = resolve_tck_zip()
 
     FULL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     if zip_path is None:
-        fallback = (
-            "# Trevas - TCK VTL 2.1\n\n"
-            "## TCK scripts output\n\n"
-            "Report is exported as artifact `tck-scripts-report`.\n\n"
-            "TCK scripts output\n"
-            "_Unable to locate `v2.1.zip` in expected paths:_\n\n"
-            + "\n".join(f"- `{p}`" for p in TCK_ZIP_CANDIDATES)
+        msg = (
+            "TCK scripts output\n\n"
+            "Source zip: (not found)\n\n"
+            "Expected one of:\n"
+            + "\n".join(f"  - {p}" for p in TCK_ZIP_CANDIDATES)
             + "\n"
         )
-        FULL_REPORT_PATH.write_text(fallback, encoding="utf-8")
+        FULL_REPORT_PATH.write_text(msg, encoding="utf-8")
         if summary_path:
             with open(summary_path, "a", encoding="utf-8") as out:
                 out.write("\n\n---\n\n")
-                out.write(fallback)
+                out.write(msg)
         return
 
     scripts = load_scripts_from_zip(zip_path)
     results = parse_ordered_results(SUREFIRE_XML_PATH)
 
     chunks: list[str] = []
-    chunks.append("# Trevas - TCK VTL 2.1\n\n")
-    chunks.append("## TCK scripts output\n\n")
-    chunks.append("Report is exported as artifact `tck-scripts-report`.\n\n")
     chunks.append("TCK scripts output\n")
-    chunks.append(f"Source zip: `{zip_path}`\n\n")
-    chunks.append(f"Total cases: {len(results)}\n\n")
+    chunks.append("")
+    chunks.append(f"Source zip: {zip_path_for_report(zip_path)}\n")
+    chunks.append("")
+    chunks.append(f"Total cases: {len(results)}\n")
+    chunks.append("")
 
     for row in results:
         i = row["index"]
         display_path = row["display_path"]
-        zip_key = display_path_to_zip_key(display_path)
-        path_slash = zip_key
-        script = scripts.get(zip_key, "(script not found in zip for this path)")
-        chunks.append(render_case_md(i, display_path, path_slash, script, row))
+        script = lookup_script(scripts, display_path)
+        chunks.append(render_case_plain(i, display_path, script, row))
 
-    report = "".join(chunks)
+    report = "".join(chunks).rstrip() + "\n"
+
     FULL_REPORT_PATH.write_text(report, encoding="utf-8")
 
     if summary_path:
