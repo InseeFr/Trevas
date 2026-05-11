@@ -165,6 +165,9 @@ def iter_surefire_testcases(root: ET.Element) -> list[ET.Element]:
 
 _ASSERTJ_MULTI = re.compile(r"^Multiple Failures\s*\([^)]+\)\s*$", re.IGNORECASE)
 _ASSERTJ_FAILURE_HDR = re.compile(r"^--\s*failure\s+\d+\s*--\s*$", re.IGNORECASE)
+_ASSERTJ_CLASS_HDR = re.compile(
+    r"^\s*org\.assertj\..*AssertJMultipleFailuresError:\s*$", re.IGNORECASE
+)
 
 
 def strip_assertj_noise(text: str) -> str:
@@ -173,7 +176,11 @@ def strip_assertj_noise(text: str) -> str:
     kept: list[str] = []
     for line in lines:
         s = line.strip()
-        if _ASSERTJ_MULTI.match(s) or _ASSERTJ_FAILURE_HDR.match(s):
+        if (
+            _ASSERTJ_MULTI.match(s)
+            or _ASSERTJ_FAILURE_HDR.match(s)
+            or _ASSERTJ_CLASS_HDR.match(s)
+        ):
             continue
         kept.append(line)
     return "\n".join(kept).strip()
@@ -345,7 +352,13 @@ def rewrite_failure_cause_summary(text: str) -> str:
 def sanitize_failure_detail(detail: str) -> str:
     """Remove duplicated script and AssertJ noise; keep inputs/tables."""
     t = strip_assertj_noise(detail)
-    t = strip_embedded_tck_script_block(t)
+    # Some Surefire variants duplicate the payload (message + body).
+    # Strip embedded script sections repeatedly until stable.
+    while True:
+        nxt = strip_embedded_tck_script_block(t)
+        if nxt == t:
+            break
+        t = nxt
     t = strip_java_stack_trace(t)
     t = convert_ascii_tables_to_markdown(t)
     t = tidy_failure_section_headers(t)
@@ -359,16 +372,11 @@ def failure_or_error_text(node: ET.Element | None) -> str:
     msg = (node.attrib.get("message") or "").strip()
     body = "".join(node.itertext()).strip()
     typ = (node.attrib.get("type") or "").strip()
-    parts: list[str] = []
+    # Prefer body: in Surefire/JUnit5 it usually contains the full useful failure payload.
+    if body:
+        return body
     if msg:
-        parts.append(msg)
-    if body and body != msg and msg not in body:
-        parts.append(body)
-    elif body and not msg:
-        parts.append(body)
-    out = "\n\n".join(parts).strip()
-    if out:
-        return out
+        return msg
     if typ:
         return typ
     return ""
