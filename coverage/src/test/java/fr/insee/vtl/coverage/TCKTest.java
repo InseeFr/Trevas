@@ -52,6 +52,10 @@ class TCKTest {
   }
 
   private static void logCaseOutcome(TckCase c, boolean success) {
+    // Avoid duplicating hundreds of lines in CI logs; use generated markdown artifact instead.
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("GITHUB_ACTIONS", "false"))) {
+      return;
+    }
     System.out.println((success ? "✅" : "❌") + " Test " + c.index());
     System.out.println("\tVTL script: " + c.scriptSummary());
     System.out.println("\t" + c.displayPath());
@@ -76,7 +80,7 @@ class TCKTest {
 
   private record TckCase(int index, String displayPath, Test payload) {
     String label() {
-      return "Test " + index + " — VTL script: " + scriptSummary();
+      return "Test " + index + " — " + displayPath;
     }
 
     String scriptSummary() {
