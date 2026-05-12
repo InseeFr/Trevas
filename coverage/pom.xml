@@ -18,6 +18,9 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Spark backend for TCK: default vtl-spark (Spark 3); profile spark4-tck uses vtl-spark4 -->
+        <trevas.spark.artifact>vtl-spark</trevas.spark.artifact>
+        <tck.suite.title>TCK VTL v2.1 (Spark 3)</tck.suite.title>
     </properties>
 
     <dependencies>
@@ -48,7 +51,7 @@
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-spark</artifactId>
+            <artifactId>${trevas.spark.artifact}</artifactId>
             <version>2.4.0-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -70,6 +73,9 @@
                 <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                    <systemPropertyVariables>
+                        <tck.suite.title>${tck.suite.title}</tck.suite.title>
+                    </systemPropertyVariables>
                     <!-- GitHub / Surefire legacy XML uses technical names unless JUnit 5 phrased
                          reporters are enabled (see Surefire "JUnit Platform" examples). -->
                     <statelessTestsetReporter
@@ -111,4 +117,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>spark4-tck</id>
+            <properties>
+                <trevas.spark.artifact>vtl-spark4</trevas.spark.artifact>
+                <tck.suite.title>TCK VTL v2.1 (Spark 4)</tck.suite.title>
+            </properties>
+        </profile>
+    </profiles>
 </project>

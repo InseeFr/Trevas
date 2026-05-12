@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -24,7 +24,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Spark-backed conformance run against the packaged TCK ({@code v2.1.zip}). Orchestration only —
  * discovery, naming, and assertions live under {@code fr.insee.vtl.coverage.tck}.
  */
-@DisplayName("TCK v2.1 (Spark)")
+@DisplayNameGeneration(TckSuiteDisplayNameGenerator.class)
 class TCKTest {
 
   private TckCaseExecutor executor;

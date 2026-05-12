@@ -22,6 +22,8 @@ Inputs:
 
 Writes: coverage/target/tck-scripts-report.md
 Appends to GITHUB_STEP_SUMMARY when set (after existing summary from test-reporter).
+
+Optional env TCK_REPORT_TITLE: prepended as Markdown H1 (e.g. TCK VTL v2.1 (Spark 4)).
 """
 from __future__ import annotations
 
@@ -444,11 +446,15 @@ def render_case_plain(i: int, display_path: str, script: str, row: dict[str, str
 def main() -> None:
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     zip_path = resolve_tck_zip()
+    report_title = os.environ.get("TCK_REPORT_TITLE", "").strip()
 
     FULL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     if zip_path is None:
-        msg = (
+        msg = ""
+        if report_title:
+            msg += f"# {report_title}\n\n"
+        msg += (
             "TCK scripts output\n\n"
             "Source zip: (not found)\n\n"
             "Expected one of:\n"
@@ -466,6 +472,8 @@ def main() -> None:
     results = parse_ordered_results(SUREFIRE_XML_PATH)
 
     chunks: list[str] = []
+    if report_title:
+        chunks.append(f"# {report_title}\n\n")
     chunks.append("TCK scripts output\n")
     chunks.append("")
     chunks.append(f"Source zip: {zip_path_for_report(zip_path)}\n")

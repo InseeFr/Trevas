@@ -9,6 +9,23 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - spark: '3'
+            maven_profile: ''
+            tck_report_title: 'TCK VTL v2.1 (Spark 3)'
+            junit_report_name: 'JUnit (Spark 3)'
+            artifact_name: 'tck-scripts-report-spark3'
+          - spark: '4'
+            maven_profile: '-Pspark4-tck'
+            tck_report_title: 'TCK VTL v2.1 (Spark 4)'
+            junit_report_name: 'JUnit (Spark 4)'
+            artifact_name: 'tck-scripts-report-spark4'
+
+    env:
+      TCK_REPORT_TITLE: ${{ matrix.tck_report_title }}
 
     steps:
       - name: Checkout main project
@@ -53,13 +70,14 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-spark-${{ matrix.spark }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
+            ${{ runner.os }}-maven-spark-${{ matrix.spark }}-
             ${{ runner.os }}-maven-
 
       - name: Build and run tests
         continue-on-error: true
-        run: mvn clean test --batch-mode
+        run: mvn clean test --batch-mode ${{ matrix.maven_profile }}
 
       # dorny/test-reporter titles come from Surefire <testcase name="…">; rewrite TCK names so
       # passed tests show "Test N" + newline + tab + path (see coverage/scripts/prettify_tck_surefire_xml.py).
@@ -72,7 +90,7 @@ jobs:
         uses: dorny/test-reporter@v3
         if: always()
         with:
-          name: JUnit Test Report
+          name: ${{ matrix.junit_report_name }}
           path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
           only-summary: 'true'
@@ -87,6 +105,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tck-scripts-report
+          name: ${{ matrix.artifact_name }}
           path: coverage/target/tck-scripts-report.md
           if-no-files-found: ignore
