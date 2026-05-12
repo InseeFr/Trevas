@@ -4,8 +4,7 @@ import java.lang.reflect.Method;
 import org.junit.jupiter.api.DisplayNameGenerator;
 
 /**
- * JUnit suite title from {@code -Dtck.suite.title=…} (set by Maven profile in CI for Spark 3 vs
- * 4).
+ * JUnit suite title from {@code -Dtck.suite.title=…} (set by Maven profile in CI for Spark 3 vs 4).
  */
 public final class TckSuiteDisplayNameGenerator implements DisplayNameGenerator {
 
