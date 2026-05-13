@@ -152,7 +152,7 @@ jobs:
       - name: Build dependencies and run TCK (coverage only, Spark 4 profile)
         continue-on-error: true
         run: |
-          mvn clean install -pl coverage -am -DskipTests --batch-mode
+          mvn clean install -pl coverage -am -DskipTests --batch-mode -Pspark4-tck
           mvn test -pl coverage --batch-mode -Pspark4-tck
 
       - name: Prettify TCK Surefire XML for GitHub
