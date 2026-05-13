@@ -1,4 +1,4 @@
-name: Run VTL TF TCK
+name: Run VTL TF TCK (Spark 3)
 
 on:
   push:
@@ -7,8 +7,11 @@ on:
     branches: [ master, develop ]
 
 jobs:
-  test:
+  tck-spark3:
+    name: TCK VTL v2.1 (Spark 3)
     runs-on: ubuntu-latest
+    env:
+      TCK_REPORT_TITLE: 'TCK VTL v2.1 (Spark 3)'
 
     steps:
       - name: Checkout main project
@@ -53,31 +56,31 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-tck-spark3-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build and run tests
+      - name: Build dependencies and run TCK (coverage only)
         continue-on-error: true
-        run: mvn clean test --batch-mode
+        run: |
+          mvn clean install -pl coverage -am -DskipTests --batch-mode
+          mvn test -pl coverage --batch-mode
 
-      # dorny/test-reporter titles come from Surefire <testcase name="…">; rewrite TCK names so
-      # passed tests show "Test N" + newline + tab + path (see coverage/scripts/prettify_tck_surefire_xml.py).
       - name: Prettify TCK Surefire XML for GitHub
         if: always()
         run: python3 coverage/scripts/prettify_tck_surefire_xml.py
 
-      # only-summary: table per XML only (no per-test expansion). max-annotations: 0 avoids PR file annotations.
       - name: Publish JUnit test results
         uses: dorny/test-reporter@v3
         if: always()
         with:
-          name: JUnit Test Report
+          name: JUnit (Spark 3)
           path: coverage/target/surefire-reports/*.xml
           reporter: java-junit
           only-summary: 'true'
           max-annotations: 0
           fail-on-error: 'false'
+          fail-on-empty: 'false'
 
       - name: Generate TCK scripts report
         if: always()
@@ -87,6 +90,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tck-scripts-report
+          name: tck-scripts-report-spark3
           path: coverage/target/tck-scripts-report.md
           if-no-files-found: ignore
