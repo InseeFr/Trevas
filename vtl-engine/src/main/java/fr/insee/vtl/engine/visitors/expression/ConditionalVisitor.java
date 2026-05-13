@@ -5,6 +5,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
+import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -165,11 +166,14 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
 
     ResolvableExpression nextWhen = whenExpr.next();
+    ResolvableExpression caseCondition =
+        genericFunctionsVisitor.invokeFunction(
+            "nvl", List.of(nextWhen, new ConstantExpression(false, nextWhen)), nextWhen);
 
     return genericFunctionsVisitor.invokeFunction(
         "ifThenElse",
-        List.of(nextWhen, thenExpr.next(), caseToIfIt(whenExpr, thenExpr, elseExpression)),
-        nextWhen);
+        List.of(caseCondition, thenExpr.next(), caseToIfIt(whenExpr, thenExpr, elseExpression)),
+        caseCondition);
   }
 
   /**

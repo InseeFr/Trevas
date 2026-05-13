@@ -7,6 +7,7 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.script.ScriptContext;
@@ -79,5 +80,41 @@ public class CalcTest {
             new Structured.Component("test", Boolean.class, Dataset.Role.MEASURE),
             new Structured.Component("weight", Long.class, Dataset.Role.MEASURE),
             new Structured.Component("wisdom", Double.class, Dataset.Role.ATTRIBUTE));
+  }
+
+  @Test
+  public void testCaseElseAppliesWhenWhenConditionIsNull() throws ScriptException {
+    ScriptContext context = engine.getContext();
+
+    Map<String, Object> r4 = new HashMap<>();
+    r4.put("name", "NullGuy");
+    r4.put("me_1", null);
+
+    InMemoryDataset dsWithNull =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "A", "me_1", 0.12D),
+                Map.of("name", "B", "me_1", 3.5D),
+                Map.of("name", "C", "me_1", 10.7D),
+                r4),
+            Map.of("name", String.class, "me_1", Double.class),
+            Map.of("name", Dataset.Role.IDENTIFIER, "me_1", Dataset.Role.MEASURE));
+
+    context.setAttribute("ds_null", dsWithNull, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "res := ds_null[calc me_2 := case when me_1 <= 1 then 0 when me_1 > 1 and me_1 <= 10 then 1 when me_1 > 10 then 10 else 100];");
+
+    Dataset res = (Dataset) context.getAttribute("res");
+    assertThat(res.getDataAsMap())
+        .contains(
+            Map.of("name", "A", "me_1", 0.12D, "me_2", 0L),
+            Map.of("name", "B", "me_1", 3.5D, "me_2", 1L),
+            Map.of("name", "C", "me_1", 10.7D, "me_2", 10L));
+
+    Map<String, Object> expectedNullRow = new HashMap<>();
+    expectedNullRow.put("name", "NullGuy");
+    expectedNullRow.put("me_1", null);
+    expectedNullRow.put("me_2", 100L);
+    assertThat(res.getDataAsMap()).contains(expectedNullRow);
   }
 }
