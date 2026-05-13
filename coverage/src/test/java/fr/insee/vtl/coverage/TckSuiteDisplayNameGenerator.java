@@ -1,6 +1,7 @@
 package fr.insee.vtl.coverage;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import org.junit.jupiter.api.DisplayNameGenerator;
 
 /**
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.DisplayNameGenerator;
  */
 public final class TckSuiteDisplayNameGenerator implements DisplayNameGenerator {
 
-  private static final DisplayNameGenerator DEFAULT = DisplayNameGenerator.Standard.INSTANCE;
+  private static final DisplayNameGenerator DEFAULT = new DisplayNameGenerator.Standard();
 
   @Override
   public String generateDisplayNameForClass(Class<?> testClass) {
@@ -26,5 +27,11 @@ public final class TckSuiteDisplayNameGenerator implements DisplayNameGenerator 
   @Override
   public String generateDisplayNameForMethod(Class<?> testClass, Method testMethod) {
     return DEFAULT.generateDisplayNameForMethod(testClass, testMethod);
+  }
+
+  @Override
+  public String generateDisplayNameForMethod(
+      List<Class<?>> enclosingInstanceTypes, Class<?> testClass, Method testMethod) {
+    return DEFAULT.generateDisplayNameForMethod(enclosingInstanceTypes, testClass, testMethod);
   }
 }
