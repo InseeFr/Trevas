@@ -1,12 +1,12 @@
 package fr.insee.vtl.engine;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.utils.dag.DAGBuilder;
 import fr.insee.vtl.engine.utils.dag.DAGStatement;
 import fr.insee.vtl.engine.visitors.DAGBuildingVisitor;
 import fr.insee.vtl.model.exceptions.VtlMultiErrorScriptException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.ParserRuleContext;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

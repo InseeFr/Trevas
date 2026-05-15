@@ -1,8 +1,8 @@
 package fr.insee.vtl.prov;
 
-import fr.insee.vtl.parser.antlr4.runtime.ParserRuleContext;
-import fr.insee.vtl.parser.antlr4.runtime.Token;
-import fr.insee.vtl.parser.antlr4.runtime.misc.Interval;
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
+import fr.insee.vtl.antlr.runtime.Token;
+import fr.insee.vtl.antlr.runtime.misc.Interval;
 import java.util.Optional;
 
 public class Variable {

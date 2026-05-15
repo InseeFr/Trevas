@@ -77,13 +77,12 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- Surefire defaults to module-path startup when modules are present, but the reactor
+                     resolves dependencies via target/classes which has no module descriptor for the
+                     generated antlr parser sources. Force classpath mode to match compilation. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- fr.insee.vtl.parser.shaded exists only as Automatic-Module-Name on the packaged
-                         shaded vtl-parser.jar. Reactor resolution uses target/classes (no module name),
-                         which breaks Surefire's default Java 9+ module-path startup. Classpath mode matches
-                         compilation against workspace classes + antlr-runtime. -->
                     <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>

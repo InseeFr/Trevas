@@ -5,6 +5,8 @@ import static fr.insee.vtl.engine.VtlScriptEngine.toPositioned;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertBasicScalarType;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertNumber;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
+import fr.insee.vtl.antlr.runtime.misc.Interval;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
@@ -15,8 +17,6 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.ParserRuleContext;
-import fr.insee.vtl.parser.antlr4.runtime.misc.Interval;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;

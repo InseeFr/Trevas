@@ -1,13 +1,13 @@
 package fr.insee.vtl.engine.utils.dag;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
+import fr.insee.vtl.antlr.runtime.tree.ParseTree;
+import fr.insee.vtl.antlr.runtime.tree.RuleNode;
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.exceptions.VtlMultiStatementScriptException;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.ParserRuleContext;
-import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTree;
-import fr.insee.vtl.parser.antlr4.runtime.tree.RuleNode;
-import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
