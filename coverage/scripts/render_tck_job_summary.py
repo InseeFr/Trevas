@@ -311,27 +311,178 @@ _CAUSE_LINE = re.compile(r"^\s*\[[^\]]+\]\s+(.*)$")
 _STACK_FRAME = re.compile(r"^\s*at\s+.+")
 _STACK_MORE = re.compile(r"^\s*\.\.\.\s*\d+\s+more\b")
 _SUPPRESSED_HDR = re.compile(r"^\s*Suppressed:\s*")
+_EXCEPTION_HEAD = re.compile(
+    r"^([a-zA-Z][\w$]*(?:\.[a-zA-Z][\w$]*)*(?:Exception|Error))(?:\s*:\s*(.*))?$"
+)
+_CAUSED_BY = re.compile(r"^Caused by:\s*(.*)$", re.IGNORECASE)
+_FRAME_TREVAS = re.compile(r"^\s*at\s+(?:fr\.insee\.vtl\.|javax\.script\.)")
+_FRAME_OMITTED = re.compile(r"^\s*…\s*\(.*omitted.*\)\s*$", re.IGNORECASE)
+_NUMBERED_TREVAS_FRAME = re.compile(
+    r"^\s*\d+\.\s+fr\.insee\.vtl\.[\w$.]+\.[\w$]+(?:\s*<[^>]+>)?\s+—\s+.+$",
+)
+_TREVAS_STACK_HDR = re.compile(
+    r"^Trevas stack(?: \(file:line\))?:", re.IGNORECASE
+)
+_ASSERTION_ERROR_HDR = re.compile(r"^java\.lang\.AssertionError:\s*$")
+
+
+def _already_structured_failure(text: str) -> bool:
+    return (
+        "output `" in text
+        or "script execution failed" in text
+        or "row data differs" in text
+        or "data structure differs" in text
+    )
+
+
+def compact_java_exception_detail(text: str, max_frames: int = 5) -> str:
+    """
+    Collapse raw Java stack dumps to type, message, cause chain, and Trevas/script frames.
+    Skips when TckFailureText already formatted the failure.
+    """
+    if not text.strip() or _already_structured_failure(text):
+        return text
+
+    lines = text.splitlines()
+    blocks: list[str] = []
+    current_exc: list[str] = []
+    frames: list[str] = []
+
+    def flush_block() -> None:
+        nonlocal current_exc, frames
+        if not current_exc and not frames:
+            return
+        block_lines = list(current_exc)
+        block_lines.extend(frames[:max_frames])
+        if len(frames) > max_frames:
+            block_lines.append(f"    … ({len(frames) - max_frames} more frames omitted)")
+        blocks.append("\n".join(block_lines))
+        current_exc = []
+        frames = []
+
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            continue
+        if _SUPPRESSED_HDR.match(ln) or _STACK_MORE.match(ln) or s == "... <omitted />":
+            continue
+        m_cb = _CAUSED_BY.match(ln)
+        if m_cb:
+            flush_block()
+            current_exc.append(f"Caused by: {m_cb.group(1).strip()}")
+            continue
+        m_ex = _EXCEPTION_HEAD.match(s)
+        if m_ex:
+            flush_block()
+            head = m_ex.group(1)
+            msg = (m_ex.group(2) or "").strip()
+            current_exc.append(f"{head}: {msg}" if msg else head)
+            continue
+        if _FRAME_TREVAS.match(ln) or _FRAME_OMITTED.match(ln):
+            frames.append(ln.rstrip())
+            continue
+        if _STACK_FRAME.match(ln):
+            continue
+        if s.startswith("org.assertj.") and "Error" in s:
+            continue
+        if current_exc or frames:
+            flush_block()
+        blocks.append(ln.rstrip())
+
+    flush_block()
+    if not blocks:
+        return text
+
+    summary = "\n\n".join(blocks)
+    if len(summary.strip()) < 12 and text.strip():
+        return text
+    return "**Error**\n\n```text\n" + summary.strip() + "\n```"
+
+
+def _keep_stack_line(ln: str) -> bool:
+    """Keep Trevas locations and our numbered stack; drop generic Java/Spark noise."""
+    if _NUMBERED_TREVAS_FRAME.match(ln):
+        return True
+    if _TREVAS_STACK_HDR.match(ln):
+        return True
+    if _FRAME_TREVAS.match(ln):
+        return True
+    if _FRAME_OMITTED.match(ln):
+        return True
+    if ln.strip().startswith("Exception:") or ln.strip().startswith("Root cause:"):
+        return True
+    return False
 
 
 def strip_java_stack_trace(text: str) -> str:
-    """Drop Java stack frames (lines starting with `at …`), Suppressed headers, '… more'."""
+    """Drop Java stack frames unless they are Trevas locations we want in the report."""
     lines = text.splitlines()
     out: list[str] = []
     for ln in lines:
         if (
             _SUPPRESSED_HDR.match(ln)
-            or _STACK_FRAME.match(ln)
             or _STACK_MORE.match(ln)
             or ln.strip() == "... <omitted />"
         ):
+            continue
+        if _STACK_FRAME.match(ln):
+            if _keep_stack_line(ln):
+                out.append(ln.rstrip())
             continue
         out.append(ln)
     return "\n".join(out)
 
 
+def peel_assertion_error_wrapper(text: str) -> str:
+    """Surefire often prefixes AssertionError before our formatted execution failure."""
+    lines = text.splitlines()
+    out: list[str] = []
+    seen_execution_failed = False
+    for ln in lines:
+        if _ASSERTION_ERROR_HDR.match(ln.strip()):
+            continue
+        if "script execution failed" in ln:
+            seen_execution_failed = True
+        if (
+            seen_execution_failed
+            and ln.strip().startswith("Caused by:")
+            and "Exception" in ln
+        ):
+            continue
+        out.append(ln)
+    return "\n".join(out).strip()
+
+
+def highlight_trevas_stack_headers(text: str) -> str:
+    return re.sub(
+        r"^(Trevas stack(?: \(file:line\))?:)\s*$",
+        r"**\1**",
+        text,
+        flags=re.MULTILINE,
+    )
+
+
 def tidy_failure_section_headers(text: str) -> str:
     """Remove --- inputs ---; bold compact subtitles for datasets / Trevas / TCK."""
-    t = re.sub(r"^--- inputs ---\s*\n", "", text, flags=re.MULTILINE | re.IGNORECASE)
+    t = re.sub(
+        r"^Exception:\s*$",
+        "**Exception**",
+        text,
+        flags=re.MULTILINE,
+    )
+    t = re.sub(
+        r"^Root cause:\s*",
+        "**Root cause:** ",
+        t,
+        flags=re.MULTILINE,
+    )
+    t = re.sub(
+        r"^\[([^\]]+)\] script execution failed\s*$",
+        r"**\1 — script execution failed**",
+        t,
+        flags=re.MULTILINE,
+    )
+    t = re.sub(r"^--- inputs ---\s*\n", "", t, flags=re.MULTILINE | re.IGNORECASE)
     t = re.sub(r"^« ([^»]+) »\s*$", r"**« \1 »**", t, flags=re.MULTILINE)
     t = re.sub(r"^Trevas \(actual\):\s*$", "**Trevas (actual)**", t, flags=re.MULTILINE)
     t = re.sub(r"^TCK \(expected\):\s*$", "**TCK (expected)**", t, flags=re.MULTILINE)
@@ -353,7 +504,8 @@ def rewrite_failure_cause_summary(text: str) -> str:
 
 def sanitize_failure_detail(detail: str) -> str:
     """Remove duplicated script and AssertJ noise; keep inputs/tables."""
-    t = strip_assertj_noise(detail)
+    t = peel_assertion_error_wrapper(detail)
+    t = strip_assertj_noise(t)
     # Some Surefire variants duplicate the payload (message + body).
     # Strip embedded script sections repeatedly until stable.
     while True:
@@ -361,7 +513,9 @@ def sanitize_failure_detail(detail: str) -> str:
         if nxt == t:
             break
         t = nxt
+    t = compact_java_exception_detail(t)
     t = strip_java_stack_trace(t)
+    t = highlight_trevas_stack_headers(t)
     t = convert_ascii_tables_to_markdown(t)
     t = tidy_failure_section_headers(t)
     t = rewrite_failure_cause_summary(t)
@@ -438,7 +592,10 @@ def render_case_plain(i: int, display_path: str, script: str, row: dict[str, str
     if row["status"] == "FAIL":
         cleaned = sanitize_failure_detail(row["detail"].strip())
         if cleaned:
-            lines.extend(["", cleaned])
+            if cleaned.startswith("**") or cleaned.startswith("```"):
+                lines.extend(["", cleaned])
+            else:
+                lines.extend(["", "```text", cleaned, "```"])
     lines.extend(["", ""])
     return "\n".join(lines)
 

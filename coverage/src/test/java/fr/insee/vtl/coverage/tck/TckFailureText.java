@@ -28,6 +28,18 @@ public final class TckFailureText {
         formatDataStructureTable(expected));
   }
 
+  /** Script failed during {@code engine.eval} (exception, not an output mismatch). */
+  public static String executionError(String displayPath, Test test, Throwable error) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format("[%s] script execution failed%n", displayPath));
+    appendExceptionSummary(sb, error);
+    sb.append(System.lineSeparator());
+    appendScript(sb, test.getScript());
+    sb.append(System.lineSeparator());
+    appendInputs(sb, test.getInput());
+    return sb.toString();
+  }
+
   public static String rowDataMismatch(
       String displayPath, String outputName, Test test, Dataset actualDs, Dataset expectedDs) {
     StringBuilder sb = new StringBuilder();
@@ -46,6 +58,127 @@ public final class TckFailureText {
 
   private static void appendScript(StringBuilder sb, String script) {
     TckScriptText.appendFull(sb, script, MAX_SCRIPT_CHARS);
+  }
+
+  private static final int MAX_CAUSE_DEPTH = 4;
+  private static final int MAX_TREVAS_FRAMES = 15;
+  private static final int MAX_FALLBACK_FRAMES = 8;
+
+  private static void appendExceptionSummary(StringBuilder sb, Throwable error) {
+    if (error == null) {
+      sb.append("(no exception)").append(System.lineSeparator());
+      return;
+    }
+    Throwable root = rootCause(error);
+    appendThrowableLine(sb, error, false);
+    if (root != error) {
+      sb.append("Root cause: ");
+      appendThrowableLine(sb, root, true);
+    }
+    appendTrevasStackSection(sb, root);
+  }
+
+  private static Throwable rootCause(Throwable error) {
+    Throwable cur = error;
+    while (cur.getCause() != null && cur.getCause() != cur) {
+      cur = cur.getCause();
+    }
+    return cur;
+  }
+
+  private static void appendThrowableLine(StringBuilder sb, Throwable t, boolean inline) {
+    if (!inline) {
+      sb.append("Exception: ");
+    }
+    sb.append(t.getClass().getName());
+    String message = t.getMessage();
+    if (message != null && !message.isBlank()) {
+      sb.append(": ").append(message.trim());
+    }
+    sb.append(System.lineSeparator());
+  }
+
+  /**
+   * All {@code fr.insee.vtl.*} frames with file:line for the report (not stripped by CI script).
+   */
+  private static void appendTrevasStackSection(StringBuilder sb, Throwable error) {
+    StackTraceElement[] trace = error.getStackTrace();
+    if (trace == null || trace.length == 0) {
+      sb.append("Trevas stack: (empty stack trace)").append(System.lineSeparator());
+      return;
+    }
+    List<StackTraceElement> trevas = new ArrayList<>();
+    for (StackTraceElement frame : trace) {
+      if (frame.getClassName().startsWith("fr.insee.vtl")) {
+        trevas.add(frame);
+      }
+    }
+    if (!trevas.isEmpty()) {
+      sb.append("Trevas stack (file:line):").append(System.lineSeparator());
+      int n = Math.min(trevas.size(), MAX_TREVAS_FRAMES);
+      for (int i = 0; i < n; i++) {
+        appendNumberedFrame(sb, i + 1, trevas.get(i));
+      }
+      if (trevas.size() > MAX_TREVAS_FRAMES) {
+        sb.append("  … ")
+            .append(trevas.size() - MAX_TREVAS_FRAMES)
+            .append(" more Trevas frames omitted")
+            .append(System.lineSeparator());
+      }
+      return;
+    }
+    sb.append("Trevas stack: (no fr.insee.vtl frame — showing call path):")
+        .append(System.lineSeparator());
+    int shown = 0;
+    for (StackTraceElement frame : trace) {
+      if (isNoiseFrame(frame.getClassName())) {
+        continue;
+      }
+      if (shown >= MAX_FALLBACK_FRAMES) {
+        break;
+      }
+      appendNumberedFrame(sb, shown + 1, frame);
+      shown++;
+    }
+    if (shown == 0) {
+      for (int i = 0; i < Math.min(5, trace.length); i++) {
+        appendNumberedFrame(sb, i + 1, trace[i]);
+      }
+    }
+  }
+
+  private static void appendNumberedFrame(StringBuilder sb, int index, StackTraceElement frame) {
+    sb.append("  ")
+        .append(index)
+        .append(". ")
+        .append(frame.getClassName())
+        .append(".")
+        .append(frame.getMethodName())
+        .append(" — ")
+        .append(formatSourceLocation(frame))
+        .append(System.lineSeparator());
+  }
+
+  private static String formatSourceLocation(StackTraceElement frame) {
+    String file = frame.getFileName();
+    if (file == null || file.isBlank()) {
+      file = "(unknown file)";
+    }
+    int line = frame.getLineNumber();
+    if (line > 0) {
+      return file + ":" + line;
+    }
+    return file + " (line unknown)";
+  }
+
+  private static boolean isNoiseFrame(String className) {
+    return className.startsWith("java.")
+        || className.startsWith("jdk.")
+        || className.startsWith("sun.")
+        || className.startsWith("org.junit.")
+        || className.startsWith("org.assertj.")
+        || className.startsWith("org.apache.maven.")
+        || className.startsWith("org.opentest4j.");
   }
 
   private static void appendInputs(StringBuilder sb, Map<String, Dataset> inputs) {

@@ -40,7 +40,11 @@ public final class TckCaseExecutor {
       softly.assertAll();
       return;
     }
-    engine.eval(script);
+    try {
+      engine.eval(script);
+    } catch (Throwable t) {
+      throw new AssertionError(TckFailureText.executionError(displayPath, test, t), t);
+    }
 
     Map<String, Dataset> outputs = test.getOutputs();
     if (outputs == null || outputs.isEmpty()) {
