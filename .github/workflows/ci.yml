@@ -41,8 +41,10 @@ jobs:
           java-version: 17
           distribution: "adopt"
       # Also exclude vtl-prov because of vtl-sdmx scope test dependency
+      - name: Build parser stack (vtl-antlr + vtl-parser)
+        run: mvn install -pl vtl-antlr,vtl-parser -am -DskipTests
       - name: Test
-        run: mvn install -pl vtl-parser && mvn test -pl '!vtl-sdmx,!vtl-prov'
+        run: mvn test -pl '!vtl-sdmx,!vtl-prov'
   test:
     name: Run Trevas tests
     if: (github.repository != 'InseeFr/Trevas' &&
@@ -70,8 +72,10 @@ jobs:
                 "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
+      - name: Build parser stack (vtl-antlr + vtl-parser)
+        run: mvn install -pl vtl-antlr,vtl-parser -am -DskipTests
       - name: Test
-        run: mvn install -pl vtl-parser && mvn test
+        run: mvn test
 
   spark-integration:
     name: Spark ${{ matrix.spark-label }}
@@ -115,10 +119,10 @@ jobs:
                 "username": "${{ secrets.GH_PACKAGES_USERNAME }}",
                 "password": "${{ secrets.GH_PACKAGES_PASSWORD }}"
             }]
-      # Install shaded vtl-parser first, then exclude it from the reactor so dependent
-      # modules resolve the installed jar (JPMS fr.insee.vtl.parser.shaded), not target/classes.
+      # Install vtl-antlr + vtl-parser first, then exclude vtl-parser from the reactor so
+      # dependent modules resolve the installed jar, not target/classes.
       - name: Test ${{ matrix.module }} (and upstream modules)
-        run: mvn install -pl vtl-parser -DskipTests && mvn -B test -pl ${{ matrix.module }} -am --projects '!vtl-parser' ${{ matrix.extra-args }}
+        run: mvn install -pl vtl-antlr,vtl-parser -am -DskipTests && mvn -B test -pl ${{ matrix.module }} -am --projects '!vtl-parser' ${{ matrix.extra-args }}
 
   package:
     name: Package Trevas modules
