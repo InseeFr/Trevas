@@ -2,7 +2,10 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.aggregation.DatasetAggregateInvocationExecutor;
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
@@ -369,6 +372,30 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   }
 
   /**
+   * Dataset-level aggregate invocation ({@code sum(DS group by …)}, etc.).
+   *
+   * @see DatasetAggregateInvocationExecutor
+   */
+  @Override
+  public ResolvableExpression visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
+    return visit(ctx.aggrOperatorsGrouping());
+  }
+
+  @Override
+  public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    DatasetExpression dataset = asDataset(visit(ctx.expr()), ctx);
+    return DatasetAggregateInvocationExecutor.executeSumLike(dataset, ctx, this, processingEngine);
+  }
+
+  @Override
+  public ResolvableExpression visitCountAggr(VtlParser.CountAggrContext ctx) {
+    throw new VtlRuntimeException(
+        new UnimplementedException(
+            "count() without operand is not supported at dataset invocation level",
+            fromContext(ctx)));
+  }
+
+  /**
    * Visits clause expressions.
    *
    * @param ctx The scripting context for the expression.
@@ -512,6 +539,15 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
       analytics.put(targetColumnName, result);
     }
     return processingEngine.executeInnerJoin(analytics);
+  }
+
+  private DatasetExpression asDataset(ResolvableExpression expression, ParserRuleContext ctx) {
+    if (expression instanceof DatasetExpression datasetExpression) {
+      return datasetExpression;
+    }
+    throw new VtlRuntimeException(
+        new InvalidArgumentException(
+            "aggregate invocation first operand must be a dataset", fromContext(ctx)));
   }
 
   @Override
