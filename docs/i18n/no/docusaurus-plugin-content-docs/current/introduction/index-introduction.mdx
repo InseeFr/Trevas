@@ -46,3 +46,5 @@ import Video from '@theme/Video';
 Trevas leverer VTL-motorer for ulike driftsmiljøer, inkludert en Java 17-motor og en [Apache Spark](https://spark.apache.org/) motor.
 
 Trevas-motorer er basert på [JSR 223](https://jcp.org/en/jsr/detail?id=223) spesifikasjonen som beskriver bruken av skriptspråk i Java.
+
+Parserstakken (`vtl-antlr` deretter `vtl-parser`) bruker en [flyttet ANTLR-runtime](/developer-guide/antlr-shaded-runtime) slik at Trevas og Apache Spark kan sameksistere på samme classpath.
