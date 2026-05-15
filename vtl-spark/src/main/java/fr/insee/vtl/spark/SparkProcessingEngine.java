@@ -67,8 +67,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
     return getRoleMap(dataset.getDataStructure().values());
   }
 
-  // TODO (expression instanceof MinAggregationExpression)
-  // TODO column = stddev_pop(columnName);
   private static Column convertAggregation(String columnName, AggregationExpression expression)
       throws UnsupportedOperationException {
     Column column;
@@ -85,6 +83,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     } else if (expression instanceof MedianAggregationExpression) {
       column =
           percentile_approx(SparkUtils.safeCol(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+    } else if (expression instanceof StdDevPopAggregationExpression) {
+      column = stddev_pop(SparkUtils.safeCol(columnName));
     } else if (expression instanceof StdDevSampAggregationExpression) {
       column = stddev_samp(SparkUtils.safeCol(columnName));
     } else if (expression instanceof VarPopAggregationExpression) {
