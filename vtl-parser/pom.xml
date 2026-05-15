@@ -25,13 +25,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>${antlr4.version}</version>
-            <scope>compile</scope>
-            <!-- Runtime is shaded/relocated into this module artifact;
-                 do not leak the original ANTLR runtime transitively. -->
-            <optional>true</optional>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-antlr</artifactId>
+            <version>2.4.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -43,106 +39,39 @@
                 <version>${antlr4.version}</version>
                 <executions>
                     <execution>
+                        <id>antlr</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
                         <configuration>
                             <listener>true</listener>
                             <visitor>true</visitor>
                             <libDirectory>src/main/antlr4/fr/insee/vtl/parser</libDirectory>
                         </configuration>
-                        <id>antlr</id>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <!-- Build the unshaded jar early (process-classes) so shade can transform it
-                     before tests run. Skip the default jar execution that would otherwise
-                     overwrite the shaded jar at the package phase. -->
+                <!-- ANTLR has no option to override the runtime import path; rewrite the
+                     generated sources' imports to point at our relocated runtime (vtl-antlr)
+                     so the compiled class files reference the shaded names from the start. -->
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>default-jar</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>pre-shade-jar</id>
-                        <phase>process-classes</phase>
+                        <id>relocate-antlr-imports</id>
+                        <phase>process-sources</phase>
                         <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>shade-antlr</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>shade</goal>
+                            <goal>run</goal>
                         </goals>
                         <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.antlr:antlr4-runtime</include>
-                                </includes>
-                            </artifactSet>
-
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.antlr.v4</pattern>
-                                    <shadedPattern>fr.insee.vtl.parser.antlr4</shadedPattern>
-                                </relocation>
-                            </relocations>
-
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <!-- Inject a JPMS module-info into the shaded JAR. The source module-info.java
-                     only exports unshaded packages (so Surefire can read target/classes during test);
-                     this execution overwrites the JAR's module-info.class with one that also exports
-                     the relocated fr.insee.vtl.parser.antlr4.* packages produced by shade. -->
-                <groupId>org.moditect</groupId>
-                <artifactId>moditect-maven-plugin</artifactId>
-                <version>1.2.2.Final</version>
-                <executions>
-                    <execution>
-                        <id>add-shaded-module-info</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>add-module-info</goal>
-                        </goals>
-                        <configuration>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <modules>
-                                <module>
-                                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
-                                    <moduleInfo>
-                                        <name>fr.insee.vtl.parser</name>
-                                        <exports>
-                                            fr.insee.vtl.parser;
-                                            fr.insee.vtl.parser.antlr4.runtime;
-                                            fr.insee.vtl.parser.antlr4.runtime.atn;
-                                            fr.insee.vtl.parser.antlr4.runtime.dfa;
-                                            fr.insee.vtl.parser.antlr4.runtime.misc;
-                                            fr.insee.vtl.parser.antlr4.runtime.tree;
-                                            fr.insee.vtl.parser.antlr4.runtime.tree.pattern;
-                                            fr.insee.vtl.parser.antlr4.runtime.tree.xpath;
-                                        </exports>
-                                        <opens>fr.insee.vtl.parser;</opens>
-                                    </moduleInfo>
-                                </module>
-                            </modules>
+                            <target>
+                                <replaceregexp match="org\.antlr\.v4" replace="fr.insee.vtl.antlr" flags="g">
+                                    <fileset dir="${project.build.directory}/generated-sources/antlr4"
+                                             includes="**/*.java"/>
+                                </replaceregexp>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

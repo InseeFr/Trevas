@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.insee.trevas</groupId>
+        <artifactId>trevas-parent</artifactId>
+        <version>2.4.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vtl-antlr</artifactId>
+    <name>VTL ANTLR Runtime (shaded)</name>
+    <description>Relocated ANTLR4 runtime so it does not collide with Spark's bundled copy.</description>
+    <version>2.4.0-SNAPSHOT</version>
+
+    <!--    Warning: not latest, align with version embedded by Spark-->
+    <properties>
+        <antlr4.version>4.9.3</antlr4.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.version}</version>
+            <scope>compile</scope>
+            <!-- Runtime is shaded/relocated into this module artifact;
+                 do not leak the original ANTLR runtime transitively. -->
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- Build the (empty) unshaded jar early (process-classes) so shade can transform it
+                     before downstream reactor modules compile. Skip the default jar execution that
+                     would otherwise overwrite the shaded jar at the package phase. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>pre-shade-jar</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-antlr</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.antlr:antlr4-runtime</include>
+                                </includes>
+                            </artifactSet>
+
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.antlr.v4</pattern>
+                                    <shadedPattern>fr.insee.vtl.antlr</shadedPattern>
+                                </relocation>
+                            </relocations>
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Inject a JPMS module-info into the shaded JAR. We cannot author a source
+                     module-info.java that exports the relocated packages because they don't
+                     exist at compile time (shade has not run yet). -->
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.2.2.Final</version>
+                <executions>
+                    <execution>
+                        <id>add-shaded-module-info</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <modules>
+                                <module>
+                                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
+                                    <moduleInfo>
+                                        <name>fr.insee.vtl.antlr</name>
+                                        <exports>
+                                            fr.insee.vtl.antlr.runtime;
+                                            fr.insee.vtl.antlr.runtime.atn;
+                                            fr.insee.vtl.antlr.runtime.dfa;
+                                            fr.insee.vtl.antlr.runtime.misc;
+                                            fr.insee.vtl.antlr.runtime.tree;
+                                            fr.insee.vtl.antlr.runtime.tree.pattern;
+                                            fr.insee.vtl.antlr.runtime.tree.xpath;
+                                        </exports>
+                                    </moduleInfo>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

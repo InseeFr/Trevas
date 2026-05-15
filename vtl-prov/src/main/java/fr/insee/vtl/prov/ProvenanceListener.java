@@ -1,12 +1,12 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.misc.Interval;
+import fr.insee.vtl.antlr.runtime.tree.ParseTreeWalker;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.*;
-import fr.insee.vtl.parser.antlr4.runtime.misc.Interval;
-import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTreeWalker;
 import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;

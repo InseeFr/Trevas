@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -11,7 +12,6 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;

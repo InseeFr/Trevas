@@ -2,6 +2,10 @@ package fr.insee.vtl.engine;
 
 import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.misc.Interval;
+import fr.insee.vtl.antlr.runtime.tree.ParseTree;
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
@@ -9,10 +13,6 @@ import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.*;
-import fr.insee.vtl.parser.antlr4.runtime.misc.Interval;
-import fr.insee.vtl.parser.antlr4.runtime.tree.ParseTree;
-import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;

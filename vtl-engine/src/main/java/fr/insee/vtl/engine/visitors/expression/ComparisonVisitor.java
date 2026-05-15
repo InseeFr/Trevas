@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.antlr.runtime.Token;
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.utils.TypeChecking;
@@ -13,8 +15,6 @@ import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.parser.antlr4.runtime.Token;
-import fr.insee.vtl.parser.antlr4.runtime.tree.TerminalNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
