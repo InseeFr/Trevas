@@ -29,7 +29,6 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,13 +139,9 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             fromContext(ctx));
       }
 
-      ArrayList<String> components =
-          structure.values().stream()
-              .filter(Structured.Component::isIdentifier)
-              .map(Structured.Component::getName)
-              .collect(Collectors.toCollection(ArrayList::new));
-      components.add(componentName);
-      return this.engine.getProcessingEngine().executeProject((DatasetExpression) ds, components);
+      return this.engine
+          .getProcessingEngine()
+          .executeMembership((DatasetExpression) ds, componentName);
     } catch (VtlScriptException vse) {
       throw new VtlRuntimeException(vse);
     }

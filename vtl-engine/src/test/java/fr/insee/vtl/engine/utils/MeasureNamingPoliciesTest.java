@@ -72,6 +72,10 @@ class MeasureNamingPoliciesTest {
         .isEqualTo(MeasureNamingPolicy.TYPE_CHANGING);
     assertThat(MeasureNamingPolicies.policyFor("isNull", List.of(ds)))
         .isEqualTo(MeasureNamingPolicy.TYPE_CHANGING);
+    assertThat(MeasureNamingPolicies.policyFor("len", List.of(ds)))
+        .isEqualTo(MeasureNamingPolicy.TYPE_CHANGING);
+    assertThat(MeasureNamingPolicies.policyFor("instr", List.of(ds, scalar)))
+        .isEqualTo(MeasureNamingPolicy.TYPE_CHANGING);
   }
 
   @Test

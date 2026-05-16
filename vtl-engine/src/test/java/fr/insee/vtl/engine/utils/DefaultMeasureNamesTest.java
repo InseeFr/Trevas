@@ -41,4 +41,18 @@ class DefaultMeasureNamesTest {
                 "double1", Double.class, Long.class, MeasureNamingPolicy.HOMONYMOUS))
         .isEqualTo("double1");
   }
+
+  @Test
+  void typeChangingPolicyUsesIntVarAndStringVar() {
+    assertThat(
+            DefaultMeasureNames.resolveOutputMeasureName(
+                "Me_1", String.class, Long.class, MeasureNamingPolicy.TYPE_CHANGING))
+        .isEqualTo(DefaultMeasureNames.INT_VAR);
+    assertThat(
+            DefaultMeasureNames.resolveOutputMeasureName(
+                "At_1", String.class, String.class, MeasureNamingPolicy.TYPE_CHANGING))
+        .isEqualTo("At_1");
+    assertThat(DefaultMeasureNames.forType(Double.class)).isEqualTo(DefaultMeasureNames.NUM_VAR);
+    assertThat(DefaultMeasureNames.forType(String.class)).isEqualTo(DefaultMeasureNames.STRING_VAR);
+  }
 }
