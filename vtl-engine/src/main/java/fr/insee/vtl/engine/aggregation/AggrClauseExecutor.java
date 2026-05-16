@@ -6,7 +6,6 @@ import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
@@ -82,27 +81,13 @@ public final class AggrClauseExecutor {
             alias,
             AggregationExpressionFactory.fromAggrDataset(
                 (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                columnReference(fromContext(ctx), alias, normalizedComponent.getType())));
+                AggregationColumnReferences.columnReference(
+                    fromContext(ctx), alias, normalizedComponent.getType())));
       } else {
         collectorMap.put(alias, AggregationExpressionFactory.countRows());
       }
     }
 
     return processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectorMap);
-  }
-
-  private static ResolvableExpression columnReference(
-      Positioned position, String alias, Class<?> type) {
-    return new ResolvableExpression(position) {
-      @Override
-      public Object resolve(Map<String, Object> context) {
-        return context.get(alias);
-      }
-
-      @Override
-      public Class<?> getType() {
-        return type;
-      }
-    };
   }
 }
