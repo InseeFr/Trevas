@@ -72,7 +72,7 @@ Reports (after a test run):
 ```shell
 python3 coverage/scripts/prettify_tck_surefire_xml.py
 python3 coverage/scripts/render_tck_job_summary.py
-# → coverage/target/tck-scripts-report.md
+# → coverage/target/tck-scripts-report.md (cases ordered by Test N, same as JUnit)
 ```
 
 ## CI

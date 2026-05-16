@@ -7,7 +7,7 @@ Rewrite Surefire TEST-*.xml testcase names for TCK so GitHub's java-junit report
 
 instead of a single technical line like tckCase(TckCase) Test 76 — …
 
-Also reorders <testcase> elements by natural alphanumeric order of the display path
+Also reorders <testcase> elements by Trevas test number (Test N)
 (same order as coverage/target/tck-scripts-report.md).
 
 Run after mvn test, before dorny/test-reporter. Safe no-op if reports are missing.
@@ -57,12 +57,12 @@ def _local_tag(elem: ET.Element) -> str:
     return elem.tag
 
 
-def _testcase_sort_key(tc: ET.Element) -> list:
+def _testcase_sort_key(tc: ET.Element) -> tuple[int, list]:
     name = tc.attrib.get("name", "")
     parsed = split_testcase_name(name)
     if parsed is not None:
-        return natural_sort_key(parsed[1])
-    return natural_sort_key(name)
+        return (parsed[0], natural_sort_key(parsed[1]))
+    return (2**31 - 1, natural_sort_key(name))
 
 
 def sort_testcases_in_testsuite(parent: ET.Element) -> bool:
