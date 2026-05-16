@@ -11,6 +11,9 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
+import fr.insee.vtl.engine.utils.DefaultMeasureNames;
+import fr.insee.vtl.engine.utils.MeasureNamingPolicies;
+import fr.insee.vtl.engine.utils.MeasureNamingPolicy;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -124,7 +127,12 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
         return new FunctionExpression(method, parameters, position);
       } else if (noMonoDs.isEmpty()) {
-        finalRes = invokeFunctionOnDataset(funcName, parameters, position);
+        finalRes =
+            invokeFunctionOnDataset(
+                funcName,
+                parameters,
+                position,
+                MeasureNamingPolicies.policyFor(funcName, parameters));
       } else {
         List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
         Map<String, DatasetExpression> results = new HashMap<>();
@@ -142,16 +150,11 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                         } else return p;
                       })
                   .collect(Collectors.toList());
-          results.put(measure.getName(), invokeFunctionOnDataset(funcName, params, position));
+          results.put(
+              measure.getName(),
+              invokeFunctionOnDataset(funcName, params, position, MeasureNamingPolicy.HOMONYMOUS));
         }
         finalRes = proc.executeInnerJoin(results);
-      }
-      if (finalRes instanceof DatasetExpression expression) {
-        List<Structured.Component> measures = expression.getMeasures();
-        if (measures.size() == 1 && measures.get(0).getType().equals(Boolean.class)) {
-          // TODO: refine with constraints matrix
-          return proc.executeRename(expression, Map.of(measures.get(0).getName(), "bool_var"));
-        }
       }
       return finalRes;
     } catch (NoSuchMethodException e) {
@@ -160,7 +163,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
   }
 
   private DatasetExpression invokeFunctionOnDataset(
-      String funcName, List<ResolvableExpression> parameters, Positioned position)
+      String funcName,
+      List<ResolvableExpression> parameters,
+      Positioned position,
+      MeasureNamingPolicy namingPolicy)
       throws NoSuchMethodException, VtlScriptException {
     ProcessingEngine proc = engine.getProcessingEngine();
 
@@ -168,6 +174,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     // 1. Join all the datasets together and build a new expression map.
     Map<String, ResolvableExpression> monoExprs = new HashMap<>();
     Set<String> measureNames = new HashSet<>();
+    Class<?> operandMeasureType = null;
     var dsExprs =
         parameters.stream()
             .filter(DatasetExpression.class::isInstance)
@@ -190,6 +197,12 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                   return ds;
                 })
             .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
+    operandMeasureType =
+        parameters.stream()
+            .filter(DatasetExpression.class::isInstance)
+            .map(p -> ((DatasetExpression) p).getMeasures().get(0).getType())
+            .findFirst()
+            .orElse(null);
     if (measureNames.size() != 1) {
       throw new VtlRuntimeException(
           new InvalidArgumentException(
@@ -211,6 +224,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         normalizedParams.stream().map(TypedExpression::getType).collect(Collectors.toList());
     var method = engine.findMethod(funcName, parametersTypes);
     var funcExrp = new FunctionExpression(method, normalizedParams, position);
+    Class<?> resultType = funcExrp.getType();
     ds =
         proc.executeCalc(
             ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
@@ -221,7 +235,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                     ds.getIdentifiers().stream().map(Structured.Component::getName),
                     Stream.of(result))
                 .collect(Collectors.toList()));
-    return proc.executeRename(ds, Map.of(result, measureNames.iterator().next()));
+    String outputMeasureName =
+        DefaultMeasureNames.resolveOutputMeasureName(
+            measureNames.iterator().next(), operandMeasureType, resultType, namingPolicy);
+    return proc.executeRename(ds, Map.of(result, outputMeasureName));
   }
 
   @Override
