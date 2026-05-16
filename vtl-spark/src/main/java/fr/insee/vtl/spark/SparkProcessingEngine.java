@@ -15,6 +15,7 @@ import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -306,6 +307,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
       }
     }
     return dataset.select(iterableAsScalaIterable(columns).toSeq());
+  }
+
+  @Override
+  public DatasetExpression executeMembership(
+      DatasetExpression expression, String memberComponentName) {
+    return MembershipOperations.execute(this, expression, memberComponentName);
   }
 
   @Override
