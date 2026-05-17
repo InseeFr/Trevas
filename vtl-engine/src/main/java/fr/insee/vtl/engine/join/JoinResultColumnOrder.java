@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Canonical column order for a join virtual dataset (engine + Spark tests). */
+/** Output column order after join and alias stripping. */
 public final class JoinResultColumnOrder {
 
   private JoinResultColumnOrder() {}
@@ -50,10 +50,8 @@ public final class JoinResultColumnOrder {
     if (!nonKeyIds.isEmpty()) {
       ordered = partialUsingOrder(joinKeys, nonKeyIds, measures);
     } else if (operandsInJoinOrder.size() > 2 && measures.size() > 2) {
-      // Spark-style 3-way join (name, age, weight, age2, …), not full_join on the same id+m1.
       ordered = multiOperandNaturalJoinOrder(joinKeys, operandsInJoinOrder);
     } else {
-      // Keys then measures: {@code id1, id2, m1, m2} or collapsed {@code id, m1}.
       ordered = keysThenMeasures(joinKeys, measures);
     }
     return appendRemainingColumns(ordered, joinStructure, wanted);
@@ -106,11 +104,7 @@ public final class JoinResultColumnOrder {
     return ordered;
   }
 
-  /**
-   * Three or more operands, natural join on identifiers only (Spark {@code JoinTest} order): join
-   * keys, first reversed measure of operand 1, then non-keys of following operands from last to
-   * second, then remaining measures of operand 1, then first measure of operand 2 when 3-way.
-   */
+  /** Join keys, then operand-specific measure / identifier layout for 3+ datasets. */
   private static List<String> multiOperandNaturalJoinOrder(
       List<Component> joinKeys, List<DataStructure> operands) {
     Set<String> joinKeyNames =

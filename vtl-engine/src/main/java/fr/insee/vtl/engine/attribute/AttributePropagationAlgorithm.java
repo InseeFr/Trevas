@@ -6,21 +6,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * VTL 2.1 attribute propagation — value rules (User Manual, attribute components).
- *
- * <p><strong>Grouped aggregation</strong> (TCK ex. 163): for each viral component, reduce the
- * group's values with the minimum ({@code null} first, then natural order). Empty strings
- * participate like any other string value.
- *
- * <p><strong>Warning:</strong> using {@code min} as the group reducer is an implementation aligned
- * with today's TCK golden files, not a verbatim copy of the User Manual algorithm. It may need to
- * change if the VTL 2.1 spec, User Manual, or reference examples are updated — see {@code
- * package-info.java} in this package.
- *
- * <p><strong>Unary</strong> operations copy viral column values unchanged (handled by retaining
- * columns through operators; see {@link AttributePropagation}).
- *
- * <p><strong>Binary</strong> propagation after joins is not implemented here (Phase 5).
+ * Viral attribute values: grouped reduction uses {@code min} (nulls first); unary copy is by
+ * column.
  */
 public final class AttributePropagationAlgorithm {
 

@@ -56,12 +56,7 @@ public final class JoinProjection {
     return projected;
   }
 
-  /**
-   * When join renamed a duplicate identifier to {@code alias#name}, the virtual dataset keeps both
-   * {@code name} (left) and {@code alias#name} (right). For {@code using} on a strict subset of
-   * identifiers, output {@code name} must take the right operand ({@code alias#name}), not the
-   * left.
-   */
+  /** Prefer {@code alias#name} over bare {@code name} when both exist after a join rename. */
   static String resolveSourceColumn(DataStructure source, String bareName) {
     String bare = null;
     String aliased = null;

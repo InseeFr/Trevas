@@ -11,7 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/** Step-by-step checks for join output column order (run after each join change). */
+/** Join output column order. */
 class JoinResultColumnOrderTest {
 
   private static Component id(String name) {
@@ -79,7 +79,7 @@ class JoinResultColumnOrderTest {
   }
 
   @Nested
-  @DisplayName("3+ operands (Spark JoinTest layout)")
+  @DisplayName("3+ operands")
   class MultiOperand {
 
     @Test

@@ -177,7 +177,6 @@ public class JoinTest {
             new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
             new Structured.Component("m1", Long.class, Dataset.Role.MEASURE));
 
-    // Column order: identifier then measure (same as vtl-engine JoinFunctionsTest.testFullJoin).
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(
             Arrays.asList("d", 8L),
