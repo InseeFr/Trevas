@@ -7,6 +7,8 @@ import static fr.insee.vtl.model.Dataset.Role;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.join.JoinProjection;
+import fr.insee.vtl.engine.join.JoinResultColumnOrder;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -157,28 +159,18 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     return result;
   }
 
-  private DatasetExpression removeComponentAlias(DatasetExpression dataset) {
-    Set<String> toKeep =
-        dataset.getDataStructure().values().stream()
-            .map(Component::getName)
-            .map(n -> n.substring(n.lastIndexOf("#") + 1))
-            .collect(Collectors.toSet());
-    List<String> componentNamesWithAlias =
-        dataset.getDataStructure().values().stream()
-            .map(Component::getName)
-            .filter(n -> n.contains("#"))
-            .toList();
-    Map<String, String> toFrom = new HashMap<>();
-    componentNamesWithAlias.forEach(
-        n -> {
-          String extraction = n.substring(n.lastIndexOf("#") + 1);
-          toFrom.put(extraction, n);
-        });
-    Map<String, String> fromTo =
-        toFrom.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-    var renamed = processingEngine.executeRename(dataset, fromTo);
-    return processingEngine.executeProject(renamed, new ArrayList<>(toKeep));
+  private DatasetExpression removeComponentAlias(
+      DatasetExpression dataset,
+      List<Structured.Component> joinKeys,
+      List<DatasetExpression> operandsInJoinOrder) {
+    Structured.DataStructure structure = dataset.getDataStructure();
+    List<Structured.DataStructure> operandStructures =
+        operandsInJoinOrder.stream().map(DatasetExpression::getDataStructure).toList();
+    List<String> toKeep = JoinResultColumnOrder.compute(structure, joinKeys, operandStructures);
+    if (JoinResultColumnOrder.hasAliasedColumn(structure)) {
+      return JoinProjection.project(dataset, toKeep);
+    }
+    return processingEngine.executeProject(dataset, toKeep);
   }
 
   private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
@@ -187,7 +179,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     List<Structured.Component> ids = getInnerAndLeftJoinIdentifiers(joinClauseContext, datasets);
 
     DatasetExpression res = processingEngine.executeLeftJoin(renameDuplicates(ids, datasets), ids);
-    return removeComponentAlias(res);
+    return removeComponentAlias(res, ids, new ArrayList<>(datasets.values()));
   }
 
   private DatasetExpression crossJoin(VtlParser.JoinExprContext ctx) {
@@ -221,7 +213,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     DatasetExpression res =
         processingEngine.executeFullJoin(
             renameDuplicates(commonIdentifiers, datasets), commonIdentifiers);
-    return removeComponentAlias(res);
+    return removeComponentAlias(res, commonIdentifiers, new ArrayList<>(datasets.values()));
   }
 
   private DatasetExpression innerJoin(VtlParser.JoinExprContext ctx) {
@@ -229,7 +221,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     var datasets = normalizeDatasets(joinClauseContext.joinClauseItem());
     List<Structured.Component> ids = getInnerAndLeftJoinIdentifiers(joinClauseContext, datasets);
     DatasetExpression res = processingEngine.executeInnerJoin(renameDuplicates(ids, datasets), ids);
-    return removeComponentAlias(res);
+    return removeComponentAlias(res, ids, new ArrayList<>(datasets.values()));
   }
 
   private List<Structured.Component> getInnerAndLeftJoinIdentifiers(

@@ -20,7 +20,12 @@ public interface Structured {
    * @return The column names as a list of strings.
    */
   default List<String> getColumnNames() {
-    return new ArrayList<>(getDataStructure().keySet());
+    var structure = getDataStructure();
+    List<String> names = new java.util.ArrayList<>(structure.size());
+    for (int i = 0; i < structure.size(); i++) {
+      names.add(structure.keyAtIndex(i));
+    }
+    return names;
   }
 
   /**
@@ -279,6 +284,7 @@ public interface Structured {
         Component component = new Component(column, types.get(column), roles.get(column));
         put(column, component);
       }
+      reindexKeys();
     }
 
     /**
@@ -302,6 +308,7 @@ public interface Structured {
             new Component(column, types.get(column), roles.get(column), nullables.get(column));
         put(column, component);
       }
+      reindexKeys();
     }
 
     /**
@@ -323,28 +330,45 @@ public interface Structured {
       if (!duplicates.isEmpty()) {
         throw new IllegalArgumentException("duplicate column " + duplicates);
       }
+      reindexKeys();
     }
 
     // TODO: Remove. We can simply use a Map<String, Component> of the
     //        constructor with Collection<Component>
     public DataStructure(DataStructure dataStructure) {
       super(dataStructure);
+      reindexKeys();
+    }
+
+    /** Components in stable index order ({@link #keyAtIndex(int)}), not hash iteration order. */
+    public List<Component> componentsInOrder() {
+      List<Component> list = new ArrayList<>(size());
+      for (int i = 0; i < size(); i++) {
+        list.add(get(keyAtIndex(i)));
+      }
+      return list;
     }
 
     public List<Component> getIdentifiers() {
-      return values().stream().filter(Component::isIdentifier).collect(Collectors.toList());
+      return componentsInOrder().stream()
+          .filter(Component::isIdentifier)
+          .collect(Collectors.toList());
     }
 
     public List<Component> getMeasures() {
-      return values().stream().filter(Component::isMeasure).collect(Collectors.toList());
+      return componentsInOrder().stream().filter(Component::isMeasure).collect(Collectors.toList());
     }
 
     public List<Component> getAttributes() {
-      return values().stream().filter(Component::isAttribute).collect(Collectors.toList());
+      return componentsInOrder().stream()
+          .filter(Component::isAttribute)
+          .collect(Collectors.toList());
     }
 
     public List<Component> getViralAttributes() {
-      return values().stream().filter(Component::isViralAttribute).collect(Collectors.toList());
+      return componentsInOrder().stream()
+          .filter(Component::isViralAttribute)
+          .collect(Collectors.toList());
     }
 
     public Map<String, Dataset.Role> getRoles() {
@@ -419,6 +443,32 @@ public interface Structured {
       addAll(collection);
     }
 
+    /**
+     * Copies values from {@code source} into this point, matching columns by name (safe when
+     * structures differ in size or column order).
+     */
+    public DataPoint(DataStructure dataStructure, DataPoint source) {
+      super();
+      growSize(dataStructure.size());
+      this.dataStructure = Objects.requireNonNull(dataStructure);
+      copyValuesByName(Objects.requireNonNull(source));
+    }
+
+    private void copyValuesByName(DataPoint source) {
+      if (dataStructure == source.dataStructure) {
+        for (int i = 0; i < dataStructure.size(); i++) {
+          set(i, source.get(i));
+        }
+        return;
+      }
+      for (Component component : dataStructure.componentsInOrder()) {
+        String name = component.getName();
+        if (source.dataStructure.containsKey(name)) {
+          set(name, source.get(name));
+        }
+      }
+    }
+
     private void growSize(int size) {
       while (size() < size) {
         add(null);
@@ -452,6 +502,11 @@ public interface Structured {
       return set(index, object);
     }
 
+    /** Structure this point was built for (index layout follows this map). */
+    public DataStructure getStructure() {
+      return dataStructure;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
@@ -461,7 +516,7 @@ public interface Structured {
         if (!Dataset.Role.IDENTIFIER.equals(component.getRole())) {
           continue;
         }
-        if (!get(component.getName()).equals(objects.get(component.getName()))) {
+        if (!Objects.equals(get(component.getName()), objects.get(component.getName()))) {
           return false;
         }
       }

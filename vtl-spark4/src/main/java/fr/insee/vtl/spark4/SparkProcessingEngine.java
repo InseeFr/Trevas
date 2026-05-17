@@ -68,6 +68,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
     return getRoleMap(dataset.getDataStructure().values());
   }
 
+  private static Map<String, Role> getRoleMap(
+      Structured.DataStructure structure, List<String> columnNames) {
+    Map<String, Role> roles = new LinkedHashMap<>();
+    for (String name : columnNames) {
+      Component component = structure.get(name);
+      if (component != null) {
+        roles.put(name, component.getRole());
+      }
+    }
+    return roles;
+  }
+
   // TODO (expression instanceof MinAggregationExpression)
   // TODO column = stddev_pop(columnName);
   private static Column convertAggregation(String columnName, AggregationExpression expression)
@@ -333,7 +345,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     // Project in spark.
     Dataset<Row> result = dataset.getSparkDataset().select(columnArray);
 
-    return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)), expression);
+    return new SparkDatasetExpression(
+        new SparkDataset(result, getRoleMap(expression.getDataStructure(), columnNames)),
+        expression);
   }
 
   private boolean checkColNameCompatibility(List<DatasetExpression> datasets) {

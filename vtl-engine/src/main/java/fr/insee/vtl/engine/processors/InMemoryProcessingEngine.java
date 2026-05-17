@@ -35,12 +35,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           new Dataset.Component(
               columnName, expressions.get(columnName).getType(), roles.get(columnName), true));
     }
+    newStructure.reindexKeys();
 
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         var dataset = expression.resolve(context);
-        List<List<Object>> result =
+        List<DataPoint> result =
             dataset.getDataPoints().stream()
                 .map(
                     dataPoint -> {
@@ -52,7 +53,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       return newDataPoint;
                     })
                 .collect(Collectors.toList());
-        return new InMemoryDataset(result, newStructure);
+        return InMemoryDataset.ofDataPoints(result, newStructure);
       }
 
       @Override
@@ -75,7 +76,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         Dataset resolve = expression.resolve(context);
-        List<List<Object>> result =
+        List<DataPoint> result =
             resolve.getDataPoints().stream()
                 .filter(
                     map -> {
@@ -84,7 +85,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       return (boolean) res;
                     })
                 .collect(Collectors.toList());
-        return new InMemoryDataset(result, getDataStructure());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
     };
   }
@@ -94,35 +95,37 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     if (fromTo.isEmpty()) {
       return expression;
     }
-    var structure =
-        expression.getDataStructure().values().stream()
-            .map(
-                component ->
-                    !fromTo.containsKey(component.getName())
-                        ? component
-                        : new Dataset.Component(
-                            fromTo.get(component.getName()),
-                            component.getType(),
-                            component.getRole(),
-                            component.getNullable()))
-            .collect(Collectors.toList());
-    DataStructure renamedStructure = new DataStructure(structure);
+    Map<String, Component> components = new LinkedHashMap<>();
+    for (Component component : expression.getDataStructure().values()) {
+      String name = fromTo.getOrDefault(component.getName(), component.getName());
+      components.put(
+          name,
+          name.equals(component.getName())
+              ? component
+              : new Component(
+                  name, component.getType(), component.getRole(), component.getNullable()));
+    }
+    DataStructure renamedStructure = new DataStructure(components.values());
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var result =
+        DataStructure sourceStructure = expression.getDataStructure();
+        List<DataPoint> result =
             expression.resolve(context).getDataPoints().stream()
                 .map(
                     dataPoint -> {
-                      var newDataPoint = new DataPoint(renamedStructure, dataPoint);
-                      for (String fromName : fromTo.keySet()) {
-                        var toName = fromTo.get(fromName);
-                        newDataPoint.set(toName, dataPoint.get(fromName));
+                      var newDataPoint = new DataPoint(renamedStructure);
+                      for (Component component : sourceStructure.values()) {
+                        String from = component.getName();
+                        String to = fromTo.getOrDefault(from, from);
+                        if (renamedStructure.containsKey(to)) {
+                          newDataPoint.set(to, dataPoint.get(from));
+                        }
                       }
                       return newDataPoint;
                     })
                 .collect(Collectors.toList());
-        return new InMemoryDataset(result, getDataStructure());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
       @Override
@@ -140,18 +143,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
-
+    DataStructure source = expression.getDataStructure();
     var structure =
-        expression.getDataStructure().values().stream()
-            .filter(component -> columnNames.contains(component.getName()))
-            .collect(Collectors.toList());
+        columnNames.stream().map(source::get).filter(Objects::nonNull).collect(Collectors.toList());
     var newStructure = new DataStructure(structure);
 
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         var columnNames = getColumnNames();
-        List<List<Object>> result =
+        List<DataPoint> result =
             expression.resolve(context).getDataPoints().stream()
                 .map(
                     data -> {
@@ -162,8 +163,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       return projectedDataPoint;
                     })
                 .collect(Collectors.toList());
-        // TODO: Use List<Datapoint> type for result to avoid conversion.
-        return new InMemoryDataset(result, getDataStructure());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
       @Override
@@ -184,7 +184,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           stream = Stream.concat(stream, dataset.getDataPoints().stream());
         }
         List<DataPoint> data = stream.distinct().collect(Collectors.toList());
-        return new InMemoryDataset(data, getDataStructure());
+        return InMemoryDataset.ofDataPoints(data, getDataStructure());
       }
 
       @Override
@@ -229,7 +229,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                     })
                 .collect(Collectors.toList());
 
-        return new InMemoryDataset(collect, structure);
+        return InMemoryDataset.ofDataPoints(collect, structure);
       }
 
       @Override
@@ -364,17 +364,48 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   private DataStructure createCommonStructure(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
     List<Component> components = new ArrayList<>(identifiers);
-    for (Component component : left.getDataStructure().values()) {
-      if (!identifiers.contains(component)) {
-        components.add(component);
-      }
-    }
-    for (Component component : right.getDataStructure().values()) {
-      if (!identifiers.contains(component)) {
-        components.add(component);
-      }
-    }
+    appendJoinOperands(components, identifiers, left.getDataStructure());
+    appendJoinOperands(components, identifiers, right.getDataStructure());
     return new DataStructure(components);
+  }
+
+  /** Appends non-key components in VTL order: identifiers, measures, viral/other attributes. */
+  private static void appendJoinOperands(
+      List<Component> target, List<Component> joinKeys, DataStructure structure) {
+    Set<String> joinKeyNames =
+        joinKeys.stream().map(Component::getName).collect(Collectors.toSet());
+    Set<String> present =
+        target.stream()
+            .map(Component::getName)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    List<Component> ids = new ArrayList<>();
+    List<Component> measures = new ArrayList<>();
+    List<Component> viral = new ArrayList<>();
+    List<Component> attributes = new ArrayList<>();
+
+    for (Component component : structure.componentsInOrder()) {
+      String name = component.getName();
+      if (joinKeyNames.contains(name) || present.contains(name)) {
+        continue;
+      }
+      if (component.isIdentifier()) {
+        ids.add(component);
+      } else if (component.isMeasure()) {
+        measures.add(component);
+      } else if (component.isViralAttribute()) {
+        viral.add(component);
+      } else if (component.isAttribute()) {
+        attributes.add(component);
+      }
+    }
+    for (List<Component> batch : List.of(ids, measures, viral, attributes)) {
+      for (Component component : batch) {
+        if (present.add(component.getName())) {
+          target.add(component);
+        }
+      }
+    }
   }
 
   /** Creates a datapoint comparator that operates on the given identifiers only. */
@@ -412,19 +443,19 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           if (!matches.isEmpty()) {
             // Create merge datapoint.
             var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getDataStructure().keySet()) {
+            for (String leftColumn : left.getColumnNames()) {
               mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
             }
             for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, mergedPoint);
-              for (String rightColumn : right.getDataStructure().keySet()) {
+              var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
+              for (String rightColumn : right.getColumnNames()) {
                 matchPoint.set(rightColumn, match.get(rightColumn));
               }
               result.add(matchPoint);
             }
           }
         }
-        return new InMemoryDataset(result, structure);
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override
@@ -464,7 +495,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
           // Create merge datapoint.
           var mergedPoint = new DataPoint(structure);
-          for (String leftColumn : left.getDataStructure().keySet()) {
+          for (String leftColumn : left.getColumnNames()) {
             mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
           }
 
@@ -472,15 +503,15 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             result.add(mergedPoint);
           } else {
             for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, mergedPoint);
-              for (String rightColumn : right.getDataStructure().keySet()) {
+              var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
+              for (String rightColumn : right.getColumnNames()) {
                 matchPoint.set(rightColumn, match.get(rightColumn));
               }
               result.add(matchPoint);
             }
           }
         }
-        return new InMemoryDataset(result, structure);
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override
@@ -503,16 +534,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         for (DataPoint leftPoint : leftPoints) {
           for (DataPoint rightPoint : rightPoints) {
             var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getDataStructure().keySet()) {
+            for (String leftColumn : left.getColumnNames()) {
               mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
             }
-            for (String rightColumn : right.getDataStructure().keySet()) {
+            for (String rightColumn : right.getColumnNames()) {
               mergedPoint.set(rightColumn, rightPoint.get(rightColumn));
             }
             result.add(mergedPoint);
           }
         }
-        return new InMemoryDataset(result, structure);
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override

@@ -17,6 +17,30 @@ public class InMemoryDataset implements Dataset {
   }
 
   /**
+   * Builds a dataset from existing {@link DataPoint}s (no row re-copy via {@link List} positional
+   * semantics). Use this instead of {@link #InMemoryDataset(List, DataStructure)} when {@code data}
+   * is already {@code List<DataPoint>}.
+   */
+  public static InMemoryDataset ofDataPoints(List<DataPoint> dataPoints, DataStructure structure) {
+    DataStructure target = Objects.requireNonNull(structure);
+    List<DataPoint> rebased =
+        Objects.requireNonNull(dataPoints).stream().map(p -> rebindToStructure(p, target)).toList();
+    return new InMemoryDataset(target, rebased);
+  }
+
+  private static DataPoint rebindToStructure(DataPoint point, DataStructure structure) {
+    if (point.getStructure() == structure) {
+      return point;
+    }
+    return new DataPoint(structure, point);
+  }
+
+  private InMemoryDataset(DataStructure structure, List<DataPoint> dataPoints) {
+    this.structure = structure;
+    this.data = dataPoints;
+  }
+
+  /**
    * Constructor taking initial data and structure components types, roles and nullables.
    *
    * @param data The initial data as a list of mappings between column names and column contents.
@@ -97,9 +121,15 @@ public class InMemoryDataset implements Dataset {
         .collect(Collectors.toList());
   }
 
-  private List<DataPoint> convertList(List<List<Object>> data) {
+  private List<DataPoint> convertList(List<? extends List<Object>> data) {
     return Objects.requireNonNull(data).stream()
-        .map(map -> new DataPoint(this.structure, map))
+        .map(
+            row -> {
+              if (row instanceof DataPoint point) {
+                return new DataPoint(this.structure, point);
+              }
+              return new DataPoint(this.structure, row);
+            })
         .collect(Collectors.toList());
   }
 

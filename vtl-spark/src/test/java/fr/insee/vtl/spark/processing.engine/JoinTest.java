@@ -177,12 +177,13 @@ public class JoinTest {
             new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
             new Structured.Component("m1", Long.class, Dataset.Role.MEASURE));
 
+    // Column order: identifier then measure (same as vtl-engine JoinFunctionsTest.testFullJoin).
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(
-            Arrays.asList(8L, "d"),
-            Arrays.asList(null, "c"),
-            Arrays.asList(null, "b"),
-            Arrays.asList(7L, "a"));
+            Arrays.asList("d", 8L),
+            Arrays.asList("c", null),
+            Arrays.asList("b", null),
+            Arrays.asList("a", 7L));
   }
 
   @Test
