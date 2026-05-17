@@ -102,6 +102,16 @@ public interface ProcessingEngine {
       Map<String, AggregationExpression> collectorMap);
 
   /**
+   * Same as {@link #executeAggr(DatasetExpression, List, Map)} with explicit viral propagation
+   * semantics (aggregate invocation vs {@code aggr} clause).
+   */
+  DatasetExpression executeAggr(
+      DatasetExpression expression,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap,
+      AggregationViralPropagation viralPropagation);
+
+  /**
    * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a
    * given window specification (e.g. partitionBy, orderBy, datapoints)
    */

@@ -59,7 +59,7 @@ class SparkViralAttributePropagationTest {
     engine.put("ds", multiIdentifierGroupedAggrDataset());
     engine.eval("res <- ds[aggr Me_2 := max(Me_1), Me_3 := min(Me_1) group by Id_1];");
     var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
+    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.VIRALATTRIBUTE);
     assertGroupedAggrViralValues(res.getDataAsMap());
   }
 

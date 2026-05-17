@@ -87,7 +87,7 @@ class AggregateInvocationEngineTest {
   }
 
   @Test
-  void globalAvgWithoutGroupByDropsViralAttribute() throws ScriptException {
+  void globalAvgWithoutGroupByPropagatesViralAsAttribute() throws ScriptException {
     InMemoryDataset ds1 =
         new InMemoryDataset(
             List.of(Map.of("me_1", 2D, "at_1", "x"), Map.of("me_1", 4D, "at_1", "y")),
@@ -100,24 +100,7 @@ class AggregateInvocationEngineTest {
     Structured.DataStructure structure =
         ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
     assertThat(structure.get("me_1").getRole()).isEqualTo(Role.IDENTIFIER);
-    assertThat(structure.get("at_1")).isNull();
-  }
-
-  @Test
-  void globalAvgWithoutGroupByPromotesMeasureToIdentifier() throws ScriptException {
-    InMemoryDataset ds1 =
-        new InMemoryDataset(
-            List.of(Map.of("me_1", 2D, "at_1", "x"), Map.of("me_1", 4D, "at_1", "x")),
-            Map.of("me_1", Double.class, "at_1", String.class),
-            Map.of("me_1", Role.MEASURE, "at_1", Role.ATTRIBUTE));
-
-    engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
-    engine.eval("res := avg(ds1);");
-
-    Structured.DataStructure structure =
-        ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
-    assertThat(structure.get("me_1").getRole()).isEqualTo(Role.IDENTIFIER);
-    assertThat(structure.get("at_1")).isNull();
+    assertThat(structure.get("at_1").getRole()).isEqualTo(Role.ATTRIBUTE);
   }
 
   @Test

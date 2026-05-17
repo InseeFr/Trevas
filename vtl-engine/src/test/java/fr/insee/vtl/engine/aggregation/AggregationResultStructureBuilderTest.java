@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.aggregation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -63,6 +64,29 @@ class AggregationResultStructureBuilderTest {
   }
 
   @Test
+  void globalAggregationPropagatesViralAsAttribute() {
+    Structured.DataStructure input =
+        new Structured.DataStructure(
+            List.of(
+                new Structured.Component("me_1", Double.class, Dataset.Role.MEASURE),
+                new Structured.Component("at_1", String.class, Dataset.Role.VIRALATTRIBUTE)));
+
+    Structured.DataStructure result =
+        AggregationResultStructureBuilder.build(
+            input,
+            List.of(),
+            Map.of(
+                "me_1",
+                AggregationExpression.avg(
+                    ResolvableExpression.withType(Double.class)
+                        .withPosition(TEST_POSITION)
+                        .using(c -> Double.class.cast(c.get("me_1"))))),
+            AggregationViralPropagation.INVOCATION_GLOBAL);
+
+    assertThat(result.get("at_1").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+  }
+
+  @Test
   void groupedAggregationPreservesViralAttributesOnly() {
     Structured.DataStructure input =
         new Structured.DataStructure(
@@ -81,10 +105,11 @@ class AggregationResultStructureBuilderTest {
                 AggregationExpression.sum(
                     ResolvableExpression.withType(Long.class)
                         .withPosition(TEST_POSITION)
-                        .using(c -> Long.class.cast(c.get("me_1"))))));
+                        .using(c -> Long.class.cast(c.get("me_1"))))),
+            AggregationViralPropagation.AGGR_CLAUSE_GROUPED);
 
     assertThat(result.get("at_plain")).isNull();
-    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
   }
 
   @Test

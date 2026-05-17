@@ -15,7 +15,7 @@ import javax.script.ScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** End-to-end viral attribute behaviour on aggregation and calc. */
+/** End-to-end viral attribute behaviour on aggregation and calc (TCK-aligned). */
 class ViralAttributeAggregationEngineTest {
 
   private ScriptEngine engine;
@@ -26,33 +26,33 @@ class ViralAttributeAggregationEngineTest {
   }
 
   @Test
-  void groupedAggrPropagatesViralValuesWithAttributeRole() throws ScriptException {
+  void groupedAggrClausePropagatesViralAsViralAttribute() throws ScriptException {
     engine
         .getContext()
         .setAttribute("ds", GroupedAggrViralFixtures.dataset(), ScriptContext.ENGINE_SCOPE);
     engine.eval("res <- ds[aggr Me_2 := max(Me_1), Me_3 := min(Me_1) group by Id_1];");
     var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
-    assertThat(res.getDataStructure().containsKey("At_1")).isTrue();
+    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.VIRALATTRIBUTE);
     GroupedAggrViralFixtures.assertGroupedAggrViralValues(res.getDataAsMap());
   }
 
   @Test
-  void globalAvgDropsPropagatedViral() throws ScriptException {
+  void globalAvgInvocationPropagatesViralAsAttribute() throws ScriptException {
     engine.getContext().setAttribute("ds", viralMeasureDataset(), ScriptContext.ENGINE_SCOPE);
     engine.eval("res := avg(ds);");
     var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure().containsKey("At_1")).isFalse();
+    assertThat(res.getDataStructure().containsKey("At_1")).isTrue();
+    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
     assertThat(res.getDataStructure().get("Me_1").getRole()).isEqualTo(Role.IDENTIFIER);
   }
 
   @Test
-  void sumGroupByPromotesLongAndKeepsPropagatedViral() throws ScriptException {
+  void sumInvocationGroupByOmitsPropagatedViral() throws ScriptException {
     engine.getContext().setAttribute("ds", viralMeasureDataset(), ScriptContext.ENGINE_SCOPE);
     engine.eval("res := sum(ds group by Id_1);");
     var res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataStructure().containsKey("At_1")).isFalse();
     assertThat(res.getDataStructure().get("Me_1").getType()).isEqualTo(Double.class);
-    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
   }
 
   @Test

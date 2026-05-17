@@ -20,9 +20,11 @@ public final class SparkViralAttributeAggregations {
       Structured.DataStructure input,
       Structured.DataStructure output,
       Map<String, AggregationExpression> measureCollectors,
+      fr.insee.vtl.model.AggregationViralPropagation viralPropagation,
       java.util.function.BiFunction<String, AggregationExpression, Column> measureConverter) {
     Map<String, AggregationExpression> merged =
-        ViralAttributeCollectors.mergeMeasureCollectors(input, output, measureCollectors);
+        ViralAttributeCollectors.mergeMeasureCollectors(
+            input, output, measureCollectors, viralPropagation);
     List<Column> columns = new ArrayList<>();
     for (Map.Entry<String, AggregationExpression> entry : merged.entrySet()) {
       String name = entry.getKey();

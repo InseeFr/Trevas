@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.attribute;
 
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -38,7 +39,11 @@ class ViralAttributeGroupedAggregationTest {
     DatasetExpression inputExpression = DatasetExpression.of(input, TEST_POSITION);
     Dataset result =
         new InMemoryProcessingEngine()
-            .executeAggr(inputExpression, List.of("Id_1"), collectors)
+            .executeAggr(
+                inputExpression,
+                List.of("Id_1"),
+                collectors,
+                AggregationViralPropagation.AGGR_CLAUSE_GROUPED)
             .resolve(Map.of());
 
     GroupedAggrViralFixtures.assertGroupedAggrViralValues(result.getDataAsMap());

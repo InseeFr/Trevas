@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.aggregation;
 
 import fr.insee.vtl.engine.attribute.ViralAttributeAggregationRules;
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.util.LinkedHashMap;
@@ -17,6 +18,18 @@ public final class AggregationResultStructureBuilder {
       Structured.DataStructure input,
       List<String> groupByKeys,
       Map<String, AggregationExpression> collectors) {
+    AggregationViralPropagation propagation =
+        groupByKeys.isEmpty()
+            ? AggregationViralPropagation.INVOCATION_GLOBAL
+            : AggregationViralPropagation.INVOCATION_GROUPED;
+    return build(input, groupByKeys, collectors, propagation);
+  }
+
+  public static Structured.DataStructure build(
+      Structured.DataStructure input,
+      List<String> groupByKeys,
+      Map<String, AggregationExpression> collectors,
+      AggregationViralPropagation viralPropagation) {
     boolean globalAggregation = groupByKeys.isEmpty();
     Map<String, Structured.Component> columns = new LinkedHashMap<>();
 
@@ -37,20 +50,16 @@ public final class AggregationResultStructureBuilder {
       columns.put(name, new Structured.Component(name, entry.getValue().getType(), role));
     }
 
-    for (Structured.Component component : input.values()) {
-      if (isPreservedPropagatedViral(component, groupByKeys)
-          && !columns.containsKey(component.getName())) {
-        columns.put(
-            component.getName(), ViralAttributeAggregationRules.asPropagatedAttribute(component));
+    if (viralPropagation.propagatesViralAttributes()) {
+      for (Structured.Component component : input.values()) {
+        if (component.isViralAttribute() && !columns.containsKey(component.getName())) {
+          columns.put(
+              component.getName(),
+              ViralAttributeAggregationRules.asPropagatedComponent(component, viralPropagation));
+        }
       }
     }
 
     return new Structured.DataStructure(columns.values());
-  }
-
-  private static boolean isPreservedPropagatedViral(
-      Structured.Component component, List<String> groupByKeys) {
-    return component.isViralAttribute()
-        && ViralAttributeAggregationRules.preservePropagatedVirals(groupByKeys);
   }
 }

@@ -23,6 +23,12 @@ import javax.script.ScriptEngine;
  */
 public class InMemoryProcessingEngine implements ProcessingEngine {
 
+  private static AggregationViralPropagation defaultViralPropagation(List<String> groupBy) {
+    return groupBy.isEmpty()
+        ? AggregationViralPropagation.INVOCATION_GLOBAL
+        : AggregationViralPropagation.INVOCATION_GROUPED;
+  }
+
   @Override
   public DatasetExpression executeCalc(
       DatasetExpression expression,
@@ -227,14 +233,24 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
-    // Create a keyExtractor with the columns we group by.
+    return executeAggr(expression, groupBy, collectorMap, defaultViralPropagation(groupBy));
+  }
+
+  @Override
+  public DatasetExpression executeAggr(
+      DatasetExpression expression,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap,
+      AggregationViralPropagation viralPropagation) {
     var keyExtractor = new KeyExtractor(groupBy);
 
     Structured.DataStructure inputStructure = expression.getDataStructure();
     Structured.DataStructure structure =
-        AggregationResultStructureBuilder.build(inputStructure, groupBy, collectorMap);
+        AggregationResultStructureBuilder.build(
+            inputStructure, groupBy, collectorMap, viralPropagation);
     Map<String, AggregationExpression> allCollectors =
-        ViralAttributeCollectors.mergeMeasureCollectors(inputStructure, structure, collectorMap);
+        ViralAttributeCollectors.mergeMeasureCollectors(
+            inputStructure, structure, collectorMap, viralPropagation);
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {

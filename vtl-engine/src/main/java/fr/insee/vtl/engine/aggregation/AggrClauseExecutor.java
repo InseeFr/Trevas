@@ -89,6 +89,11 @@ public final class AggrClauseExecutor {
       }
     }
 
-    return processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectorMap);
+    fr.insee.vtl.model.AggregationViralPropagation viralPropagation =
+        grouping.groupByKeys().isEmpty()
+            ? fr.insee.vtl.model.AggregationViralPropagation.INVOCATION_GLOBAL
+            : fr.insee.vtl.model.AggregationViralPropagation.AGGR_CLAUSE_GROUPED;
+    return processingEngine.executeAggr(
+        grouping.dataset(), grouping.groupByKeys(), collectorMap, viralPropagation);
   }
 }

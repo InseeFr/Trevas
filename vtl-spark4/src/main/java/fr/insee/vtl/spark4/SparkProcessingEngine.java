@@ -441,16 +441,30 @@ public class SparkProcessingEngine implements ProcessingEngine {
       DatasetExpression dataset,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
+    AggregationViralPropagation viralPropagation =
+        groupBy.isEmpty()
+            ? AggregationViralPropagation.INVOCATION_GLOBAL
+            : AggregationViralPropagation.INVOCATION_GROUPED;
+    return executeAggr(dataset, groupBy, collectorMap, viralPropagation);
+  }
+
+  @Override
+  public DatasetExpression executeAggr(
+      DatasetExpression dataset,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap,
+      AggregationViralPropagation viralPropagation) {
     SparkDataset sparkDataset = asSparkDataset(dataset);
     Structured.DataStructure inputStructure = dataset.getDataStructure();
     Structured.DataStructure resultStructure =
         fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
-            inputStructure, groupBy, collectorMap);
+            inputStructure, groupBy, collectorMap, viralPropagation);
     List<Column> columns =
         fr.insee.vtl.spark.aggregation.SparkViralAttributeAggregations.allAggregationColumns(
             inputStructure,
             resultStructure,
             collectorMap,
+            viralPropagation,
             SparkProcessingEngine::convertAggregation);
     List<Column> groupByColumns =
         groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());

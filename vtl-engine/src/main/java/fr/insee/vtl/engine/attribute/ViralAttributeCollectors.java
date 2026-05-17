@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.attribute;
 
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
@@ -67,7 +68,19 @@ public final class ViralAttributeCollectors {
       Structured.DataStructure input,
       Structured.DataStructure output,
       Map<String, AggregationExpression> measureCollectors) {
+    return mergeMeasureCollectors(
+        input, output, measureCollectors, AggregationViralPropagation.INVOCATION_GROUPED);
+  }
+
+  public static Map<String, AggregationExpression> mergeMeasureCollectors(
+      Structured.DataStructure input,
+      Structured.DataStructure output,
+      Map<String, AggregationExpression> measureCollectors,
+      AggregationViralPropagation viralPropagation) {
     Map<String, AggregationExpression> merged = new LinkedHashMap<>(measureCollectors);
+    if (!viralPropagation.propagatesViralAttributes()) {
+      return merged;
+    }
     for (Structured.Component viral : input.getViralAttributes()) {
       String name = viral.getName();
       if (output.containsKey(name) && !merged.containsKey(name)) {
