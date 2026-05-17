@@ -7,7 +7,6 @@ import static fr.insee.vtl.model.Dataset.Role;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.join.JoinProjection;
 import fr.insee.vtl.engine.join.JoinResultColumnOrder;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
@@ -167,10 +166,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     List<Structured.DataStructure> operandStructures =
         operandsInJoinOrder.stream().map(DatasetExpression::getDataStructure).toList();
     List<String> toKeep = JoinResultColumnOrder.compute(structure, joinKeys, operandStructures);
-    if (JoinResultColumnOrder.hasAliasedColumn(structure)) {
-      return JoinProjection.project(dataset, toKeep);
-    }
-    return processingEngine.executeProject(dataset, toKeep);
+    return processingEngine.executeJoinProjection(dataset, toKeep);
   }
 
   private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
@@ -188,13 +184,18 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     Map<String, DatasetExpression> renamedDatasets = renameDuplicates(List.of(), datasets);
 
-    List<Component> identifiers =
-        renamedDatasets.values().stream()
-            .flatMap(dsExpr -> dsExpr.getDataStructure().values().stream())
-            .filter(Component::isIdentifier)
-            .collect(Collectors.toList());
-
-    return processingEngine.executeCrossJoin(renamedDatasets, identifiers);
+    DatasetExpression res = processingEngine.executeCrossJoin(renamedDatasets, List.of());
+    if (JoinResultColumnOrder.hasAliasedColumn(res.getDataStructure())) {
+      List<Structured.DataStructure> operandStructures =
+          renamedDatasets.values().stream().map(DatasetExpression::getDataStructure).toList();
+      if (operandStructures.size() == 2) {
+        List<String> columnOrder =
+            JoinResultColumnOrder.crossJoinTwoOperandColumnOrder(operandStructures);
+        return processingEngine.executeJoinProjection(res, columnOrder);
+      }
+      return res;
+    }
+    return removeComponentAlias(res, List.of(), new ArrayList<>(datasets.values()));
   }
 
   private DatasetExpression fullJoin(VtlParser.JoinExprContext ctx) {

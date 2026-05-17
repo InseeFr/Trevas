@@ -5,7 +5,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
+import fr.insee.vtl.engine.attribute.AttributePropagation;
 import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
@@ -28,8 +28,10 @@ import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -158,8 +160,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             joined.getDataStructure().getMeasures().stream()
                 .collect(
                     Collectors.toMap(Structured.Component::getName, Structured.Component::getType));
-        finalRes =
-            UnaryAttributePropagation.reattachViralAttributes(viralSource, joined, outputMeasures);
+        finalRes = proc.reattachUnaryViralAttributes(viralSource, joined, outputMeasures);
       }
       return finalRes;
     } catch (NoSuchMethodException e) {
@@ -178,35 +179,44 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     // Normalize all parameters to datasets first.
     // 1. Join all the datasets together and build a new expression map.
     Map<String, ResolvableExpression> monoExprs = new HashMap<>();
+    Map<DatasetExpression, String> operandAliases = new LinkedHashMap<>();
+    Map<String, DatasetExpression> dsExprs = new LinkedHashMap<>();
     Set<String> measureNames = new HashSet<>();
     Class<?> operandMeasureType = null;
-    var dsExprs =
-        parameters.stream()
-            .filter(DatasetExpression.class::isInstance)
-            .map(e -> ((DatasetExpression) e))
-            .map(
-                ds -> {
-                  if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
-                    throw new VtlRuntimeException(
-                        new InvalidArgumentException("mono-measure dataset expected", ds));
-                  }
-                  var uniqueName = "arg" + ds.hashCode();
-                  var measure = ds.getMeasures().get(0);
-                  String measureName = measure.getName();
-                  measureNames.add(measureName);
-                  ds =
-                      proc.executeProject(
-                          ds,
-                          UnaryAttributePropagation.columnsForMonoMeasureOperation(
-                              ds.getDataStructure(), measureName));
-                  ds = proc.executeRename(ds, Map.of(measureName, uniqueName));
-                  var renamedComponent =
-                      new Structured.Component(
-                          uniqueName, measure.getType(), measure.getRole(), measure.getNullable());
-                  monoExprs.put(uniqueName, new ComponentExpression(renamedComponent, ds));
-                  return ds;
-                })
-            .collect(Collectors.toMap(e -> "arg" + e.hashCode(), e -> e));
+    List<DatasetExpression> operandDatasets = new ArrayList<>();
+    for (ResolvableExpression parameter : parameters) {
+      if (parameter instanceof DatasetExpression ds) {
+        operandDatasets.add(ds);
+      }
+    }
+    int argIndex = 0;
+    for (DatasetExpression ds : operandDatasets) {
+      if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException("mono-measure dataset expected", ds));
+      }
+      String operandAlias = "arg" + argIndex++;
+      operandAliases.put(ds, operandAlias);
+      var measure = ds.getMeasures().get(0);
+      String measureName = measure.getName();
+      measureNames.add(measureName);
+      ds =
+          proc.executeProject(
+              ds,
+              UnaryAttributePropagation.columnsForMonoMeasureOperation(
+                  ds.getDataStructure(), measureName));
+      Map<String, String> joinRenames = new LinkedHashMap<>();
+      joinRenames.put(measureName, operandAlias);
+      for (String viral : AttributePropagation.viralAttributeNames(ds.getDataStructure())) {
+        joinRenames.put(viral, operandAlias + "#" + viral);
+      }
+      ds = proc.executeRename(ds, joinRenames);
+      var renamedComponent =
+          new Structured.Component(
+              operandAlias, measure.getType(), measure.getRole(), measure.getNullable());
+      monoExprs.put(operandAlias, new ComponentExpression(renamedComponent, ds));
+      dsExprs.put(operandAlias, ds);
+    }
     operandMeasureType =
         parameters.stream()
             .filter(DatasetExpression.class::isInstance)
@@ -226,7 +236,16 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     // Rebuild the function parameters. TODO: All component?
     var normalizedParams =
         parameters.stream()
-            .map(e -> monoExprs.getOrDefault("arg" + e.hashCode(), e))
+            .map(
+                e -> {
+                  if (e instanceof DatasetExpression operand) {
+                    String alias = operandAliases.get(operand);
+                    if (alias != null) {
+                      return monoExprs.get(alias);
+                    }
+                  }
+                  return e;
+                })
             .collect(Collectors.toList());
 
     // 3. Invoke the function.
@@ -254,8 +273,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             .toList();
     if (!datasetOperands.isEmpty()) {
       Map<String, Class<?>> outputMeasures = Map.of(outputMeasureName, resultType);
-      return BinaryAttributePropagation.reattachViralAttributes(
-          datasetOperands, ds, outputMeasures);
+      return proc.reattachBinaryViralAttributes(datasetOperands, ds, outputMeasures);
     }
     return ds;
   }

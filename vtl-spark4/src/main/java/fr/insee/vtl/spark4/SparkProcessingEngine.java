@@ -15,8 +15,10 @@ import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.join.JoinStructureBuilder;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.spark.attribute.SparkViralAttributePropagation;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
@@ -338,16 +340,48 @@ public class SparkProcessingEngine implements ProcessingEngine {
   @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     SparkDataset dataset = asSparkDataset(expression);
+    org.apache.spark.sql.Dataset<Row> sparkDataset = dataset.getSparkDataset();
+    Structured.DataStructure structure = dataset.getDataStructure();
 
-    List<Column> columns = columnNames.stream().map(Column::new).collect(Collectors.toList());
+    List<Column> columns =
+        columnNames.stream()
+            .map(
+                name ->
+                    SparkViralAttributePropagation.resolveProjectColumn(
+                        sparkDataset, structure, name))
+            .collect(Collectors.toList());
     Column[] columnArray = columns.toArray(new Column[0]);
 
-    // Project in spark.
-    Dataset<Row> result = dataset.getSparkDataset().select(columnArray);
+    Dataset<Row> result = sparkDataset.select(columnArray);
 
     return new SparkDatasetExpression(
         new SparkDataset(result, getRoleMap(expression.getDataStructure(), columnNames)),
         expression);
+  }
+
+  @Override
+  public DatasetExpression executeJoinProjection(
+      DatasetExpression expression, List<String> outputColumnNames) {
+    return SparkViralAttributePropagation.joinProjection(
+        (SparkDatasetExpression) expression, outputColumnNames);
+  }
+
+  @Override
+  public DatasetExpression reattachUnaryViralAttributes(
+      DatasetExpression sourceDataset,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return SparkViralAttributePropagation.reattachUnary(
+        sourceDataset, (SparkDatasetExpression) transformed, outputMeasuresByName);
+  }
+
+  @Override
+  public DatasetExpression reattachBinaryViralAttributes(
+      List<DatasetExpression> sources,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return SparkViralAttributePropagation.reattachBinary(
+        sources, (SparkDatasetExpression) transformed, outputMeasuresByName);
   }
 
   private boolean checkColNameCompatibility(List<DatasetExpression> datasets) {
@@ -546,44 +580,45 @@ public class SparkProcessingEngine implements ProcessingEngine {
   @Override
   public DatasetExpression executeInnerJoin(
       Map<String, DatasetExpression> datasets, List<Component> components) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifiers = identifierNames(components);
-    var innerJoin = executeJoin(sparkDatasets, identifiers, "inner");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
+    return joinDatasets(datasets, components, "inner");
   }
 
   @Override
   public DatasetExpression executeLeftJoin(
       Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifiers = identifierNames(components);
-    var innerJoin = executeJoin(sparkDatasets, identifiers, "left");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
+    return joinDatasets(datasets, components, "left");
   }
 
   @Override
   public DatasetExpression executeCrossJoin(
       Map<String, DatasetExpression> datasets, List<Component> identifiers) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    var crossJoin = executeJoin(sparkDatasets, List.of(), "cross");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
+    return joinDatasets(datasets, List.of(), "cross");
   }
 
   @Override
   public DatasetExpression executeFullJoin(
       Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+    return joinDatasets(datasets, identifiers, "outer");
+  }
+
+  private DatasetExpression joinDatasets(
+      Map<String, DatasetExpression> datasets, List<Component> joinKeys, String joinType) {
     List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifierNames = identifierNames(identifiers);
-    var crossJoin = executeJoin(sparkDatasets, identifierNames, "outer");
+    List<String> identifiers = identifierNames(joinKeys);
+    Structured.DataStructure structure = joinStructure(joinKeys, datasets);
+    Dataset<Row> joined = executeJoin(sparkDatasets, identifiers, joinType);
+    joined = SparkViralAttributePropagation.collapseHomonymViralColumns(joined, structure);
     DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
     return new SparkDatasetExpression(
-        new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
+        new SparkDataset(joined, SparkViralAttributePropagation.rolesFromStructure(structure)),
+        datasetExpression);
+  }
+
+  private static Structured.DataStructure joinStructure(
+      List<Component> joinKeys, Map<String, DatasetExpression> datasets) {
+    List<Structured.DataStructure> operands =
+        datasets.values().stream().map(DatasetExpression::getDataStructure).toList();
+    return JoinStructureBuilder.build(joinKeys, operands);
   }
 
   @Override

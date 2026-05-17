@@ -49,7 +49,7 @@ class AggregateInvocationEngineTest {
   }
 
   @Test
-  void sumGroupByKeepsLongMeasureTypeWhenAllValuesAreLong() throws ScriptException {
+  void sumGroupByPromotesLongMeasureToDouble() throws ScriptException {
     InMemoryDataset ds1 =
         new InMemoryDataset(
             List.of(Map.of("id_1", 1L, "me_1", 2L), Map.of("id_1", 1L, "me_1", 3L)),
@@ -61,10 +61,10 @@ class AggregateInvocationEngineTest {
 
     Structured.DataStructure structure =
         ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
-    assertThat(structure.get("me_1").getType()).isEqualTo(Long.class);
+    assertThat(structure.get("me_1").getType()).isEqualTo(Double.class);
     assertThat(
             ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0).get("me_1"))
-        .isEqualTo(5L);
+        .isEqualTo(5.0D);
   }
 
   @Test
@@ -84,6 +84,23 @@ class AggregateInvocationEngineTest {
     assertThat(
             ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0).get("me_1"))
         .isEqualTo(3.5D);
+  }
+
+  @Test
+  void globalAvgWithoutGroupByDropsViralAttribute() throws ScriptException {
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            List.of(Map.of("me_1", 2D, "at_1", "x"), Map.of("me_1", 4D, "at_1", "y")),
+            Map.of("me_1", Double.class, "at_1", String.class),
+            Map.of("me_1", Role.MEASURE, "at_1", Role.VIRALATTRIBUTE));
+
+    engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
+    engine.eval("res := avg(ds1);");
+
+    Structured.DataStructure structure =
+        ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
+    assertThat(structure.get("me_1").getRole()).isEqualTo(Role.IDENTIFIER);
+    assertThat(structure.get("at_1")).isNull();
   }
 
   @Test

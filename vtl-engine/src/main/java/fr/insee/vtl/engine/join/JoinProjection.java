@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.join;
 import static fr.insee.vtl.model.Structured.Component;
 
 import fr.insee.vtl.engine.attribute.AttributePropagationAlgorithm;
+import fr.insee.vtl.engine.attribute.ViralColumnMergePlan;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured.DataPoint;
@@ -37,7 +38,8 @@ public final class JoinProjection {
     };
   }
 
-  static DataStructure buildTargetStructure(DataStructure source, List<String> outputColumnNames) {
+  public static DataStructure buildTargetStructure(
+      DataStructure source, List<String> outputColumnNames) {
     List<Component> components = new ArrayList<>(outputColumnNames.size());
     for (String bareName : outputColumnNames) {
       String sourceColumn = resolveSourceColumn(source, bareName);
@@ -57,8 +59,7 @@ public final class JoinProjection {
   }
 
   static Object resolveProjectedValue(DataStructure source, DataPoint row, String bareName) {
-    List<Component> viralSources =
-        matchingComponents(source, bareName).stream().filter(Component::isViralAttribute).toList();
+    List<Component> viralSources = ViralColumnMergePlan.viralSources(source, bareName);
     if (viralSources.size() <= 1) {
       return row.get(resolveSourceColumn(source, bareName));
     }
@@ -74,18 +75,8 @@ public final class JoinProjection {
     return merged;
   }
 
-  private static List<Component> matchingComponents(DataStructure source, String bareName) {
-    List<Component> matches = new ArrayList<>();
-    for (Component component : source.componentsInOrder()) {
-      if (stripJoinAlias(component.getName()).equals(bareName)) {
-        matches.add(component);
-      }
-    }
-    return matches;
-  }
-
   /** Prefer {@code alias#name} over bare {@code name} when both exist after a join rename. */
-  static String resolveSourceColumn(DataStructure source, String bareName) {
+  public static String resolveSourceColumn(DataStructure source, String bareName) {
     String bare = null;
     String aliased = null;
     for (Component component : source.componentsInOrder()) {

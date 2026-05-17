@@ -31,6 +31,20 @@ class JoinResultColumnOrderTest {
   }
 
   @Nested
+  @DisplayName("cross join (2 operands, alias# homonyms)")
+  class CrossJoinTwoOperands {
+
+    @Test
+    void columnOrderIdentifiersThenMeasuresPerOperand() {
+      var ds3 = ds(id("ds3#id1"), id("ds3#id2"), me("m1"));
+      var ds4 = ds(id("ds4#id1"), id("ds4#id2"), me("m2"));
+
+      assertThat(JoinResultColumnOrder.crossJoinTwoOperandColumnOrder(List.of(ds3, ds4)))
+          .containsExactly("ds3#id1", "ds3#id2", "ds4#id1", "ds4#id2", "m1", "m2");
+    }
+  }
+
+  @Nested
   @DisplayName("partial using (alias# duplicate identifier)")
   class PartialUsing {
 

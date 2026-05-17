@@ -57,14 +57,13 @@ public final class UnaryAttributePropagation {
       DatasetExpression transformed,
       Map<String, Class<?>> outputMeasuresByName) {
 
-    DataStructure sourceStructure = sourceDataset.getDataStructure();
-    DataStructure targetStructure =
-        AttributePropagation.unaryStructure(sourceStructure, outputMeasuresByName);
-    List<String> identifierNames =
-        sourceStructure.getIdentifiers().stream().map(Component::getName).toList();
-    Set<String> viralNames = AttributePropagation.viralAttributeNames(sourceStructure);
+    ViralAttributeReattachPlan plan =
+        ViralAttributeReattachPlan.unary(sourceDataset, outputMeasuresByName);
+    DataStructure targetStructure = plan.targetStructure();
+    List<String> identifierNames = plan.identifierNames();
+    Set<String> viralNames = plan.viralNames();
 
-    if (viralNames.isEmpty()) {
+    if (!plan.hasVirals()) {
       return withStructure(transformed, targetStructure);
     }
 
@@ -77,7 +76,8 @@ public final class UnaryAttributePropagation {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         Map<List<Object>, DataPoint> sourceByKey =
-            indexByIdentifiers(sourceDataset.resolve(context).getDataPoints(), identifierNames);
+            indexByIdentifiers(
+                sourceDataset.resolve(context).getDataPoints(), plan.identifierNames());
 
         List<DataPoint> rows =
             transformed.resolve(context).getDataPoints().stream()

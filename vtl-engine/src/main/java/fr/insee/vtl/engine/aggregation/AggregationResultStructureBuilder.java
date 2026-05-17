@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.aggregation;
 
+import fr.insee.vtl.engine.attribute.ViralAttributeAggregationRules;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
@@ -27,22 +28,29 @@ public final class AggregationResultStructureBuilder {
     }
 
     for (Map.Entry<String, AggregationExpression> entry : collectors.entrySet()) {
-      Dataset.Role role = globalAggregation ? Dataset.Role.IDENTIFIER : Dataset.Role.MEASURE;
-      columns.put(
-          entry.getKey(),
-          new Structured.Component(entry.getKey(), entry.getValue().getType(), role));
+      String name = entry.getKey();
+      Structured.Component source = input.get(name);
+      Dataset.Role role =
+          globalAggregation
+              ? Dataset.Role.IDENTIFIER
+              : (source != null ? source.getRole() : Dataset.Role.MEASURE);
+      columns.put(name, new Structured.Component(name, entry.getValue().getType(), role));
     }
 
     for (Structured.Component component : input.values()) {
-      if (isPreservedAttribute(component) && !columns.containsKey(component.getName())) {
-        columns.put(component.getName(), new Structured.Component(component));
+      if (isPreservedPropagatedViral(component, groupByKeys)
+          && !columns.containsKey(component.getName())) {
+        columns.put(
+            component.getName(), ViralAttributeAggregationRules.asPropagatedAttribute(component));
       }
     }
 
     return new Structured.DataStructure(columns.values());
   }
 
-  private static boolean isPreservedAttribute(Structured.Component component) {
-    return component.isViralAttribute();
+  private static boolean isPreservedPropagatedViral(
+      Structured.Component component, List<String> groupByKeys) {
+    return component.isViralAttribute()
+        && ViralAttributeAggregationRules.preservePropagatedVirals(groupByKeys);
   }
 }

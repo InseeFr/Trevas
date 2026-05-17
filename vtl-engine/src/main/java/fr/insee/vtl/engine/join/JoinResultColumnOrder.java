@@ -18,6 +18,41 @@ public final class JoinResultColumnOrder {
     return structure.componentsInOrder().stream().anyMatch(c -> c.getName().contains("#"));
   }
 
+  /**
+   * Column order for a 2-operand cross join when homonym components were renamed to {@code
+   * alias#name}: all identifiers from the first operand, then the second, then measures in the same
+   * operand order (see {@code JoinFunctionsTest#testCrossJoin}).
+   */
+  public static List<String> crossJoinTwoOperandColumnOrder(List<DataStructure> operands) {
+    if (operands.size() != 2) {
+      throw new IllegalArgumentException("expected exactly 2 operands, got " + operands.size());
+    }
+    List<String> order = new ArrayList<>();
+    for (DataStructure operand : operands) {
+      for (Component component : operand.componentsInOrder()) {
+        if (component.isIdentifier()) {
+          order.add(component.getName());
+        }
+      }
+    }
+    for (DataStructure operand : operands) {
+      for (Component component : operand.componentsInOrder()) {
+        if (component.isMeasure()) {
+          order.add(component.getName());
+        }
+      }
+    }
+    for (DataStructure operand : operands) {
+      for (Component component : operand.componentsInOrder()) {
+        if ((component.isViralAttribute() || component.isAttribute())
+            && !order.contains(component.getName())) {
+          order.add(component.getName());
+        }
+      }
+    }
+    return order;
+  }
+
   public static List<String> compute(
       DataStructure joinStructure,
       List<Component> joinKeys,

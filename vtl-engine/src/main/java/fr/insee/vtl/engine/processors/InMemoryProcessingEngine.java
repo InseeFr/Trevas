@@ -4,7 +4,10 @@ import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
 import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
+import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
+import fr.insee.vtl.engine.join.JoinProjection;
+import fr.insee.vtl.engine.join.JoinStructureBuilder;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
@@ -140,6 +143,30 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   public DatasetExpression executeMembership(
       DatasetExpression expression, String memberComponentName) {
     return MembershipOperations.execute(this, expression, memberComponentName);
+  }
+
+  @Override
+  public DatasetExpression executeJoinProjection(
+      DatasetExpression expression, List<String> outputColumnNames) {
+    return JoinProjection.project(expression, outputColumnNames);
+  }
+
+  @Override
+  public DatasetExpression reattachUnaryViralAttributes(
+      DatasetExpression sourceDataset,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return UnaryAttributePropagation.reattachViralAttributes(
+        sourceDataset, transformed, outputMeasuresByName);
+  }
+
+  @Override
+  public DatasetExpression reattachBinaryViralAttributes(
+      List<DatasetExpression> sources,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return BinaryAttributePropagation.reattachViralAttributes(
+        sources, transformed, outputMeasuresByName);
   }
 
   @Override
@@ -361,52 +388,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     throw new UnsupportedOperationException();
   }
 
-  /** Returns a structure with the common identifiers only once. */
   private DataStructure createCommonStructure(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    List<Component> components = new ArrayList<>(identifiers);
-    appendJoinOperands(components, identifiers, left.getDataStructure());
-    appendJoinOperands(components, identifiers, right.getDataStructure());
-    return new DataStructure(components);
-  }
-
-  /** Appends non-key components in VTL order: identifiers, measures, viral/other attributes. */
-  private static void appendJoinOperands(
-      List<Component> target, List<Component> joinKeys, DataStructure structure) {
-    Set<String> joinKeyNames =
-        joinKeys.stream().map(Component::getName).collect(Collectors.toSet());
-    Set<String> present =
-        target.stream()
-            .map(Component::getName)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-
-    List<Component> ids = new ArrayList<>();
-    List<Component> measures = new ArrayList<>();
-    List<Component> viral = new ArrayList<>();
-    List<Component> attributes = new ArrayList<>();
-
-    for (Component component : structure.componentsInOrder()) {
-      String name = component.getName();
-      if (joinKeyNames.contains(name) || present.contains(name)) {
-        continue;
-      }
-      if (component.isIdentifier()) {
-        ids.add(component);
-      } else if (component.isMeasure()) {
-        measures.add(component);
-      } else if (component.isViralAttribute()) {
-        viral.add(component);
-      } else if (component.isAttribute()) {
-        attributes.add(component);
-      }
-    }
-    for (List<Component> batch : List.of(ids, measures, viral, attributes)) {
-      for (Component component : batch) {
-        if (present.add(component.getName())) {
-          target.add(component);
-        }
-      }
-    }
+    return JoinStructureBuilder.build(
+        identifiers, left.getDataStructure(), right.getDataStructure());
   }
 
   /** Creates a datapoint comparator that operates on the given identifiers only. */

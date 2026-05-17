@@ -70,19 +70,16 @@ public final class BinaryAttributePropagation {
           sources.get(0), transformed, outputMeasuresByName);
     }
 
-    DataStructure[] operandStructures =
-        sources.stream().map(DatasetExpression::getDataStructure).toArray(DataStructure[]::new);
-    DataStructure mergedOperands = AttributePropagation.mergeStructure(operandStructures);
-    DataStructure targetStructure =
-        AttributePropagation.unaryStructure(mergedOperands, outputMeasuresByName);
-    Set<String> viralNames = AttributePropagation.viralAttributeNames(mergedOperands);
-    if (viralNames.isEmpty()) {
+    ViralAttributeReattachPlan plan =
+        ViralAttributeReattachPlan.binary(sources, outputMeasuresByName);
+    DataStructure targetStructure = plan.targetStructure();
+    Set<String> viralNames = plan.viralNames();
+    if (!plan.hasVirals()) {
       return UnaryAttributePropagation.reattachViralAttributes(
           sources.get(0), transformed, outputMeasuresByName);
     }
 
-    List<String> identifierNames =
-        mergedOperands.getIdentifiers().stream().map(Component::getName).toList();
+    List<String> identifierNames = plan.identifierNames();
     List<SourceIndex> indexes =
         sources.stream().map(source -> new SourceIndex(source, identifierNames)).toList();
 

@@ -56,6 +56,25 @@ public interface ProcessingEngine {
   DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames);
 
   /**
+   * Projects a join result onto bare column names, merging homonym {@linkplain
+   * Dataset.Role#VIRALATTRIBUTE viral attributes} when needed.
+   */
+  DatasetExpression executeJoinProjection(
+      DatasetExpression expression, List<String> outputColumnNames);
+
+  /** Restores viral attribute values after a unary dataset transform that dropped them. */
+  DatasetExpression reattachUnaryViralAttributes(
+      DatasetExpression sourceDataset,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName);
+
+  /** Restores viral attribute values after a binary dataset transform that dropped them. */
+  DatasetExpression reattachBinaryViralAttributes(
+      List<DatasetExpression> sources,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName);
+
+  /**
    * Execute membership ({@code DS # component}) on a dataset expression.
    *
    * @param expression the source dataset

@@ -35,7 +35,7 @@ class AggregationResultStructureBuilderTest {
                         .withPosition(TEST_POSITION)
                         .using(c -> Long.class.cast(c.get("me_1"))))));
 
-    assertThat(result.get("me_1").getType()).isEqualTo(Long.class);
+    assertThat(result.get("me_1").getType()).isEqualTo(Double.class);
     assertThat(result.get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
   }
 
@@ -84,7 +84,7 @@ class AggregationResultStructureBuilderTest {
                         .using(c -> Long.class.cast(c.get("me_1"))))));
 
     assertThat(result.get("at_plain")).isNull();
-    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
+    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
   }
 
   @Test
