@@ -100,7 +100,7 @@ class AggregateInvocationEngineTest {
     Structured.DataStructure structure =
         ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
     assertThat(structure.get("me_1").getRole()).isEqualTo(Role.IDENTIFIER);
-    assertThat(structure.get("at_1").getRole()).isEqualTo(Role.ATTRIBUTE);
+    assertThat(structure.get("at_1")).isNull();
   }
 
   @Test

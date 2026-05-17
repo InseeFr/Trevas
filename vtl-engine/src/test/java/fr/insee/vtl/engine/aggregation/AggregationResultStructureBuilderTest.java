@@ -59,7 +59,32 @@ class AggregationResultStructureBuilderTest {
                         .using(c -> Double.class.cast(c.get("me_1"))))));
 
     assertThat(result.get("me_1").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
-    assertThat(result.get("at_1").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(result.get("at_1")).isNull();
+  }
+
+  @Test
+  void groupedAggregationPreservesViralAttributesOnly() {
+    Structured.DataStructure input =
+        new Structured.DataStructure(
+            List.of(
+                new Structured.Component("id_1", Long.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("at_plain", String.class, Dataset.Role.ATTRIBUTE),
+                new Structured.Component("at_viral", String.class, Dataset.Role.VIRALATTRIBUTE)));
+
+    Structured.DataStructure result =
+        AggregationResultStructureBuilder.build(
+            input,
+            List.of("id_1"),
+            Map.of(
+                "me_1",
+                AggregationExpression.sum(
+                    ResolvableExpression.withType(Long.class)
+                        .withPosition(TEST_POSITION)
+                        .using(c -> Long.class.cast(c.get("me_1"))))));
+
+    assertThat(result.get("at_plain")).isNull();
+    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
   }
 
   @Test

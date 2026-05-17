@@ -73,5 +73,14 @@ public class ComponentDeserializerTest extends AbstractMapperTest {
                 + "",
             Structured.Component.class);
     assertThat(component).isEqualTo(attributeComponent);
+
+    component =
+        mapper.readValue(
+            ""
+                + "{ \"name\": \"At_1\", \"type\": \"STRING\", \"role\": \"VIRALATTRIBUTE\", \"nullable\": true }"
+                + "",
+            Structured.Component.class);
+    assertThat(component.getRole()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
+    assertThat(component.isViralAttribute()).isTrue();
   }
 }

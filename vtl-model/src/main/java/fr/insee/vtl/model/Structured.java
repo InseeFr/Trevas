@@ -45,6 +45,10 @@ public interface Structured {
     return getDataStructure().getAttributes();
   }
 
+  default List<Component> getViralAttributes() {
+    return getDataStructure().getViralAttributes();
+  }
+
   default Boolean isMonoMeasure() {
     return getDataStructure().isMonoMeasure();
   }
@@ -168,12 +172,23 @@ public interface Structured {
     }
 
     /**
-     * Tests if a component is an attribute.
+     * Tests if a component is a non-viral attribute ({@link Dataset.Role#ATTRIBUTE}).
      *
-     * @return <code>true</code> if the component is an attribute, <code>false</code>.
+     * <p>Viral attributes ({@link Dataset.Role#VIRALATTRIBUTE}) are tested with {@link
+     * #isViralAttribute()}.
      */
     public boolean isAttribute() {
       return Dataset.Role.ATTRIBUTE.equals(this.role);
+    }
+
+    /** Tests if a component is a viral attribute ({@link Dataset.Role#VIRALATTRIBUTE}). */
+    public boolean isViralAttribute() {
+      return Dataset.Role.VIRALATTRIBUTE.equals(this.role);
+    }
+
+    /** Tests if a component is any attribute role (viral or not). */
+    public boolean isAnyAttribute() {
+      return isAttribute() || isViralAttribute();
     }
 
     /**
@@ -326,6 +341,10 @@ public interface Structured {
 
     public List<Component> getAttributes() {
       return values().stream().filter(Component::isAttribute).collect(Collectors.toList());
+    }
+
+    public List<Component> getViralAttributes() {
+      return values().stream().filter(Component::isViralAttribute).collect(Collectors.toList());
     }
 
     public Map<String, Dataset.Role> getRoles() {

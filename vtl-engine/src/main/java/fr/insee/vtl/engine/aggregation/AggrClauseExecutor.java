@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.aggregation;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.engine.attribute.ComponentRoles;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Dataset;
@@ -49,7 +50,7 @@ public final class AggrClauseExecutor {
                     agg ->
                         agg.componentRole() == null
                             ? Dataset.Role.MEASURE
-                            : Dataset.Role.valueOf(agg.componentRole().getText().toUpperCase()),
+                            : ComponentRoles.fromParser(agg.componentRole()),
                     (a, b) -> b,
                     LinkedHashMap::new));
 

@@ -43,6 +43,6 @@ public final class AggregationResultStructureBuilder {
   }
 
   private static boolean isPreservedAttribute(Structured.Component component) {
-    return component.isAttribute() || Dataset.Role.VIRALATTRIBUTE.equals(component.getRole());
+    return component.isViralAttribute();
   }
 }
