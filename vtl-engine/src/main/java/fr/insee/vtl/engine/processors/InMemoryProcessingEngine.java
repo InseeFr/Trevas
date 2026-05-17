@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.processors;
 import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
+import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
@@ -448,9 +449,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             }
             for (DataPoint match : matches) {
               var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
-              for (String rightColumn : right.getColumnNames()) {
-                matchPoint.set(rightColumn, match.get(rightColumn));
-              }
+              BinaryAttributePropagation.applyRightColumns(
+                  matchPoint,
+                  structure,
+                  leftPoint,
+                  left.getDataStructure(),
+                  match,
+                  right.getDataStructure());
               result.add(matchPoint);
             }
           }
@@ -504,9 +509,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           } else {
             for (DataPoint match : matches) {
               var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
-              for (String rightColumn : right.getColumnNames()) {
-                matchPoint.set(rightColumn, match.get(rightColumn));
-              }
+              BinaryAttributePropagation.applyRightColumns(
+                  matchPoint,
+                  structure,
+                  leftPoint,
+                  left.getDataStructure(),
+                  match,
+                  right.getDataStructure());
               result.add(matchPoint);
             }
           }
@@ -537,9 +546,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
             for (String leftColumn : left.getColumnNames()) {
               mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
             }
-            for (String rightColumn : right.getColumnNames()) {
-              mergedPoint.set(rightColumn, rightPoint.get(rightColumn));
-            }
+            BinaryAttributePropagation.applyRightColumns(
+                mergedPoint,
+                structure,
+                leftPoint,
+                left.getDataStructure(),
+                rightPoint,
+                right.getDataStructure());
             result.add(mergedPoint);
           }
         }

@@ -22,6 +22,10 @@ class JoinResultColumnOrderTest {
     return new Component(name, Long.class, Role.MEASURE);
   }
 
+  private static Component viral(String name) {
+    return new Component(name, String.class, Role.VIRALATTRIBUTE);
+  }
+
   private static DataStructure ds(Component... components) {
     return new DataStructure(List.of(components));
   }
@@ -178,6 +182,26 @@ class JoinResultColumnOrderTest {
       assertThat(projected.get("m1")).isEqualTo(3L);
       assertThat(projected.get("id2")).isEqualTo(1L);
       assertThat(projected.get("m2")).isEqualTo(9L);
+    }
+
+    @Test
+    void mergesAliasedHomonymViralAttributes() {
+      var join =
+          ds(id("Id_1"), me("Me_left"), me("Me_right"), viral("left#At_1"), viral("right#At_1"));
+      var row = new Structured.DataPoint(join);
+      row.set("Id_1", "k2");
+      row.set("Me_left", 2L);
+      row.set("Me_right", 20L);
+      row.set("left#At_1", "P");
+      row.set("right#At_1", "Z");
+
+      var target =
+          JoinProjection.buildTargetStructure(join, List.of("Id_1", "Me_left", "Me_right", "At_1"));
+      var projected =
+          JoinProjection.projectRow(
+              target, join, row, List.of("Id_1", "Me_left", "Me_right", "At_1"));
+
+      assertThat(projected.get("At_1")).isEqualTo("P");
     }
 
     @Test

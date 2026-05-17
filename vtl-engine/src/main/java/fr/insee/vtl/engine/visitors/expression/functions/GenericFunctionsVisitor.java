@@ -5,6 +5,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
@@ -246,9 +247,15 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         DefaultMeasureNames.resolveOutputMeasureName(
             measureNames.iterator().next(), operandMeasureType, resultType, namingPolicy);
     ds = proc.executeRename(ds, Map.of(result, outputMeasureName));
-    if (parameters.size() == 1 && parameters.get(0) instanceof DatasetExpression single) {
+    List<DatasetExpression> datasetOperands =
+        parameters.stream()
+            .filter(DatasetExpression.class::isInstance)
+            .map(DatasetExpression.class::cast)
+            .toList();
+    if (!datasetOperands.isEmpty()) {
       Map<String, Class<?>> outputMeasures = Map.of(outputMeasureName, resultType);
-      return UnaryAttributePropagation.reattachViralAttributes(single, ds, outputMeasures);
+      return BinaryAttributePropagation.reattachViralAttributes(
+          datasetOperands, ds, outputMeasures);
     }
     return ds;
   }

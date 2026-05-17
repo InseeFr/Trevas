@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.attribute;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -45,6 +46,16 @@ public final class AttributePropagationAlgorithm {
   /** Stream variant used by collectors. */
   public static Object reduceGroupedValues(Stream<Object> values, Class<?> type) {
     return reduceGroupedValues(values.toList(), type);
+  }
+
+  /**
+   * Binary join / multi-operand merge: same {@code min} (nulls first) rule as grouped reduction.
+   */
+  public static Object propagateBinaryValue(Object left, Object right, Class<?> type) {
+    List<Object> values = new ArrayList<>(2);
+    values.add(left);
+    values.add(right);
+    return reduceGroupedValues(values, type);
   }
 
   private static <T extends Comparable<? super T>> T minNullsFirst(
