@@ -45,6 +45,21 @@ class MembershipPlanTest {
   }
 
   @Test
+  void measureMembershipDropsOtherMeasuresAndNonViralAttributes() {
+    var structure =
+        structure(
+            new Structured.Component("Id_1", Long.class, Dataset.Role.IDENTIFIER),
+            new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+            new Structured.Component("Me_2", Long.class, Dataset.Role.MEASURE),
+            new Structured.Component("At_1", String.class, Dataset.Role.ATTRIBUTE));
+
+    MembershipPlan plan = MembershipPlan.of(structure, "Me_1");
+
+    assertThat(plan.projectColumns()).containsExactly("Id_1", "Me_1");
+    assertThat(plan.projectColumns()).doesNotContain("Me_2", "At_1");
+  }
+
+  @Test
   void attributeMembershipPromotesToStringVarWithoutKeepingAttribute() {
     var structure =
         structure(
