@@ -61,11 +61,22 @@ public class SparkDataset implements Dataset {
    * Constructor taking a {@link Dataset}, a mapping of component names and roles, and a Spark
    * session.
    *
+   * <p>When {@code vtlDataset} is already a {@link SparkDataset}, the underlying Spark DataFrame is
+   * reused (no driver-side collect). Otherwise the in-memory dataset is converted row-by-row on the
+   * driver — suitable only for small bindings or tests.
+   *
    * @param vtlDataset a VTL dataset.
    * @param roles a map between component names and their roles in the dataset.
    * @param spark a Spark session to use for the creation of the Spark dataset.
    */
   public SparkDataset(Dataset vtlDataset, Map<String, Role> roles, SparkSession spark) {
+    Objects.requireNonNull(spark);
+    this.roles = Objects.requireNonNull(roles);
+    if (vtlDataset instanceof SparkDataset sparkSource) {
+      this.sparkDataset = castIfNeeded(sparkSource.getSparkDataset());
+      this.dataStructure = sparkSource.getDataStructure();
+      return;
+    }
     List<Row> rows =
         vtlDataset.getDataPoints().stream()
             .map(
@@ -88,7 +99,6 @@ public class SparkDataset implements Dataset {
     // TODO: Handle nullable with component
     StructType schema = toSparkSchema(vtlDataset.getDataStructure());
     this.sparkDataset = spark.createDataFrame(rows, schema);
-    this.roles = Objects.requireNonNull(roles);
     this.dataStructure = vtlDataset.getDataStructure();
   }
 
@@ -111,6 +121,18 @@ public class SparkDataset implements Dataset {
   private static org.apache.spark.sql.Dataset<Row> castIfNeeded(
       org.apache.spark.sql.Dataset<Row> sparkDataset) {
     StructType schema = sparkDataset.schema();
+    boolean needsCast =
+        Arrays.stream(schema.fields())
+            .anyMatch(
+                field -> {
+                  DataType type = field.dataType();
+                  return type instanceof IntegerType
+                      || type instanceof FloatType
+                      || type instanceof DecimalType;
+                });
+    if (!needsCast) {
+      return sparkDataset;
+    }
 
     List<Column> castedColumns =
         Arrays.stream(schema.fields())
@@ -277,6 +299,39 @@ public class SparkDataset implements Dataset {
     return sparkDataset;
   }
 
+  /**
+   * Builds a driver-side map from two columns (e.g. hierarchical validation bindings).
+   *
+   * <p>Only {@code keyColumn} and {@code valueColumn} are collected; the rest of the DataFrame
+   * stays distributed.
+   */
+  public static Map<String, Object> columnBindingsMap(
+      org.apache.spark.sql.Dataset<Row> dataset, String keyColumn, String valueColumn) {
+    org.apache.spark.sql.Dataset<Row> pairs =
+        dataset.select(
+            SparkUtils.safeCol(keyColumn).alias("__trevas_hr_key"),
+            SparkUtils.safeCol(valueColumn).alias("__trevas_hr_val"));
+    Map<String, Object> bindings = new HashMap<>();
+    Iterator<Row> rows = pairs.toLocalIterator();
+    while (rows.hasNext()) {
+      Row row = rows.next();
+      Object key = row.get(0);
+      if (key != null) {
+        bindings.put(key.toString(), row.get(1));
+      }
+    }
+    return bindings;
+  }
+
+  /**
+   * Materializes the full Spark DataFrame on the driver ({@code collectAsList}).
+   *
+   * <p>For production workloads on large datasets, keep processing on {@link #getSparkDataset()}.
+   * Intended for tests, TCK-sized data, and interoperability with in-memory APIs.
+   *
+   * @deprecated driver-side collection does not scale; prefer {@link #getSparkDataset()}.
+   */
+  @Deprecated
   @Override
   public List<DataPoint> getDataPoints() {
     List<Row> rows = sparkDataset.collectAsList();

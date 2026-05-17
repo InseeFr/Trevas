@@ -864,20 +864,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
           "dataset_priority input mode is not supported in check_hierarchy");
     }
 
-    // Create "bindings" (componentID column values)
-    fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
-
+    SparkDataset sparkDs = asSparkDataset(dsE);
     Map<String, Object> bindings =
-        ds.getDataAsMap().stream()
-            .collect(
-                HashMap::new,
-                (acc, dp) -> acc.put(dp.get(componentID).toString(), dp.get(hr.getVariable())),
-                HashMap::putAll);
+        SparkDataset.columnBindingsMap(sparkDs.getSparkDataset(), componentID, hr.getVariable());
+
     // Save monomeasure type
     Component measure = dsE.getDataStructure().getMeasures().get(0);
     Class measureType = measure.getType();
 
-    var roleMap = getRoleMap(ds);
+    var roleMap = getRoleMap(sparkDs);
     roleMap.put(RULEID, IDENTIFIER);
     roleMap.put(BOOLVAR, MEASURE);
     roleMap.put(IMBALANCE, MEASURE);
