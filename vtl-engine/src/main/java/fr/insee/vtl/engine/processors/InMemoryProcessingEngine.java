@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.processors;
 import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
+import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
@@ -201,15 +202,17 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     // Create a keyExtractor with the columns we group by.
     var keyExtractor = new KeyExtractor(groupBy);
 
+    Structured.DataStructure inputStructure = expression.getDataStructure();
     Structured.DataStructure structure =
-        AggregationResultStructureBuilder.build(
-            expression.getDataStructure(), groupBy, collectorMap);
+        AggregationResultStructureBuilder.build(inputStructure, groupBy, collectorMap);
+    Map<String, AggregationExpression> allCollectors =
+        ViralAttributeCollectors.mergeMeasureCollectors(inputStructure, structure, collectorMap);
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
 
         List<DataPoint> data = expression.resolve(Map.of()).getDataPoints();
-        MapCollector collector = new MapCollector(structure, collectorMap);
+        MapCollector collector = new MapCollector(structure, allCollectors);
         List<DataPoint> collect =
             data.stream()
                 .collect(Collectors.groupingBy(keyExtractor, collector))

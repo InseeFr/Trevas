@@ -387,22 +387,26 @@ public class SparkProcessingEngine implements ProcessingEngine {
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
     SparkDataset sparkDataset = asSparkDataset(dataset);
-    List<Column> columns =
-        collectorMap.entrySet().stream()
-            .map(e -> convertAggregation(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
-    List<Column> groupByColumns =
-        groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
-    Dataset<Row> result =
-        sparkDataset
-            .getSparkDataset()
-            .groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
-            .agg(
-                columns.get(0),
-                iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
+    Structured.DataStructure inputStructure = dataset.getDataStructure();
     Structured.DataStructure resultStructure =
         fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
-            dataset.getDataStructure(), groupBy, collectorMap);
+            inputStructure, groupBy, collectorMap);
+    List<Column> columns =
+        fr.insee.vtl.spark.aggregation.SparkViralAttributeAggregations.allAggregationColumns(
+            inputStructure,
+            resultStructure,
+            collectorMap,
+            SparkProcessingEngine::convertAggregation);
+    List<Column> groupByColumns =
+        groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
+    RelationalGroupedDataset grouped =
+        sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq());
+    if (columns.isEmpty()) {
+      throw new IllegalArgumentException("aggregation requires at least one aggregate expression");
+    }
+    Dataset<Row> result =
+        grouped.agg(
+            columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
     SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
     return new SparkDatasetExpression(sparkDs, dataset);
   }
