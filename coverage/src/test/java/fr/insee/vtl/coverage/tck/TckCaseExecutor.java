@@ -100,7 +100,7 @@ public final class TckCaseExecutor {
                       expected,
                       "expected output",
                       "TCK expected output");
-              if (!TckDatasetComparison.sameRowOrder(actualMap, expectedMap)) {
+              if (!TckDatasetComparison.sameRows(actualMap, expectedMap)) {
                 softly.fail(
                     TckFailureText.rowDataMismatch(
                         displayPath, outputName, test, actual, expected));
