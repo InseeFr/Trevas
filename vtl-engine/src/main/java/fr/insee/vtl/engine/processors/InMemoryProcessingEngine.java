@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.processors;
 import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
@@ -128,6 +129,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return renamedStructure;
       }
     };
+  }
+
+  @Override
+  public DatasetExpression executeMembership(
+      DatasetExpression expression, String memberComponentName) {
+    return MembershipOperations.execute(this, expression, memberComponentName);
   }
 
   @Override

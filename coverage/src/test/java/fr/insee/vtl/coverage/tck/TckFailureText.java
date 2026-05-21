@@ -1,6 +1,7 @@
 package fr.insee.vtl.coverage.tck;
 
 import fr.insee.vtl.coverage.model.Test;
+import fr.insee.vtl.csv.DatasetConsistencyIssue;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.util.ArrayList;
@@ -28,6 +29,65 @@ public final class TckFailureText {
         formatDataStructureTable(expected));
   }
 
+  /**
+   * TCK {@code input.json} / {@code output.json} or CSV files are inconsistent (detected before
+   * running the script). This is not a Trevas VTL engine failure.
+   */
+  public static String tckFixtureInconsistency(
+      String displayPath, Test test, String fixtureRole, List<DatasetConsistencyIssue> issues) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        String.format(
+            "[%s] TCK %s fixture inconsistency (not a Trevas engine failure)%n",
+            displayPath, fixtureRole));
+    appendFixtureExplanation(sb);
+    appendIssueList(sb, issues);
+    sb.append(System.lineSeparator());
+    appendScript(sb, test.getScript());
+    sb.append(System.lineSeparator());
+    if ("input".equals(fixtureRole)) {
+      appendInputsMetadataOnly(sb, test.getInput(), test.getInputFixtureIssues());
+    } else {
+      appendInputsMetadataOnly(sb, test.getOutputs(), test.getOutputFixtureIssues());
+    }
+    return sb.toString();
+  }
+
+  /** Same as {@link #tckFixtureInconsistency} but inferred from a CSV load exception at runtime. */
+  public static String tckFixtureInconsistencyFromRuntime(
+      String displayPath, Test test, String fixtureRole, String datasetName, Throwable error) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        String.format(
+            "[%s] TCK %s fixture inconsistency (not a Trevas engine failure)%n",
+            displayPath, fixtureRole));
+    appendFixtureExplanation(sb);
+    String csvFileName = datasetName.endsWith(".csv") ? datasetName : datasetName + ".csv";
+    String issueDatasetName =
+        datasetName.endsWith(".csv")
+            ? datasetName.substring(0, datasetName.length() - 4)
+            : datasetName;
+    DatasetConsistencyIssue issue =
+        TckInputValidator.fromLoadFailure(issueDatasetName, csvFileName, error);
+    if (issue != null) {
+      appendIssueList(sb, List.of(issue));
+    } else {
+      sb.append("(see exception below)").append(System.lineSeparator());
+      appendExceptionSummary(sb, error);
+    }
+    sb.append(System.lineSeparator());
+    appendScript(sb, test.getScript());
+    sb.append(System.lineSeparator());
+    if ("input".equals(fixtureRole) || fixtureRole.startsWith("input")) {
+      appendInputsMetadataOnly(sb, test.getInput(), test.getInputFixtureIssues());
+    } else {
+      appendInputs(sb, test.getInput(), test.getInputFixtureIssues());
+      sb.append(System.lineSeparator());
+      appendInputsMetadataOnly(sb, test.getOutputs(), test.getOutputFixtureIssues());
+    }
+    return sb.toString();
+  }
+
   /** Script failed during {@code engine.eval} (exception, not an output mismatch). */
   public static String executionError(String displayPath, Test test, Throwable error) {
     StringBuilder sb = new StringBuilder();
@@ -36,7 +96,7 @@ public final class TckFailureText {
     sb.append(System.lineSeparator());
     appendScript(sb, test.getScript());
     sb.append(System.lineSeparator());
-    appendInputs(sb, test.getInput());
+    appendInputs(sb, test.getInput(), test.getInputFixtureIssues());
     return sb.toString();
   }
 
@@ -46,7 +106,7 @@ public final class TckFailureText {
     sb.append(String.format("[%s] output `%s` — row data differs%n", displayPath, outputName));
     appendScript(sb, test.getScript());
     sb.append(System.lineSeparator());
-    appendInputs(sb, test.getInput());
+    appendInputs(sb, test.getInput(), test.getInputFixtureIssues());
     sb.append(System.lineSeparator());
     sb.append("Trevas (actual):").append(System.lineSeparator());
     sb.append(formatDatasetTable(actualDs));
@@ -181,7 +241,45 @@ public final class TckFailureText {
         || className.startsWith("org.opentest4j.");
   }
 
-  private static void appendInputs(StringBuilder sb, Map<String, Dataset> inputs) {
+  private static void appendFixtureExplanation(StringBuilder sb) {
+    sb.append(
+            "The metadata (input.json / output.json) and CSV files shipped with this TCK case do not"
+                + " match what Trevas can load, or they disagree with each other.")
+        .append(System.lineSeparator());
+    sb.append("Fix the TCK package or extend Trevas CSV loading (see roadmap/tck-csv-loader.md).")
+        .append(System.lineSeparator())
+        .append(System.lineSeparator());
+  }
+
+  private static void appendIssueList(StringBuilder sb, List<DatasetConsistencyIssue> issues) {
+    for (DatasetConsistencyIssue issue : issues) {
+      sb.append("• Dataset `")
+          .append(issue.datasetName())
+          .append("` (")
+          .append(issue.csvFileName())
+          .append(")");
+      if (issue.column() != null) {
+        sb.append(", column `").append(issue.column()).append("`");
+      }
+      if (issue.rowNumber() > 0) {
+        sb.append(", CSV row ").append(issue.rowNumber());
+      }
+      sb.append(System.lineSeparator());
+      sb.append("  ").append(formatIssueKind(issue.kind())).append(": ").append(issue.detail());
+      sb.append(System.lineSeparator());
+    }
+  }
+
+  private static String formatIssueKind(DatasetConsistencyIssue.Kind kind) {
+    return switch (kind) {
+      case COLUMN_IN_STRUCTURE_MISSING_FROM_CSV_HEADER -> "Structure/CSV column mismatch";
+      case UNSUPPORTED_TYPE_IN_STRUCTURE -> "Unsupported type in structure metadata";
+      case INTEGER_METADATA_BUT_CSV_DECIMAL_NOTATION -> "INTEGER metadata vs decimal CSV value";
+    };
+  }
+
+  private static void appendInputs(
+      StringBuilder sb, Map<String, Dataset> inputs, List<DatasetConsistencyIssue> knownIssues) {
     sb.append("--- inputs ---").append(System.lineSeparator());
     if (inputs == null || inputs.isEmpty()) {
       sb.append("(none)").append(System.lineSeparator());
@@ -192,9 +290,57 @@ public final class TckFailureText {
         .forEach(
             e -> {
               sb.append("« ").append(e.getKey()).append(" »").append(System.lineSeparator());
-              sb.append(formatDatasetTable(e.getValue()));
+              if (datasetHasKnownIssues(e.getKey(), knownIssues)) {
+                sb.append(formatDataStructureTable(e.getValue().getDataStructure()));
+                sb.append(" (CSV rows not shown — fixture inconsistency)");
+              } else {
+                sb.append(formatDatasetTableSafe(e.getValue()));
+              }
               sb.append(System.lineSeparator());
             });
+  }
+
+  private static void appendInputsMetadataOnly(
+      StringBuilder sb, Map<String, Dataset> datasets, List<DatasetConsistencyIssue> issues) {
+    sb.append("--- fixture metadata ---").append(System.lineSeparator());
+    if (datasets == null || datasets.isEmpty()) {
+      sb.append("(none)").append(System.lineSeparator());
+      return;
+    }
+    datasets.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(
+            e -> {
+              sb.append("« ").append(e.getKey()).append(" »").append(System.lineSeparator());
+              sb.append(formatDataStructureTable(e.getValue().getDataStructure()));
+              if (datasetHasKnownIssues(e.getKey(), issues)) {
+                sb.append(" (CSV not loaded — see issues above)");
+              }
+              sb.append(System.lineSeparator());
+            });
+  }
+
+  private static boolean datasetHasKnownIssues(
+      String datasetName, List<DatasetConsistencyIssue> issues) {
+    if (issues == null) {
+      return false;
+    }
+    return issues.stream().anyMatch(i -> datasetName.equals(i.datasetName()));
+  }
+
+  private static String formatDatasetTableSafe(Dataset dataset) {
+    try {
+      return formatDatasetTable(dataset);
+    } catch (RuntimeException e) {
+      if (TckInputValidator.isTckFixtureLoadFailure(e)) {
+        return formatDataStructureTable(dataset.getDataStructure())
+            + System.lineSeparator()
+            + "(could not load CSV rows: "
+            + e.getClass().getSimpleName()
+            + ")";
+      }
+      throw e;
+    }
   }
 
   static String formatDataStructureTable(Structured.DataStructure ds) {
