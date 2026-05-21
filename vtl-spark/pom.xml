@@ -36,8 +36,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>3.5.8</version>
+            <artifactId>spark-sql_${spark3.scala.binary}</artifactId>
         </dependency>
 
         <dependency>

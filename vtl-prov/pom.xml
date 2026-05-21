@@ -20,6 +20,10 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
+        <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
+        <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -41,11 +45,6 @@
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-spark</artifactId>
-            <version>2.4.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
             <version>2.4.0-SNAPSHOT</version>
         </dependency>
@@ -63,8 +62,43 @@
             <version>3.17.0</version>
             <type>pom</type>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- Spark is not a compile dependency: applications add either vtl-spark or vtl-spark4.
+             Tests pick one module via trevas.spark.integration.test.module (profile spark4-tests). -->
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>${trevas.spark.integration.test.module}</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>spark4-tests</id>
+            <properties>
+                <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
+                <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
+                <jackson.version>2.18.2</jackson.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -74,6 +108,13 @@
                 <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                    <environmentVariables>
+                        <SPARK_USER>test</SPARK_USER>
+                        <HADOOP_USER_NAME>test</HADOOP_USER_NAME>
+                    </environmentVariables>
+                    <systemPropertyVariables>
+                        <trevas.spark.processing.engine>${trevas.spark.processing.engine}</trevas.spark.processing.engine>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>

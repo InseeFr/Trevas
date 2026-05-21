@@ -2,6 +2,12 @@ package fr.insee.vtl.engine.utils.dag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import fr.insee.vtl.antlr.runtime.CharStreams;
+import fr.insee.vtl.antlr.runtime.CodePointCharStream;
+import fr.insee.vtl.antlr.runtime.CommonTokenStream;
+import fr.insee.vtl.antlr.runtime.tree.ParseTree;
+import fr.insee.vtl.antlr.runtime.tree.RuleNode;
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlSyntaxPreprocessor;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlLexer;
@@ -9,12 +15,6 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.script.ScriptException;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

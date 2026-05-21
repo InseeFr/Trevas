@@ -2,6 +2,10 @@ package fr.insee.vtl.engine;
 
 import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
 
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.misc.Interval;
+import fr.insee.vtl.antlr.runtime.tree.ParseTree;
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
@@ -19,10 +23,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.script.*;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * The {@link ScriptEngine} implementation for VTL.

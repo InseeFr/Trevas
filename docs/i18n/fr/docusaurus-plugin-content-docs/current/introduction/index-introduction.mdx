@@ -46,3 +46,5 @@ import Video from '@theme/Video';
 Trevas fournit des moteurs VTL pour différents environnemens d'exécution, notamment un moteur Java 17 et un moteur [Apache Spark](https://spark.apache.org/).
 
 Les moteurs Trevas se basent sur la spécification [JSR 223](https://jcp.org/en/jsr/detail?id=223) qui décrit l'utilisation de langages de scripts en Java.
+
+La pile parseur (`vtl-antlr` puis `vtl-parser`) utilise un [runtime ANTLR relocalisé](/developer-guide/antlr-shaded-runtime) pour que Trevas et Apache Spark puissent coexister sur le même classpath.

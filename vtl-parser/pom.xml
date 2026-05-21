@@ -25,9 +25,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>${antlr4.version}</version>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-antlr</artifactId>
+            <version>2.4.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -39,15 +39,40 @@
                 <version>${antlr4.version}</version>
                 <executions>
                     <execution>
+                        <id>antlr</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
                         <configuration>
                             <listener>true</listener>
                             <visitor>true</visitor>
                             <libDirectory>src/main/antlr4/fr/insee/vtl/parser</libDirectory>
                         </configuration>
-                        <id>antlr</id>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- ANTLR has no option to override the runtime import path; rewrite the
+                     generated sources' imports to point at our relocated runtime (vtl-antlr)
+                     so the compiled class files reference the shaded names from the start. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>relocate-antlr-imports</id>
+                        <phase>process-sources</phase>
                         <goals>
-                            <goal>antlr4</goal>
+                            <goal>run</goal>
                         </goals>
+                        <configuration>
+                            <target>
+                                <replaceregexp match="org\.antlr\.v4" replace="fr.insee.vtl.antlr" flags="g">
+                                    <fileset dir="${project.build.directory}/generated-sources/antlr4"
+                                             includes="**/*.java"/>
+                                </replaceregexp>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

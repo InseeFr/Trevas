@@ -17,6 +17,7 @@ module.exports = {
 					key: 'introduction-modules',
 					items: [
 						'introduction/modules/index-modules',
+						'introduction/modules/antlr',
 						'introduction/modules/engine',
 						'introduction/modules/parser',
 						'introduction/modules/spark',
@@ -112,6 +113,7 @@ module.exports = {
 			items: [
 				'developer-guide/index-developer-guide',
 				'developer-guide/developer-javadoc',
+				'developer-guide/antlr-shaded-runtime',
 				'developer-guide/dag',
 				{
 					type: 'category',

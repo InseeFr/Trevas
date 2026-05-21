@@ -61,11 +61,11 @@ public class RDFTest {
     RDFUtils.loadModelWithCredentials(
         model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
 
-    spark = SparkSession.builder().appName("test").master("local").getOrCreate();
+    spark = TestSparkSessionFactory.create();
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
-    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, TestSparkEngineConfig.getEngineName());
     engine.put("$vtl.spark.session", spark);
   }
 

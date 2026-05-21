@@ -20,8 +20,15 @@ import Card from '@theme/Card';
 		</div>
 		<div className="col">
 			<Card
-				title="VTL Parser"
-				description="Parseur généré par Antlr à partir de la grammaire formelle de VTL 2.1"
+				title="VTL ANTLR 模块"
+				description="解析器使用的 ANTLR 4 运行时（已 shade）"
+				page={useBaseUrl('/modules/antlr')}
+			/>
+		</div>
+		<div className="col">
+			<Card
+				title="VTL 语言解析模块"
+				description="基于 VTL 2.1 形式语法、由 Antlr 生成的解析器"
 				page={useBaseUrl('/modules/parser')}
 			/>
 		</div>
