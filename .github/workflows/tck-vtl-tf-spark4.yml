@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TCK_REPORT_TITLE: 'TCK VTL v2.1 (Spark 4)'
+      VTL_TCK_BRANCH: fix/doc-examples
 
     steps:
       - name: Checkout main project
@@ -19,8 +20,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Clone vtl spec repo (branch fix/tck-2.1)
-        run: git clone --branch fix/tck-2.1 https://github.com/sdmx-twg/vtl.git
+      - name: Clone vtl spec repo
+        run: git clone --depth 1 --branch "${VTL_TCK_BRANCH}" https://github.com/sdmx-twg/vtl.git
 
       - name: Install Python 3
         uses: actions/setup-python@v6

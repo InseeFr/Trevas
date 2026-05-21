@@ -25,8 +25,8 @@ public class AggregationExpression
    * @param aggregation Collector of data points.
    * @param type Expected type for aggregation results.
    */
-  public <T> AggregationExpression(
-      Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
+  protected AggregationExpression(
+      Collector<Structured.DataPoint, ?, ?> aggregation, Class<?> type) {
     this.aggregation = aggregation;
     this.type = type;
   }
@@ -55,8 +55,8 @@ public class AggregationExpression
   }
 
   public static class CountAggregationExpression extends AggregationExpression {
-    private <T> CountAggregationExpression(
-        Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
+    private CountAggregationExpression(
+        Collector<Structured.DataPoint, ?, ?> aggregation, Class<?> type) {
       super(aggregation, type);
     }
   }
@@ -89,23 +89,29 @@ public class AggregationExpression
   }
 
   /**
-   * Returns an aggregation expression that sums an expression on data points and returns a long
-   * integer or double number.
+   * Returns an aggregation expression that sums an expression on data points.
+   *
+   * <p>{@link Long} operands are summed as {@link Long} then promoted to {@link Double} (TCK /
+   * numeric aggregate convention). {@link Double} operands yield {@link Double} sums.
    *
    * @param expression The expression on data points.
    * @return The summing expression.
    */
   public static AggregationExpression sum(ResolvableExpression expression) {
-    if (Long.class.equals(expression.getType())) {
-      return new SumAggregationExpression(
-          expression, Collectors.summingLong(value -> (Long) value), Long.class);
-    } else if (Double.class.equals(expression.getType())) {
+    Class<?> operandType = expression.getType();
+    if (Double.class.equals(operandType)) {
       return new SumAggregationExpression(
           expression, Collectors.summingDouble(value -> (Double) value), Double.class);
-    } else {
-      // Type asserted in visitor.
-      throw new Error("unexpected type");
     }
+    if (Long.class.equals(operandType)) {
+      return new SumAggregationExpression(
+          expression,
+          Collectors.mapping(
+              value -> ((Long) value).doubleValue(), Collectors.summingDouble(v -> v)),
+          Double.class);
+    }
+    // Type asserted in visitor.
+    throw new Error("unexpected type");
   }
 
   public static class SumAggregationExpression extends AggregationExpression {

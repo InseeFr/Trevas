@@ -3,6 +3,7 @@ package fr.insee.vtl.jackson;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import fr.insee.vtl.model.ComponentRoleResolver;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
     var node = ctxt.readTree(p);
     var name = node.get("name").asText();
     var type = node.get("type").asText();
-    var role = Dataset.Role.valueOf(node.get("role").asText());
+    var role = ComponentRoleResolver.parseRoleName(node.get("role").asText());
     var nullable = node.get("nullable") != null ? node.get("nullable").asBoolean() : null;
     return new Dataset.Component(name, asType(type), role, nullable);
   }

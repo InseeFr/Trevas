@@ -186,7 +186,7 @@ public class SparkDataset implements Dataset {
       fieldRole = roles.get(field.name());
     } else if (field.metadata().contains("vtlRole")) {
       String roleName = field.metadata().getString("vtlRole");
-      fieldRole = Role.valueOf(roleName);
+      fieldRole = fr.insee.vtl.model.ComponentRoleResolver.parseRoleName(roleName);
     } else {
       fieldRole = Role.MEASURE;
     }
@@ -282,9 +282,11 @@ public class SparkDataset implements Dataset {
         .map(
             row -> {
               List<Object> values = new ArrayList<>();
-              int i = 0;
-              for (Component component : getDataStructure().values()) {
-                Object v = row.get(i++);
+              var structure = getDataStructure();
+              for (int i = 0; i < structure.size(); i++) {
+                String column = structure.keyAtIndex(i);
+                Component component = structure.get(column);
+                Object v = row.get(row.fieldIndex(column));
                 if (component.getType().equals(Instant.class)) {
                   if (v instanceof java.time.LocalDate ld) {
                     values.add(ld.atStartOfDay().toInstant(java.time.ZoneOffset.UTC));

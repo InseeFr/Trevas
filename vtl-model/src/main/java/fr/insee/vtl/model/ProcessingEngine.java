@@ -56,6 +56,34 @@ public interface ProcessingEngine {
   DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames);
 
   /**
+   * Projects a join result onto bare column names, merging homonym {@linkplain
+   * Dataset.Role#VIRALATTRIBUTE viral attributes} when needed.
+   */
+  DatasetExpression executeJoinProjection(
+      DatasetExpression expression, List<String> outputColumnNames);
+
+  /** Restores viral attribute values after a unary dataset transform that dropped them. */
+  DatasetExpression reattachUnaryViralAttributes(
+      DatasetExpression sourceDataset,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName);
+
+  /** Restores viral attribute values after a binary dataset transform that dropped them. */
+  DatasetExpression reattachBinaryViralAttributes(
+      List<DatasetExpression> sources,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName);
+
+  /**
+   * Execute membership ({@code DS # component}) on a dataset expression.
+   *
+   * @param expression the source dataset
+   * @param memberComponentName the component id after {@code #}
+   * @return the membership result
+   */
+  DatasetExpression executeMembership(DatasetExpression expression, String memberComponentName);
+
+  /**
    * Execute a union transformations on the dataset expression.
    *
    * @param datasets list of dataset expression to union
@@ -72,6 +100,16 @@ public interface ProcessingEngine {
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap);
+
+  /**
+   * Same as {@link #executeAggr(DatasetExpression, List, Map)} with explicit viral propagation
+   * semantics (aggregate invocation vs {@code aggr} clause).
+   */
+  DatasetExpression executeAggr(
+      DatasetExpression expression,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap,
+      AggregationViralPropagation viralPropagation);
 
   /**
    * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a
