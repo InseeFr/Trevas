@@ -23,7 +23,7 @@
         <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
         <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
         <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
-        <jackson.version>2.15.2</jackson.version>
+        <jackson.version>2.18.6</jackson.version>
     </properties>
 
     <dependencies>
