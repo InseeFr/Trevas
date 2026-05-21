@@ -393,7 +393,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
             .agg(
                 columns.get(0),
                 iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-    SparkDataset sparkDs = new SparkDataset(result, dataset.getRoles());
+    Structured.DataStructure resultStructure =
+        fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
+            dataset.getDataStructure(), groupBy, collectorMap);
+    SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 
