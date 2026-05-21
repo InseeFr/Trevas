@@ -2,6 +2,8 @@ package fr.insee.vtl.engine.processors;
 
 import static fr.insee.vtl.model.Structured.*;
 
+import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
@@ -130,6 +132,12 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   }
 
   @Override
+  public DatasetExpression executeMembership(
+      DatasetExpression expression, String memberComponentName) {
+    return MembershipOperations.execute(this, expression, memberComponentName);
+  }
+
+  @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
 
     var structure =
@@ -193,22 +201,9 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     // Create a keyExtractor with the columns we group by.
     var keyExtractor = new KeyExtractor(groupBy);
 
-    // Compute the new data structure.
-    Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
-    for (Dataset.Component component : expression.getDataStructure().values()) {
-      if (groupBy.contains(component.getName())) {
-        newStructure.put(component.getName(), component);
-      }
-    }
-    for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
-      // TODO: refine nullable strategy
-      newStructure.put(
-          entry.getKey(),
-          new Dataset.Component(
-              entry.getKey(), entry.getValue().getType(), Dataset.Role.MEASURE, true));
-    }
-
-    Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
+    Structured.DataStructure structure =
+        AggregationResultStructureBuilder.build(
+            expression.getDataStructure(), groupBy, collectorMap);
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {

@@ -15,6 +15,7 @@ import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -317,6 +318,12 @@ public class SparkProcessingEngine implements ProcessingEngine {
   }
 
   @Override
+  public DatasetExpression executeMembership(
+      DatasetExpression expression, String memberComponentName) {
+    return MembershipOperations.execute(this, expression, memberComponentName);
+  }
+
+  @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     SparkDataset dataset = asSparkDataset(expression);
 
@@ -400,7 +407,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
             .agg(
                 columns.get(0),
                 iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-    SparkDataset sparkDs = new SparkDataset(result, dataset.getRoles());
+    Structured.DataStructure resultStructure =
+        fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
+            dataset.getDataStructure(), groupBy, collectorMap);
+    SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 

@@ -106,9 +106,9 @@ public class StringFunctionsTest {
             ((Dataset) context.getAttribute("dsLower")).getDataStructure().get("string1").getType())
         .isEqualTo(String.class);
     assertThat(((Dataset) context.getAttribute("dsLen")).getDataAsMap().get(0))
-        .isEqualTo(Map.of("id", "Toto", "string1", 4L));
+        .isEqualTo(Map.of("id", "Toto", "int_var", 4L));
     assertThat(
-            ((Dataset) context.getAttribute("dsLen")).getDataStructure().get("string1").getType())
+            ((Dataset) context.getAttribute("dsLen")).getDataStructure().get("int_var").getType())
         .isEqualTo(Long.class);
   }
 
