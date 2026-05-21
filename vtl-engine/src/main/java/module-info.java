@@ -14,8 +14,6 @@ module fr.insee.vtl.engine {
   requires transitive java.scripting;
   requires transitive fr.insee.vtl.parser;
   requires transitive fr.insee.vtl.model;
-
-  // TODO: Consider removing these.
   requires org.apache.commons.lang3;
   requires org.apache.commons.text;
   requires safety.mirror;

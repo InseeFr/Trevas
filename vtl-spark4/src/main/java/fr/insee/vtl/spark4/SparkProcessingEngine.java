@@ -15,7 +15,10 @@ import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.join.JoinStructureBuilder;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.spark.attribute.SparkViralAttributePropagation;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
@@ -65,6 +68,18 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
   private static Map<String, Role> getRoleMap(fr.insee.vtl.model.Dataset dataset) {
     return getRoleMap(dataset.getDataStructure().values());
+  }
+
+  private static Map<String, Role> getRoleMap(
+      Structured.DataStructure structure, List<String> columnNames) {
+    Map<String, Role> roles = new LinkedHashMap<>();
+    for (String name : columnNames) {
+      Component component = structure.get(name);
+      if (component != null) {
+        roles.put(name, component.getRole());
+      }
+    }
+    return roles;
   }
 
   // TODO (expression instanceof MinAggregationExpression)
@@ -317,16 +332,56 @@ public class SparkProcessingEngine implements ProcessingEngine {
   }
 
   @Override
+  public DatasetExpression executeMembership(
+      DatasetExpression expression, String memberComponentName) {
+    return MembershipOperations.execute(this, expression, memberComponentName);
+  }
+
+  @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     SparkDataset dataset = asSparkDataset(expression);
+    org.apache.spark.sql.Dataset<Row> sparkDataset = dataset.getSparkDataset();
+    Structured.DataStructure structure = dataset.getDataStructure();
 
-    List<Column> columns = columnNames.stream().map(Column::new).collect(Collectors.toList());
+    List<Column> columns =
+        columnNames.stream()
+            .map(
+                name ->
+                    SparkViralAttributePropagation.resolveProjectColumn(
+                        sparkDataset, structure, name))
+            .collect(Collectors.toList());
     Column[] columnArray = columns.toArray(new Column[0]);
 
-    // Project in spark.
-    Dataset<Row> result = dataset.getSparkDataset().select(columnArray);
+    Dataset<Row> result = sparkDataset.select(columnArray);
 
-    return new SparkDatasetExpression(new SparkDataset(result, getRoleMap(dataset)), expression);
+    return new SparkDatasetExpression(
+        new SparkDataset(result, getRoleMap(expression.getDataStructure(), columnNames)),
+        expression);
+  }
+
+  @Override
+  public DatasetExpression executeJoinProjection(
+      DatasetExpression expression, List<String> outputColumnNames) {
+    return SparkViralAttributePropagation.joinProjection(
+        (SparkDatasetExpression) expression, outputColumnNames);
+  }
+
+  @Override
+  public DatasetExpression reattachUnaryViralAttributes(
+      DatasetExpression sourceDataset,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return SparkViralAttributePropagation.reattachUnary(
+        sourceDataset, (SparkDatasetExpression) transformed, outputMeasuresByName);
+  }
+
+  @Override
+  public DatasetExpression reattachBinaryViralAttributes(
+      List<DatasetExpression> sources,
+      DatasetExpression transformed,
+      Map<String, Class<?>> outputMeasuresByName) {
+    return SparkViralAttributePropagation.reattachBinary(
+        sources, (SparkDatasetExpression) transformed, outputMeasuresByName);
   }
 
   private boolean checkColNameCompatibility(List<DatasetExpression> datasets) {
@@ -386,21 +441,42 @@ public class SparkProcessingEngine implements ProcessingEngine {
       DatasetExpression dataset,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
+    AggregationViralPropagation viralPropagation =
+        groupBy.isEmpty()
+            ? AggregationViralPropagation.INVOCATION_GLOBAL
+            : AggregationViralPropagation.INVOCATION_GROUPED;
+    return executeAggr(dataset, groupBy, collectorMap, viralPropagation);
+  }
+
+  @Override
+  public DatasetExpression executeAggr(
+      DatasetExpression dataset,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap,
+      AggregationViralPropagation viralPropagation) {
     SparkDataset sparkDataset = asSparkDataset(dataset);
+    Structured.DataStructure inputStructure = dataset.getDataStructure();
+    Structured.DataStructure resultStructure =
+        fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
+            inputStructure, groupBy, collectorMap, viralPropagation);
     List<Column> columns =
-        collectorMap.entrySet().stream()
-            .map(e -> convertAggregation(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
+        fr.insee.vtl.spark.aggregation.SparkViralAttributeAggregations.allAggregationColumns(
+            inputStructure,
+            resultStructure,
+            collectorMap,
+            viralPropagation,
+            SparkProcessingEngine::convertAggregation);
     List<Column> groupByColumns =
         groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
+    RelationalGroupedDataset grouped =
+        sparkDataset.getSparkDataset().groupBy(iterableAsScalaIterable(groupByColumns).toSeq());
+    if (columns.isEmpty()) {
+      throw new IllegalArgumentException("aggregation requires at least one aggregate expression");
+    }
     Dataset<Row> result =
-        sparkDataset
-            .getSparkDataset()
-            .groupBy(iterableAsScalaIterable(groupByColumns).toSeq())
-            .agg(
-                columns.get(0),
-                iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-    SparkDataset sparkDs = new SparkDataset(result, dataset.getRoles());
+        grouped.agg(
+            columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
+    SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 
@@ -518,44 +594,45 @@ public class SparkProcessingEngine implements ProcessingEngine {
   @Override
   public DatasetExpression executeInnerJoin(
       Map<String, DatasetExpression> datasets, List<Component> components) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifiers = identifierNames(components);
-    var innerJoin = executeJoin(sparkDatasets, identifiers, "inner");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
+    return joinDatasets(datasets, components, "inner");
   }
 
   @Override
   public DatasetExpression executeLeftJoin(
       Map<String, DatasetExpression> datasets, List<Structured.Component> components) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifiers = identifierNames(components);
-    var innerJoin = executeJoin(sparkDatasets, identifiers, "left");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(innerJoin, getRoleMap(components)), datasetExpression);
+    return joinDatasets(datasets, components, "left");
   }
 
   @Override
   public DatasetExpression executeCrossJoin(
       Map<String, DatasetExpression> datasets, List<Component> identifiers) {
-    List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    var crossJoin = executeJoin(sparkDatasets, List.of(), "cross");
-    DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
+    return joinDatasets(datasets, List.of(), "cross");
   }
 
   @Override
   public DatasetExpression executeFullJoin(
       Map<String, DatasetExpression> datasets, List<Component> identifiers) {
+    return joinDatasets(datasets, identifiers, "outer");
+  }
+
+  private DatasetExpression joinDatasets(
+      Map<String, DatasetExpression> datasets, List<Component> joinKeys, String joinType) {
     List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
-    List<String> identifierNames = identifierNames(identifiers);
-    var crossJoin = executeJoin(sparkDatasets, identifierNames, "outer");
+    List<String> identifiers = identifierNames(joinKeys);
+    Structured.DataStructure structure = joinStructure(joinKeys, datasets);
+    Dataset<Row> joined = executeJoin(sparkDatasets, identifiers, joinType);
+    joined = SparkViralAttributePropagation.collapseHomonymViralColumns(joined, structure);
     DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
     return new SparkDatasetExpression(
-        new SparkDataset(crossJoin, getRoleMap(identifiers)), datasetExpression);
+        new SparkDataset(joined, SparkViralAttributePropagation.rolesFromStructure(structure)),
+        datasetExpression);
+  }
+
+  private static Structured.DataStructure joinStructure(
+      List<Component> joinKeys, Map<String, DatasetExpression> datasets) {
+    List<Structured.DataStructure> operands =
+        datasets.values().stream().map(DatasetExpression::getDataStructure).toList();
+    return JoinStructureBuilder.build(joinKeys, operands);
   }
 
   @Override
@@ -787,20 +864,15 @@ public class SparkProcessingEngine implements ProcessingEngine {
           "dataset_priority input mode is not supported in check_hierarchy");
     }
 
-    // Create "bindings" (componentID column values)
-    fr.insee.vtl.model.Dataset ds = dsE.resolve(Map.of());
-
+    SparkDataset sparkDs = asSparkDataset(dsE);
     Map<String, Object> bindings =
-        ds.getDataAsMap().stream()
-            .collect(
-                HashMap::new,
-                (acc, dp) -> acc.put(dp.get(componentID).toString(), dp.get(hr.getVariable())),
-                HashMap::putAll);
+        SparkDataset.columnBindingsMap(sparkDs.getSparkDataset(), componentID, hr.getVariable());
+
     // Save monomeasure type
     Component measure = dsE.getDataStructure().getMeasures().get(0);
     Class measureType = measure.getType();
 
-    var roleMap = getRoleMap(ds);
+    var roleMap = getRoleMap(sparkDs);
     roleMap.put(RULEID, IDENTIFIER);
     roleMap.put(BOOLVAR, MEASURE);
     roleMap.put(IMBALANCE, MEASURE);

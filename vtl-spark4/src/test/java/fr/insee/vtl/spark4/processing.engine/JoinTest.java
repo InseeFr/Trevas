@@ -180,10 +180,10 @@ public class JoinTest {
 
     assertThat(result.getDataAsList())
         .containsExactlyInAnyOrder(
-            Arrays.asList(8L, "d"),
-            Arrays.asList(null, "c"),
-            Arrays.asList(null, "b"),
-            Arrays.asList(7L, "a"));
+            Arrays.asList("d", 8L),
+            Arrays.asList("c", null),
+            Arrays.asList("b", null),
+            Arrays.asList("a", 7L));
   }
 
   @Test

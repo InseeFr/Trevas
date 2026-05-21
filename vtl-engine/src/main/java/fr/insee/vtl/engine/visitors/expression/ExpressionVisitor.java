@@ -2,7 +2,11 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.aggregation.AggregateInvocationExecutor;
+import fr.insee.vtl.engine.aggregation.AggregationColumnReferences;
+import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
@@ -25,7 +29,6 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,13 +139,9 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             fromContext(ctx));
       }
 
-      ArrayList<String> components =
-          structure.values().stream()
-              .filter(Structured.Component::isIdentifier)
-              .map(Structured.Component::getName)
-              .collect(Collectors.toCollection(ArrayList::new));
-      components.add(componentName);
-      return this.engine.getProcessingEngine().executeProject((DatasetExpression) ds, components);
+      return this.engine
+          .getProcessingEngine()
+          .executeMembership((DatasetExpression) ds, componentName);
     } catch (VtlScriptException vse) {
       throw new VtlRuntimeException(vse);
     }
@@ -369,6 +368,26 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   }
 
   /**
+   * Dataset-level aggregate invocation ({@code sum(DS group by …)}, etc.).
+   *
+   * @see AggregateInvocationExecutor
+   */
+  @Override
+  public ResolvableExpression visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
+    return visit(ctx.aggrOperatorsGrouping());
+  }
+
+  @Override
+  public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    return AggregateInvocationExecutor.executeAggrDataset(ctx, this, processingEngine);
+  }
+
+  @Override
+  public ResolvableExpression visitCountAggr(VtlParser.CountAggrContext ctx) {
+    return AggregationColumnReferences.countMeasure(fromContext(ctx));
+  }
+
+  /**
    * Visits clause expressions.
    *
    * @param ctx The scripting context for the expression.
@@ -512,6 +531,15 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
       analytics.put(targetColumnName, result);
     }
     return processingEngine.executeInnerJoin(analytics);
+  }
+
+  private DatasetExpression asDataset(ResolvableExpression expression, ParserRuleContext ctx) {
+    if (expression instanceof DatasetExpression datasetExpression) {
+      return datasetExpression;
+    }
+    throw new VtlRuntimeException(
+        new InvalidArgumentException(
+            "aggregate invocation first operand must be a dataset", fromContext(ctx)));
   }
 
   @Override

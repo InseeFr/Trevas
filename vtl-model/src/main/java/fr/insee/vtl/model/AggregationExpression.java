@@ -25,8 +25,8 @@ public class AggregationExpression
    * @param aggregation Collector of data points.
    * @param type Expected type for aggregation results.
    */
-  public <T> AggregationExpression(
-      Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
+  protected AggregationExpression(
+      Collector<Structured.DataPoint, ?, ?> aggregation, Class<?> type) {
     this.aggregation = aggregation;
     this.type = type;
   }
@@ -55,8 +55,8 @@ public class AggregationExpression
   }
 
   public static class CountAggregationExpression extends AggregationExpression {
-    private <T> CountAggregationExpression(
-        Collector<Structured.DataPoint, ?, T> aggregation, Class<T> type) {
+    private CountAggregationExpression(
+        Collector<Structured.DataPoint, ?, ?> aggregation, Class<?> type) {
       super(aggregation, type);
     }
   }
@@ -89,23 +89,29 @@ public class AggregationExpression
   }
 
   /**
-   * Returns an aggregation expression that sums an expression on data points and returns a long
-   * integer or double number.
+   * Returns an aggregation expression that sums an expression on data points.
+   *
+   * <p>{@link Long} operands are summed as {@link Long} then promoted to {@link Double} (TCK /
+   * numeric aggregate convention). {@link Double} operands yield {@link Double} sums.
    *
    * @param expression The expression on data points.
    * @return The summing expression.
    */
   public static AggregationExpression sum(ResolvableExpression expression) {
-    if (Long.class.equals(expression.getType())) {
-      return new SumAggregationExpression(
-          expression, Collectors.summingLong(value -> (Long) value), Long.class);
-    } else if (Double.class.equals(expression.getType())) {
+    Class<?> operandType = expression.getType();
+    if (Double.class.equals(operandType)) {
       return new SumAggregationExpression(
           expression, Collectors.summingDouble(value -> (Double) value), Double.class);
-    } else {
-      // Type asserted in visitor.
-      throw new Error("unexpected type");
     }
+    if (Long.class.equals(operandType)) {
+      return new SumAggregationExpression(
+          expression,
+          Collectors.mapping(
+              value -> ((Long) value).doubleValue(), Collectors.summingDouble(v -> v)),
+          Double.class);
+    }
+    // Type asserted in visitor.
+    throw new Error("unexpected type");
   }
 
   public static class SumAggregationExpression extends AggregationExpression {
@@ -374,134 +380,36 @@ public class AggregationExpression
         });
   }
 
-  private static Collector<Long, List<Long>, Double> stdDevPopCollectorLong() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getDeviationLongFn(true));
+  private static Collector<Long, ?, Double> stdDevPopCollectorLong() {
+    return WelfordAccumulator.longStdDevCollector(true);
   }
 
-  private static Collector<Double, List<Double>, Double> stdDevPopCollectorDouble() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getDeviationDoubleFn(true));
+  private static Collector<Double, ?, Double> stdDevPopCollectorDouble() {
+    return WelfordAccumulator.doubleStdDevCollector(true);
   }
 
-  private static Collector<Long, List<Long>, Double> stdDevSampCollectorLong() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getDeviationLongFn(false));
+  private static Collector<Long, ?, Double> stdDevSampCollectorLong() {
+    return WelfordAccumulator.longStdDevCollector(false);
   }
 
-  private static Collector<Double, List<Double>, Double> stdDevSampCollectorDouble() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getDeviationDoubleFn(false));
+  private static Collector<Double, ?, Double> stdDevSampCollectorDouble() {
+    return WelfordAccumulator.doubleStdDevCollector(false);
   }
 
-  private static Collector<Long, List<Long>, Double> varPopCollectorLong() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getVarLongFn(true));
+  private static Collector<Long, ?, Double> varPopCollectorLong() {
+    return WelfordAccumulator.longVarianceCollector(true);
   }
 
-  private static Collector<Double, List<Double>, Double> varPopCollectorDouble() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getVarDoubleFn(true));
+  private static Collector<Double, ?, Double> varPopCollectorDouble() {
+    return WelfordAccumulator.doubleVarianceCollector(true);
   }
 
-  private static Collector<Long, List<Long>, Double> varSampCollectorLong() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getVarLongFn(false));
+  private static Collector<Long, ?, Double> varSampCollectorLong() {
+    return WelfordAccumulator.longVarianceCollector(false);
   }
 
-  private static Collector<Double, List<Double>, Double> varSampCollectorDouble() {
-    return Collector.of(
-        ArrayList::new,
-        List::add,
-        (longs, longs2) -> {
-          longs.addAll(longs2);
-          return longs;
-        },
-        getVarDoubleFn(false));
-  }
-
-  private static Function<List<Long>, Double> getDeviationLongFn(Boolean usePopulation) {
-    return longs -> {
-      if (longs.contains(null)) return null;
-      if (longs.size() <= 1) return 0D;
-      Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
-      return Math.sqrt(
-          longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
-              / (longs.size() - (usePopulation ? 0D : 1D)));
-    };
-  }
-
-  private static Function<List<Double>, Double> getDeviationDoubleFn(Boolean usePopulation) {
-    return doubles -> {
-      if (doubles.contains(null)) return null;
-      if (doubles.size() <= 1) return 0D;
-      Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
-      return Math.sqrt(
-          doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
-              / (doubles.size() - (usePopulation ? 0D : 1D)));
-    };
-  }
-
-  private static Function<List<Long>, Double> getVarLongFn(Boolean usePopulation) {
-    return longs -> {
-      if (longs.contains(null)) return null;
-      if (longs.size() <= 1) return 0D;
-      Double avg = longs.stream().collect(Collectors.averagingLong(v -> v));
-      return longs.stream().map(v -> Math.pow(((double) v) - avg, 2)).mapToDouble(v -> v).sum()
-          / (longs.size() - (usePopulation ? 0D : 1D));
-    };
-  }
-
-  private static Function<List<Double>, Double> getVarDoubleFn(Boolean usePopulation) {
-    return doubles -> {
-      if (doubles.contains(null)) return null;
-      if (doubles.size() <= 1) return 0D;
-      Double avg = doubles.stream().collect(Collectors.averagingDouble(v -> v));
-      return doubles.stream().map(v -> Math.pow(v - avg, 2)).mapToDouble(v -> v).sum()
-          / (doubles.size() - (usePopulation ? 0D : 1D));
-    };
+  private static Collector<Double, ?, Double> varSampCollectorDouble() {
+    return WelfordAccumulator.doubleVarianceCollector(false);
   }
 
   @Override

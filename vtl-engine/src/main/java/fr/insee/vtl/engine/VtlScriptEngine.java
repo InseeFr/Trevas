@@ -45,10 +45,18 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   /** Script engine property to switch on DAG generation. */
   public static final String USE_DAG = "$vtl.engine.use_dag";
 
+  /** When {@code false}, each {@link #eval} parses the script again (no parse-tree reuse). */
+  public static final String PARSE_CACHE = "$vtl.engine.parse_cache";
+
   private final ScriptEngineFactory factory;
+  private final VtlParseCache parseCache = new VtlParseCache();
   private Map<String, Method> methodCache;
 
   private Map<String, Method> globalMethodCache;
+
+  private volatile Map<String, ProcessingEngineFactory> processingEngineFactories;
+  private volatile String cachedProcessingEngineName;
+  private volatile ProcessingEngine cachedProcessingEngine;
 
   /**
    * Constructor taking a script engine factory.
@@ -197,19 +205,81 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     return useDag == null || "true".equalsIgnoreCase(useDag.toString());
   }
 
+  private boolean isParseCacheEnabled() {
+    Object flag = get(PARSE_CACHE);
+    return flag == null || "true".equalsIgnoreCase(flag.toString());
+  }
+
+  void clearParseCache() {
+    parseCache.clear();
+  }
+
+  int parseCacheSize() {
+    return parseCache.size();
+  }
+
+  private Map<String, ProcessingEngineFactory> processingEngineFactories() {
+    Map<String, ProcessingEngineFactory> map = processingEngineFactories;
+    if (map == null) {
+      synchronized (this) {
+        map = processingEngineFactories;
+        if (map == null) {
+          map =
+              ServiceLoader.load(ProcessingEngineFactory.class).stream()
+                  .map(ServiceLoader.Provider::get)
+                  .collect(
+                      Collectors.toMap(
+                          ProcessingEngineFactory::getName,
+                          f -> f,
+                          (left, right) -> left,
+                          LinkedHashMap::new));
+          processingEngineFactories = map;
+        }
+      }
+    }
+    return map;
+  }
+
+  private void invalidateProcessingEngineCache() {
+    cachedProcessingEngine = null;
+    cachedProcessingEngineName = null;
+  }
+
   /**
    * Returns an instance of the processing engine for the script engine.
+   *
+   * <p>The same instance is reused for this script engine until {@link #PROCESSING_ENGINE_NAMES}
+   * changes.
    *
    * @return an instance of the processing engine for the script engine.
    */
   public ProcessingEngine getProcessingEngine() {
     String name = getProcessingEngineName();
-    Optional<ProcessingEngineFactory> factory =
-        ServiceLoader.load(ProcessingEngineFactory.class).stream()
-            .map(ServiceLoader.Provider::get)
-            .filter(f -> f.getName().equals(name))
-            .findFirst();
-    return factory.orElseThrow().getProcessingEngine(this);
+    ProcessingEngine cached = cachedProcessingEngine;
+    if (cached != null && name.equals(cachedProcessingEngineName)) {
+      return cached;
+    }
+    synchronized (this) {
+      if (cachedProcessingEngine == null || !name.equals(cachedProcessingEngineName)) {
+        ProcessingEngineFactory factory =
+            Optional.ofNullable(processingEngineFactories().get(name))
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            "No ProcessingEngineFactory registered for name: " + name));
+        cachedProcessingEngineName = name;
+        cachedProcessingEngine = factory.getProcessingEngine(this);
+      }
+      return cachedProcessingEngine;
+    }
+  }
+
+  @Override
+  public void put(String key, Object value) {
+    if (PROCESSING_ENGINE_NAMES.equals(key)) {
+      invalidateProcessingEngineCache();
+    }
+    super.put(key, value);
   }
 
   /**
@@ -223,52 +293,19 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   private Object evalStream(CodePointCharStream stream, ScriptContext context)
       throws VtlScriptException {
     try {
-      VtlLexer lexer = new VtlLexer(stream);
-
-      Deque<VtlScriptException> errors = new ArrayDeque<>();
-      BaseErrorListener baseErrorListener =
-          new BaseErrorListener() {
-            @Override
-            public void syntaxError(
-                Recognizer<?, ?> recognizer,
-                Object offendingSymbol,
-                int startLine,
-                int startColumn,
-                String msg,
-                RecognitionException e) {
-              if (e != null && e.getCtx() != null) {
-                errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
-              } else {
-                if (offendingSymbol instanceof Token offendingSymbolToken) {
-                  errors.add(new VtlSyntaxException(msg, fromToken(offendingSymbolToken)));
-                } else {
-                  var pos =
-                      new Positioned.Position(
-                          "", startLine, startLine, startColumn, startColumn + 1);
-                  errors.add(new VtlScriptException(msg, () -> pos));
-                }
-              }
-            }
-          };
-
-      lexer.removeErrorListeners();
-      lexer.addErrorListener(baseErrorListener);
-
-      VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
-      parser.removeErrorListeners();
-      parser.addErrorListener(baseErrorListener);
-
-      // Note that we need to call this method to trigger the
-      // error listener.
-      var start = parser.start();
-
-      if (!errors.isEmpty()) {
-        var first = errors.removeFirst();
-        for (VtlScriptException suppressed : errors) {
-          first.addSuppressed(suppressed);
-        }
-        throw first;
-      }
+      String script = stream.toString();
+      var start =
+          isParseCacheEnabled()
+              ? parseCache.get(
+                  script,
+                  s -> {
+                    try {
+                      return parseStart(s);
+                    } catch (VtlScriptException e) {
+                      throw new VtlRuntimeException(e);
+                    }
+                  })
+              : parseStart(script);
 
       VtlSyntaxPreprocessor syntaxPreprocessor =
           new VtlSyntaxPreprocessor(
@@ -281,7 +318,8 @@ public class VtlScriptEngine extends AbstractScriptEngine {
         syntaxPreprocessor.checkForMultipleAssignments();
       }
 
-      AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, getProcessingEngine());
+      ProcessingEngine processingEngine = getProcessingEngine();
+      AssignmentVisitor assignmentVisitor = new AssignmentVisitor(this, processingEngine);
       Object lastValue = null;
       for (VtlParser.StatementContext stmt : start.statement()) {
         lastValue = assignmentVisitor.visit(stmt);
@@ -290,6 +328,54 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     } catch (VtlRuntimeException vre) {
       throw vre.getCause();
     }
+  }
+
+  private VtlParser.StartContext parseStart(String script) throws VtlScriptException {
+    CodePointCharStream stream = CharStreams.fromString(script);
+    VtlLexer lexer = new VtlLexer(stream);
+
+    Deque<VtlScriptException> errors = new ArrayDeque<>();
+    BaseErrorListener baseErrorListener =
+        new BaseErrorListener() {
+          @Override
+          public void syntaxError(
+              Recognizer<?, ?> recognizer,
+              Object offendingSymbol,
+              int startLine,
+              int startColumn,
+              String msg,
+              RecognitionException e) {
+            if (e != null && e.getCtx() != null) {
+              errors.add(new VtlScriptException(msg, fromContext(e.getCtx())));
+            } else {
+              if (offendingSymbol instanceof Token offendingSymbolToken) {
+                errors.add(new VtlSyntaxException(msg, fromToken(offendingSymbolToken)));
+              } else {
+                var pos =
+                    new Positioned.Position("", startLine, startLine, startColumn, startColumn + 1);
+                errors.add(new VtlScriptException(msg, () -> pos));
+              }
+            }
+          }
+        };
+
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(baseErrorListener);
+
+    VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
+    parser.removeErrorListeners();
+    parser.addErrorListener(baseErrorListener);
+
+    var start = parser.start();
+
+    if (!errors.isEmpty()) {
+      var first = errors.removeFirst();
+      for (VtlScriptException suppressed : errors) {
+        first.addSuppressed(suppressed);
+      }
+      throw first;
+    }
+    return start;
   }
 
   /**
