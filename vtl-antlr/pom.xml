@@ -35,9 +35,25 @@
     <build>
         <plugins>
             <plugin>
-                <!-- Build the (empty) unshaded jar early (process-classes) so shade can transform it
-                     before downstream reactor modules compile. Skip the default jar execution that
-                     would otherwise overwrite the shaded jar at the package phase. -->
+                <!-- No Java sources: skip compile so reactor does not put an empty
+                     target/classes on the module path ahead of the shaded JAR. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Shade + Moditect run in the compile phase (before process-classes) so the
+                     modular shaded JAR exists when vtl-parser compiles in the same reactor pass.
+                     Default jar at package is disabled to avoid overwriting the shaded artifact. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.4.2</version>
@@ -48,7 +64,7 @@
                     </execution>
                     <execution>
                         <id>pre-shade-jar</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -62,7 +78,7 @@
                 <executions>
                     <execution>
                         <id>shade-antlr</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
@@ -95,7 +111,7 @@
                 <executions>
                     <execution>
                         <id>add-shaded-module-info</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>add-module-info</goal>
                         </goals>
