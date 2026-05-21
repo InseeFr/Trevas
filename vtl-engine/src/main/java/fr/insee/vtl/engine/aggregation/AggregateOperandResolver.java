@@ -4,9 +4,9 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 
 /** Resolves the operand of an aggregate invocation to a {@link DatasetExpression}. */
 public final class AggregateOperandResolver {

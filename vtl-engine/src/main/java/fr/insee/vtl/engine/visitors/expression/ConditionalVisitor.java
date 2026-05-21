@@ -3,12 +3,12 @@ package fr.insee.vtl.engine.visitors.expression;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.hasSameTypeOrNull;
 
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;

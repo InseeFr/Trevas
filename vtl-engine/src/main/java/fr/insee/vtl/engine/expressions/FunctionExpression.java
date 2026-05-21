@@ -1,10 +1,10 @@
 package fr.insee.vtl.engine.expressions;
 
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.ListExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.VtlMethod;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
