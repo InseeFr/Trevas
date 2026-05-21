@@ -10,7 +10,7 @@ import fr.insee.vtl.engine.aggregation.VtlParseTrees;
 import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;

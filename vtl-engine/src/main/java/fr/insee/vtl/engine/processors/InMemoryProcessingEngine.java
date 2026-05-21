@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.processors;
 
 import static fr.insee.vtl.model.Structured.*;
 
-import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
@@ -195,8 +194,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     var keyExtractor = new KeyExtractor(groupBy);
 
     Structured.DataStructure structure =
-        AggregationResultStructureBuilder.build(
-            expression.getDataStructure(), groupBy, collectorMap);
+        aggregationResultStructure(expression.getDataStructure(), groupBy, collectorMap);
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {

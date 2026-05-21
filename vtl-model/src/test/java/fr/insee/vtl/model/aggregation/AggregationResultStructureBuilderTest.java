@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.aggregation;
+package fr.insee.vtl.model.aggregation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

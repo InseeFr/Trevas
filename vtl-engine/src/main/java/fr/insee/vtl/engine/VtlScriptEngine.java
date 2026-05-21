@@ -6,7 +6,7 @@ import fr.insee.vtl.antlr.runtime.*;
 import fr.insee.vtl.antlr.runtime.misc.Interval;
 import fr.insee.vtl.antlr.runtime.tree.ParseTree;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.*;

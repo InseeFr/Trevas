@@ -3,7 +3,7 @@ package fr.insee.vtl.engine.utils;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.antlr.runtime.tree.ParseTree;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;

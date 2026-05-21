@@ -3,7 +3,7 @@ package fr.insee.vtl.engine.visitors.expression;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Dataset;

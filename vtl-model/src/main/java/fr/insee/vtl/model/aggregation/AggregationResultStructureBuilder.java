@@ -1,4 +1,4 @@
-package fr.insee.vtl.engine.aggregation;
+package fr.insee.vtl.model.aggregation;
 
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Dataset;

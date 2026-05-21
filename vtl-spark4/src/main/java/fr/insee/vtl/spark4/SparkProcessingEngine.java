@@ -14,8 +14,8 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.*;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
@@ -401,9 +401,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
                 columns.get(0),
                 iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
     Structured.DataStructure resultStructure =
-        fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
-            dataset.getDataStructure(), groupBy, collectorMap);
-    SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
+        aggregationResultStructure(dataset.getDataStructure(), groupBy, collectorMap);
+    SparkDataset sparkDs = new SparkDataset(result, resultStructure);
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 

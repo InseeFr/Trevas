@@ -5,7 +5,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 import fr.insee.vtl.antlr.runtime.RuleContext;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;

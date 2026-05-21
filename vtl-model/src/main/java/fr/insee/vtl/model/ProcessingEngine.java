@@ -2,6 +2,7 @@ package fr.insee.vtl.model;
 
 import static fr.insee.vtl.model.Structured.Component;
 
+import fr.insee.vtl.model.aggregation.AggregationResultStructureBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,16 @@ public interface ProcessingEngine {
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap);
+
+  /**
+   * Builds the output data structure of an {@link #executeAggr} operation (shared by all engines).
+   */
+  default Structured.DataStructure aggregationResultStructure(
+      Structured.DataStructure input,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectors) {
+    return AggregationResultStructureBuilder.build(input, groupBy, collectors);
+  }
 
   /**
    * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a
