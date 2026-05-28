@@ -11,8 +11,15 @@
     </parent>
 
     <artifactId>vtl-antlr</artifactId>
-    <name>VTL ANTLR Runtime (shaded)</name>
-    <description>Relocated ANTLR4 runtime so it does not collide with Spark's bundled copy.</description>
+    <name>VTL ANTLR Runtime (relocated)</name>
+    <description>
+        Source-level relocation of antlr4-runtime into the fr.insee.vtl.antlr.* namespace so it
+        does not collide with the ANTLR runtime that Apache Spark bundles. The relocated sources
+        are committed under src/main/java so the IDE sees this module as a plain Java project.
+        To re-vendor after bumping antlr4.version, run:
+            ./mvnw -pl vtl-antlr -Pvendor-antlr generate-sources
+        and commit the diff under src/main/java/fr/.
+    </description>
     <version>2.5.0-SNAPSHOT</version>
 
     <!--    Warning: not latest, align with version embedded by Spark-->
@@ -20,113 +27,94 @@
         <antlr4.version>4.9.3</antlr4.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>${antlr4.version}</version>
-            <scope>compile</scope>
-            <!-- Runtime is shaded/relocated into this module artifact;
-                 do not leak the original ANTLR runtime transitively. -->
-            <optional>true</optional>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
-                <!-- Build the (empty) unshaded jar at the `compile` phase so the shaded jar with the
-                     injected module-info exists before any downstream reactor module's `compile`
-                     phase runs. (Earlier this was bound to `process-classes`, which fires *after*
-                     `compile` — `mvn compile` would then leave the shaded jar unbuilt and break
-                     module resolution in vtl-parser.) Skip the default jar execution that would
-                     otherwise overwrite the shaded jar at the package phase. -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <id>pre-shade-jar</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>shade-antlr</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <artifactSet>
-                                <includes>
-                                    <include>org.antlr:antlr4-runtime</include>
-                                </includes>
-                            </artifactSet>
-
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.antlr.v4</pattern>
-                                    <shadedPattern>fr.insee.vtl.antlr</shadedPattern>
-                                </relocation>
-                            </relocations>
-
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <!-- Inject a JPMS module-info into the shaded JAR. We cannot author a source
-                     module-info.java that exports the relocated packages because they don't
-                     exist at compile time (shade has not run yet). -->
-                <groupId>org.moditect</groupId>
-                <artifactId>moditect-maven-plugin</artifactId>
-                <version>1.2.2.Final</version>
-                <executions>
-                    <execution>
-                        <id>add-shaded-module-info</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>add-module-info</goal>
-                        </goals>
-                        <configuration>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <modules>
-                                <module>
-                                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
-                                    <moduleInfo>
-                                        <name>fr.insee.vtl.antlr</name>
-                                        <exports>
-                                            fr.insee.vtl.antlr.runtime;
-                                            fr.insee.vtl.antlr.runtime.atn;
-                                            fr.insee.vtl.antlr.runtime.dfa;
-                                            fr.insee.vtl.antlr.runtime.misc;
-                                            fr.insee.vtl.antlr.runtime.tree;
-                                            fr.insee.vtl.antlr.runtime.tree.pattern;
-                                            fr.insee.vtl.antlr.runtime.tree.xpath;
-                                        </exports>
-                                    </moduleInfo>
-                                </module>
-                            </modules>
-                        </configuration>
-                    </execution>
-                </executions>
+                <!-- The vendored ANTLR runtime is third-party source; preserve its original
+                     formatting and BSD-3-Clause headers verbatim. -->
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <configuration>
+                    <java>
+                        <excludes>
+                            <exclude>src/main/java/fr/insee/vtl/antlr/**/*.java</exclude>
+                        </excludes>
+                        <googleJavaFormat>
+                            <version>1.27.0</version>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- Re-vendor the relocated ANTLR runtime into src/main/java.
+                 Run on demand: ./mvnw -pl vtl-antlr -Pvendor-antlr generate-sources -->
+            <id>vendor-antlr</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- 1) Unpack antlr4-runtime sources into a staging directory under target/. -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.7.0</version>
+                        <executions>
+                            <execution>
+                                <id>unpack-antlr-sources</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.antlr</groupId>
+                                            <artifactId>antlr4-runtime</artifactId>
+                                            <version>${antlr4.version}</version>
+                                            <classifier>sources</classifier>
+                                            <outputDirectory>${project.build.directory}/antlr-staging</outputDirectory>
+                                            <includes>org/antlr/v4/**/*.java</includes>
+                                            <overWrite>true</overWrite>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- 2) Rewrite `org.antlr.v4` -> `fr.insee.vtl.antlr` in the staged sources,
+                             wipe the prior vendored tree, and move the relocated package directory
+                             into the canonical src/main/java location. -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>relocate-and-vendor-antlr-sources</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <replaceregexp match="org\.antlr\.v4" replace="fr.insee.vtl.antlr" flags="g">
+                                            <fileset dir="${project.build.directory}/antlr-staging" includes="**/*.java"/>
+                                        </replaceregexp>
+                                        <delete dir="${project.basedir}/src/main/java/fr/insee/vtl/antlr"/>
+                                        <move todir="${project.basedir}/src/main/java/fr/insee/vtl/antlr">
+                                            <fileset dir="${project.build.directory}/antlr-staging/org/antlr/v4"/>
+                                        </move>
+                                        <delete dir="${project.build.directory}/antlr-staging"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
