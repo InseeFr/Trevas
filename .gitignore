@@ -6,6 +6,7 @@ target/
 **/.project
 **/.settings/
 **/pom.xml.versionsBackup
+**/gen/
 
 *-dev.properties
 **/__pycache__/
