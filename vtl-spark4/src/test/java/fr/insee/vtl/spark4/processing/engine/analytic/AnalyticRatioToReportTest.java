@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark.processing.engine.analytic;
+package fr.insee.vtl.spark4.processing.engine.analytic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

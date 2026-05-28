@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark.samples;
+package fr.insee.vtl.spark4.samples;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;

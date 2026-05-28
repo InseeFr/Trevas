@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark.processing.engine;
+package fr.insee.vtl.spark4.processing.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,7 +7,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.spark.SparkDataset;
+import fr.insee.vtl.spark4.SparkDataset;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

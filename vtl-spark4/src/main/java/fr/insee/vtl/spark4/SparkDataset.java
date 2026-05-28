@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark;
+package fr.insee.vtl.spark4;
 
 import static org.apache.spark.sql.types.DataTypes.*;
 

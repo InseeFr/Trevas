@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark;
+package fr.insee.vtl.spark4;
 
 import fr.insee.vtl.model.ResolvableExpression;
 import org.apache.spark.api.java.function.FilterFunction;

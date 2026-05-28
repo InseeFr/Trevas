@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark;
+package fr.insee.vtl.spark4;
 
 import static fr.insee.vtl.model.Structured.Component;
 import static org.assertj.core.api.Assertions.assertThat;

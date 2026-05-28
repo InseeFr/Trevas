@@ -1,11 +1,11 @@
-package fr.insee.vtl.spark;
+package fr.insee.vtl.spark4;
 
 import static fr.insee.vtl.model.AggregationExpression.*;
 import static fr.insee.vtl.model.Dataset.Component;
 import static fr.insee.vtl.model.Dataset.Role;
 import static fr.insee.vtl.model.Dataset.Role.IDENTIFIER;
 import static fr.insee.vtl.model.Dataset.Role.MEASURE;
-import static fr.insee.vtl.spark.SparkDataset.fromVtlType;
+import static fr.insee.vtl.spark4.SparkDataset.fromVtlType;
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.avg;
 import static org.apache.spark.sql.functions.count;

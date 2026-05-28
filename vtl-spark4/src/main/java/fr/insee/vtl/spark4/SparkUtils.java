@@ -1,4 +1,4 @@
-package fr.insee.vtl.spark;
+package fr.insee.vtl.spark4;
 
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 

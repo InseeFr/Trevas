@@ -1,10 +1,8 @@
-package fr.insee.vtl.spark.processing.engine;
+package fr.insee.vtl.spark4.processing.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.exceptions.ConflictingTypesException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
@@ -20,9 +18,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class FilterTest {
+public class RenameTest {
 
-  InMemoryDataset dataset =
+  private final InMemoryDataset dataset =
       new InMemoryDataset(
           List.of(
               Map.of("name", "Hadrien", "age", 10L, "weight", 11L),
@@ -57,37 +55,23 @@ public class FilterTest {
   }
 
   @Test
-  public void testLessThanBadTypes() {
-    ScriptContext context = engine.getContext();
-    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
-    assertThatThrownBy(() -> engine.eval("ds_out := ds[filter name < 1];"))
-        .isInstanceOf(ConflictingTypesException.class)
-        .hasMessage("conflicting types: [String, Long]");
-  }
-
-  @Test
-  public void testLessThanGoodTypes() throws ScriptException {
-    ScriptContext context = engine.getContext();
-    context.setAttribute("ds", dataset, ScriptContext.ENGINE_SCOPE);
-    engine.eval("ds_out := ds[filter 18.1 < age];");
-  }
-
-  @Test
-  public void testFilterClause() throws ScriptException {
+  public void testRename() throws ScriptException {
 
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
 
-    engine.eval("ds := ds1[filter age > 10 and age < 12];");
+    engine.eval("ds := ds1[rename age to weight, weight to age, name to pseudo];");
 
     assertThat(engine.getContext().getAttribute("ds")).isInstanceOf(Dataset.class);
     var ds = (Dataset) engine.getContext().getAttribute("ds");
     assertThat(ds.getDataAsMap())
-        .isEqualTo(List.of(Map.of("name", "Nico", "age", 11L, "weight", 10L)));
-
+        .containsExactlyInAnyOrder(
+            Map.of("pseudo", "Hadrien", "weight", 10L, "age", 11L),
+            Map.of("pseudo", "Nico", "weight", 11L, "age", 10L),
+            Map.of("pseudo", "Franck", "weight", 12L, "age", 9L));
     assertThat(ds.getDataStructure())
         .containsValues(
-            new Structured.Component("name", String.class, Dataset.Role.IDENTIFIER),
+            new Structured.Component("pseudo", String.class, Dataset.Role.IDENTIFIER),
             new Structured.Component("age", Long.class, Dataset.Role.MEASURE),
             new Structured.Component("weight", Long.class, Dataset.Role.MEASURE));
   }
