@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunktrevas_documentation=globalThis.webpackChunktrevas_documentation||[]).push([[2555],{62555(e,a,t){t.d(a,{createWardleyServices:()=>s.J});var s=t(54837);t(69302)}}]);
