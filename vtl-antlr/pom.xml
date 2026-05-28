@@ -35,9 +35,12 @@
     <build>
         <plugins>
             <plugin>
-                <!-- Build the (empty) unshaded jar early (process-classes) so shade can transform it
-                     before downstream reactor modules compile. Skip the default jar execution that
-                     would otherwise overwrite the shaded jar at the package phase. -->
+                <!-- Build the (empty) unshaded jar at the `compile` phase so the shaded jar with the
+                     injected module-info exists before any downstream reactor module's `compile`
+                     phase runs. (Earlier this was bound to `process-classes`, which fires *after*
+                     `compile` — `mvn compile` would then leave the shaded jar unbuilt and break
+                     module resolution in vtl-parser.) Skip the default jar execution that would
+                     otherwise overwrite the shaded jar at the package phase. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.4.2</version>
@@ -48,7 +51,7 @@
                     </execution>
                     <execution>
                         <id>pre-shade-jar</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -62,7 +65,7 @@
                 <executions>
                     <execution>
                         <id>shade-antlr</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
@@ -95,7 +98,7 @@
                 <executions>
                     <execution>
                         <id>add-shaded-module-info</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>add-module-info</goal>
                         </goals>
