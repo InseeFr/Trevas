@@ -191,8 +191,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v7
-        with:
+        uses: crazy-max/ghaction-import-gpg@v1
+        env:
           GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
       - uses: s4u/maven-settings-action@v4.0.0
