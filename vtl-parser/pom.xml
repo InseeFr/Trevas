@@ -52,6 +52,15 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <testCompilerArgs>
+                        <arg>--add-reads=fr.insee.vtl.parser=org.junit.jupiter.api</arg>
+                    </testCompilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
                 <!-- ANTLR has no option to override the runtime import path; rewrite the
                      generated sources' imports to point at our relocated runtime (vtl-antlr)
                      so the compiled class files reference the shaded names from the start. -->

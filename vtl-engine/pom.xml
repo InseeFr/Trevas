@@ -59,6 +59,17 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <testCompilerArgs>
+                        <arg>--add-reads=fr.insee.vtl.engine=org.junit.jupiter.api</arg>
+                        <arg>--add-reads=fr.insee.vtl.engine=org.junit.jupiter.params</arg>
+                        <arg>--add-reads=fr.insee.vtl.engine=org.assertj.core</arg>
+                    </testCompilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>

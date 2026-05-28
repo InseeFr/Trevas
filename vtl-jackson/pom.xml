@@ -35,4 +35,19 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <testCompilerArgs>
+                        <arg>--add-reads=fr.insee.vtl.jackson=org.junit.jupiter.api</arg>
+                        <arg>--add-reads=fr.insee.vtl.jackson=org.assertj.core</arg>
+                    </testCompilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
