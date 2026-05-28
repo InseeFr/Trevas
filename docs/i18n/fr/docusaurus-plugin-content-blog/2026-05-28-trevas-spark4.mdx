@@ -1,0 +1,57 @@
+---
+slug: /trevas-spark4
+title: Spark 4 dans Trevas
+date: 2026-05-28
+authors: [nicolas]
+tags: [Trevas]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+Nous sommes heureux d’annoncer **Trevas 2.4.0**, qui ajoute le support d’**Apache Spark 4** via le nouveau module **`vtl-spark4`**.
+
+Si vous souhaitez faire évoluer vos applications clientes basées sur Spark vers Spark 4, vous pouvez dépendre de `fr.insee.trevas:vtl-spark4` avec le reste de la stack Trevas. L’API et le comportement VTL restent les mêmes ; seule la couche d’intégration Spark change.
+
+**Spark 3 n’est pas abandonné.** Le module **`vtl-spark`** existant reste pleinement maintenu en parallèle. Vous pouvez rester sur Spark 3 aussi longtemps que nécessaire — il n’y a pas d’échéance de migration imposée.
+
+Voir les <Link label="notes de version 2.4.0" href={useBaseUrl('/releases/2.x.x')} /> et la <Link label="release GitHub" href="https://github.com/InseeFr/Trevas/releases/tag/v2.4.0" /> pour le détail des changements.
+
+## Applications clientes Trevas — imports ANTLR empaquetés
+
+Maintenir **Spark 3** et **Spark 4** sur la même base de code Trevas nous a aussi amenés à **affiner le packaging d’ANTLR** : le runtime est désormais empaqueté (shade) et relocalisé pour que Trevas et Spark ne se disputent plus les mêmes classes `org.antlr.v4` sur le classpath.
+
+À partir de Trevas **2.4.0**, cette note ne concerne que les **applications clientes** qui **utilisent explicitement les API ANTLR** dans leur propre code (lexer, flux de jetons, arbre de parse, listeners, etc.) **en plus de** Trevas. Si votre application n’appelle que les API Trevas et n’importe ni ne manipule jamais les types ANTLR directement, **rien ne change pour vous**.
+
+Si vous manipulez ANTLR vous-même — que vous restiez sur **Apache Spark 3** (`vtl-spark`) ou que vous passiez à **Spark 4** (`vtl-spark4`) — vous devez importer le runtime depuis l’espace de noms **relocalisé** :
+
+```java
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.tree.*;
+// … et les autres sous-paquets fr.insee.vtl.antlr.* selon les besoins
+```
+
+Auparavant, le code qui touchait le parseur ou les API ANTLR utilisait souvent les paquets ANTLR standard, par exemple :
+
+```java
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+```
+
+Ces imports **ne correspondent plus** aux classes livrées par Trevas à l’exécution. Trevas empaquette `org.antlr:antlr4-runtime` dans l’artefact `vtl-antlr` et relocalise `org.antlr.v4` → `fr.insee.vtl.antlr` afin que Trevas et Spark puissent partager une JVM sans charger deux runtimes ANTLR concurrents.
+
+### Ce qu’il faut modifier
+
+- Mettre à jour **chaque** import `org.antlr.v4…` de votre application (et tout code généré contre les types du parseur Trevas) vers le paquet `fr.insee.vtl.antlr…` correspondant.
+- S’appuyer sur **`fr.insee.trevas:vtl-antlr`** (de façon transitive via `vtl-parser` / `vtl-engine`) pour le runtime ; **ne pas** ajouter une dépendance séparée sur `org.antlr:antlr4-runtime` pour l’analyse liée à Trevas.
+- Cela vaut autant pour l’intégration Spark 3 que Spark 4 : les deux utilisent la même pile parseur empaquetée.
+
+Correspondance typique :
+
+| Avant                                    | Après                                          |
+| ---------------------------------------- | ---------------------------------------------- |
+| `org.antlr.v4.runtime.CharStreams`       | `fr.insee.vtl.antlr.runtime.CharStreams`       |
+| `org.antlr.v4.runtime.CommonTokenStream` | `fr.insee.vtl.antlr.runtime.CommonTokenStream` |
+| `org.antlr.v4.runtime.tree.ParseTree`    | `fr.insee.vtl.antlr.runtime.tree.ParseTree`    |
+
+Pour plus de détails techniques, voir <Link label="ici" href={useBaseUrl('/developer-guide/antlr-shaded-runtime')} /> la documentation.
