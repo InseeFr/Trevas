@@ -57,6 +57,7 @@
                 <configuration>
                     <testCompilerArgs>
                         <arg>--add-reads=fr.insee.vtl.parser=org.junit.jupiter.api</arg>
+                        <arg>--add-reads=fr.insee.vtl.parser=fr.insee.vtl.antlr</arg>
                     </testCompilerArgs>
                 </configuration>
             </plugin>
