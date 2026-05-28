@@ -9,27 +9,11 @@ import javax.script.ScriptEngineFactory;
 /** This module contains the actual VTL engine. */
 module fr.insee.vtl.engine {
   exports fr.insee.vtl.engine.exceptions;
+  exports fr.insee.vtl.engine.processors;
 
   requires transitive java.scripting;
   requires transitive fr.insee.vtl.parser;
   requires transitive fr.insee.vtl.model;
-
-  uses ProcessingEngine;
-  uses ProcessingEngineFactory;
-  uses FunctionProvider;
-
-  // exports fr.insee.vtl.engine.functions;
-  provides FunctionProvider with
-      LevenshteinProvider;
-
-  exports fr.insee.vtl.engine.processors;
-
-  provides ProcessingEngineFactory with
-      InMemoryProcessingEngine.Factory;
-
-  opens fr.insee.vtl.engine;
-
-  requires org.antlr.antlr4.runtime;
 
   // TODO: Consider removing these.
   requires org.apache.commons.lang3;
@@ -38,6 +22,16 @@ module fr.insee.vtl.engine {
   requires org.threeten.extra;
   requires org.jgrapht.core;
 
+  uses ProcessingEngine;
+  uses ProcessingEngineFactory;
+  uses FunctionProvider;
+
+  provides FunctionProvider with
+      LevenshteinProvider;
+  provides ProcessingEngineFactory with
+      InMemoryProcessingEngine.Factory;
   provides ScriptEngineFactory with
       VtlScriptEngineFactory;
+
+  opens fr.insee.vtl.engine;
 }

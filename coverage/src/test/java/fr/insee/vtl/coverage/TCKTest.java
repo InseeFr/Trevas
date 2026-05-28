@@ -5,6 +5,7 @@ import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.coverage.tck.TckCaseExecutor;
 import fr.insee.vtl.coverage.tck.TckFolders;
 import fr.insee.vtl.coverage.tck.TckLeafCase;
+import fr.insee.vtl.coverage.tck.TckScriptText;
 import fr.insee.vtl.coverage.tck.TckSparkScriptEngines;
 import java.io.InputStream;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.stream.Stream;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -23,7 +24,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Spark-backed conformance run against the packaged TCK ({@code v2.1.zip}). Orchestration only —
  * discovery, naming, and assertions live under {@code fr.insee.vtl.coverage.tck}.
  */
-@DisplayName("TCK v2.1 (Spark)")
+@DisplayNameGeneration(TckSuiteDisplayNameGenerator.class)
 class TCKTest {
 
   private TckCaseExecutor executor;
@@ -51,7 +52,12 @@ class TCKTest {
   }
 
   private static void logCaseOutcome(TckCase c, boolean success) {
+    // Avoid duplicating hundreds of lines in CI logs; use generated markdown artifact instead.
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("GITHUB_ACTIONS", "false"))) {
+      return;
+    }
     System.out.println((success ? "✅" : "❌") + " Test " + c.index());
+    System.out.println("\tVTL script: " + c.scriptSummary());
     System.out.println("\t" + c.displayPath());
   }
 
@@ -75,6 +81,10 @@ class TCKTest {
   private record TckCase(int index, String displayPath, Test payload) {
     String label() {
       return "Test " + index + " — " + displayPath;
+    }
+
+    String scriptSummary() {
+      return TckScriptText.summary(payload.getScript(), 120);
     }
   }
 }

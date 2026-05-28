@@ -1,10 +1,10 @@
 package fr.insee.vtl.parser;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import fr.insee.vtl.antlr.runtime.CharStreams;
+import fr.insee.vtl.antlr.runtime.CodePointCharStream;
+import fr.insee.vtl.antlr.runtime.CommonTokenStream;
+import fr.insee.vtl.antlr.runtime.tree.ErrorNode;
+import fr.insee.vtl.antlr.runtime.tree.ParseTreeWalker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

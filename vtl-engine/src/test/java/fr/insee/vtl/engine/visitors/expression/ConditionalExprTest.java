@@ -69,6 +69,8 @@ public class ConditionalExprTest {
     assertThat(context.getAttribute("s2")).isEqualTo("yes");
     engine.eval("s3 := case when false then \"no\" when 1=2 then \"yes\" else \"else\";");
     assertThat(context.getAttribute("s3")).isEqualTo("else");
+    engine.eval("s4 := case when cast(null, boolean) then \"no\" else \"else\";");
+    assertThat(context.getAttribute("s4")).isEqualTo("else");
 
     engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds_2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);

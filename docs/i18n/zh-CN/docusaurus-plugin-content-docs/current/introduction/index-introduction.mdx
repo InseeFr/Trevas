@@ -45,4 +45,6 @@ import Video from '@theme/Video';
 
 Trevas 项目在各种运行环境下提供 VTL 引擎，包括 Java 11 引擎和 [Apache Spark](https://spark.apache.org/)引擎.
 
-Trevas 的引擎是基于[JSR 223](https://jcp.org/en/jsr/detail?id=223)规范，该规范描述了 Java 中脚本语言的使用
+Trevas 的引擎是基于[JSR 223](https://jcp.org/en/jsr/detail?id=223)规范，该规范描述了 Java 中脚本语言的使用。
+
+解析器栈（先 `vtl-antlr`，再 `vtl-parser`）使用[重定位后的 ANTLR 运行时](/developer-guide/antlr-shaded-runtime)，以便 Trevas 与 Apache Spark 可在同一 classpath 上共存。

@@ -8,3 +8,5 @@ target/
 **/pom.xml.versionsBackup
 
 *-dev.properties
+**/__pycache__/
+**/*.pyc

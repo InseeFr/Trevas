@@ -15,7 +15,7 @@ import Card from '@theme/Card';
 <dependency>
     <groupId>fr.insee.trevas</groupId>
     <artifactId>vtl-engine</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 
@@ -54,6 +54,18 @@ Long result = (Long) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("b");
 		<Card
 			title="Spark modus"
 			page={useBaseUrl('/developer-guide/spark-mode')}
+		/>
+	</div>
+</div>
+
+### Parserstakk
+
+<div className="row">
+	<div className="col">
+		<Card
+			title="Shadet ANTLR-runtime"
+			description="Shading, byggerekkefølge (vtl-antlr → vtl-parser), Maven og CI"
+			page={useBaseUrl('/developer-guide/antlr-shaded-runtime')}
 		/>
 	</div>
 </div>

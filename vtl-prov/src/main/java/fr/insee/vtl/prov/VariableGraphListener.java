@@ -1,12 +1,12 @@
 package fr.insee.vtl.prov;
 
+import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.parser.VtlBaseListener;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 

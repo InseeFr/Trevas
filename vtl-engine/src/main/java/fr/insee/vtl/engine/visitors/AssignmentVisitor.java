@@ -2,6 +2,7 @@ package fr.insee.vtl.engine.visitors;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -18,7 +19,6 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /** <code>AssignmentVisitor</code> is the visitor for VTL assignment expressions. */
 public class AssignmentVisitor extends VtlBaseVisitor<Object> {
