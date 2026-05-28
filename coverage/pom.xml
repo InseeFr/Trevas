@@ -126,5 +126,12 @@
                 <tck.suite.title>TCK VTL v2.1 (Spark 4)</tck.suite.title>
             </properties>
         </profile>
+        <!-- Internal TCK harness: do not publish to Maven Central on release tags (-Prelease). -->
+        <profile>
+            <id>release</id>
+            <properties>
+                <maven.deploy.skip>true</maven.deploy.skip>
+            </properties>
+        </profile>
     </profiles>
 </project>
