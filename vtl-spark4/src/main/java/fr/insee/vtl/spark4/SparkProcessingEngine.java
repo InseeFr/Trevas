@@ -14,8 +14,8 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
@@ -85,6 +85,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     } else if (expression instanceof MedianAggregationExpression) {
       column =
           percentile_approx(SparkUtils.safeCol(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+    } else if (expression instanceof StdDevPopAggregationExpression) {
+      column = stddev_pop(SparkUtils.safeCol(columnName));
     } else if (expression instanceof StdDevSampAggregationExpression) {
       column = stddev_samp(SparkUtils.safeCol(columnName));
     } else if (expression instanceof VarPopAggregationExpression) {

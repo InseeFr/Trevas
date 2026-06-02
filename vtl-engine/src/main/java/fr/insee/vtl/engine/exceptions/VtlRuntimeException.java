@@ -1,4 +1,6 @@
-package fr.insee.vtl.model.exceptions;
+package fr.insee.vtl.engine.exceptions;
+
+import fr.insee.vtl.model.exceptions.VtlScriptException;
 
 /**
  * Base runtime exception for VTL execution failures. The cause is always a {@link

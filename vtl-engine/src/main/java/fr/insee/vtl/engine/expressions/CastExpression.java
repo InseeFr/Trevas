@@ -2,9 +2,9 @@ package fr.insee.vtl.engine.expressions;
 
 import fr.insee.vtl.engine.exceptions.CastException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;

@@ -14,8 +14,8 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;

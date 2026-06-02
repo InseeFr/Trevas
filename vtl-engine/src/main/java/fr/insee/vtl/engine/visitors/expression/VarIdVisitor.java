@@ -3,13 +3,13 @@ package fr.insee.vtl.engine.visitors.expression;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.io.Serializable;

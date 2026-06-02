@@ -4,10 +4,10 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.antlr.runtime.tree.ParseTree;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;

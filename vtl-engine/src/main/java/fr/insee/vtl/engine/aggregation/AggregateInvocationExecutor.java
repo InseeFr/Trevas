@@ -4,11 +4,11 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.TypeChecking.assertDatasetExpression;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.Map;
 
@@ -25,8 +25,7 @@ public final class AggregateInvocationExecutor {
       ExpressionVisitor expressionVisitor,
       ProcessingEngine processingEngine) {
 
-    DatasetExpression input =
-        assertDatasetExpression(expressionVisitor.visit(ctx.expr()), ctx);
+    DatasetExpression input = assertDatasetExpression(expressionVisitor.visit(ctx.expr()), ctx);
 
     GroupingPlan grouping =
         GroupingResolver.resolve(input, ctx.groupingClause(), expressionVisitor, processingEngine);
