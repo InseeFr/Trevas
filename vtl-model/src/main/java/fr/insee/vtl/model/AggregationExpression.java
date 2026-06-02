@@ -537,4 +537,23 @@ public class AggregationExpression
   public Set<Characteristics> characteristics() {
     return aggregation.characteristics();
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof AggregationExpression other)) {
+      return false;
+    }
+    return getClass().equals(other.getClass())
+        && Objects.equals(type, other.type)
+        && aggregation.getClass().equals(other.aggregation.getClass())
+        && Objects.equals(characteristics(), other.characteristics());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getClass(), type, aggregation.getClass(), characteristics());
+  }
 }

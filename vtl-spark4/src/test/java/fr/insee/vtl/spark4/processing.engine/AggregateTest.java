@@ -9,6 +9,7 @@ import fr.insee.vtl.model.Structured;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -79,6 +80,39 @@ public class AggregateTest {
   }
 
   @Test
+  void testAggregateInvocationMatchesClause() throws ScriptException {
+    engine.put("ds1", dataset);
+    engine.eval("inv := sum(ds1 group by country);");
+    engine.eval("clause := ds1[aggr age := sum(age), weight := sum(weight) group by country];");
+
+    Dataset inv = (Dataset) engine.get("inv");
+    Dataset clause = (Dataset) engine.get("clause");
+    assertThat(inv.getDataAsMap()).containsExactlyInAnyOrderElementsOf(clause.getDataAsMap());
+  }
+
+  @Test
+  void testCountInvocationHavingMatchesClause() throws ScriptException {
+    InMemoryDataset dsHaving =
+        new InMemoryDataset(
+            List.of(
+                Map.of("country", "france"),
+                Map.of("country", "france"),
+                Map.of("country", "france"),
+                Map.of("country", "norway")),
+            Map.of("country", String.class),
+            Map.of("country", Dataset.Role.IDENTIFIER));
+
+    engine.put("dsHaving", dsHaving);
+    engine.eval("inv := count(dsHaving group by country having count() > 2);");
+    engine.eval(
+        "clause := dsHaving[aggr int_var := count() group by country][filter int_var > 2];");
+
+    Dataset inv = (Dataset) engine.get("inv");
+    Dataset clause = (Dataset) engine.get("clause");
+    assertThat(inv.getDataAsMap()).containsExactlyInAnyOrderElementsOf(clause.getDataAsMap());
+  }
+
+  @Test
   public void testAggregateClause() throws ScriptException {
 
     engine.put("ds1", dataset);
@@ -140,7 +174,57 @@ public class AggregateTest {
                 "medianWeight",
                 11D));
 
-    //        InMemoryDataset dataset2 = new InMemoryDataset(
+    InMemoryDataset dataset2 =
+        new InMemoryDataset(
+            List.of(
+                Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight", 11D),
+                Map.of("name", "Nico", "country", "france", "age", 9L, "weight", 5D),
+                Map.of("name", "Franck", "country", "france", "age", 10L, "weight", 15D),
+                Map.of("name", "Nico1", "country", "france", "age", 11L, "weight", 10D),
+                Map.of("name", "Franck1", "country", "france", "age", 12L, "weight", 8D)),
+            Map.of(
+                "name",
+                String.class,
+                "country",
+                String.class,
+                "age",
+                Long.class,
+                "weight",
+                Double.class),
+            Map.of(
+                "name",
+                Dataset.Role.IDENTIFIER,
+                "country",
+                Dataset.Role.IDENTIFIER,
+                "age",
+                Dataset.Role.MEASURE,
+                "weight",
+                Dataset.Role.MEASURE));
+
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds2", dataset2, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        "resStats := ds2[aggr "
+            + "stddev_popAge := stddev_pop(age), "
+            + "stddev_popWeight := stddev_pop(weight), "
+            + "stddev_sampAge := stddev_samp(age), "
+            + "stddev_sampWeight := stddev_samp(weight), "
+            + "var_popAge := var_pop(age), "
+            + "var_popWeight := var_pop(weight), "
+            + "var_sampAge := var_samp(age), "
+            + "var_sampWeight := var_samp(weight)"
+            + " group by country];");
+
+    assertThat(context.getAttribute("resStats")).isInstanceOf(Dataset.class);
+    var no = ((Dataset) context.getAttribute("resStats")).getDataAsMap().get(1);
+    // For singleton groups spark4 currently follows spark behavior: sample stats return null.
+    assertThat((Double) no.get("stddev_sampAge")).isNull();
+    assertThat((Double) no.get("stddev_sampWeight")).isNull();
+    assertThat((Double) no.get("var_sampAge")).isNull();
+    assertThat((Double) no.get("var_sampWeight")).isNull();
+
+    //        Historical detailed assertions kept as reference:
     //                List.of(
     //                        Map.of("name", "Hadrien", "country", "norway", "age", 10L, "weight",
     // 11D),

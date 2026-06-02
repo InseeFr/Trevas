@@ -8,7 +8,6 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -69,24 +68,9 @@ public final class AggrClauseExecutor {
         GroupingResolver.resolve(
             normalizedDataset, ctx.groupingClause(), componentExpressionVisitor, processingEngine);
 
-    Structured.DataStructure normalizedStructure = grouping.dataset().getDataStructure();
-    Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
-
-    for (VtlParser.AggrFunctionClauseContext functionCtx :
-        ctx.aggregateClause().aggrFunctionClause()) {
-      String alias = VtlParseTrees.componentName(functionCtx.componentID());
-      if (normalizedStructure.containsKey(alias)) {
-        Structured.Component normalizedComponent = normalizedStructure.get(alias);
-        collectorMap.put(
-            alias,
-            AggregationExpressionFactory.fromAggrDataset(
-                (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                AggregationColumnReferences.columnReference(
-                    fromContext(ctx), alias, normalizedComponent.getType())));
-      } else {
-        collectorMap.put(alias, AggregationExpressionFactory.countRows());
-      }
-    }
+    Map<String, AggregationExpression> collectorMap =
+        AggregationCollectors.fromAggrClause(
+            ctx, grouping.dataset().getDataStructure(), fromContext(ctx));
 
     return processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectorMap);
   }

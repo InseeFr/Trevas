@@ -6,12 +6,9 @@ import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlRuntimeException;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +31,7 @@ public final class AggregateInvocationExecutor {
         GroupingResolver.resolve(input, ctx.groupingClause(), expressionVisitor, processingEngine);
 
     Map<String, AggregationExpression> collectors =
-        buildCollectors(ctx, grouping.dataset(), fromContext(ctx));
+        AggregationCollectors.fromAggrDatasetInvocation(ctx, grouping.dataset(), fromContext(ctx));
 
     if (collectors.isEmpty()) {
       throw new VtlRuntimeException(
@@ -48,23 +45,5 @@ public final class AggregateInvocationExecutor {
 
     return HavingClauseApplier.apply(
         result, ctx.havingClause(), expressionVisitor, processingEngine);
-  }
-
-  private static Map<String, AggregationExpression> buildCollectors(
-      VtlParser.AggrDatasetContext ctx, DatasetExpression dataset, Positioned position) {
-
-    if (ctx.COUNT() != null) {
-      return Map.of(AggregationNames.COUNT_MEASURE, AggregationExpressionFactory.countRows());
-    }
-
-    Map<String, AggregationExpression> collectors = new LinkedHashMap<>();
-    for (Structured.Component measure : dataset.getDataStructure().getMeasures()) {
-      String name = measure.getName();
-      collectors.put(
-          name,
-          AggregationExpressionFactory.fromAggrDataset(
-              ctx, AggregationColumnReferences.columnReference(position, name, measure.getType())));
-    }
-    return collectors;
   }
 }
