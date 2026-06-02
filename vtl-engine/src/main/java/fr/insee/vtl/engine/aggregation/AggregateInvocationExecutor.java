@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine.aggregation;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertDatasetExpression;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -25,7 +26,7 @@ public final class AggregateInvocationExecutor {
       ProcessingEngine processingEngine) {
 
     DatasetExpression input =
-        AggregateOperandResolver.requireDataset(expressionVisitor.visit(ctx.expr()), ctx);
+        assertDatasetExpression(expressionVisitor.visit(ctx.expr()), ctx);
 
     GroupingPlan grouping =
         GroupingResolver.resolve(input, ctx.groupingClause(), expressionVisitor, processingEngine);

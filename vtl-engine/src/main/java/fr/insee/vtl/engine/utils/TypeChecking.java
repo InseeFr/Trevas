@@ -4,6 +4,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.antlr.runtime.tree.ParseTree;
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -54,6 +55,21 @@ public class TypeChecking {
           new InvalidTypeException(type, expression.getType(), fromContext(tree)));
     }
     return expression;
+  }
+
+  /**
+   * Asserts that an expression is a {@link DatasetExpression}.
+   *
+   * <p>This is stricter than checking {@code Dataset.class} as a type: callers need the expression
+   * object to expose dataset-structure operations.
+   */
+  public static DatasetExpression assertDatasetExpression(
+      ResolvableExpression expression, ParseTree tree) {
+    if (expression instanceof DatasetExpression datasetExpression) {
+      return datasetExpression;
+    }
+    throw new VtlRuntimeException(
+        new InvalidTypeException(DatasetExpression.class, expression.getType(), fromContext(tree)));
   }
 
   /**
