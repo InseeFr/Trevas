@@ -82,6 +82,7 @@
         <spark3.scala.binary>2.12</spark3.scala.binary>
         <spark4.version>4.0.0</spark4.version>
         <spark4.scala.binary>2.13</spark4.scala.binary>
+        <sdmx.version>2.5.2</sdmx.version>
     </properties>
 
     <dependencies>
@@ -121,6 +122,13 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_2.13</artifactId>
                 <version>${spark4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.sdmx</groupId>
+                <artifactId>sdmx-core-bom</artifactId>
+                <version>${sdmx.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
