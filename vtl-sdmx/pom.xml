@@ -65,9 +65,11 @@
             <version>2.5.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+        <!-- Integration tests use Spark 4: fusion-sdmx-vtl and Spark 4 both need ANTLR 4.13.x,
+             which is incompatible with Spark 3.5 (4.9.x) on a single classpath. -->
         <dependency>
             <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-spark</artifactId>
+            <artifactId>vtl-spark4</artifactId>
             <version>2.5.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
@@ -78,17 +80,11 @@
             <version>2.1.0-alpha1</version>
             <scope>test</scope>
         </dependency>
-        <!-- Spark 3.x UI still references javax.servlet; SDMX/Jersey bring jakarta only. -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- Spark and fusion-sdmx-vtl share org.antlr.v4.runtime (not fr.insee.vtl.antlr). -->
+        <!-- fusion-sdmx-vtl and Spark 4 share org.antlr.v4.runtime (not fr.insee.vtl.antlr). -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.spark4.version}</version>
         </dependency>
 
     </dependencies>
