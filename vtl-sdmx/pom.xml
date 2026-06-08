@@ -22,23 +22,31 @@
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.sdmx</groupId>
-                <artifactId>sdmx-core-bom</artifactId>
-                <version>${sdmx.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>io.sdmx</groupId>
             <artifactId>fusion-sdmx-ml</artifactId>
             <version>${sdmx.version}</version>
+            <exclusions>
+                <!-- fusion-sdmx-vtl pulls antlr4-runtime 4.13.x, which breaks Spark 3.5 SQL parser (4.9.x). -->
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+                <!-- Keep Jackson aligned with Spark / vtl-jackson (2.15.x). -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
@@ -69,6 +77,18 @@
             <artifactId>slf4j-simple</artifactId>
             <version>2.1.0-alpha1</version>
             <scope>test</scope>
+        </dependency>
+        <!-- Spark 3.x UI still references javax.servlet; SDMX/Jersey bring jakarta only. -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spark and fusion-sdmx-vtl share org.antlr.v4.runtime (not fr.insee.vtl.antlr). -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
         </dependency>
 
     </dependencies>
