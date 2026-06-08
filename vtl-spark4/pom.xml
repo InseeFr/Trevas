@@ -38,7 +38,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${spark4.scala.binary}</artifactId>
         </dependency>
-        <!-- Parent dependencyManagement pins 4.9.3 for Spark 3; Spark 4 needs 4.13.x on the classpath. -->
+        <!-- Spark 4 SQL parser requires ANTLR 4.13.x (ATN v4). -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>

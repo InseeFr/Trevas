@@ -126,11 +126,6 @@
                 <artifactId>spark-sql_2.13</artifactId>
                 <version>${spark4.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-runtime</artifactId>
-                <version>${antlr4.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
