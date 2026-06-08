@@ -16,10 +16,23 @@
     <version>2.5.0-SNAPSHOT</version>
 
     <properties>
+        <sdmx.version>2.5.2</sdmx.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.sdmx</groupId>
+                <artifactId>sdmx-core-bom</artifactId>
+                <version>${sdmx.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
