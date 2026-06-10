@@ -15,7 +15,7 @@ public final class SparkUtils {
     if (name == null) {
       throw new IllegalArgumentException("Column name cannot be null");
     }
-    return functions.col("`" + name + "`");
+    return functions.col("`" + name.replace("`", "``") + "`");
   }
 
   public static Seq<Column> safeCols(Collection<String> names) {

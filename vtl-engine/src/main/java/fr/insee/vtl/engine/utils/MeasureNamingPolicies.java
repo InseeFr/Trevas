@@ -14,15 +14,17 @@ import java.util.Set;
  * invocation, or operators that keep the measure name by convention in Trevas ({@code len},
  * arithmetic, …).
  *
- * <p><strong>Type-changing</strong> ({@code bool_var}, …): mono-measure dataset-level operator
- * whose scalar result type differs from the operand measure — comparisons ({@code DS_1 > 20},
- * {@code DS_1 = DS_2} on numeric), {@code between(DS_1, …)}, {@code isnull(DS_1)}, {@code DS_1 in
- * {…}}, etc. Actual rename still depends on {@link DefaultMeasureNames#changesMeasureType}.
+ * <p><strong>Type-changing</strong> ({@code bool_var}, {@code int_var}, …): mono-measure
+ * dataset-level operator whose scalar result type differs from the operand measure — comparisons
+ * ({@code DS_1 > 20}), {@code length(DS_1)}, {@code instr(DS_1, …)}, etc. Actual rename still
+ * depends on {@link DefaultMeasureNames#changesMeasureType}. Membership ({@code #}) is handled in
+ * {@link fr.insee.vtl.engine.membership.MembershipOperations}.
  */
 public final class MeasureNamingPolicies {
 
   /**
-   * Comparisons and comparison-like functions that may yield {@code bool_var} on mono-measure DS.
+   * Dataset-level mono-measure operators that may yield default measure names ({@code bool_var},
+   * {@code int_var}, …) when the scalar type changes.
    */
   private static final Set<String> TYPE_CHANGING_WHEN_MONO_MEASURE =
       Set.of(
@@ -36,7 +38,9 @@ public final class MeasureNamingPolicies {
           "charsetMatch",
           "isNull",
           "in",
-          "notIn");
+          "notIn",
+          "len",
+          "instr");
 
   /** Boolean combinators: type stays boolean → homonymous measure name. */
   private static final Set<String> BOOLEAN_COMBINATORS = Set.of("and", "or", "xor", "not");

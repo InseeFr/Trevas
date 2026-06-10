@@ -183,7 +183,13 @@ public class AssignmentTest {
     engine.getContext().setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     engine.eval("res := ds#long1;");
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure()).hasSize(2);
+    assertThat(res.getMeasureNames()).containsExactly("long1");
+    assertThat(res.getIdentifierNames()).containsExactly("id");
+
+    engine.eval("resId := ds#id;");
+    Dataset resId = (Dataset) engine.getContext().getAttribute("resId");
+    assertThat(resId.getDataStructure().containsKey("string_var")).isTrue();
+    assertThat(resId.getDataAsMap().get(0).get("string_var")).isEqualTo("Toto");
 
     assertThatThrownBy(() -> engine.eval("res1 := ds#baaaddd;"))
         .isInstanceOf(VtlScriptException.class)

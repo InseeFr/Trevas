@@ -22,6 +22,7 @@ import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
@@ -29,7 +30,6 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,13 +140,9 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             fromContext(ctx));
       }
 
-      ArrayList<String> components =
-          structure.values().stream()
-              .filter(Structured.Component::isIdentifier)
-              .map(Structured.Component::getName)
-              .collect(Collectors.toCollection(ArrayList::new));
-      components.add(componentName);
-      return this.engine.getProcessingEngine().executeProject((DatasetExpression) ds, components);
+      return this.engine
+          .getProcessingEngine()
+          .executeMembership((DatasetExpression) ds, componentName);
     } catch (VtlScriptException vse) {
       throw new VtlRuntimeException(vse);
     }
@@ -536,6 +532,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
       analytics.put(targetColumnName, result);
     }
     return processingEngine.executeInnerJoin(analytics);
+  }
+
+  /**
+   * Invokes a scalar VTL function (e.g. {@code isEqual}, {@code and}) in the current expression
+   * context.
+   */
+  public ResolvableExpression invokeScalarFunction(
+      String functionName, List<ResolvableExpression> parameters, Positioned position) {
+    try {
+      return genericFunctionsVisitor.invokeFunction(functionName, parameters, position);
+    } catch (VtlScriptException e) {
+      throw new VtlRuntimeException(e);
+    }
   }
 
   private DatasetExpression asDataset(ResolvableExpression expression, ParserRuleContext ctx) {

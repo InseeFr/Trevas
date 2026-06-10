@@ -7,6 +7,8 @@ import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.aggregation.AggrClauseExecutor;
 import fr.insee.vtl.engine.aggregation.VtlParseTrees;
+import fr.insee.vtl.engine.attribute.ComponentRoles;
+import fr.insee.vtl.engine.clause.SubspaceClauseExecutor;
 import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
@@ -144,7 +146,7 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       final Dataset.Role columnRole =
           (calcCtx.componentRole() == null)
               ? Dataset.Role.MEASURE
-              : Dataset.Role.valueOf(calcCtx.componentRole().getText().toUpperCase());
+              : ComponentRoles.fromParser(calcCtx.componentRole());
 
       // If the target already exists in the dataset, check its role
       final Dataset.Component existing = byName.get(columnName);
@@ -295,6 +297,12 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
 
     // Execute rename in processing engine
     return processingEngine.executeRename(datasetExpression, fromTo);
+  }
+
+  @Override
+  public DatasetExpression visitSubspaceClause(VtlParser.SubspaceClauseContext ctx) {
+    return SubspaceClauseExecutor.execute(
+        datasetExpression, ctx, componentExpressionVisitor, processingEngine);
   }
 
   @Override
