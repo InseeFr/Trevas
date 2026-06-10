@@ -1,40 +1,88 @@
-# Coverage
+# Coverage — TCK VTL local
 
-Conformance tests for Trevas against the VTL Technology Compatibility Kit (TCK).
+Module Maven qui exécute le **Technology Compatibility Kit (TCK)** VTL v2.1 contre Trevas (moteur + backend Spark).
 
-## TCK source
+**Point d’entrée JUnit :** `fr.insee.vtl.coverage.TCKTest`  
+**Fichier requis :** `coverage/src/main/resources/v2.1.zip` (non versionné — à générer une fois)
 
-Tests load `src/main/resources/v2.1.zip`, built from the [SDMX-VTL](https://github.com/sdmx-twg/vtl) reference manual examples (`v2.1/docs/reference_manual/operators/**/examples`).
+---
 
-Until the TCK is published from an official VTL release branch, Trevas pins the **git branch** of `sdmx-twg/vtl` that contains corrected example fixtures (CSV/JSON):
+## Démarrage rapide (depuis la racine du dépôt Trevas)
 
-| Context | Branch |
-|---------|--------|
-| CI (`tck-vtl-tf-spark3.yml`, `tck-vtl-tf-spark4.yml`) | `fix/doc-examples` (`VTL_TCK_BRANCH`) |
-| Local (default in `refresh_tck_zip.sh`) | `fix/doc-examples` |
+Prérequis : **JDK 17+**, **Maven 3.9+**, **Python 3**, accès réseau (clone GitHub la première fois).
 
-Upstream branch: https://github.com/sdmx-twg/vtl/tree/fix/doc-examples
+```shell
+# 1) Générer le zip TCK (une fois, ou après mise à jour des exemples SDMX-VTL)
+./coverage/scripts/refresh_tck_zip.sh
 
-The zip is **not** committed in this repository; CI and developers generate it before running `TCKTest`.
+# 2) Compiler les modules dont dépend coverage (dont vtl-csv, vtl-spark, vtl-engine…)
+mvn clean install -pl coverage -am -DskipTests --batch-mode
 
-## Refresh the TCK zip locally
+# 3) Lancer le TCK (Spark 3 par défaut)
+mvn test -pl coverage --batch-mode
+```
 
-From the **Trevas repository root**:
+Vérifier que le zip est bien là avant l’étape 3 :
+
+```shell
+test -f coverage/src/main/resources/v2.1.zip && echo OK || echo "manquant — relancer refresh_tck_zip.sh"
+```
+
+### Spark 4
+
+```shell
+mvn clean install -pl coverage -am -DskipTests --batch-mode -Pspark4-tck
+mvn test -pl coverage --batch-mode -Pspark4-tck
+```
+
+### Rapport lisible après les tests
+
+```shell
+python3 coverage/scripts/prettify_tck_surefire_xml.py
+python3 coverage/scripts/render_tck_job_summary.py
+# → coverage/target/tck-scripts-report.md
+```
+
+XML Surefire principal : `coverage/target/surefire-reports/TEST-fr.insee.vtl.coverage.TCKTest.xml`
+
+---
+
+## Pourquoi `mvn test -pl coverage` seul échoue souvent
+
+| Symptôme | Cause | Correctif |
+|----------|--------|-----------|
+| `FileNotFoundException` / zip introuvable | Pas de `v2.1.zip` | `./coverage/scripts/refresh_tck_zip.sh` |
+| `ClassNotFoundException: fr.insee.vtl.csv.CsvDatasetValidator` | Module `vtl-csv` non installé | `mvn install -pl vtl-csv -am -DskipTests` ou **toujours** utiliser `-am` avec `coverage` |
+| Tests TCK absents / 0 test | Classpath incomplet | `mvn clean install -pl coverage -am -DskipTests` puis `mvn test -pl coverage` |
+
+**Règle :** pour `coverage`, utiliser **`-pl coverage -am`** (`-am` = *also make* : construit tous les modules requis du réacteur, dont `vtl-csv`).
+
+---
+
+## D’où vient le TCK ?
+
+Les cas sont extraits des exemples du manuel VTL SDMX  
+(`v2.1/docs/reference_manual/operators/**/examples`).
+
+Branche Git pinée (fixtures CSV/JSON corrigées) : **`fix/doc-examples`**  
+https://github.com/sdmx-twg/vtl/tree/fix/doc-examples
+
+Le script local reproduit ce que fait la CI :
 
 ```shell
 ./coverage/scripts/refresh_tck_zip.sh
 ```
 
-This clones `sdmx-twg/vtl` at `fix/doc-examples`, runs `scripts/generate_tck_files.py` with `DOC_VERSION=v2.1`, and copies `tck/v2.1.zip` to `coverage/src/main/resources/v2.1.zip`.
+→ clone `sdmx-twg/vtl`, exécute `scripts/generate_tck_files.py`, copie `tck/v2.1.zip` vers `coverage/src/main/resources/v2.1.zip`.
 
-Optional overrides:
+Variables optionnelles :
 
 ```shell
 VTL_TCK_BRANCH=fix/doc-examples ./coverage/scripts/refresh_tck_zip.sh
 DOC_VERSION=v2.1 VTL_TCK_BRANCH=master ./coverage/scripts/refresh_tck_zip.sh
 ```
 
-### Manual equivalent
+### Génération manuelle (équivalent)
 
 ```shell
 git clone --depth 1 --branch fix/doc-examples https://github.com/sdmx-twg/vtl.git /tmp/vtl-tck
@@ -43,54 +91,30 @@ mkdir -p coverage/src/main/resources
 cp /tmp/vtl-tck/tck/v2.1.zip coverage/src/main/resources/v2.1.zip
 ```
 
-If you already have a local `vtl` checkout on `fix/doc-examples`:
+---
+
+## Lancer un sous-ensemble (debug)
 
 ```shell
-cd /path/to/vtl
-git checkout fix/doc-examples
-DOC_VERSION=v2.1 python3 scripts/generate_tck_files.py
-cp tck/v2.1.zip /path/to/trevas/coverage/src/main/resources/v2.1.zip
+# un seul cas (adapter le nom affiché dans les logs / XML)
+mvn test -pl coverage -Dtest='TCKTest#leafCases' --batch-mode
+
+# tests unitaires du module coverage (hors TCK long)
+mvn test -pl coverage -Dtest='!TCKTest' --batch-mode
 ```
 
-## Run the TCK
-
-After refreshing the zip:
-
-```shell
-mvn clean install -pl coverage -am -DskipTests --batch-mode
-mvn test -pl coverage --batch-mode
-```
-
-Spark 4 variant:
-
-```shell
-mvn test -pl coverage -Pspark4-tck --batch-mode
-```
-
-Reports (after a test run):
-
-```shell
-python3 coverage/scripts/prettify_tck_surefire_xml.py
-python3 coverage/scripts/render_tck_job_summary.py
-# → coverage/target/tck-scripts-report.md (cases ordered by Test N, same as JUnit)
-```
+---
 
 ## CI
 
-On each TCK workflow run, GitHub Actions:
+Workflows : `.github/workflows/tck-vtl-tf-spark3.yml`, `tck-vtl-tf-spark4.yml`
 
-1. Checks out Trevas
-2. Clones `https://github.com/sdmx-twg/vtl.git` at `VTL_TCK_BRANCH` (`fix/doc-examples`)
-3. Runs `DOC_VERSION=v2.1 python3 vtl/scripts/generate_tck_files.py`
-4. Copies `vtl/tck/v2.1.zip` into `coverage/src/main/resources/`
-5. Runs `mvn test -pl coverage`
-6. Publishes GitHub check summary from **`TEST-fr.insee.vtl.coverage.TCKTest.xml` only** (not the other Surefire XML files for `TckDatasetComparisonTest`, `TckFailureTextFixtureTest`, …)
-7. Appends the long TCK script report via `render_tck_job_summary.py` (same single XML + `v2.1.zip`)
+En résumé : checkout Trevas → génération `v2.1.zip` → `mvn clean install -pl coverage -am -DskipTests` → `mvn test -pl coverage` → rapport Surefire / résumé Markdown.
 
-No committed zip and no git hooks: local and CI use the same generation step.
+---
 
-## Related links
+## Liens
 
 - [TCK automation PR (VTL TF)](https://github.com/sdmx-twg/vtl/pull/565)
-- [Trevas TCK CSV loader notes](../roadmap/tck-csv-loader.md)
-- JUnit / reporting: [junit5](https://github.com/junit-team/junit5/discussions/4504#discussioncomment-13046641), [surefire](https://github.com/apache/maven-surefire/issues/835), [dorny/test-reporter](https://github.com/dorny/test-reporter/issues/580)
+- [Notes chargeur CSV TCK](../roadmap/tck-csv-loader.md)
+- JUnit / reporting : [junit5](https://github.com/junit-team/junit5/discussions/4504#discussioncomment-13046641), [surefire](https://github.com/apache/maven-surefire/issues/835), [dorny/test-reporter](https://github.com/dorny/test-reporter/issues/580)
