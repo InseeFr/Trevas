@@ -33,7 +33,7 @@ class AggregationCollectorsTest {
         AggregationCollectors.fromAggrDatasetInvocation(ctx, datasetExpression, fromContext(ctx));
 
     assertThat(collectors).containsOnlyKeys("me_1", "me_2");
-    assertThat(collectors.get("me_1").getType()).isEqualTo(Long.class);
+    assertThat(collectors.get("me_1").getType()).isEqualTo(Double.class);
     assertThat(collectors.get("me_2").getType()).isEqualTo(Double.class);
   }
 

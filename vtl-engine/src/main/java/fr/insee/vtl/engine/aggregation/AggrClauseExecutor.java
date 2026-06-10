@@ -2,8 +2,10 @@ package fr.insee.vtl.engine.aggregation;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
+import fr.insee.vtl.engine.attribute.ComponentRoles;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
@@ -48,7 +50,7 @@ public final class AggrClauseExecutor {
                     agg ->
                         agg.componentRole() == null
                             ? Dataset.Role.MEASURE
-                            : Dataset.Role.valueOf(agg.componentRole().getText().toUpperCase()),
+                            : ComponentRoles.fromParser(agg.componentRole()),
                     (a, b) -> b,
                     LinkedHashMap::new));
 
@@ -72,6 +74,11 @@ public final class AggrClauseExecutor {
         AggregationCollectors.fromAggrClause(
             ctx, grouping.dataset().getDataStructure(), fromContext(ctx));
 
-    return processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectorMap);
+    AggregationViralPropagation viralPropagation =
+        grouping.groupByKeys().isEmpty()
+            ? AggregationViralPropagation.INVOCATION_GLOBAL
+            : AggregationViralPropagation.AGGR_CLAUSE_GROUPED;
+    return processingEngine.executeAggr(
+        grouping.dataset(), grouping.groupByKeys(), collectorMap, viralPropagation);
   }
 }

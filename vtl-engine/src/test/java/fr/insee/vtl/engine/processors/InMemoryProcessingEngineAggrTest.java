@@ -42,7 +42,7 @@ class InMemoryProcessingEngineAggrTest {
                         .withPosition(TEST_POSITION)
                         .using(c -> Long.class.cast(c.get("me_1"))))));
 
-    assertThat(result.getDataStructure().get("me_1").getType()).isEqualTo(Long.class);
+    assertThat(result.getDataStructure().get("me_1").getType()).isEqualTo(Double.class);
     assertThat(result.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
   }
 
@@ -68,7 +68,7 @@ class InMemoryProcessingEngineAggrTest {
                         .using(c -> Double.class.cast(c.get("me_1"))))));
 
     assertThat(result.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
-    assertThat(result.getDataStructure().get("at_1").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+    assertThat(result.getDataStructure().get("at_1")).isNull();
   }
 
   @Test
