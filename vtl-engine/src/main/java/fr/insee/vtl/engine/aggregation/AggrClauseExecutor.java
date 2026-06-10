@@ -2,14 +2,12 @@ package fr.insee.vtl.engine.aggregation;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
-import fr.insee.vtl.engine.attribute.ComponentRoles;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.AggregationExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -50,7 +48,7 @@ public final class AggrClauseExecutor {
                     agg ->
                         agg.componentRole() == null
                             ? Dataset.Role.MEASURE
-                            : ComponentRoles.fromParser(agg.componentRole()),
+                            : Dataset.Role.valueOf(agg.componentRole().getText().toUpperCase()),
                     (a, b) -> b,
                     LinkedHashMap::new));
 
@@ -70,30 +68,10 @@ public final class AggrClauseExecutor {
         GroupingResolver.resolve(
             normalizedDataset, ctx.groupingClause(), componentExpressionVisitor, processingEngine);
 
-    Structured.DataStructure normalizedStructure = grouping.dataset().getDataStructure();
-    Map<String, AggregationExpression> collectorMap = new LinkedHashMap<>();
+    Map<String, AggregationExpression> collectorMap =
+        AggregationCollectors.fromAggrClause(
+            ctx, grouping.dataset().getDataStructure(), fromContext(ctx));
 
-    for (VtlParser.AggrFunctionClauseContext functionCtx :
-        ctx.aggregateClause().aggrFunctionClause()) {
-      String alias = VtlParseTrees.componentName(functionCtx.componentID());
-      if (normalizedStructure.containsKey(alias)) {
-        Structured.Component normalizedComponent = normalizedStructure.get(alias);
-        collectorMap.put(
-            alias,
-            AggregationExpressionFactory.fromAggrDataset(
-                (VtlParser.AggrDatasetContext) functionCtx.aggrOperatorsGrouping(),
-                AggregationColumnReferences.columnReference(
-                    fromContext(ctx), alias, normalizedComponent.getType())));
-      } else {
-        collectorMap.put(alias, AggregationExpressionFactory.countRows());
-      }
-    }
-
-    fr.insee.vtl.model.AggregationViralPropagation viralPropagation =
-        grouping.groupByKeys().isEmpty()
-            ? fr.insee.vtl.model.AggregationViralPropagation.INVOCATION_GLOBAL
-            : fr.insee.vtl.model.AggregationViralPropagation.AGGR_CLAUSE_GROUPED;
-    return processingEngine.executeAggr(
-        grouping.dataset(), grouping.groupByKeys(), collectorMap, viralPropagation);
+    return processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectorMap);
   }
 }

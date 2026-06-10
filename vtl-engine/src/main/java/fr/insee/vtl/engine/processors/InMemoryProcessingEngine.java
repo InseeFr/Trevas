@@ -510,6 +510,34 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
    * The <code>Factory</code> class is an implementation of a VTL engine factory that returns
    * in-memory engines.
    */
+  private static DataStructure aggrResultStructure(
+      DataStructure input, List<String> groupBy, Map<String, AggregationExpression> collectorMap) {
+    boolean globalAggregation = groupBy.isEmpty();
+    Map<String, Component> columns = new LinkedHashMap<>();
+
+    for (String key : groupBy) {
+      Component id = input.get(key);
+      if (id != null) {
+        columns.put(key, new Component(id));
+      }
+    }
+
+    for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
+      Dataset.Role role = globalAggregation ? Dataset.Role.IDENTIFIER : Dataset.Role.MEASURE;
+      columns.put(
+          entry.getKey(), new Dataset.Component(entry.getKey(), entry.getValue().getType(), role));
+    }
+
+    for (Component component : input.values()) {
+      if ((component.isAttribute() || Dataset.Role.VIRALATTRIBUTE.equals(component.getRole()))
+          && !columns.containsKey(component.getName())) {
+        columns.put(component.getName(), new Component(component));
+      }
+    }
+
+    return new DataStructure(columns.values());
+  }
+
   public static class Factory implements ProcessingEngineFactory {
 
     @Override

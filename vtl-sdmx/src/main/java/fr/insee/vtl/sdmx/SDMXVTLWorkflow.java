@@ -31,7 +31,7 @@ public class SDMXVTLWorkflow {
   public SDMXVTLWorkflow(
       ScriptEngine engine, ReadableDataLocation rdl, Map<String, Dataset> inputs) {
     this.engine = engine;
-    this.sdmxBeans = readerEngineSDMX3.getSdmxBeans(rdl);
+    this.sdmxBeans = TrevasSDMXUtils.parseSdmxBeans(rdl);
     this.inputs = inputs;
   }
 

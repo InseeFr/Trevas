@@ -38,6 +38,12 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${spark3.scala.binary}</artifactId>
         </dependency>
+        <!-- Spark 3.5 SQL parser requires ANTLR 4.9.x (not the 4.13.x that SDMX may transitively pull). -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>

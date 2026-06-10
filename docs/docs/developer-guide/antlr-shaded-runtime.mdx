@@ -34,7 +34,7 @@ Downstream code never references `org.antlr.v4` at runtime on the Trevas side; i
 | Role | Shaded, relocated ANTLR 4 runtime |
 | JPMS module | `fr.insee.vtl.antlr` |
 
-Shading runs at the **`process-classes`** phase so the final JAR is available **before** `vtl-parser` compiles. The plain `org.antlr` dependency is marked `optional` so it is not leaked transitively to consumers.
+Shading runs in the **`compile`** phase (this module has no Java sources) so the modular shaded JAR exists **before** `vtl-parser` compiles in the same reactor `compile` pass. The plain `org.antlr` dependency is marked `optional` so it is not leaked transitively to consumers.
 
 ## Module `vtl-parser`
 

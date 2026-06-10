@@ -82,6 +82,10 @@
         <spark3.scala.binary>2.12</spark3.scala.binary>
         <spark4.version>4.0.0</spark4.version>
         <spark4.scala.binary>2.13</spark4.scala.binary>
+        <!-- Unshaded org.antlr.v4.runtime for Spark 3.5 / vtl-antlr shade source (ATN v3). -->
+        <antlr4.version>4.9.3</antlr4.version>
+        <!-- Spark 4.0 SQL parser (ATN v4); do not apply reactor-wide — override in vtl-spark4 only. -->
+        <antlr4.spark4.version>4.13.1</antlr4.spark4.version>
     </properties>
 
     <dependencies>
