@@ -76,7 +76,8 @@ jobs:
         if: always()
         with:
           name: JUnit (Spark 3)
-          path: coverage/target/surefire-reports/*.xml
+          # TCK suite only (exclude coverage unit tests: TckDatasetComparisonTest, …)
+          path: coverage/target/surefire-reports/TEST-fr.insee.vtl.coverage.TCKTest.xml
           reporter: java-junit
           only-summary: 'true'
           max-annotations: 0

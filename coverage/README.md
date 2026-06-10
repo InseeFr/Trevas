@@ -84,6 +84,8 @@ On each TCK workflow run, GitHub Actions:
 3. Runs `DOC_VERSION=v2.1 python3 vtl/scripts/generate_tck_files.py`
 4. Copies `vtl/tck/v2.1.zip` into `coverage/src/main/resources/`
 5. Runs `mvn test -pl coverage`
+6. Publishes GitHub check summary from **`TEST-fr.insee.vtl.coverage.TCKTest.xml` only** (not the other Surefire XML files for `TckDatasetComparisonTest`, `TckFailureTextFixtureTest`, …)
+7. Appends the long TCK script report via `render_tck_job_summary.py` (same single XML + `v2.1.zip`)
 
 No committed zip and no git hooks: local and CI use the same generation step.
 
