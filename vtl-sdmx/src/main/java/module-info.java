@@ -4,6 +4,7 @@ module fr.insee.vtl.sdmx {
   requires fusion.api.sdmx;
   requires fusion.api;
   requires java.scripting;
+  requires fusion.sdmx.im;
   requires fusion.sdmx.ml;
   requires fusion.utils;
 

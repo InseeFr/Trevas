@@ -20,11 +20,12 @@
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
-        <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts. -->
-        <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
-        <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
-        <!-- Spark 3.x pulls scala-module-jackson 2.15.x; keep databind < 2.16 for tests -->
-        <jackson.version>2.15.2</jackson.version>
+        <!-- Test-only Spark bridge: same public package fr.insee.vtl.spark.* in both artifacts.
+             Default Spark 4: vtl-sdmx (test) and fusion-sdmx-vtl need ANTLR 4.13.x on the classpath. -->
+        <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
+        <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
+        <jackson.version>2.18.2</jackson.version>
+        <antlr.runtime.version>${antlr4.spark4.version}</antlr.runtime.version>
     </properties>
 
     <dependencies>
@@ -80,11 +81,18 @@
         </dependency>
 
         <!-- Spark is not a compile dependency: applications add either vtl-spark or vtl-spark4.
-             Tests pick one module via trevas.spark.integration.test.module (profile spark4-tests). -->
+             Tests pick one module via trevas.spark.integration.test.module (profile spark3-tests). -->
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>${trevas.spark.integration.test.module}</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Pin ANTLR for SDMX + Spark 4; do not rely on transitive mediation across test deps. -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr.runtime.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -92,12 +100,17 @@
 
     <profiles>
         <profile>
-            <id>spark4-tests</id>
+            <id>spark3-tests</id>
             <properties>
-                <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
-                <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
-                <jackson.version>2.18.2</jackson.version>
+                <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
+                <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
+                <jackson.version>2.15.2</jackson.version>
+                <antlr.runtime.version>${antlr4.version}</antlr.runtime.version>
             </properties>
+        </profile>
+        <!-- Alias kept for CI matrix entries that still pass -Pspark4-tests. -->
+        <profile>
+            <id>spark4-tests</id>
         </profile>
     </profiles>
 

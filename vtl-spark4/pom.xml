@@ -38,6 +38,12 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${spark4.scala.binary}</artifactId>
         </dependency>
+        <!-- Spark 4 SQL parser requires ANTLR 4.13.x (ATN v4). -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.spark4.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>

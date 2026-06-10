@@ -15,11 +15,6 @@
     <description>Relocated ANTLR4 runtime so it does not collide with Spark's bundled copy.</description>
     <version>2.5.0-SNAPSHOT</version>
 
-    <!--    Warning: not latest, align with version embedded by Spark-->
-    <properties>
-        <antlr4.version>4.9.3</antlr4.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.antlr</groupId>
