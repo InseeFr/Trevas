@@ -91,9 +91,8 @@ public class AggregationExpression
   /**
    * Returns an aggregation expression that sums an expression on data points.
    *
-   * <p>Result type follows the operand {@link ResolvableExpression#getType()}, which must reflect
-   * VTL metadata (component types from the data structure). {@link Long} operands yield {@link
-   * Long} sums; {@link Double} operands yield {@link Double} sums.
+   * <p>{@link Long} operands are summed as {@link Long} then promoted to {@link Double} (TCK /
+   * numeric aggregate convention). {@link Double} operands yield {@link Double} sums.
    *
    * @param expression The expression on data points.
    * @return The summing expression.
@@ -106,7 +105,10 @@ public class AggregationExpression
     }
     if (Long.class.equals(operandType)) {
       return new SumAggregationExpression(
-          expression, Collectors.summingLong(value -> (Long) value), Long.class);
+          expression,
+          Collectors.mapping(
+              value -> ((Long) value).doubleValue(), Collectors.summingDouble(v -> v)),
+          Double.class);
     }
     // Type asserted in visitor.
     throw new Error("unexpected type");

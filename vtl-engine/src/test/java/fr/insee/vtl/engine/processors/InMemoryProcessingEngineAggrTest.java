@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.processors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.InMemoryDataset;
@@ -69,6 +70,32 @@ class InMemoryProcessingEngineAggrTest {
 
     assertThat(result.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
     assertThat(result.getDataStructure().get("at_1").getRole()).isEqualTo(Dataset.Role.ATTRIBUTE);
+  }
+
+  @Test
+  void groupedAggregationPreservesViralAttributesOnly() {
+    Structured.DataStructure input =
+        new Structured.DataStructure(
+            List.of(
+                new Structured.Component("id_1", Long.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("at_plain", String.class, Dataset.Role.ATTRIBUTE),
+                new Structured.Component("at_viral", String.class, Dataset.Role.VIRALATTRIBUTE)));
+
+    Structured.DataStructure result =
+        AggregationResultStructureBuilder.build(
+            input,
+            List.of("id_1"),
+            Map.of(
+                "me_1",
+                AggregationExpression.sum(
+                    ResolvableExpression.withType(Long.class)
+                        .withPosition(TEST_POSITION)
+                        .using(c -> Long.class.cast(c.get("me_1"))))),
+            AggregationViralPropagation.AGGR_CLAUSE_GROUPED);
+
+    assertThat(result.get("at_plain")).isNull();
+    assertThat(result.get("at_viral").getRole()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
   }
 
   @Test
