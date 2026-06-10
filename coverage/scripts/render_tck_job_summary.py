@@ -17,7 +17,7 @@ After `mvn test` (+ optional prettify), build a plain-text-friendly Markdown rep
   ASCII tables → GFM; `[path] output …` → **Cause: output …**.
 
 Inputs:
-  - Surefire XML (test order = execution order; names carry Test N + path).
+  - Surefire XML (names carry Test N + path; report sorted by display path).
   - v2.1.zip (transformation.vtl per folder path).
 
 Writes: coverage/target/tck-scripts-report.md
@@ -42,6 +42,18 @@ TCK_ZIP_CANDIDATES = [
 SUREFIRE_XML_PATH = Path("coverage/target/surefire-reports/TEST-fr.insee.vtl.coverage.TCKTest.xml")
 
 _DISPLAY_SEP = " \u00bb "
+
+
+def natural_sort_key(text: str) -> list:
+    """Case-insensitive natural sort key (ex_2 before ex_10)."""
+    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", text)]
+
+
+def sort_results_by_display_path(results: list[dict]) -> None:
+    """Sort cases by label path (e.g. General purpose operators » … » ex_5)."""
+    results.sort(
+        key=lambda row: natural_sort_key(row["display_path"]),
+    )
 
 
 def resolve_tck_zip() -> Path | None:
@@ -627,6 +639,7 @@ def main() -> None:
 
     scripts = load_scripts_from_zip(zip_path)
     results = parse_ordered_results(SUREFIRE_XML_PATH)
+    sort_results_by_display_path(results)
 
     chunks: list[str] = []
     if report_title:

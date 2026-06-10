@@ -94,6 +94,22 @@ public class BooleanExprTest {
   }
 
   @Test
+  public void notOnBooleanDatasetKeepsMeasureName() throws ScriptException {
+    ScriptContext context = engine.getContext();
+    context.setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+    engine.eval("ds1 := ds_1[keep bool1]; notDs := not ds1;");
+    Dataset notDs = (Dataset) context.getAttribute("notDs");
+    assertThat(notDs.getDataStructure().containsKey("bool1")).isTrue();
+    assertThat(notDs.getDataStructure().containsKey("bool_var")).isFalse();
+    assertThat(notDs.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("id", "Toto", "bool1", false),
+            Map.of("id", "Hadrien", "bool1", false),
+            Map.of("id", "Nico", "bool1", true),
+            Map.of("id", "Franck", "bool1", true));
+  }
+
+  @Test
   public void testOnDatasets() throws ScriptException {
     ScriptContext context = engine.getContext();
 
@@ -108,23 +124,24 @@ public class BooleanExprTest {
     Dataset and = (Dataset) context.getAttribute("andDs");
     assertThat(and.getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("id", "Toto", "bool_var", false),
-            Map.of("id", "Hadrien", "bool_var", true),
-            Map.of("id", "Nico", "bool_var", false),
-            Map.of("id", "Franck", "bool_var", false));
+            Map.of("id", "Toto", "bool1", false),
+            Map.of("id", "Hadrien", "bool1", true),
+            Map.of("id", "Nico", "bool1", false),
+            Map.of("id", "Franck", "bool1", false));
+    assertThat(and.getDataStructure().get("bool1").getType()).isEqualTo(Boolean.class);
     Dataset or = (Dataset) context.getAttribute("orDs");
     assertThat(or.getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("id", "Toto", "bool_var", true),
-            Map.of("id", "Hadrien", "bool_var", true),
-            Map.of("id", "Nico", "bool_var", true),
-            Map.of("id", "Franck", "bool_var", false));
+            Map.of("id", "Toto", "bool1", true),
+            Map.of("id", "Hadrien", "bool1", true),
+            Map.of("id", "Nico", "bool1", true),
+            Map.of("id", "Franck", "bool1", false));
     Dataset xor = (Dataset) context.getAttribute("xorDs");
     assertThat(xor.getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("id", "Toto", "bool_var", true),
-            Map.of("id", "Hadrien", "bool_var", false),
-            Map.of("id", "Nico", "bool_var", true),
-            Map.of("id", "Franck", "bool_var", false));
+            Map.of("id", "Toto", "bool1", true),
+            Map.of("id", "Hadrien", "bool1", false),
+            Map.of("id", "Nico", "bool1", true),
+            Map.of("id", "Franck", "bool1", false));
   }
 }
