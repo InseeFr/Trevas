@@ -2,10 +2,8 @@ package fr.insee.vtl.engine.processors;
 
 import static fr.insee.vtl.model.Structured.*;
 
-import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
 import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
-import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
 import fr.insee.vtl.engine.join.InMemoryJoinExecutor;
 import fr.insee.vtl.engine.join.JoinProjection;
 import fr.insee.vtl.engine.membership.MembershipOperations;
