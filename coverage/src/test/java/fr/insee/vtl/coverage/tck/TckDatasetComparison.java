@@ -1,13 +1,14 @@
 package fr.insee.vtl.coverage.tck;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Row-by-row comparison for TCK outputs: same length, same key sets per row, values equal modulo
- * numeric tolerance (IEEE-754 noise + TCK reference values rounded in CSV to a few significant
- * digits).
+ * Row comparison for TCK outputs: same multiset of rows (order ignored), same key sets per row,
+ * values equal modulo numeric tolerance (IEEE-754 noise + TCK reference values rounded in CSV to a
+ * few significant digits).
  */
 public final class TckDatasetComparison {
 
@@ -25,20 +26,34 @@ public final class TckDatasetComparison {
 
   private TckDatasetComparison() {}
 
-  public static boolean sameRowOrder(
+  /** Compares two tables as multisets of rows; row order in each list is not significant. */
+  public static boolean sameRows(
       List<Map<String, Object>> actual, List<Map<String, Object>> expected) {
     if (actual.size() != expected.size()) {
       return false;
     }
-    for (int i = 0; i < actual.size(); i++) {
-      if (!rowMapsEqual(actual.get(i), expected.get(i))) {
+    List<Map<String, Object>> unmatched = new ArrayList<>(actual);
+    for (Map<String, Object> expectedRow : expected) {
+      int match = indexOfEqualRow(unmatched, expectedRow);
+      if (match < 0) {
         return false;
       }
+      unmatched.remove(match);
     }
-    return true;
+    return unmatched.isEmpty();
   }
 
-  private static boolean rowMapsEqual(Map<String, Object> actual, Map<String, Object> expected) {
+  private static int indexOfEqualRow(
+      List<Map<String, Object>> rows, Map<String, Object> expectedRow) {
+    for (int i = 0; i < rows.size(); i++) {
+      if (rowMapsEqual(rows.get(i), expectedRow)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  static boolean rowMapsEqual(Map<String, Object> actual, Map<String, Object> expected) {
     if (actual.size() != expected.size()) {
       return false;
     }

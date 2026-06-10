@@ -10,6 +10,9 @@ After `mvn test` (+ optional prettify), build a plain-text-friendly Markdown rep
     ✅ Test N
     folder » with » chevrons » ex_k
 
+  N is 1..total in report order (default: natural alphanumeric on the path).
+  JUnit parameterized index is not shown (see Surefire XML / CI for Test 162, …).
+
     <script body from zip>
 
   Failures: one-line header `✅ Test N - path » …`; script in ```vtl`; detail
@@ -17,8 +20,12 @@ After `mvn test` (+ optional prettify), build a plain-text-friendly Markdown rep
   ASCII tables → GFM; `[path] output …` → **Cause: output …**.
 
 Inputs:
-  - Surefire XML (names carry Test N + path; report sorted by test number N).
+  - Surefire XML (names carry Test N + path).
   - v2.1.zip (transformation.vtl per folder path).
+
+Report order: natural alphanumeric sort on the case path (folder » … » ex_k).
+Case labels Test 1, Test 2, … follow that order (not the JUnit zip-tree index).
+Override with env TCK_REPORT_SORT=index to sort and number by JUnit Test N instead.
 
 Writes: coverage/target/tck-scripts-report.md
 Appends to GITHUB_STEP_SUMMARY when set (after existing summary from test-reporter).
@@ -56,7 +63,27 @@ def sort_results_by_index(results: list[dict]) -> None:
 
 def sort_results_by_display_path(results: list[dict]) -> None:
     """Sort cases by label path (e.g. General purpose operators » … » ex_5)."""
-    results.sort(key=lambda row: natural_sort_key(row["display_path"]))
+    results.sort(
+        key=lambda row: (natural_sort_key(row["display_path"]), row["index"])
+    )
+
+
+def apply_report_sort(results: list[dict]) -> None:
+    mode = os.environ.get("TCK_REPORT_SORT", "path").strip().lower()
+    if mode in ("index", "test", "number"):
+        sort_results_by_index(results)
+    elif mode in ("path", "alpha", "alphanumeric", "natural"):
+        sort_results_by_display_path(results)
+    else:
+        raise ValueError(
+            f"unsupported TCK_REPORT_SORT={mode!r} (use path or index)"
+        )
+
+
+def assign_report_numbers(results: list[dict]) -> None:
+    """Set report_index 1..n in current list order (after apply_report_sort)."""
+    for n, row in enumerate(results, start=1):
+        row["report_index"] = n
 
 
 def resolve_tck_zip() -> Path | None:
@@ -642,7 +669,8 @@ def main() -> None:
 
     scripts = load_scripts_from_zip(zip_path)
     results = parse_ordered_results(SUREFIRE_XML_PATH)
-    sort_results_by_index(results)
+    apply_report_sort(results)
+    assign_report_numbers(results)
 
     chunks: list[str] = []
     if report_title:
@@ -655,10 +683,11 @@ def main() -> None:
     chunks.append("")
 
     for row in results:
-        i = row["index"]
         display_path = row["display_path"]
         script = lookup_script(scripts, display_path)
-        chunks.append(render_case_plain(i, display_path, script, row))
+        chunks.append(
+            render_case_plain(row["report_index"], display_path, script, row)
+        )
 
     report = "".join(chunks).rstrip() + "\n"
 

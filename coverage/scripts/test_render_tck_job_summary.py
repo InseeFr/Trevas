@@ -3,6 +3,8 @@
 import unittest
 
 from render_tck_job_summary import (
+    apply_report_sort,
+    assign_report_numbers,
     compact_java_exception_detail,
     sanitize_failure_detail,
     sort_results_by_display_path,
@@ -11,6 +13,31 @@ from render_tck_job_summary import (
 
 
 class SortResultsTest(unittest.TestCase):
+    def test_apply_report_sort_defaults_to_path(self) -> None:
+        import os
+
+        rows = [
+            {"index": 1, "display_path": "Z » ex_9 » ex_9", "status": "PASS", "detail": ""},
+            {"index": 2, "display_path": "A » ex_2 » ex_2", "status": "PASS", "detail": ""},
+        ]
+        old = os.environ.pop("TCK_REPORT_SORT", None)
+        try:
+            apply_report_sort(rows)
+        finally:
+            if old is not None:
+                os.environ["TCK_REPORT_SORT"] = old
+        self.assertEqual([r["display_path"] for r in rows], ["A » ex_2 » ex_2", "Z » ex_9 » ex_9"])
+
+    def test_assign_report_numbers_after_path_sort(self) -> None:
+        rows = [
+            {"index": 165, "display_path": "Agg » ex_1 » ex_1", "status": "PASS", "detail": ""},
+            {"index": 164, "display_path": "Agg » ex_2 » ex_2", "status": "PASS", "detail": ""},
+        ]
+        sort_results_by_display_path(rows)
+        assign_report_numbers(rows)
+        self.assertEqual([r["report_index"] for r in rows], [1, 2])
+        self.assertEqual([r["index"] for r in rows], [165, 164])
+
     def test_sorts_by_test_index(self) -> None:
         rows = [
             {"index": 165, "display_path": "Agg » ex_1 » ex_1", "status": "PASS", "detail": ""},
