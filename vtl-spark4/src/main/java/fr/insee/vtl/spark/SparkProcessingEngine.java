@@ -85,6 +85,8 @@ public class SparkProcessingEngine implements ProcessingEngine {
     } else if (expression instanceof MedianAggregationExpression) {
       column =
           percentile_approx(SparkUtils.safeCol(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+    } else if (expression instanceof StdDevPopAggregationExpression) {
+      column = stddev_pop(SparkUtils.safeCol(columnName));
     } else if (expression instanceof StdDevSampAggregationExpression) {
       column = stddev_samp(SparkUtils.safeCol(columnName));
     } else if (expression instanceof VarPopAggregationExpression) {
@@ -400,7 +402,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
             .agg(
                 columns.get(0),
                 iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-    SparkDataset sparkDs = new SparkDataset(result, dataset.getRoles());
+    Structured.DataStructure resultStructure =
+        aggrResultStructure(dataset.getDataStructure(), groupBy, collectorMap);
+    SparkDataset sparkDs = new SparkDataset(result, resultStructure);
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 
@@ -1139,6 +1143,37 @@ public class SparkProcessingEngine implements ProcessingEngine {
             .agg(functions.first(meName));
 
     return new SparkDatasetExpression(new SparkDataset(result), pos);
+  }
+
+  private static Structured.DataStructure aggrResultStructure(
+      Structured.DataStructure input,
+      List<String> groupBy,
+      Map<String, AggregationExpression> collectorMap) {
+    boolean globalAggregation = groupBy.isEmpty();
+    Map<String, Structured.Component> columns = new LinkedHashMap<>();
+
+    for (String key : groupBy) {
+      Structured.Component id = input.get(key);
+      if (id != null) {
+        columns.put(key, new Structured.Component(id));
+      }
+    }
+
+    for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
+      Role role = globalAggregation ? IDENTIFIER : MEASURE;
+      columns.put(
+          entry.getKey(),
+          new Structured.Component(entry.getKey(), entry.getValue().getType(), role));
+    }
+
+    for (Structured.Component component : input.values()) {
+      if ((component.isAttribute() || Role.VIRALATTRIBUTE.equals(component.getRole()))
+          && !columns.containsKey(component.getName())) {
+        columns.put(component.getName(), new Structured.Component(component));
+      }
+    }
+
+    return new Structured.DataStructure(columns.values());
   }
 
   /**

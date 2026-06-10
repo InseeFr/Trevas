@@ -80,6 +80,39 @@ public class AggregateTest {
   }
 
   @Test
+  void testAggregateInvocationMatchesClause() throws ScriptException {
+    engine.put("ds1", dataset);
+    engine.eval("inv := sum(ds1 group by country);");
+    engine.eval("clause := ds1[aggr age := sum(age), weight := sum(weight) group by country];");
+
+    Dataset inv = (Dataset) engine.get("inv");
+    Dataset clause = (Dataset) engine.get("clause");
+    assertThat(inv.getDataAsMap()).containsExactlyInAnyOrderElementsOf(clause.getDataAsMap());
+  }
+
+  @Test
+  void testCountInvocationHavingMatchesClause() throws ScriptException {
+    InMemoryDataset dsHaving =
+        new InMemoryDataset(
+            List.of(
+                Map.of("country", "france"),
+                Map.of("country", "france"),
+                Map.of("country", "france"),
+                Map.of("country", "norway")),
+            Map.of("country", String.class),
+            Map.of("country", Dataset.Role.IDENTIFIER));
+
+    engine.put("dsHaving", dsHaving);
+    engine.eval("inv := count(dsHaving group by country having count() > 2);");
+    engine.eval(
+        "clause := dsHaving[aggr int_var := count() group by country][filter int_var > 2];");
+
+    Dataset inv = (Dataset) engine.get("inv");
+    Dataset clause = (Dataset) engine.get("clause");
+    assertThat(inv.getDataAsMap()).containsExactlyInAnyOrderElementsOf(clause.getDataAsMap());
+  }
+
+  @Test
   public void testAggregateClause() throws ScriptException {
 
     engine.put("ds1", dataset);

@@ -363,8 +363,6 @@ public class ClauseVisitorTest {
         List.of(
             "res := ds1[aggr a :=         sum(name) group by country];",
             "res := ds1[aggr a :=         avg(name) group by country];",
-            "res := ds1[aggr a :=         max(name) group by country];",
-            "res := ds1[aggr a :=         min(name) group by country];",
             "res := ds1[aggr a :=      median(name) group by country];",
             "res := ds1[aggr a :=  stddev_pop(name) group by country];",
             "res := ds1[aggr a := stddev_samp(name) group by country];",
@@ -372,6 +370,12 @@ public class ClauseVisitorTest {
             "res := ds1[aggr a :=    var_samp(name) group by country];");
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    for (String script : cases) {
+      assertThatThrownBy(() -> engine.eval(script))
+          .as("script should reject non numeric aggregate operand: %s", script)
+          .isInstanceOf(VtlScriptException.class);
+    }
   }
 
   @Test

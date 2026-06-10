@@ -34,7 +34,7 @@ Nedstrømskode refererer aldri til `org.antlr.v4` ved runtime på Trevas-siden; 
 | Rolle | Shadet, flyttet ANTLR 4-runtime |
 | JPMS-modul | `fr.insee.vtl.antlr` |
 
-Shading kjører i **`process-classes`**-fasen slik at den endelige JAR-en er tilgjengelig **før** `vtl-parser` kompileres. Den vanlige `org.antlr`-avhengigheten er merket `optional` for ikke å lekke transitivt til konsumenter.
+Shading kjører i **`compile`**-fasen (ingen Java-kilder i modulen) slik at den modulære shaded JAR-en finnes **før** `vtl-parser` kompileres i samme reactor-`compile`. Den vanlige `org.antlr`-avhengigheten er merket `optional` for ikke å lekke transitivt til konsumenter.
 
 ## Modul `vtl-parser`
 
