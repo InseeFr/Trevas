@@ -6,8 +6,8 @@ import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
 import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
+import fr.insee.vtl.engine.join.InMemoryJoinExecutor;
 import fr.insee.vtl.engine.join.JoinProjection;
-import fr.insee.vtl.engine.join.JoinStructureBuilder;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
@@ -404,63 +404,26 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     throw new UnsupportedOperationException();
   }
 
-  private DataStructure createCommonStructure(
-      List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    return JoinStructureBuilder.build(
-        identifiers, left.getDataStructure(), right.getDataStructure());
-  }
-
-  /** Creates a datapoint comparator that operates on the given identifiers only. */
-  private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
-    return (dl, dr) -> {
-      for (Component identifier : identifiers) {
-        if (!Objects.equals(dl.get(identifier.getName()), dr.get(identifier.getName()))) {
-          return -1;
-        }
-      }
-      return 0;
-    };
-  }
-
   private DatasetExpression handleInnerJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
-    var predicate = createPredicate(identifiers);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var joinKeys = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
+    var leftColumns = left.getColumnNames();
 
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        for (DataPoint leftPoint : leftPoints) {
-          List<DataPoint> matches = new ArrayList<>();
-          for (DataPoint rightPoint : rightPoints) {
-            // Check equality
-            if (predicate.compare(leftPoint, rightPoint) == 0) {
-              matches.add(rightPoint);
-            }
-          }
-
-          if (!matches.isEmpty()) {
-            // Create merge datapoint.
-            var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getColumnNames()) {
-              mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-            }
-            for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
-              BinaryAttributePropagation.applyRightColumns(
-                  matchPoint,
-                  structure,
-                  leftPoint,
-                  left.getDataStructure(),
-                  match,
-                  right.getDataStructure());
-              result.add(matchPoint);
-            }
-          }
-        }
+        var leftStructure = left.getDataStructure();
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.innerJoin(
+                structure,
+                leftStructure,
+                rightStructure,
+                leftColumns,
+                joinKeys,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
         return InMemoryDataset.ofDataPoints(result, structure);
       }
 
@@ -481,46 +444,24 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   private DatasetExpression handleLeftJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
-    var predicate = createPredicate(identifiers);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var joinKeys = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
+    var leftColumns = left.getColumnNames();
 
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        for (DataPoint leftPoint : leftPoints) {
-          List<DataPoint> matches = new ArrayList<>();
-          for (DataPoint rightPoint : rightPoints) {
-            // Check equality
-            if (predicate.compare(leftPoint, rightPoint) == 0) {
-              matches.add(rightPoint);
-            }
-          }
-
-          // Create merge datapoint.
-          var mergedPoint = new DataPoint(structure);
-          for (String leftColumn : left.getColumnNames()) {
-            mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-          }
-
-          if (matches.isEmpty()) {
-            result.add(mergedPoint);
-          } else {
-            for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
-              BinaryAttributePropagation.applyRightColumns(
-                  matchPoint,
-                  structure,
-                  leftPoint,
-                  left.getDataStructure(),
-                  match,
-                  right.getDataStructure());
-              result.add(matchPoint);
-            }
-          }
-        }
+        var leftStructure = left.getDataStructure();
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.leftJoin(
+                structure,
+                leftStructure,
+                rightStructure,
+                leftColumns,
+                joinKeys,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
         return InMemoryDataset.ofDataPoints(result, structure);
       }
 
@@ -533,30 +474,22 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   private DatasetExpression handleCrossJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var leftColumns = left.getColumnNames();
+
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        // Nested-loop implementation
-        for (DataPoint leftPoint : leftPoints) {
-          for (DataPoint rightPoint : rightPoints) {
-            var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getColumnNames()) {
-              mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-            }
-            BinaryAttributePropagation.applyRightColumns(
-                mergedPoint,
+        var leftStructure = left.getDataStructure();
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.crossJoin(
                 structure,
-                leftPoint,
-                left.getDataStructure(),
-                rightPoint,
-                right.getDataStructure());
-            result.add(mergedPoint);
-          }
-        }
+                leftStructure,
+                rightStructure,
+                leftColumns,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
         return InMemoryDataset.ofDataPoints(result, structure);
       }
 

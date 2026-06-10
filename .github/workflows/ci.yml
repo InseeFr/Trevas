@@ -3,7 +3,7 @@ name: Trevas CI
 on:
   push:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [opened, synchronize, reopened]
 
 jobs:
   format:
@@ -128,7 +128,7 @@ jobs:
     name: Package Trevas modules
     # Filter thanks to test job
     runs-on: ubuntu-latest
-    needs: [ test, spark-integration ]
+    needs: [test, spark-integration]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -186,12 +186,12 @@ jobs:
     name: Publish Trevas modules on Maven
     if: startsWith(github.event.ref, 'refs/tags/v')
     # Temp update because of sonar token issue
-    needs: [ test, spark-integration ]
+    needs: [test, spark-integration]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v7
+        uses: crazy-max/ghaction-import-gpg@v1
         env:
           GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}

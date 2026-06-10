@@ -14,7 +14,7 @@ import fr.insee.vtl.spark.SparkDataset;
 import fr.insee.vtl.spark.SparkDatasetExpression;
 import fr.insee.vtl.spark.SparkUtils;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,21 +59,9 @@ public final class SparkViralAttributePropagation {
     org.apache.spark.sql.Dataset<Row> base = transformed.resolve(Map.of()).getSparkDataset();
     org.apache.spark.sql.Dataset<Row> sourceRows = asSpark(source).getSparkDataset();
     List<String> ids = plan.identifierNames();
+    List<String> viralNames = List.copyOf(plan.viralNames());
 
-    for (String viral : plan.viralNames()) {
-      String scratch = "__viral_src_" + viral;
-      List<Column> selectCols = new ArrayList<>();
-      for (String id : ids) {
-        selectCols.add(SparkUtils.safeCol(id));
-      }
-      selectCols.add(SparkUtils.safeCol(viral).as(scratch));
-      org.apache.spark.sql.Dataset<Row> side = selectColumns(sourceRows, selectCols);
-      base = base.join(side, iterableAsScalaIterable(ids).toSeq(), "left");
-      if (Arrays.asList(base.columns()).contains(viral)) {
-        base = base.drop(viral);
-      }
-      base = base.withColumn(viral, SparkUtils.safeCol(scratch)).drop(scratch);
-    }
+    base = joinUnaryViralSource(base, sourceRows, ids, viralNames);
 
     return new SparkDatasetExpression(
         new SparkDataset(selectStructure(base, plan.targetStructure()), plan.targetStructure()),
@@ -92,40 +80,9 @@ public final class SparkViralAttributePropagation {
 
     org.apache.spark.sql.Dataset<Row> base = transformed.resolve(Map.of()).getSparkDataset();
     List<String> ids = plan.identifierNames();
+    List<String> viralNames = List.copyOf(plan.viralNames());
 
-    for (String viral : plan.viralNames()) {
-      Class<?> type = plan.viralType(viral);
-      Column merged = null;
-      List<String> scratches = new ArrayList<>();
-      int index = 0;
-      for (DatasetExpression source : sources) {
-        Component component = source.getDataStructure().get(viral);
-        if (component == null || !component.isViralAttribute()) {
-          continue;
-        }
-        String scratch = "__viral_bin_" + viral + "_" + index++;
-        scratches.add(scratch);
-        List<Column> selectCols = new ArrayList<>();
-        for (String id : ids) {
-          selectCols.add(SparkUtils.safeCol(id));
-        }
-        selectCols.add(SparkUtils.safeCol(viral).as(scratch));
-        org.apache.spark.sql.Dataset<Row> side =
-            selectColumns(asSpark(source).getSparkDataset(), selectCols);
-        base = base.join(side, iterableAsScalaIterable(ids).toSeq(), "left");
-        Column part = SparkUtils.safeCol(scratch);
-        merged = merged == null ? part : SparkViralColumnExpressions.merge(merged, part, type);
-      }
-      if (merged != null) {
-        if (Arrays.asList(base.columns()).contains(viral)) {
-          base = base.drop(viral);
-        }
-        base = base.withColumn(viral, merged);
-        for (String scratch : scratches) {
-          base = base.drop(scratch);
-        }
-      }
-    }
+    base = joinBinaryViralSources(base, sources, ids, viralNames, plan);
 
     return new SparkDatasetExpression(
         new SparkDataset(selectStructure(base, plan.targetStructure()), plan.targetStructure()),
@@ -289,6 +246,117 @@ public final class SparkViralAttributePropagation {
         structure.componentsInOrder().stream().map(c -> SparkUtils.safeCol(c.getName())).toList();
     return selectColumns(dataset, columns);
   }
+
+  private static org.apache.spark.sql.Dataset<Row> joinUnaryViralSource(
+      org.apache.spark.sql.Dataset<Row> base,
+      org.apache.spark.sql.Dataset<Row> sourceRows,
+      List<String> ids,
+      List<String> viralNames) {
+    List<Column> sideCols = identifierColumns(ids);
+    Map<String, String> scratchByViral = new LinkedHashMap<>();
+    for (String viral : viralNames) {
+      String scratch = "__viral_src_" + viral;
+      scratchByViral.put(viral, scratch);
+      sideCols.add(SparkUtils.safeCol(viral).as(scratch));
+    }
+    base =
+        base.join(
+            selectColumns(sourceRows, sideCols), iterableAsScalaIterable(ids).toSeq(), "left");
+    Set<String> columnNames = columnNamesSet(base);
+    for (String viral : viralNames) {
+      String scratch = scratchByViral.get(viral);
+      if (columnNames.contains(viral)) {
+        base = base.drop(viral);
+        columnNames.remove(viral);
+      }
+      base = base.withColumn(viral, SparkUtils.safeCol(scratch)).drop(scratch);
+    }
+    return base;
+  }
+
+  private static org.apache.spark.sql.Dataset<Row> joinBinaryViralSources(
+      org.apache.spark.sql.Dataset<Row> base,
+      List<DatasetExpression> sources,
+      List<String> ids,
+      List<String> viralNames,
+      ViralAttributeReattachPlan plan) {
+    List<List<SourceViralScratch>> scratchesBySource = new ArrayList<>(sources.size());
+    int sourceIndex = 0;
+    for (DatasetExpression source : sources) {
+      scratchesBySource.add(
+          viralScratchesForSource(source.getDataStructure(), sourceIndex++, viralNames));
+    }
+
+    for (int s = 0; s < sources.size(); s++) {
+      List<SourceViralScratch> scratches = scratchesBySource.get(s);
+      if (scratches.isEmpty()) {
+        continue;
+      }
+      List<Column> sideCols = identifierColumns(ids);
+      for (SourceViralScratch scratch : scratches) {
+        sideCols.add(SparkUtils.safeCol(scratch.viralName()).as(scratch.scratchColumn()));
+      }
+      org.apache.spark.sql.Dataset<Row> side =
+          selectColumns(asSpark(sources.get(s)).getSparkDataset(), sideCols);
+      base = base.join(side, iterableAsScalaIterable(ids).toSeq(), "left");
+    }
+
+    Set<String> columnNames = columnNamesSet(base);
+    for (String viral : viralNames) {
+      Class<?> type = plan.viralType(viral);
+      Column merged = null;
+      List<String> scratchesToDrop = new ArrayList<>();
+      for (List<SourceViralScratch> sourceScratches : scratchesBySource) {
+        for (SourceViralScratch scratch : sourceScratches) {
+          if (!scratch.viralName().equals(viral)) {
+            continue;
+          }
+          Column part = SparkUtils.safeCol(scratch.scratchColumn());
+          merged = merged == null ? part : SparkViralColumnExpressions.merge(merged, part, type);
+          scratchesToDrop.add(scratch.scratchColumn());
+        }
+      }
+      if (merged == null) {
+        continue;
+      }
+      if (columnNames.contains(viral)) {
+        base = base.drop(viral);
+        columnNames.remove(viral);
+      }
+      base = base.withColumn(viral, merged);
+      for (String scratch : scratchesToDrop) {
+        base = base.drop(scratch);
+        columnNames.remove(scratch);
+      }
+    }
+    return base;
+  }
+
+  private static List<SourceViralScratch> viralScratchesForSource(
+      DataStructure sourceStructure, int sourceIndex, List<String> viralNames) {
+    List<SourceViralScratch> scratches = new ArrayList<>();
+    for (String viral : viralNames) {
+      Component component = sourceStructure.get(viral);
+      if (component != null && component.isViralAttribute()) {
+        scratches.add(new SourceViralScratch(viral, "__viral_bin_" + viral + "_" + sourceIndex));
+      }
+    }
+    return scratches;
+  }
+
+  private static List<Column> identifierColumns(List<String> ids) {
+    List<Column> columns = new ArrayList<>(ids.size());
+    for (String id : ids) {
+      columns.add(SparkUtils.safeCol(id));
+    }
+    return columns;
+  }
+
+  private static Set<String> columnNamesSet(org.apache.spark.sql.Dataset<Row> dataset) {
+    return new HashSet<>(List.of(dataset.columns()));
+  }
+
+  private record SourceViralScratch(String viralName, String scratchColumn) {}
 
   private static org.apache.spark.sql.Dataset<Row> selectColumns(
       org.apache.spark.sql.Dataset<Row> dataset, List<Column> columns) {
