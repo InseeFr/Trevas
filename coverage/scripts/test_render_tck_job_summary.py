@@ -6,10 +6,20 @@ from render_tck_job_summary import (
     compact_java_exception_detail,
     sanitize_failure_detail,
     sort_results_by_display_path,
+    sort_results_by_index,
 )
 
 
 class SortResultsTest(unittest.TestCase):
+    def test_sorts_by_test_index(self) -> None:
+        rows = [
+            {"index": 165, "display_path": "Agg » ex_1 » ex_1", "status": "PASS", "detail": ""},
+            {"index": 164, "display_path": "Agg » ex_2 » ex_2", "status": "PASS", "detail": ""},
+            {"index": 1, "display_path": "Z » ex_9 » ex_9", "status": "PASS", "detail": ""},
+        ]
+        sort_results_by_index(rows)
+        self.assertEqual([r["index"] for r in rows], [1, 164, 165])
+
     def test_sorts_by_display_path_natural_order(self) -> None:
         rows = [
             {"index": 3, "display_path": "A » ex_10 » ex_10", "status": "PASS", "detail": ""},

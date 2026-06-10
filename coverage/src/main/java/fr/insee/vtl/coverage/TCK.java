@@ -3,6 +3,7 @@ package fr.insee.vtl.coverage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.insee.vtl.coverage.model.Folder;
 import fr.insee.vtl.coverage.model.Test;
+import fr.insee.vtl.coverage.tck.TckInputValidator;
 import fr.insee.vtl.coverage.utils.JSONStructureLoader;
 import java.io.File;
 import java.io.IOException;
@@ -96,9 +97,13 @@ public class TCK {
           switch (file.getName()) {
             case "input.json":
               test.setInput(JSONStructureLoader.loadDatasetsFromCSV(file));
+              test.setInputFixtureIssues(
+                  TckInputValidator.collectIssues(file.getParentFile(), test.getInput()));
               break;
             case "output.json":
               test.setOutputs(JSONStructureLoader.loadDatasetsFromCSV(file));
+              test.setOutputFixtureIssues(
+                  TckInputValidator.collectIssues(file.getParentFile(), test.getOutputs()));
               break;
             case "transformation.vtl":
               String script = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);

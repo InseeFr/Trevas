@@ -2,6 +2,7 @@ package fr.insee.vtl.coverage.tck;
 
 import fr.insee.vtl.coverage.model.Test;
 import fr.insee.vtl.model.Dataset;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.script.Bindings;
@@ -25,6 +26,17 @@ public final class TckCaseExecutor {
     Objects.requireNonNull(test, "test");
     Objects.requireNonNull(displayPath, "displayPath");
 
+    if (!test.getInputFixtureIssues().isEmpty()) {
+      throw new AssertionError(
+          TckFailureText.tckFixtureInconsistency(
+              displayPath, test, "input", test.getInputFixtureIssues()));
+    }
+    if (!test.getOutputFixtureIssues().isEmpty()) {
+      throw new AssertionError(
+          TckFailureText.tckFixtureInconsistency(
+              displayPath, test, "expected output", test.getOutputFixtureIssues()));
+    }
+
     Bindings bindings = new SimpleBindings();
     Map<String, Dataset> inputs = test.getInput();
     if (inputs != null) {
@@ -43,7 +55,7 @@ public final class TckCaseExecutor {
     try {
       engine.eval(script);
     } catch (Throwable t) {
-      throw new AssertionError(TckFailureText.executionError(displayPath, test, t), t);
+      throw fixtureOrExecutionError(displayPath, test, t);
     }
 
     Map<String, Dataset> outputs = test.getOutputs();
@@ -77,13 +89,55 @@ public final class TckCaseExecutor {
                         expected.getDataStructure()));
                 return;
               }
-              if (!TckDatasetComparison.sameRowOrder(
-                  actual.getDataAsMap(), expected.getDataAsMap())) {
+              var actualMap =
+                  readDataMapOrThrowFixtureError(
+                      displayPath, test, outputName, actual, "Trevas result", "Trevas result");
+              var expectedMap =
+                  readDataMapOrThrowFixtureError(
+                      displayPath,
+                      test,
+                      outputName,
+                      expected,
+                      "expected output",
+                      "TCK expected output");
+              if (!TckDatasetComparison.sameRowOrder(actualMap, expectedMap)) {
                 softly.fail(
                     TckFailureText.rowDataMismatch(
                         displayPath, outputName, test, actual, expected));
               }
             });
     softly.assertAll();
+  }
+
+  private static AssertionError fixtureOrExecutionError(
+      String displayPath, Test test, Throwable error) {
+    if (TckInputValidator.isTckFixtureLoadFailure(error)) {
+      return new AssertionError(
+          TckFailureText.tckFixtureInconsistencyFromRuntime(
+              displayPath, test, "input", "input dataset", error),
+          error);
+    }
+    return new AssertionError(TckFailureText.executionError(displayPath, test, error), error);
+  }
+
+  private static List<Map<String, Object>> readDataMapOrThrowFixtureError(
+      String displayPath,
+      Test test,
+      String datasetName,
+      Dataset dataset,
+      String fixtureRole,
+      String roleLabel) {
+    try {
+      return dataset.getDataAsMap();
+    } catch (RuntimeException error) {
+      if (TckInputValidator.isTckFixtureLoadFailure(error)) {
+        throw new AssertionError(
+            TckFailureText.tckFixtureInconsistencyFromRuntime(
+                displayPath, test, fixtureRole, datasetName, error),
+            error);
+      }
+      throw new AssertionError(
+          "[" + displayPath + "] could not read " + roleLabel + " `" + datasetName + "`", error);
+    }
   }
 }

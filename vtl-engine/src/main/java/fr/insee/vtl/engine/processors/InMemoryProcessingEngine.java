@@ -1,6 +1,8 @@
 package fr.insee.vtl.engine.processors;
 
 import static fr.insee.vtl.model.Structured.*;
+
+import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
 import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
