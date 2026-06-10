@@ -314,16 +314,15 @@ class TemporalFunctionsTest {
     engine.eval(
         "res := ds1[aggr test := sum(me1) group all truncate_time(t, \"year\", \"Europe/Oslo\")];");
     var actual = (Dataset) engine.get("res");
-    actual.getDataAsMap().forEach(System.out::println);
     assertThat(actual.getDataAsMap())
         .containsExactly(
             Map.of(
-                "time", Interval.parse("2009-12-31T23:00:00Z/2011-01-01T04:49:12Z"), "test", 70L),
+                "time", Interval.parse("2009-12-31T23:00:00Z/2011-01-01T04:49:12Z"), "test", 70.0),
             Map.of(
-                "time", Interval.parse("2012-12-31T23:00:00Z/2014-01-01T04:49:12Z"), "test", 50L),
+                "time", Interval.parse("2012-12-31T23:00:00Z/2014-01-01T04:49:12Z"), "test", 50.0),
             Map.of(
-                "time", Interval.parse("2010-12-31T23:00:00Z/2012-01-01T04:49:12Z"), "test", 30L),
+                "time", Interval.parse("2010-12-31T23:00:00Z/2012-01-01T04:49:12Z"), "test", 30.0),
             Map.of(
-                "time", Interval.parse("2011-12-31T23:00:00Z/2012-12-31T04:49:12Z"), "test", 30L));
+                "time", Interval.parse("2011-12-31T23:00:00Z/2012-12-31T04:49:12Z"), "test", 30.0));
   }
 }

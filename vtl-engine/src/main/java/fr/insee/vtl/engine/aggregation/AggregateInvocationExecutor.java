@@ -43,8 +43,13 @@ public final class AggregateInvocationExecutor {
               fromContext(ctx)));
     }
 
+    fr.insee.vtl.model.AggregationViralPropagation viralPropagation =
+        grouping.groupByKeys().isEmpty()
+            ? fr.insee.vtl.model.AggregationViralPropagation.INVOCATION_GLOBAL
+            : fr.insee.vtl.model.AggregationViralPropagation.INVOCATION_GROUPED;
     DatasetExpression result =
-        processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), collectors);
+        processingEngine.executeAggr(
+            grouping.dataset(), grouping.groupByKeys(), collectors, viralPropagation);
 
     return HavingClauseApplier.apply(
         result, ctx.havingClause(), expressionVisitor, processingEngine);

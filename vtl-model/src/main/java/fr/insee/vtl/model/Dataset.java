@@ -24,9 +24,17 @@ public interface Dataset extends Structured {
   List<DataPoint> getDataPoints();
 
   default List<List<Object>> getDataAsList() {
-    var columns = getDataStructure().keySet();
+    var structure = getDataStructure();
+    int columnCount = structure.size();
     return getDataPoints().stream()
-        .map(dataPoint -> columns.stream().map(dataPoint::get).collect(Collectors.toList()))
+        .map(
+            dataPoint -> {
+              List<Object> row = new java.util.ArrayList<>(columnCount);
+              for (int i = 0; i < columnCount; i++) {
+                row.add(dataPoint.get(i));
+              }
+              return row;
+            })
         .collect(Collectors.toList());
   }
 

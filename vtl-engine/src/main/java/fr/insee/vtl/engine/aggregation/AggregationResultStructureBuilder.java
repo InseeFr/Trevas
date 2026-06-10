@@ -1,6 +1,8 @@
 package fr.insee.vtl.engine.aggregation;
 
+import fr.insee.vtl.engine.attribute.ViralAttributeAggregationRules;
 import fr.insee.vtl.model.AggregationExpression;
+import fr.insee.vtl.model.AggregationViralPropagation;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.util.LinkedHashMap;
@@ -16,6 +18,18 @@ public final class AggregationResultStructureBuilder {
       Structured.DataStructure input,
       List<String> groupByKeys,
       Map<String, AggregationExpression> collectors) {
+    AggregationViralPropagation propagation =
+        groupByKeys.isEmpty()
+            ? AggregationViralPropagation.INVOCATION_GLOBAL
+            : AggregationViralPropagation.INVOCATION_GROUPED;
+    return build(input, groupByKeys, collectors, propagation);
+  }
+
+  public static Structured.DataStructure build(
+      Structured.DataStructure input,
+      List<String> groupByKeys,
+      Map<String, AggregationExpression> collectors,
+      AggregationViralPropagation viralPropagation) {
     boolean globalAggregation = groupByKeys.isEmpty();
     Map<String, Structured.Component> columns = new LinkedHashMap<>();
 
@@ -27,22 +41,25 @@ public final class AggregationResultStructureBuilder {
     }
 
     for (Map.Entry<String, AggregationExpression> entry : collectors.entrySet()) {
-      Dataset.Role role = globalAggregation ? Dataset.Role.IDENTIFIER : Dataset.Role.MEASURE;
-      columns.put(
-          entry.getKey(),
-          new Structured.Component(entry.getKey(), entry.getValue().getType(), role));
+      String name = entry.getKey();
+      Structured.Component source = input.get(name);
+      Dataset.Role role =
+          globalAggregation
+              ? Dataset.Role.IDENTIFIER
+              : (source != null ? source.getRole() : Dataset.Role.MEASURE);
+      columns.put(name, new Structured.Component(name, entry.getValue().getType(), role));
     }
 
-    for (Structured.Component component : input.values()) {
-      if (isPreservedAttribute(component) && !columns.containsKey(component.getName())) {
-        columns.put(component.getName(), new Structured.Component(component));
+    if (viralPropagation.propagatesViralAttributes()) {
+      for (Structured.Component component : input.values()) {
+        if (component.isViralAttribute() && !columns.containsKey(component.getName())) {
+          columns.put(
+              component.getName(),
+              ViralAttributeAggregationRules.asPropagatedComponent(component, viralPropagation));
+        }
       }
     }
 
     return new Structured.DataStructure(columns.values());
-  }
-
-  private static boolean isPreservedAttribute(Structured.Component component) {
-    return component.isAttribute() || Dataset.Role.VIRALATTRIBUTE.equals(component.getRole());
   }
 }

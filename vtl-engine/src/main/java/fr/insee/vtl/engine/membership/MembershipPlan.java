@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.membership;
 
 import fr.insee.vtl.engine.utils.DefaultMeasureNames;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +44,7 @@ public final class MembershipPlan {
     List<String> identifierNames =
         structure.getIdentifiers().stream().map(Structured.Component::getName).toList();
     List<String> viralAttributeNames =
-        structure.values().stream()
-            .filter(c -> Dataset.Role.VIRALATTRIBUTE.equals(c.getRole()))
-            .map(Structured.Component::getName)
-            .toList();
+        structure.getViralAttributes().stream().map(Structured.Component::getName).toList();
 
     if (member.isMeasure()) {
       List<String> columns = new ArrayList<>(identifierNames);

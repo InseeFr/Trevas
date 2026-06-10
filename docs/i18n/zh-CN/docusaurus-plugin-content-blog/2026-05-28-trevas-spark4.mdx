@@ -1,0 +1,57 @@
+---
+slug: /trevas-spark4
+title: Trevas 中的 Spark 4
+date: 2026-05-28
+authors: [nicolas]
+tags: [Trevas]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+我们很高兴宣布 **Trevas 2.4.0**，通过新的 **`vtl-spark4`** 模块增加了对 **Apache Spark 4** 的支持。
+
+若要将基于 Spark 的客户端应用迁移到 Spark 4，可在 Trevas 技术栈其余部分之外依赖 `fr.insee.trevas:vtl-spark4`。VTL API 与行为保持不变，仅 Spark 集成层发生变化。
+
+**Spark 3 不会停用。** 现有的 **`vtl-spark`** 模块将继续并行完整维护。您可按需继续使用 Spark 3，没有强制迁移时间表。
+
+请参阅 <Link label="2.4.0 版本说明" href={useBaseUrl('/releases/2.x.x')} /> 与 <Link label="GitHub 发布" href="https://github.com/InseeFr/Trevas/releases/tag/v2.4.0" /> 了解完整变更日志。
+
+## Trevas 客户端应用 — 已 shade 的 ANTLR 导入
+
+在同一 Trevas 代码库中同时支持 **Spark 3** 与 **Spark 4**，也促使我们 **改进了 ANTLR 的打包方式**：运行时现已 shade 并重定位，避免 Trevas 与 Spark 在 classpath 上争夺相同的 `org.antlr.v4` 类。
+
+自 Trevas **2.4.0** 起，本说明仅适用于在 Trevas 之外 **在自有代码中显式使用 ANTLR API**（词法分析器、令牌流、解析树、监听器等）的 **客户端应用**。若应用仅调用 Trevas API、从不直接导入或操作 ANTLR 类型，**对您没有任何变化**。
+
+若您确实需要直接使用 ANTLR — 无论继续使用 **Apache Spark 3**（`vtl-spark`）还是迁移到 **Spark 4**（`vtl-spark4`）— 必须从 **重定位后** 的包命名空间导入运行时：
+
+```java
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.tree.*;
+// … 以及按需使用的其他 fr.insee.vtl.antlr.* 子包
+```
+
+此前，直接操作解析器或 ANTLR API 的代码通常使用标准 ANTLR 包，例如：
+
+```java
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+```
+
+这些导入 **已不再与** Trevas 在运行时提供的类 **匹配**。Trevas 将 `org.antlr:antlr4-runtime` shade 进 `vtl-antlr` 构件，并把 `org.antlr.v4` 重定位为 `fr.insee.vtl.antlr`，以便 Trevas 与 Spark 可在同一 JVM 中共存，而无需加载两套相互竞争的 ANTLR 运行时。
+
+### 需要修改的内容
+
+- 将应用中 **所有** `org.antlr.v4…` 导入（以及针对 Trevas 解析器类型生成的代码）更新为对应的 `fr.insee.vtl.antlr…` 包。
+- 通过 **`fr.insee.trevas:vtl-antlr`**（经 `vtl-parser` / `vtl-engine` 传递依赖）获取运行时；**不要** 为 Trevas 相关解析单独添加 `org.antlr:antlr4-runtime` 依赖。
+- Spark 3 与 Spark 4 集成均适用：两者使用相同的 shade 解析器栈。
+
+典型对应关系：
+
+| 之前                                     | 之后                                           |
+| ---------------------------------------- | ---------------------------------------------- |
+| `org.antlr.v4.runtime.CharStreams`       | `fr.insee.vtl.antlr.runtime.CharStreams`       |
+| `org.antlr.v4.runtime.CommonTokenStream` | `fr.insee.vtl.antlr.runtime.CommonTokenStream` |
+| `org.antlr.v4.runtime.tree.ParseTree`    | `fr.insee.vtl.antlr.runtime.tree.ParseTree`    |
+
+更多技术细节，请<Link label="参阅" href={useBaseUrl('/developer-guide/antlr-shaded-runtime')} />文档。
