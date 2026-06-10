@@ -6,6 +6,7 @@ import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.aggregation.AggregateInvocationExecutor;
 import fr.insee.vtl.engine.aggregation.AggregationColumnReferences;
+import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -140,9 +141,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
             fromContext(ctx));
       }
 
-      return this.engine
-          .getProcessingEngine()
-          .executeMembership((DatasetExpression) ds, componentName);
+      return MembershipOperations.execute(
+          this.engine.getProcessingEngine(), (DatasetExpression) ds, componentName);
     } catch (VtlScriptException vse) {
       throw new VtlRuntimeException(vse);
     }

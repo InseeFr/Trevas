@@ -75,15 +75,6 @@ public interface ProcessingEngine {
       Map<String, Class<?>> outputMeasuresByName);
 
   /**
-   * Execute membership ({@code DS # component}) on a dataset expression.
-   *
-   * @param expression the source dataset
-   * @param memberComponentName the component id after {@code #}
-   * @return the membership result
-   */
-  DatasetExpression executeMembership(DatasetExpression expression, String memberComponentName);
-
-  /**
    * Execute a union transformations on the dataset expression.
    *
    * @param datasets list of dataset expression to union

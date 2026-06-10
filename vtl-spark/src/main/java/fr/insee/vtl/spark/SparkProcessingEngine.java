@@ -16,7 +16,6 @@ import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.join.JoinStructureBuilder;
-import fr.insee.vtl.engine.membership.MembershipOperations;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.spark.attribute.SparkViralAttributePropagation;
 import java.util.*;
@@ -322,12 +321,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
       }
     }
     return dataset.select(iterableAsScalaIterable(columns).toSeq());
-  }
-
-  @Override
-  public DatasetExpression executeMembership(
-      DatasetExpression expression, String memberComponentName) {
-    return MembershipOperations.execute(this, expression, memberComponentName);
   }
 
   @Override
