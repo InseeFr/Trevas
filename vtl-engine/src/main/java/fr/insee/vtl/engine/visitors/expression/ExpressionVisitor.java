@@ -22,6 +22,7 @@ import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
@@ -531,6 +532,19 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
       analytics.put(targetColumnName, result);
     }
     return processingEngine.executeInnerJoin(analytics);
+  }
+
+  /**
+   * Invokes a scalar VTL function (e.g. {@code isEqual}, {@code and}) in the current expression
+   * context.
+   */
+  public ResolvableExpression invokeScalarFunction(
+      String functionName, List<ResolvableExpression> parameters, Positioned position) {
+    try {
+      return genericFunctionsVisitor.invokeFunction(functionName, parameters, position);
+    } catch (VtlScriptException e) {
+      throw new VtlRuntimeException(e);
+    }
   }
 
   private DatasetExpression asDataset(ResolvableExpression expression, ParserRuleContext ctx) {

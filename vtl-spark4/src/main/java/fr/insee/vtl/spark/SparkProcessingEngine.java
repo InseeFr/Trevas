@@ -291,6 +291,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
   @Override
   public DatasetExpression executeFilter(
       DatasetExpression expression, ResolvableExpression filter, String filterText) {
+    Objects.requireNonNull(filter, "filter");
     SparkDataset dataset = asSparkDataset(expression);
 
     Dataset<Row> ds = dataset.getSparkDataset();
