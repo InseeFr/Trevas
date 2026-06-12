@@ -14,8 +14,6 @@ import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
 import fr.insee.vtl.engine.utils.DefaultMeasureNames;
-import fr.insee.vtl.engine.utils.MeasureNamingPolicies;
-import fr.insee.vtl.engine.utils.MeasureNamingPolicy;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -128,12 +126,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
         }
         return new FunctionExpression(method, parameters, position);
       } else if (noMonoDs.isEmpty()) {
-        finalRes =
-            invokeFunctionOnDataset(
-                funcName,
-                parameters,
-                position,
-                MeasureNamingPolicies.policyFor(funcName, parameters));
+        finalRes = invokeFunctionOnDataset(funcName, parameters, position, true);
       } else {
         List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
         Map<String, DatasetExpression> results = new HashMap<>();
@@ -152,8 +145,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                       })
                   .collect(Collectors.toList());
           results.put(
-              measure.getName(),
-              invokeFunctionOnDataset(funcName, params, position, MeasureNamingPolicy.HOMONYMOUS));
+              measure.getName(), invokeFunctionOnDataset(funcName, params, position, false));
         }
         DatasetExpression joined = proc.executeInnerJoin(results);
         Map<String, Class<?>> outputMeasures =
@@ -168,11 +160,17 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
   }
 
+  /**
+   * Applies a scalar VTL function row-wise on mono-measure dataset operand(s).
+   *
+   * <p>{@code monoMeasureOperands} is the only caller-specific flag; operand/result types and
+   * family rules are resolved in {@link DefaultMeasureNames#resolveOutputMeasureName}.
+   */
   private DatasetExpression invokeFunctionOnDataset(
       String funcName,
       List<ResolvableExpression> parameters,
       Positioned position,
-      MeasureNamingPolicy namingPolicy)
+      boolean monoMeasureOperands)
       throws NoSuchMethodException, VtlScriptException {
     ProcessingEngine proc = engine.getProcessingEngine();
 
@@ -182,7 +180,6 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     Map<DatasetExpression, String> operandAliases = new LinkedHashMap<>();
     Map<String, DatasetExpression> dsExprs = new LinkedHashMap<>();
     Set<String> measureNames = new HashSet<>();
-    Class<?> operandMeasureType = null;
     List<DatasetExpression> operandDatasets = new ArrayList<>();
     for (ResolvableExpression parameter : parameters) {
       if (parameter instanceof DatasetExpression ds) {
@@ -217,12 +214,6 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
       monoExprs.put(operandAlias, new ComponentExpression(renamedComponent, ds));
       dsExprs.put(operandAlias, ds);
     }
-    operandMeasureType =
-        parameters.stream()
-            .filter(DatasetExpression.class::isInstance)
-            .map(p -> ((DatasetExpression) p).getMeasures().get(0).getType())
-            .findFirst()
-            .orElse(null);
     if (measureNames.size() != 1) {
       throw new VtlRuntimeException(
           new InvalidArgumentException(
@@ -254,6 +245,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     var method = engine.findMethod(funcName, parametersTypes);
     var funcExrp = new FunctionExpression(method, normalizedParams, position);
     Class<?> resultType = funcExrp.getType();
+    Class<?> operandMeasureType =
+        DefaultMeasureNames.operandMeasureType(parameters, measureNames, resultType);
     ds =
         proc.executeCalc(
             ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
@@ -264,7 +257,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
                 ds.getDataStructure(), List.of(result)));
     String outputMeasureName =
         DefaultMeasureNames.resolveOutputMeasureName(
-            measureNames.iterator().next(), operandMeasureType, resultType, namingPolicy);
+            measureNames.iterator().next(), operandMeasureType, resultType, monoMeasureOperands);
     ds = proc.executeRename(ds, Map.of(result, outputMeasureName));
     List<DatasetExpression> datasetOperands =
         parameters.stream()

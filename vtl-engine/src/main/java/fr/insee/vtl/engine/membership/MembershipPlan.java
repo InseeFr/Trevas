@@ -16,6 +16,8 @@ import java.util.Objects;
  *   <li>{@code #At_i} on an attribute: identifiers, derived measure ({@code string_var}, …), viral
  *       attributes (non-viral {@code ATTRIBUTE} components are not kept).
  * </ul>
+ *
+ * <p>Promoted measures use {@link DefaultMeasureNames#forType(Class)} (membership spec).
  */
 public final class MembershipPlan {
 
