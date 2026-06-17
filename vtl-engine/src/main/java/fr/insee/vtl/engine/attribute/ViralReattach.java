@@ -55,7 +55,8 @@ public final class ViralReattach {
       sideCols.addAll(plan.viralNames());
       operands.put("s" + index++, engine.executeProject(source, sideCols));
     }
-    List<Component> keys = plan.identifierNames().stream().map(plan.targetStructure()::get).toList();
+    List<Component> keys =
+        plan.identifierNames().stream().map(plan.targetStructure()::get).toList();
     DatasetExpression joined = engine.executeInnerJoin(operands, keys);
     List<String> out =
         plan.targetStructure().componentsInOrder().stream().map(Component::getName).toList();
@@ -70,7 +71,8 @@ public final class ViralReattach {
     LinkedHashMap<String, DatasetExpression> operands = new LinkedHashMap<>();
     operands.put("base", base);
     operands.put("src", side);
-    List<Component> keys = plan.identifierNames().stream().map(plan.targetStructure()::get).toList();
+    List<Component> keys =
+        plan.identifierNames().stream().map(plan.targetStructure()::get).toList();
     DatasetExpression joined = engine.executeInnerJoin(operands, keys);
     List<String> out =
         plan.targetStructure().componentsInOrder().stream().map(Component::getName).toList();

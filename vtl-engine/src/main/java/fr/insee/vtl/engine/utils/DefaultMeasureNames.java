@@ -7,7 +7,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Default measure names for VTL 2.1 dataset-scoped operators ({@code bool_var}, {@code int_var}, …).
+ * Default measure names for VTL 2.1 dataset-scoped operators ({@code bool_var}, {@code int_var},
+ * …).
  *
  * <p>Naming is decided in {@link #resolveOutputMeasureName} from three pieces of information — not
  * from operand/result types alone:
@@ -40,8 +41,8 @@ public final class DefaultMeasureNames {
    * Operand measure type used for naming — not the first dataset in {@code parameters}.
    *
    * <p>Needed because {@code FunctionExpression#getType()} only gives the scalar result; among
-   * dataset parameters, the condition of {@code if cond then dsA else dsB} is itself a dataset whose
-   * measure type ({@code Boolean}) would wrongly drive naming for a {@code Long} result.
+   * dataset parameters, the condition of {@code if cond then dsA else dsB} is itself a dataset
+   * whose measure type ({@code Boolean}) would wrongly drive naming for a {@code Long} result.
    */
   public static Class<?> operandMeasureType(
       List<ResolvableExpression> parameters,
@@ -104,8 +105,7 @@ public final class DefaultMeasureNames {
       Class<?> operandMeasureType,
       Class<?> resultType,
       boolean monoMeasureOperands) {
-    if (monoMeasureOperands
-        && requiresDefaultMeasureName(operandMeasureType, resultType)) {
+    if (monoMeasureOperands && requiresDefaultMeasureName(operandMeasureType, resultType)) {
       return forType(resultType);
     }
     return homonymousName;

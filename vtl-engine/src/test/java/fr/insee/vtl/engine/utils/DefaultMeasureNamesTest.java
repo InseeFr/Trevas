@@ -20,44 +20,33 @@ class DefaultMeasureNamesTest {
             DefaultMeasureNames.resolveOutputMeasureName(
                 "Me_1", Boolean.class, Boolean.class, true))
         .isEqualTo("Me_1");
-    assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName("long1", Long.class, Long.class, true))
+    assertThat(DefaultMeasureNames.resolveOutputMeasureName("long1", Long.class, Long.class, true))
         .isEqualTo("long1");
-    assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "Me_1", Double.class, Long.class, true))
+    assertThat(DefaultMeasureNames.resolveOutputMeasureName("Me_1", Double.class, Long.class, true))
         .isEqualTo("Me_1");
     assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "long1", Long.class, Double.class, true))
+            DefaultMeasureNames.resolveOutputMeasureName("long1", Long.class, Double.class, true))
         .isEqualTo("long1");
   }
 
   @Test
   void usesDefaultNameWhenScalarFamilyChangesOnMonoMeasure() {
     assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "Me_1", Double.class, Boolean.class, true))
+            DefaultMeasureNames.resolveOutputMeasureName("Me_1", Double.class, Boolean.class, true))
         .isEqualTo(DefaultMeasureNames.BOOL_VAR);
     assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "Me_1", Long.class, Boolean.class, true))
+            DefaultMeasureNames.resolveOutputMeasureName("Me_1", Long.class, Boolean.class, true))
         .isEqualTo(DefaultMeasureNames.BOOL_VAR);
-    assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "Me_1", String.class, Long.class, true))
+    assertThat(DefaultMeasureNames.resolveOutputMeasureName("Me_1", String.class, Long.class, true))
         .isEqualTo(DefaultMeasureNames.INT_VAR);
-    assertThat(DefaultMeasureNames.requiresDefaultMeasureName(Long.class, Boolean.class))
-        .isTrue();
-    assertThat(DefaultMeasureNames.requiresDefaultMeasureName(String.class, Long.class))
-        .isTrue();
+    assertThat(DefaultMeasureNames.requiresDefaultMeasureName(Long.class, Boolean.class)).isTrue();
+    assertThat(DefaultMeasureNames.requiresDefaultMeasureName(String.class, Long.class)).isTrue();
   }
 
   @Test
   void multiMeasurePathAlwaysHomonymous() {
     assertThat(
-            DefaultMeasureNames.resolveOutputMeasureName(
-                "long1", Long.class, Boolean.class, false))
+            DefaultMeasureNames.resolveOutputMeasureName("long1", Long.class, Boolean.class, false))
         .isEqualTo("long1");
   }
 

@@ -87,8 +87,7 @@ public final class JoinFinalization {
                 merged =
                     merged == null
                         ? value
-                        : AttributePropagationAlgorithm.propagateBinaryValue(
-                            merged, value, type);
+                        : AttributePropagationAlgorithm.propagateBinaryValue(merged, value, type);
               }
               return cast(type, merged);
             });
