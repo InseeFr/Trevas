@@ -7,6 +7,7 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.validation.ValidationExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -143,7 +144,8 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
     var pos = fromContext(ctx);
 
-    return processingEngine.executeValidateDPruleset(dpr, ds, output, pos, valuedomaines);
+    return ValidationExecutor.executeDataPointRuleset(
+        processingEngine, dpr, ds, output, pos, valuedomaines);
   }
 
   /**
@@ -194,8 +196,14 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
       }
     }
     String output = ctx.output != null ? ctx.output.getText() : null;
-    return processingEngine.executeValidationSimple(
-        dsExpression, erCodeExpression, erLevelExpression, imbalanceExpression, output, pos);
+    return ValidationExecutor.executeSimpleCheck(
+        processingEngine,
+        dsExpression,
+        erCodeExpression,
+        erLevelExpression,
+        imbalanceExpression,
+        output,
+        pos);
   }
 
   // TODO: handle other IDs than componentID? build unique ID tuples to calculate
@@ -243,8 +251,15 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     String validationMode = getValidationMode(ctx.validationMode());
     String inputMode = getInputMode(ctx.inputMode());
     String validationOutput = getValidationOutput(ctx.validationOutput());
-    return processingEngine.executeHierarchicalValidation(
-        dsExpression, hr, componentID, validationMode, inputMode, validationOutput, pos);
+    return ValidationExecutor.executeHierarchicalCheck(
+        processingEngine,
+        dsExpression,
+        hr,
+        componentID,
+        validationMode,
+        inputMode,
+        validationOutput,
+        pos);
   }
 
   private String getValidationOutput(VtlParser.ValidationOutputContext voc) {

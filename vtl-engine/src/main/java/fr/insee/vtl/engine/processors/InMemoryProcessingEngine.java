@@ -343,39 +343,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     return leftMost;
   }
 
-  @Override
-  public DatasetExpression executeValidateDPruleset(
-      DataPointRuleset dpr,
-      DatasetExpression dataset,
-      String output,
-      Positioned pos,
-      List<String> toDrop) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DatasetExpression executeValidationSimple(
-      DatasetExpression dsE,
-      ResolvableExpression erCodeE,
-      ResolvableExpression erLevelE,
-      DatasetExpression imbalanceE,
-      String output,
-      Positioned pos) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DatasetExpression executeHierarchicalValidation(
-      DatasetExpression dsE,
-      HierarchicalRuleset hr,
-      String componentID,
-      String validationMode,
-      String inputMode,
-      String validationOutput,
-      Positioned pos) {
-    throw new UnsupportedOperationException();
-  }
-
   private DatasetExpression handleInnerJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
     var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);

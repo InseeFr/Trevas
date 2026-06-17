@@ -167,51 +167,6 @@ public interface ProcessingEngine {
       Map<String, DatasetExpression> datasets, List<Component> identifiers);
 
   /**
-   * Execute a validation DP ruleset on the dataset expressions.
-   *
-   * @param dpr datapoint ruleset
-   * @param datasetExpression datasets
-   * @param output validation output
-   * @param pos script error position
-   * @param toDrop variables to drop
-   * @return the result of the validation DP ruleset transformation
-   */
-  DatasetExpression executeValidateDPruleset(
-      DataPointRuleset dpr,
-      DatasetExpression datasetExpression,
-      String output,
-      Positioned pos,
-      List<String> toDrop);
-
-  /**
-   * Execute a simple validation on dataset expressions.
-   *
-   * @param dsExpr dataset expression
-   * @param erCodeExpr error code expression
-   * @param erLevelExpr error level expression
-   * @param imbalanceExpr dataset expression
-   * @param output validation output
-   * @param pos script error position
-   * @return the result of the validation
-   */
-  DatasetExpression executeValidationSimple(
-      DatasetExpression dsExpr,
-      ResolvableExpression erCodeExpr,
-      ResolvableExpression erLevelExpr,
-      DatasetExpression imbalanceExpr,
-      String output,
-      Positioned pos);
-
-  ResolvableExpression executeHierarchicalValidation(
-      DatasetExpression dsExpression,
-      HierarchicalRuleset hr,
-      String componentID,
-      String validationMode,
-      String inputMode,
-      String validationOutput,
-      Positioned pos);
-
-  /**
    * Execute pivot on dataset expression.
    *
    * @param dsExpr dataset expression
