@@ -2,13 +2,9 @@ package fr.insee.vtl.engine.processors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.engine.aggregation.AggregationPlan;
+import fr.insee.vtl.engine.aggregation.AggregationResults;
+import fr.insee.vtl.model.*;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -31,23 +27,30 @@ class InMemoryProcessingEngineAggrTest {
     DatasetExpression dataset =
         DatasetExpression.of(new InMemoryDataset(List.<List<Object>>of(), input), POSITION);
 
-    DatasetExpression result =
-        engine.executeAggr(
-            dataset,
+    Map<String, AggregationExpression> measureCollectors =
+        Map.of(
+            "me_1",
+            AggregationExpression.sum(
+                ResolvableExpression.withType(Long.class)
+                    .withPosition(TEST_POSITION)
+                    .using(c -> Long.class.cast(c.get("me_1")))));
+    var plan =
+        AggregationPlan.prepare(
+            input,
             List.of("id_1"),
-            Map.of(
-                "me_1",
-                AggregationExpression.sum(
-                    ResolvableExpression.withType(Long.class)
-                        .withPosition(TEST_POSITION)
-                        .using(c -> Long.class.cast(c.get("me_1"))))));
+            measureCollectors,
+            AggregationViralPropagation.INVOCATION_GROUPED);
 
+    DatasetExpression mechanical = engine.executeAggr(dataset, List.of("id_1"), plan.collectors());
+    DatasetExpression result = AggregationResults.withStructure(mechanical, plan.structure());
+
+    assertThat(mechanical.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
+    assertThat(result.getDataStructure()).isEqualTo(plan.structure());
     assertThat(result.getDataStructure().get("me_1").getType()).isEqualTo(Double.class);
-    assertThat(result.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
   }
 
   @Test
-  void globalAggregationPromotesMeasuresToIdentifiers() {
+  void globalAggregationDropsNonViralAttributesFromMechanicalResult() {
     Structured.DataStructure input =
         new Structured.DataStructure(
             List.of(
@@ -56,17 +59,21 @@ class InMemoryProcessingEngineAggrTest {
     DatasetExpression dataset =
         DatasetExpression.of(new InMemoryDataset(List.<List<Object>>of(), input), POSITION);
 
-    DatasetExpression result =
-        engine.executeAggr(
-            dataset,
-            List.of(),
-            Map.of(
-                "me_1",
-                AggregationExpression.avg(
-                    ResolvableExpression.withType(Double.class)
-                        .withPosition(TEST_POSITION)
-                        .using(c -> Double.class.cast(c.get("me_1"))))));
+    Map<String, AggregationExpression> measureCollectors =
+        Map.of(
+            "me_1",
+            AggregationExpression.avg(
+                ResolvableExpression.withType(Double.class)
+                    .withPosition(TEST_POSITION)
+                    .using(c -> Double.class.cast(c.get("me_1")))));
+    var plan =
+        AggregationPlan.prepare(
+            input, List.of(), measureCollectors, AggregationViralPropagation.INVOCATION_GLOBAL);
 
+    DatasetExpression mechanical = engine.executeAggr(dataset, List.of(), plan.collectors());
+    DatasetExpression result = AggregationResults.withStructure(mechanical, plan.structure());
+
+    assertThat(mechanical.getDataStructure().get("at_1")).isNull();
     assertThat(result.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
     assertThat(result.getDataStructure().get("at_1")).isNull();
   }
@@ -81,9 +88,18 @@ class InMemoryProcessingEngineAggrTest {
     DatasetExpression dataset =
         DatasetExpression.of(new InMemoryDataset(List.<List<Object>>of(), input), POSITION);
 
+    Map<String, AggregationExpression> measureCollectors =
+        Map.of("int_var", AggregationExpression.count());
+    var plan =
+        AggregationPlan.prepare(
+            input,
+            List.of("id_1"),
+            measureCollectors,
+            AggregationViralPropagation.INVOCATION_GROUPED);
+
     DatasetExpression result =
-        engine.executeAggr(
-            dataset, List.of("id_1"), Map.of("int_var", AggregationExpression.count()));
+        AggregationResults.withStructure(
+            engine.executeAggr(dataset, List.of("id_1"), plan.collectors()), plan.structure());
 
     assertThat(result.getDataStructure().get("int_var")).isNotNull();
     assertThat(result.getDataStructure().get("int_var").getType()).isEqualTo(Long.class);

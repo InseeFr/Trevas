@@ -67,14 +67,6 @@ public final class ViralAttributeCollectors {
   public static Map<String, AggregationExpression> mergeMeasureCollectors(
       Structured.DataStructure input,
       Structured.DataStructure output,
-      Map<String, AggregationExpression> measureCollectors) {
-    return mergeMeasureCollectors(
-        input, output, measureCollectors, AggregationViralPropagation.INVOCATION_GROUPED);
-  }
-
-  public static Map<String, AggregationExpression> mergeMeasureCollectors(
-      Structured.DataStructure input,
-      Structured.DataStructure output,
       Map<String, AggregationExpression> measureCollectors,
       AggregationViralPropagation viralPropagation) {
     Map<String, AggregationExpression> merged = new LinkedHashMap<>(measureCollectors);

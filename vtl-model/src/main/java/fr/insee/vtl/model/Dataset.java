@@ -49,6 +49,16 @@ public interface Dataset extends Structured {
   }
 
   /**
+   * Returns the same data with updated structure metadata (column names and values unchanged).
+   *
+   * <p>Engines use this indirectly via vtl-engine after mechanical aggregation; implementations may
+   * avoid materializing rows when only metadata changes.
+   */
+  default Dataset withDataStructure(DataStructure structure) {
+    return InMemoryDataset.ofDataPoints(getDataPoints(), structure);
+  }
+
+  /**
    * The <code>Role</code> <code>Enumeration</code> lists the roles of a component in a dataset
    * structure.
    */

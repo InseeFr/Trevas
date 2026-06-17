@@ -370,4 +370,9 @@ public class SparkDataset implements Dataset {
     }
     return dataStructure;
   }
+
+  @Override
+  public SparkDataset withDataStructure(Structured.DataStructure structure) {
+    return new SparkDataset(sparkDataset, structure);
+  }
 }

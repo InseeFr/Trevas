@@ -66,22 +66,15 @@ public interface ProcessingEngine {
   /**
    * Execute an aggregate transformations on the dataset expression.
    *
-   * <p>The API of this method is not stable yet.
+   * <p>Produces grouped rows and aggregated column values only. VTL roles and attribute propagation
+   * are applied upstream in vtl-engine before exposing the result.
+   *
+   * @param collectorMap aggregation expressions keyed by output column name
    */
   DatasetExpression executeAggr(
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap);
-
-  /**
-   * Same as {@link #executeAggr(DatasetExpression, List, Map)} with explicit viral propagation
-   * semantics (aggregate invocation vs {@code aggr} clause).
-   */
-  DatasetExpression executeAggr(
-      DatasetExpression expression,
-      List<String> groupBy,
-      Map<String, AggregationExpression> collectorMap,
-      AggregationViralPropagation viralPropagation);
 
   /**
    * Execute an simple analytic function (e.g. count, min, max) on the dataset expression based on a

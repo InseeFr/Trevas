@@ -407,31 +407,13 @@ public class SparkProcessingEngine implements ProcessingEngine {
       DatasetExpression dataset,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
-    AggregationViralPropagation viralPropagation =
-        groupBy.isEmpty()
-            ? AggregationViralPropagation.INVOCATION_GLOBAL
-            : AggregationViralPropagation.INVOCATION_GROUPED;
-    return executeAggr(dataset, groupBy, collectorMap, viralPropagation);
-  }
-
-  @Override
-  public DatasetExpression executeAggr(
-      DatasetExpression dataset,
-      List<String> groupBy,
-      Map<String, AggregationExpression> collectorMap,
-      AggregationViralPropagation viralPropagation) {
     SparkDataset sparkDataset = asSparkDataset(dataset);
-    Structured.DataStructure inputStructure = dataset.getDataStructure();
-    Structured.DataStructure resultStructure =
-        fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder.build(
-            inputStructure, groupBy, collectorMap, viralPropagation);
+    Structured.DataStructure outputStructure =
+        AggregationOutputStructure.mechanical(dataset.getDataStructure(), groupBy, collectorMap);
     List<Column> columns =
-        fr.insee.vtl.spark.aggregation.SparkViralAttributeAggregations.allAggregationColumns(
-            inputStructure,
-            resultStructure,
-            collectorMap,
-            viralPropagation,
-            SparkProcessingEngine::convertAggregation);
+        collectorMap.entrySet().stream()
+            .map(e -> convertAggregation(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
     List<Column> groupByColumns =
         groupBy.stream().map(SparkUtils::safeCol).collect(Collectors.toList());
     RelationalGroupedDataset grouped =
@@ -442,7 +424,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
     Dataset<Row> result =
         grouped.agg(
             columns.get(0), iterableAsScalaIterable(columns.subList(1, columns.size())).toSeq());
-    SparkDataset sparkDs = new SparkDataset(result, resultStructure.getRoles());
+    SparkDataset sparkDs = new SparkDataset(result, outputStructure);
     return new SparkDatasetExpression(sparkDs, dataset);
   }
 

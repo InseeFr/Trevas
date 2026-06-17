@@ -34,7 +34,8 @@ class AggregationResultStructureBuilderTest {
                 AggregationExpression.sum(
                     ResolvableExpression.withType(Long.class)
                         .withPosition(TEST_POSITION)
-                        .using(c -> Long.class.cast(c.get("me_1"))))));
+                        .using(c -> Long.class.cast(c.get("me_1"))))),
+            AggregationViralPropagation.INVOCATION_GROUPED);
 
     assertThat(result.get("me_1").getType()).isEqualTo(Double.class);
     assertThat(result.get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
@@ -57,7 +58,8 @@ class AggregationResultStructureBuilderTest {
                 AggregationExpression.avg(
                     ResolvableExpression.withType(Double.class)
                         .withPosition(TEST_POSITION)
-                        .using(c -> Double.class.cast(c.get("me_1"))))));
+                        .using(c -> Double.class.cast(c.get("me_1"))))),
+            AggregationViralPropagation.INVOCATION_GLOBAL);
 
     assertThat(result.get("me_1").getRole()).isEqualTo(Dataset.Role.IDENTIFIER);
     assertThat(result.get("at_1")).isNull();
@@ -122,7 +124,10 @@ class AggregationResultStructureBuilderTest {
 
     Structured.DataStructure result =
         AggregationResultStructureBuilder.build(
-            input, List.of("id_1"), Map.of("int_var", AggregationExpression.count()));
+            input,
+            List.of("id_1"),
+            Map.of("int_var", AggregationExpression.count()),
+            AggregationViralPropagation.INVOCATION_GROUPED);
 
     assertThat(result.get("int_var")).isNotNull();
     assertThat(result.get("int_var").getType()).isEqualTo(Long.class);

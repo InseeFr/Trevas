@@ -1,14 +1,17 @@
 package fr.insee.vtl.engine.processors;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.model.Structured.DataStructure;
+import static java.util.stream.Collectors.toList;
 
-import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
-import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
 import fr.insee.vtl.engine.join.InMemoryJoinExecutor;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.script.ScriptEngine;
@@ -18,12 +21,6 @@ import javax.script.ScriptEngine;
  * performs all operations in memory.
  */
 public class InMemoryProcessingEngine implements ProcessingEngine {
-
-  private static AggregationViralPropagation defaultViralPropagation(List<String> groupBy) {
-    return groupBy.isEmpty()
-        ? AggregationViralPropagation.INVOCATION_GLOBAL
-        : AggregationViralPropagation.INVOCATION_GROUPED;
-  }
 
   @Override
   public DatasetExpression executeCalc(
@@ -58,7 +55,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       }
                       return newDataPoint;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
         return InMemoryDataset.ofDataPoints(result, newStructure);
       }
 
@@ -90,7 +87,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       if (res == null) return false;
                       return (boolean) res;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
         return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
     };
@@ -130,7 +127,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       }
                       return newDataPoint;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
         return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
@@ -145,7 +142,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     DataStructure source = expression.getDataStructure();
     var structure =
-        columnNames.stream().map(source::get).filter(Objects::nonNull).collect(Collectors.toList());
+        columnNames.stream().map(source::get).filter(Objects::nonNull).collect(toList());
     var newStructure = new DataStructure(structure);
 
     return new DatasetExpression(expression) {
@@ -162,7 +159,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       }
                       return projectedDataPoint;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
         return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
@@ -183,7 +180,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           var dataset = datasetExpression.resolve(context);
           stream = Stream.concat(stream, dataset.getDataPoints().stream());
         }
-        List<DataPoint> data = stream.distinct().collect(Collectors.toList());
+        List<DataPoint> data = stream.distinct().collect(toList());
         return InMemoryDataset.ofDataPoints(data, getDataStructure());
       }
 
@@ -199,30 +196,17 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
-    return executeAggr(expression, groupBy, collectorMap, defaultViralPropagation(groupBy));
-  }
-
-  @Override
-  public DatasetExpression executeAggr(
-      DatasetExpression expression,
-      List<String> groupBy,
-      Map<String, AggregationExpression> collectorMap,
-      AggregationViralPropagation viralPropagation) {
+    DataStructure inputStructure = expression.getDataStructure();
+    DataStructure outputStructure =
+        AggregationOutputStructure.mechanical(inputStructure, groupBy, collectorMap);
+    DataStructure collectorStructure = collectorOnlyStructure(outputStructure, collectorMap);
     var keyExtractor = new KeyExtractor(groupBy);
 
-    Structured.DataStructure inputStructure = expression.getDataStructure();
-    Structured.DataStructure structure =
-        AggregationResultStructureBuilder.build(
-            inputStructure, groupBy, collectorMap, viralPropagation);
-    Map<String, AggregationExpression> allCollectors =
-        ViralAttributeCollectors.mergeMeasureCollectors(
-            inputStructure, structure, collectorMap, viralPropagation);
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-
         List<DataPoint> data = expression.resolve(Map.of()).getDataPoints();
-        MapCollector collector = new MapCollector(structure, allCollectors);
+        MapCollector collector = new MapCollector(collectorStructure, collectorMap);
         List<DataPoint> collect =
             data.stream()
                 .collect(Collectors.groupingBy(keyExtractor, collector))
@@ -230,23 +214,33 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 .stream()
                 .map(
                     e -> {
-                      DataPoint dataPoint = e.getValue();
-                      Map<String, Object> identifiers = e.getKey();
-                      for (Map.Entry<String, Object> identifierElement : identifiers.entrySet()) {
-                        dataPoint.set(identifierElement.getKey(), identifierElement.getValue());
+                      DataPoint aggregated = e.getValue();
+                      DataPoint resultPoint = new DataPoint(outputStructure);
+                      for (String key : groupBy) {
+                        resultPoint.set(key, e.getKey().get(key));
                       }
-                      return dataPoint;
+                      for (String column : collectorMap.keySet()) {
+                        resultPoint.set(column, aggregated.get(column));
+                      }
+                      return resultPoint;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
 
-        return InMemoryDataset.ofDataPoints(collect, structure);
+        return InMemoryDataset.ofDataPoints(collect, outputStructure);
       }
 
       @Override
       public DataStructure getDataStructure() {
-        return structure;
+        return outputStructure;
       }
     };
+  }
+
+  private static DataStructure collectorOnlyStructure(
+      DataStructure outputStructure, Map<String, AggregationExpression> collectorMap) {
+    List<Component> components =
+        collectorMap.keySet().stream().map(outputStructure::get).filter(Objects::nonNull).toList();
+    return new DataStructure(components);
   }
 
   @Override

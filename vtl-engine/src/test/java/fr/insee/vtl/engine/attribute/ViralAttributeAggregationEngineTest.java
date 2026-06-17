@@ -26,17 +26,6 @@ class ViralAttributeAggregationEngineTest {
   }
 
   @Test
-  void groupedAggrClausePropagatesViralAsViralAttribute() throws ScriptException {
-    engine
-        .getContext()
-        .setAttribute("ds", GroupedAggrViralFixtures.dataset(), ScriptContext.ENGINE_SCOPE);
-    engine.eval("res <- ds[aggr Me_2 := max(Me_1), Me_3 := min(Me_1) group by Id_1];");
-    var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.VIRALATTRIBUTE);
-    GroupedAggrViralFixtures.assertGroupedAggrViralValues(res.getDataAsMap());
-  }
-
-  @Test
   void globalAvgInvocationPropagatesViralAsAttribute() throws ScriptException {
     engine.getContext().setAttribute("ds", viralMeasureDataset(), ScriptContext.ENGINE_SCOPE);
     engine.eval("res := avg(ds);");

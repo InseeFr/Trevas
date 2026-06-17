@@ -4,12 +4,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.attribute.ComponentRoles;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.AggregationViralPropagation;
-import fr.insee.vtl.model.Dataset;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
-import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -78,7 +73,14 @@ public final class AggrClauseExecutor {
         grouping.groupByKeys().isEmpty()
             ? AggregationViralPropagation.INVOCATION_GLOBAL
             : AggregationViralPropagation.AGGR_CLAUSE_GROUPED;
-    return processingEngine.executeAggr(
-        grouping.dataset(), grouping.groupByKeys(), collectorMap, viralPropagation);
+    AggregationPlan.Prepared plan =
+        AggregationPlan.prepare(
+            grouping.dataset().getDataStructure(),
+            grouping.groupByKeys(),
+            collectorMap,
+            viralPropagation);
+    return AggregationResults.withStructure(
+        processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), plan.collectors()),
+        plan.structure());
   }
 }

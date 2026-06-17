@@ -17,17 +17,6 @@ public final class AggregationResultStructureBuilder {
   public static Structured.DataStructure build(
       Structured.DataStructure input,
       List<String> groupByKeys,
-      Map<String, AggregationExpression> collectors) {
-    AggregationViralPropagation propagation =
-        groupByKeys.isEmpty()
-            ? AggregationViralPropagation.INVOCATION_GLOBAL
-            : AggregationViralPropagation.INVOCATION_GROUPED;
-    return build(input, groupByKeys, collectors, propagation);
-  }
-
-  public static Structured.DataStructure build(
-      Structured.DataStructure input,
-      List<String> groupByKeys,
       Map<String, AggregationExpression> collectors,
       AggregationViralPropagation viralPropagation) {
     boolean globalAggregation = groupByKeys.isEmpty();

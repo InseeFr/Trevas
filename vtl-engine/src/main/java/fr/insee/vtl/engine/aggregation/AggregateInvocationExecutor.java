@@ -6,10 +6,7 @@ import static fr.insee.vtl.engine.utils.TypeChecking.assertDatasetExpression;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.AggregationExpression;
-import fr.insee.vtl.model.AggregationViralPropagation;
-import fr.insee.vtl.model.DatasetExpression;
-import fr.insee.vtl.model.ProcessingEngine;
+import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.Map;
 
@@ -45,9 +42,17 @@ public final class AggregateInvocationExecutor {
         grouping.groupByKeys().isEmpty()
             ? AggregationViralPropagation.INVOCATION_GLOBAL
             : AggregationViralPropagation.INVOCATION_GROUPED;
+    AggregationPlan.Prepared plan =
+        AggregationPlan.prepare(
+            grouping.dataset().getDataStructure(),
+            grouping.groupByKeys(),
+            collectors,
+            viralPropagation);
     DatasetExpression result =
-        processingEngine.executeAggr(
-            grouping.dataset(), grouping.groupByKeys(), collectors, viralPropagation);
+        AggregationResults.withStructure(
+            processingEngine.executeAggr(
+                grouping.dataset(), grouping.groupByKeys(), plan.collectors()),
+            plan.structure());
 
     return HavingClauseApplier.apply(
         result, ctx.havingClause(), expressionVisitor, processingEngine);
