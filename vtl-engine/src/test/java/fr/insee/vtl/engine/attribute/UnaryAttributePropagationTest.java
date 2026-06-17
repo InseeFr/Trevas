@@ -87,8 +87,7 @@ class UnaryAttributePropagationTest {
     DatasetExpression measureOnly = ENGINE.executeProject(sourceExpr, List.of("Id_1", "Me_1"));
 
     DatasetExpression restored =
-        UnaryAttributePropagation.reattachViralAttributes(
-            sourceExpr, measureOnly, Map.of("Me_1", Long.class));
+        ViralReattach.unary(ENGINE, sourceExpr, measureOnly, Map.of("Me_1", Long.class));
 
     assertThat(restored.getDataStructure().containsKey("At_1")).isTrue();
     assertThat(restored.getDataStructure().get("At_1").isViralAttribute()).isTrue();

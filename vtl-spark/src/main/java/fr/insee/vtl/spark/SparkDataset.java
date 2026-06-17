@@ -210,7 +210,7 @@ public class SparkDataset implements Dataset {
       fieldRole = roles.get(field.name());
     } else if (field.metadata().contains("vtlRole")) {
       String roleName = field.metadata().getString("vtlRole");
-      fieldRole = fr.insee.vtl.model.ComponentRoleResolver.parseRoleName(roleName);
+      fieldRole = Dataset.Role.fromName(roleName);
     } else {
       fieldRole = Role.MEASURE;
     }

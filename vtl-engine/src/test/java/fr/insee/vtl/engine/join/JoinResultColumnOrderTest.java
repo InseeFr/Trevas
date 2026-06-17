@@ -3,16 +3,24 @@ package fr.insee.vtl.engine.join;
 import static fr.insee.vtl.model.Dataset.Role;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.InMemoryDataset;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.Structured.Component;
+import fr.insee.vtl.model.Structured.DataPoint;
 import fr.insee.vtl.model.Structured.DataStructure;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /** Join output column order. */
 class JoinResultColumnOrderTest {
+
+  private static final Positioned POS = () -> new Positioned.Position("test", 1, 1, 0, 0);
+  private static final InMemoryProcessingEngine ENGINE = new InMemoryProcessingEngine();
 
   private static Component id(String name) {
     return new Component(name, String.class, Role.IDENTIFIER);
@@ -28,6 +36,10 @@ class JoinResultColumnOrderTest {
 
   private static DataStructure ds(Component... components) {
     return new DataStructure(List.of(components));
+  }
+
+  private static DatasetExpression expression(DataStructure structure, DataPoint row) {
+    return DatasetExpression.of(new InMemoryDataset(List.<DataPoint>of(row), structure), POS);
   }
 
   @Nested
@@ -142,12 +154,15 @@ class JoinResultColumnOrderTest {
     @Test
     void projectedRowListIsIdentifierThenMeasure() {
       var join = ds(id("id"), me("m1"));
-      var row = new Structured.DataPoint(join);
+      var row = new DataPoint(join);
       row.set("id", "a");
       row.set("m1", 7L);
 
-      var target = JoinProjection.buildTargetStructure(join, List.of("id", "m1"));
-      var projected = JoinProjection.projectRow(target, join, row, List.of("id", "m1"));
+      var projected =
+          JoinFinalization.apply(ENGINE, expression(join, row), List.of("id", "m1"))
+              .resolve(Map.of())
+              .getDataPoints()
+              .get(0);
 
       assertThat(projected.get(0)).isEqualTo("a");
       assertThat(projected.get(1)).isEqualTo(7L);
@@ -175,22 +190,24 @@ class JoinResultColumnOrderTest {
   }
 
   @Nested
-  @DisplayName("JoinProjection value binding")
-  class Projection {
+  @DisplayName("JoinFinalization value binding")
+  class Finalization {
 
     @Test
     void prefersAliasedColumnForDuplicateIdentifier() {
       var join = ds(id("id1"), id("id2"), me("m1"), id("aliasDs#id2"), me("m2"));
-      var row = new Structured.DataPoint(join);
+      var row = new DataPoint(join);
       row.set("id1", "b");
       row.set("id2", 99L);
       row.set("m1", 3L);
       row.set("aliasDs#id2", 1L);
       row.set("m2", 9L);
 
-      var target = JoinProjection.buildTargetStructure(join, List.of("id1", "m1", "id2", "m2"));
       var projected =
-          JoinProjection.projectRow(target, join, row, List.of("id1", "m1", "id2", "m2"));
+          JoinFinalization.apply(ENGINE, expression(join, row), List.of("id1", "m1", "id2", "m2"))
+              .resolve(Map.of())
+              .getDataPoints()
+              .get(0);
 
       assertThat(projected.get("id1")).isEqualTo("b");
       assertThat(projected.get("m1")).isEqualTo(3L);
@@ -202,18 +219,19 @@ class JoinResultColumnOrderTest {
     void mergesAliasedHomonymViralAttributes() {
       var join =
           ds(id("Id_1"), me("Me_left"), me("Me_right"), viral("left#At_1"), viral("right#At_1"));
-      var row = new Structured.DataPoint(join);
+      var row = new DataPoint(join);
       row.set("Id_1", "k2");
       row.set("Me_left", 2L);
       row.set("Me_right", 20L);
       row.set("left#At_1", "P");
       row.set("right#At_1", "Z");
 
-      var target =
-          JoinProjection.buildTargetStructure(join, List.of("Id_1", "Me_left", "Me_right", "At_1"));
       var projected =
-          JoinProjection.projectRow(
-              target, join, row, List.of("Id_1", "Me_left", "Me_right", "At_1"));
+          JoinFinalization.apply(
+                  ENGINE, expression(join, row), List.of("Id_1", "Me_left", "Me_right", "At_1"))
+              .resolve(Map.of())
+              .getDataPoints()
+              .get(0);
 
       assertThat(projected.get("At_1")).isEqualTo("P");
     }
@@ -221,15 +239,18 @@ class JoinResultColumnOrderTest {
     @Test
     void rowListOrderMatchesColumnOrder() {
       var join = ds(id("id1"), id("id2"), me("m1"), me("m2"));
-      var row = new Structured.DataPoint(join);
+      var row = new DataPoint(join);
       row.set("id1", "b");
       row.set("id2", 1L);
       row.set("m1", 3L);
       row.set("m2", 9L);
 
       List<String> order = List.of("id1", "id2", "m1", "m2");
-      var target = JoinProjection.buildTargetStructure(join, order);
-      var projected = JoinProjection.projectRow(target, join, row, order);
+      var projected =
+          JoinFinalization.apply(ENGINE, expression(join, row), order)
+              .resolve(Map.of())
+              .getDataPoints()
+              .get(0);
 
       assertThat(projected.get(0)).isEqualTo("b");
       assertThat(projected.get(1)).isEqualTo(1L);

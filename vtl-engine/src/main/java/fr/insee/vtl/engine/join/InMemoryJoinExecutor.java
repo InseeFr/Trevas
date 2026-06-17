@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.join;
 
-import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataPoint;
@@ -34,8 +33,7 @@ public final class InMemoryJoinExecutor {
       if (matches == null || matches.isEmpty()) {
         continue;
       }
-      appendMergedRows(
-          result, structure, leftStructure, rightStructure, leftColumnNames, leftPoint, matches);
+      appendMergedRows(result, structure, rightStructure, leftColumnNames, leftPoint, matches);
     }
     return result;
   }
@@ -55,8 +53,7 @@ public final class InMemoryJoinExecutor {
       if (matches == null || matches.isEmpty()) {
         result.add(copyLeftOnly(structure, leftColumnNames, leftPoint));
       } else {
-        appendMergedRows(
-            result, structure, leftStructure, rightStructure, leftColumnNames, leftPoint, matches);
+        appendMergedRows(result, structure, rightStructure, leftColumnNames, leftPoint, matches);
       }
     }
     return result;
@@ -64,7 +61,6 @@ public final class InMemoryJoinExecutor {
 
   public static List<DataPoint> crossJoin(
       DataStructure structure,
-      DataStructure leftStructure,
       DataStructure rightStructure,
       List<String> leftColumnNames,
       List<DataPoint> leftPoints,
@@ -76,8 +72,7 @@ public final class InMemoryJoinExecutor {
         for (String leftColumn : leftColumnNames) {
           mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
         }
-        BinaryAttributePropagation.applyRightColumns(
-            mergedPoint, structure, leftPoint, leftStructure, rightPoint, rightStructure);
+        copyRightColumns(mergedPoint, structure, rightPoint, rightStructure);
         result.add(mergedPoint);
       }
     }
@@ -123,7 +118,6 @@ public final class InMemoryJoinExecutor {
   private static void appendMergedRows(
       List<DataPoint> result,
       DataStructure structure,
-      DataStructure leftStructure,
       DataStructure rightStructure,
       List<String> leftColumnNames,
       DataPoint leftPoint,
@@ -134,9 +128,21 @@ public final class InMemoryJoinExecutor {
     }
     for (DataPoint match : matches) {
       var matchPoint = new DataPoint(structure, (DataPoint) mergedPoint);
-      BinaryAttributePropagation.applyRightColumns(
-          matchPoint, structure, leftPoint, leftStructure, match, rightStructure);
+      copyRightColumns(matchPoint, structure, match, rightStructure);
       result.add(matchPoint);
+    }
+  }
+
+  private static void copyRightColumns(
+      DataPoint target,
+      DataStructure targetStructure,
+      DataPoint rightRow,
+      DataStructure rightStructure) {
+    for (Component component : rightStructure.componentsInOrder()) {
+      String name = component.getName();
+      if (targetStructure.containsKey(name)) {
+        target.set(name, rightRow.get(name));
+      }
     }
   }
 

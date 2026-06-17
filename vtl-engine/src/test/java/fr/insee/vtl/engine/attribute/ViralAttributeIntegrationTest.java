@@ -11,7 +11,8 @@ import java.util.Map;
 import javax.script.ScriptException;
 import org.junit.jupiter.api.Test;
 
-class BinaryAttributePropagationTest {
+/** End-to-end viral attribute propagation (in-memory engine). */
+class ViralAttributeIntegrationTest {
 
   @Test
   void propagateBinaryValue_usesMinWithNullsFirst() {

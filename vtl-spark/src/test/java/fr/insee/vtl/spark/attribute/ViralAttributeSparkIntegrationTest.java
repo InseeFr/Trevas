@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
-import fr.insee.vtl.model.Structured;
 import java.util.List;
 import java.util.Map;
 import javax.script.ScriptEngine;
@@ -17,7 +16,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SparkViralAttributePropagationTest {
+/** Spark-specific viral attribute integration tests. */
+class ViralAttributeSparkIntegrationTest {
 
   private static SparkSession spark;
   private ScriptEngine engine;
@@ -43,50 +43,12 @@ class SparkViralAttributePropagationTest {
   }
 
   @Test
-  void innerJoin_mergesHomonymViralAttributes() throws ScriptException {
-    engine.put("left", viralDataset("Me_left", row("k1", 1L, "H"), row("k2", 2L, "P")));
-    engine.put("right", viralDataset("Me_right", row("k1", 10L, "A"), row("k2", 20L, "Z")));
-    engine.eval("res := inner_join(left, right using Id_1);");
-    var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataAsMap())
-        .containsExactly(
-            Map.of("Id_1", "k1", "Me_left", 1L, "Me_right", 10L, "At_1", "A"),
-            Map.of("Id_1", "k2", "Me_left", 2L, "Me_right", 20L, "At_1", "P"));
-  }
-
-  @Test
   void groupedAggr_propagatesViralValuesPerGroup() throws ScriptException {
     engine.put("ds", multiIdentifierGroupedAggrDataset());
     engine.eval("res <- ds[aggr Me_2 := max(Me_1), Me_3 := min(Me_1) group by Id_1];");
     var res = (Dataset) engine.getContext().getAttribute("res");
     assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.VIRALATTRIBUTE);
     assertGroupedAggrViralValues(res.getDataAsMap());
-  }
-
-  @Test
-  void binaryDatasetFunction_mergesViralFromOperands() throws ScriptException {
-    engine.put("ds1", viralDataset("Me_1", row("x", 10L, "M"), row("y", 20L, "P")));
-    engine.put("ds2", viralDataset("Me_1", row("x", 1L, "N"), row("y", 30L, "Z")));
-    engine.eval("res := ds1#Me_1 + ds2#Me_1;");
-    var res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataStructure().containsKey("At_1")).isTrue();
-    assertThat(res.getDataAsMap())
-        .containsExactly(
-            Map.of("Id_1", "x", "Me_1", 11L, "At_1", "M"),
-            Map.of("Id_1", "y", "Me_1", 50L, "At_1", "P"));
-  }
-
-  private static InMemoryDataset viralDataset(String measureName, List<Object>... rows) {
-    return new InMemoryDataset(
-        List.of(rows),
-        List.of(
-            new Structured.Component("Id_1", String.class, Role.IDENTIFIER),
-            new Structured.Component(measureName, Long.class, Role.MEASURE),
-            new Structured.Component("At_1", String.class, Role.VIRALATTRIBUTE)));
-  }
-
-  private static List<Object> row(String id, long measure, String viral) {
-    return List.of(id, measure, viral);
   }
 
   private static InMemoryDataset multiIdentifierGroupedAggrDataset() {

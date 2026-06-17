@@ -40,7 +40,7 @@ public final class JoinFinalization {
         computed.add(bareName);
         continue;
       }
-      String physical = JoinProjection.resolveSourceColumn(source, bareName);
+      String physical = JoinColumnNames.resolveSourceColumn(source, bareName);
       Component component = source.get(physical);
       if (component == null) {
         continue;
@@ -60,7 +60,7 @@ public final class JoinFinalization {
       if (computed.contains(bareName)) {
         continue;
       }
-      String physical = JoinProjection.resolveSourceColumn(source, bareName);
+      String physical = JoinColumnNames.resolveSourceColumn(source, bareName);
       if (!physical.equals(bareName)) {
         renames.put(physical, bareName);
       }

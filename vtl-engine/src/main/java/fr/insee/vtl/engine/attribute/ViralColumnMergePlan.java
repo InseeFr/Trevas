@@ -1,6 +1,6 @@
 package fr.insee.vtl.engine.attribute;
 
-import static fr.insee.vtl.engine.join.JoinProjection.stripJoinAlias;
+import static fr.insee.vtl.engine.join.JoinColumnNames.stripJoinAlias;
 
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
@@ -21,9 +21,5 @@ public final class ViralColumnMergePlan {
       }
     }
     return matches;
-  }
-
-  public static boolean needsValueMerge(DataStructure structure, String bareName) {
-    return viralSources(structure, bareName).size() > 1;
   }
 }

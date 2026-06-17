@@ -62,12 +62,12 @@ public final class JoinResultColumnOrder {
         joinKeys.stream().map(Component::getName).collect(Collectors.toSet());
     Set<String> wanted =
         joinStructure.values().stream()
-            .map(c -> JoinProjection.stripJoinAlias(c.getName()))
+            .map(c -> JoinColumnNames.stripJoinAlias(c.getName()))
             .collect(Collectors.toSet());
 
     List<String> nonKeyIds = new ArrayList<>();
     for (Component component : joinStructure.getIdentifiers()) {
-      String bare = JoinProjection.stripJoinAlias(component.getName());
+      String bare = JoinColumnNames.stripJoinAlias(component.getName());
       if (wanted.contains(bare) && !joinKeyNames.contains(bare) && !nonKeyIds.contains(bare)) {
         nonKeyIds.add(bare);
       }
@@ -75,7 +75,7 @@ public final class JoinResultColumnOrder {
 
     List<String> measures = new ArrayList<>();
     for (Component component : joinStructure.getMeasures()) {
-      String bare = JoinProjection.stripJoinAlias(component.getName());
+      String bare = JoinColumnNames.stripJoinAlias(component.getName());
       if (wanted.contains(bare) && !measures.contains(bare)) {
         measures.add(bare);
       }
@@ -96,13 +96,13 @@ public final class JoinResultColumnOrder {
       List<String> ordered, DataStructure structure, Set<String> wanted) {
     List<String> result = new ArrayList<>(ordered);
     for (Component component : structure.getViralAttributes()) {
-      String name = JoinProjection.stripJoinAlias(component.getName());
+      String name = JoinColumnNames.stripJoinAlias(component.getName());
       if (wanted.contains(name) && !result.contains(name)) {
         result.add(name);
       }
     }
     for (Component component : structure.getAttributes()) {
-      String name = JoinProjection.stripJoinAlias(component.getName());
+      String name = JoinColumnNames.stripJoinAlias(component.getName());
       if (wanted.contains(name) && !result.contains(name)) {
         result.add(name);
       }

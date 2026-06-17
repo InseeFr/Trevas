@@ -1,6 +1,5 @@
 package fr.insee.vtl.engine.attribute;
 
-import fr.insee.vtl.model.ComponentRoleResolver;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.parser.VtlParser;
 
@@ -25,6 +24,6 @@ public final class ComponentRoles {
     if (ctx.DIMENSION() != null || ctx.COMPONENT() != null) {
       return Dataset.Role.IDENTIFIER;
     }
-    return ComponentRoleResolver.parseRoleName(ctx.getText());
+    throw new IllegalArgumentException("unsupported component role: " + ctx.getText());
   }
 }

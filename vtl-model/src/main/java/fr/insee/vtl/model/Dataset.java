@@ -60,6 +60,14 @@ public interface Dataset extends Structured {
     /** The component is an attribute in the data structure */
     ATTRIBUTE,
     /** The component is a viral attribute in the data structure */
-    VIRALATTRIBUTE
+    VIRALATTRIBUTE;
+
+    /** Parses a role name from metadata (JSON {@code role}, Spark {@code vtlRole}, etc.). */
+    public static Role fromName(String roleName) {
+      if (roleName == null || roleName.isBlank()) {
+        throw new IllegalArgumentException("role name is blank");
+      }
+      return valueOf(roleName.trim().replaceAll("\\s+", "").toUpperCase());
+    }
   }
 }
