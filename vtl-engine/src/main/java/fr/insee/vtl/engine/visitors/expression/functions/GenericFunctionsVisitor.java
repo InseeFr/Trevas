@@ -5,64 +5,37 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.attribute.AttributePropagation;
-import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
-import fr.insee.vtl.engine.attribute.ViralReattach;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
-import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.FunctionExpression;
-import fr.insee.vtl.engine.utils.DefaultMeasureNames;
+import fr.insee.vtl.engine.functions.DatasetScalarFunctionExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.Positioned;
-import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.TypedExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
-/** <code>GenericFunctionsVisitor</code> is the base visitor for cast expressions. */
+/** Visitor for cast expressions and generic scalar function dispatch. */
 public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
-  private static final String result = "result";
   private final VtlScriptEngine engine;
   private final ExpressionVisitor exprVisitor;
 
-  /**
-   * Constructor taking an expression visitor.
-   *
-   * @param expressionVisitor The visitor for the enclosing expression.
-   * @param engine The {@link VtlScriptEngine}.
-   */
   public GenericFunctionsVisitor(ExpressionVisitor expressionVisitor, VtlScriptEngine engine) {
     this.engine = Objects.requireNonNull(engine);
     exprVisitor = Objects.requireNonNull(expressionVisitor);
   }
 
-  /**
-   * Method to map basic scalar types and classes.
-   *
-   * @param basicScalarType Basic scalar type.
-   * @param basicScalarText Basic scalar text.
-   */
   private static Class<?> getOutputClass(Integer basicScalarType, String basicScalarText) {
     return switch (basicScalarType) {
       case VtlParser.STRING -> String.class;
@@ -78,205 +51,49 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     };
   }
 
-  public List<DatasetExpression> splitToMonoMeasure(DatasetExpression dataset) {
-    ProcessingEngine proc = engine.getProcessingEngine();
-    List<Structured.Component> identifiers = dataset.getIdentifiers();
-    return dataset.getMeasures().stream()
-        .map(
-            measure ->
-                proc.executeProject(
-                    dataset,
-                    UnaryAttributePropagation.columnsForMonoMeasureOperation(
-                        dataset.getDataStructure(), measure.getName())))
-        .collect(Collectors.toList());
-  }
-
   public ResolvableExpression invokeFunction(
       String funcName, List<ResolvableExpression> parameters, Positioned position)
       throws VtlScriptException {
     try {
-      List<DatasetExpression> noMonoDs =
+      List<DatasetExpression> multiMeasureOperands =
           parameters.stream()
-              .filter(e -> e instanceof DatasetExpression de && !(de.isMonoMeasure()))
-              .map(ds -> (DatasetExpression) ds)
+              .filter(e -> e instanceof DatasetExpression de && !de.isMonoMeasure())
+              .map(DatasetExpression.class::cast)
               .toList();
-      if (noMonoDs.size() > 2) {
+      if (multiMeasureOperands.size() > 2) {
         throw new VtlRuntimeException(
             new InvalidArgumentException(
-                "too many no mono-measure datasets (" + noMonoDs.size() + ")", position));
+                "too many no mono-measure datasets (" + multiMeasureOperands.size() + ")",
+                position));
       }
 
-      ProcessingEngine proc = engine.getProcessingEngine();
-
-      // TODO: if (noMonoDs has not same shape) throw
-
-      // Invoking a function only supports a combination of scalar types and mono-measure arrays. In
-      // the special
-      // case of bi-functions (a + b or f(a,b)) the two datasets must have the same identifiers and
-      // measures.
-      ResolvableExpression finalRes;
       List<Class> parameterTypes =
           parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-      // Only one parameter, and it's a dataset. We can invoke the function on each measure.
-      // Or method found in global methods
       var method = engine.findGlobalMethod(funcName, parameterTypes);
       if (parameters.stream().noneMatch(DatasetExpression.class::isInstance) || method != null) {
-        // Only scalar types. We can invoke the function directly.
         if (method == null) {
           method = engine.findMethod(funcName, parameterTypes);
         }
         return new FunctionExpression(method, parameters, position);
-      } else if (noMonoDs.isEmpty()) {
-        finalRes = invokeFunctionOnDataset(funcName, parameters, position, true);
-      } else {
-        List<Structured.Component> measures = noMonoDs.get(0).getDataStructure().getMeasures();
-        Map<String, DatasetExpression> results = new HashMap<>();
-        DatasetExpression viralSource = noMonoDs.get(0);
-        for (Structured.Component measure : measures) {
-          List<ResolvableExpression> params =
-              parameters.stream()
-                  .map(
-                      p -> {
-                        if (p instanceof DatasetExpression ds) {
-                          return proc.executeProject(
-                              ds,
-                              UnaryAttributePropagation.columnsForMonoMeasureOperation(
-                                  ds.getDataStructure(), measure.getName()));
-                        } else return p;
-                      })
-                  .collect(Collectors.toList());
-          results.put(
-              measure.getName(), invokeFunctionOnDataset(funcName, params, position, false));
-        }
-        DatasetExpression joined = proc.executeInnerJoin(results);
-        Map<String, Class<?>> outputMeasures =
-            joined.getDataStructure().getMeasures().stream()
-                .collect(
-                    Collectors.toMap(Structured.Component::getName, Structured.Component::getType));
-        finalRes =
-            ViralReattach.unary(engine.getProcessingEngine(), viralSource, joined, outputMeasures);
       }
-      return finalRes;
+      if (multiMeasureOperands.isEmpty()) {
+        return DatasetScalarFunctionExecutor.invokeOnMonoMeasureOperands(
+            engine, funcName, parameters, position, true);
+      }
+      return DatasetScalarFunctionExecutor.invokePerMeasureWithViralReattach(
+          engine,
+          funcName,
+          parameters,
+          position,
+          multiMeasureOperands.get(0),
+          multiMeasureOperands.get(0).getDataStructure().getMeasures());
     } catch (NoSuchMethodException e) {
       throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
     }
   }
 
-  /**
-   * Applies a scalar VTL function row-wise on mono-measure dataset operand(s).
-   *
-   * <p>{@code monoMeasureOperands} is the only caller-specific flag; operand/result types and
-   * family rules are resolved in {@link DefaultMeasureNames#resolveOutputMeasureName}.
-   */
-  private DatasetExpression invokeFunctionOnDataset(
-      String funcName,
-      List<ResolvableExpression> parameters,
-      Positioned position,
-      boolean monoMeasureOperands)
-      throws NoSuchMethodException, VtlScriptException {
-    ProcessingEngine proc = engine.getProcessingEngine();
-
-    // Normalize all parameters to datasets first.
-    // 1. Join all the datasets together and build a new expression map.
-    Map<String, ResolvableExpression> monoExprs = new HashMap<>();
-    Map<DatasetExpression, String> operandAliases = new LinkedHashMap<>();
-    Map<String, DatasetExpression> dsExprs = new LinkedHashMap<>();
-    Set<String> measureNames = new HashSet<>();
-    List<DatasetExpression> operandDatasets = new ArrayList<>();
-    for (ResolvableExpression parameter : parameters) {
-      if (parameter instanceof DatasetExpression ds) {
-        operandDatasets.add(ds);
-      }
-    }
-    int argIndex = 0;
-    for (DatasetExpression ds : operandDatasets) {
-      if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
-        throw new VtlRuntimeException(
-            new InvalidArgumentException("mono-measure dataset expected", ds));
-      }
-      String operandAlias = "arg" + argIndex++;
-      operandAliases.put(ds, operandAlias);
-      var measure = ds.getMeasures().get(0);
-      String measureName = measure.getName();
-      measureNames.add(measureName);
-      ds =
-          proc.executeProject(
-              ds,
-              UnaryAttributePropagation.columnsForMonoMeasureOperation(
-                  ds.getDataStructure(), measureName));
-      Map<String, String> joinRenames = new LinkedHashMap<>();
-      joinRenames.put(measureName, operandAlias);
-      for (String viral : AttributePropagation.viralAttributeNames(ds.getDataStructure())) {
-        joinRenames.put(viral, operandAlias + "#" + viral);
-      }
-      ds = proc.executeRename(ds, joinRenames);
-      var renamedComponent =
-          new Structured.Component(
-              operandAlias, measure.getType(), measure.getRole(), measure.getNullable());
-      monoExprs.put(operandAlias, new ComponentExpression(renamedComponent, ds));
-      dsExprs.put(operandAlias, ds);
-    }
-    if (measureNames.size() != 1) {
-      throw new VtlRuntimeException(
-          new InvalidArgumentException(
-              "Variables in the mono-measure datasets are not named the same: "
-                  + measureNames
-                  + " found",
-              position));
-    }
-    DatasetExpression ds = proc.executeInnerJoin(dsExprs);
-
-    // Rebuild the function parameters. TODO: All component?
-    var normalizedParams =
-        parameters.stream()
-            .map(
-                e -> {
-                  if (e instanceof DatasetExpression operand) {
-                    String alias = operandAliases.get(operand);
-                    if (alias != null) {
-                      return monoExprs.get(alias);
-                    }
-                  }
-                  return e;
-                })
-            .collect(Collectors.toList());
-
-    // 3. Invoke the function.
-    List<Class> parametersTypes =
-        normalizedParams.stream().map(TypedExpression::getType).collect(Collectors.toList());
-    var method = engine.findMethod(funcName, parametersTypes);
-    var funcExrp = new FunctionExpression(method, normalizedParams, position);
-    Class<?> resultType = funcExrp.getType();
-    Class<?> operandMeasureType =
-        DefaultMeasureNames.operandMeasureType(parameters, measureNames, resultType);
-    ds =
-        proc.executeCalc(
-            ds, Map.of(result, funcExrp), Map.of(result, Dataset.Role.MEASURE), Map.of());
-    ds =
-        proc.executeProject(
-            ds,
-            UnaryAttributePropagation.columnsForUnaryOutput(
-                ds.getDataStructure(), List.of(result)));
-    String outputMeasureName =
-        DefaultMeasureNames.resolveOutputMeasureName(
-            measureNames.iterator().next(), operandMeasureType, resultType, monoMeasureOperands);
-    ds = proc.executeRename(ds, Map.of(result, outputMeasureName));
-    List<DatasetExpression> datasetOperands =
-        parameters.stream()
-            .filter(DatasetExpression.class::isInstance)
-            .map(DatasetExpression.class::cast)
-            .toList();
-    if (!datasetOperands.isEmpty()) {
-      Map<String, Class<?>> outputMeasures = Map.of(outputMeasureName, resultType);
-      return ViralReattach.binary(
-          engine.getProcessingEngine(), datasetOperands, ds, outputMeasures);
-    }
-    return ds;
-  }
-
   @Override
   public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
-    // Strange name, this is the generic function syntax; fnName ( param, * ).
     try {
       List<ResolvableExpression> parameters =
           ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
@@ -286,17 +103,10 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
     }
   }
 
-  /**
-   * Visits expressions with cast operators.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the result of the cast operation.
-   */
   @Override
   public ResolvableExpression visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
     ResolvableExpression expression = exprVisitor.visit(ctx.expr());
     TerminalNode maskNode = ctx.STRING_CONSTANT();
-    // STRING_CONSTANT().getText return null or a string wrapped by quotes
     String mask =
         maskNode == null
             ? null

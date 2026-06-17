@@ -355,41 +355,30 @@ public class SparkProcessingEngine implements ProcessingEngine {
   }
 
   @Override
-  public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
-    DatasetExpression dataset = datasets.get(0);
-
-    if (!checkColNameCompatibility(datasets))
+  public DatasetExpression executeUnion(
+      List<DatasetExpression> datasets, List<String> dedupeOnColumns) {
+    if (!checkColNameCompatibility(datasets)) {
       throw new UnsupportedOperationException("The schema of the dataset is not compatible");
-    // use the base data structure to build the result data roles
+    }
     Structured.DataStructure baseDataStructure = datasets.get(0).getDataStructure();
-    Set<String> keys = baseDataStructure.keySet();
-    HashMap<String, Role> dataRoles = new HashMap<>();
-    for (String key : keys) {
+    Map<String, Role> dataRoles = new LinkedHashMap<>();
+    for (String key : baseDataStructure.keySet()) {
       Component item = baseDataStructure.get(key);
       dataRoles.put(item.getName(), item.getRole());
     }
 
-    // get Id column list
-    List<String> colNames = datasets.get(0).getColumnNames();
-    ArrayList<String> idColList = new ArrayList<>();
-    IndexedHashMap<String, Component> structure = dataset.getDataStructure();
-    // get column list with ID role, it will be used to drop duplicated rows
-    for (String colName : colNames) {
-      if (structure.get(colName).getRole().equals(IDENTIFIER)) idColList.add(colName);
-    }
-    int size = datasets.size();
-
-    if (size == 1) {
+    if (datasets.size() == 1) {
       return datasets.get(0);
-    } else {
-      Dataset<Row> result = asSparkDataset(datasets.get(0)).getSparkDataset();
-      for (int i = 1; i <= size - 1; i++) {
-        Dataset<Row> current = asSparkDataset(datasets.get(i)).getSparkDataset();
-        result = result.union(current);
-      }
-      result = result.dropDuplicates(iterableAsScalaIterable(idColList).toSeq());
-      return new SparkDatasetExpression(new SparkDataset(result, dataRoles), datasets.get(0));
     }
+
+    Dataset<Row> result = asSparkDataset(datasets.get(0)).getSparkDataset();
+    for (int i = 1; i < datasets.size(); i++) {
+      result = result.union(asSparkDataset(datasets.get(i)).getSparkDataset());
+    }
+    if (!dedupeOnColumns.isEmpty()) {
+      result = result.dropDuplicates(dedupeOnColumns.toArray(new String[0]));
+    }
+    return new SparkDatasetExpression(new SparkDataset(result, dataRoles), datasets.get(0));
   }
 
   @Override
@@ -678,7 +667,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
 
     Dataset<Row> invertRenamedSparkDs =
         rename(
-            asSparkDataset(executeUnion(datasetsExpression)).getSparkDataset(),
+            asSparkDataset(executeUnion(datasetsExpression, List.of())).getSparkDataset(),
             invertMap(dpr.getAlias()));
     SparkDatasetExpression sparkDatasetExpression =
         new SparkDatasetExpression(new SparkDataset(invertRenamedSparkDs), pos);
@@ -967,7 +956,7 @@ public class SparkProcessingEngine implements ProcessingEngine {
               roleMap);
       datasetExpression = DatasetExpression.of(emptyCHDataset, pos);
     } else {
-      datasetExpression = executeUnion(datasetsExpression);
+      datasetExpression = executeUnion(datasetsExpression, List.of());
     }
     // validationOutput invalid (default) | all | all_measures
     if (null == validationOutput || validationOutput.equals("invalid")) {

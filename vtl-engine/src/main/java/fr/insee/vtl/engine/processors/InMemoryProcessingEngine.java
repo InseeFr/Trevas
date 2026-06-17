@@ -9,11 +9,12 @@ import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.script.ScriptEngine;
 
 /**
@@ -171,22 +172,33 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   }
 
   @Override
-  public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+  public DatasetExpression executeUnion(
+      List<DatasetExpression> datasets, List<String> dedupeOnColumns) {
     return new DatasetExpression(datasets.get(0)) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        Stream<DataPoint> stream = Stream.empty();
-        for (DatasetExpression datasetExpression : datasets) {
-          var dataset = datasetExpression.resolve(context);
-          stream = Stream.concat(stream, dataset.getDataPoints().stream());
+        List<DataPoint> data =
+            datasets.stream()
+                .flatMap(ds -> ds.resolve(context).getDataPoints().stream())
+                .collect(toList());
+        if (!dedupeOnColumns.isEmpty()) {
+          Set<List<Object>> seen = new LinkedHashSet<>();
+          data =
+              data.stream()
+                  .filter(
+                      point -> {
+                        List<Object> key =
+                            dedupeOnColumns.stream().map(point::get).collect(toList());
+                        return seen.add(key);
+                      })
+                  .collect(toList());
         }
-        List<DataPoint> data = stream.distinct().collect(toList());
         return InMemoryDataset.ofDataPoints(data, getDataStructure());
       }
 
       @Override
       public DataStructure getDataStructure() {
-        return (datasets.get(0)).getDataStructure();
+        return datasets.get(0).getDataStructure();
       }
     };
   }
@@ -396,10 +408,10 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   private DatasetExpression handleFullJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    // Naive implementation, left and right union. Could be optimized.
+    List<String> dedupeOn = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
     return executeUnion(
-        List.of(
-            handleLeftJoin(identifiers, left, right), handleLeftJoin(identifiers, right, left)));
+        List.of(handleLeftJoin(identifiers, left, right), handleLeftJoin(identifiers, right, left)),
+        dedupeOn);
   }
 
   private DatasetExpression handleLeftJoin(

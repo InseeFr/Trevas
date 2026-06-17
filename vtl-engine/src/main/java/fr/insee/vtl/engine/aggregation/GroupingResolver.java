@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.aggregation;
 
+import fr.insee.vtl.engine.DatasetResults;
 import fr.insee.vtl.engine.visitors.GroupAllVisitor;
 import fr.insee.vtl.engine.visitors.GroupByVisitor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
@@ -47,15 +48,24 @@ public final class GroupingResolver {
           new GroupByVisitor(plan.getDataset().getDataStructure()).visit(groupingClause));
     }
 
-    Structured.DataStructure structure = plan.getDataset().getDataStructure();
-    structure.forEach(
-        (name, component) -> {
-          if (groupBy.contains(name)) {
-            structure.put(
-                name, new Structured.Component(name, component.getType(), Dataset.Role.IDENTIFIER));
-          }
-        });
+    DatasetExpression groupedDataset =
+        DatasetResults.withStructure(
+            plan.getDataset(), groupByStructure(plan.getDataset().getDataStructure(), groupBy));
 
-    return plan.addGroupByKeys(groupBy).build();
+    return GroupingPlan.builder(groupedDataset).addGroupByKeys(groupBy).build();
+  }
+
+  private static Structured.DataStructure groupByStructure(
+      Structured.DataStructure input, List<String> groupBy) {
+    List<Structured.Component> components =
+        input.componentsInOrder().stream()
+            .map(
+                component ->
+                    groupBy.contains(component.getName())
+                        ? new Structured.Component(
+                            component.getName(), component.getType(), Dataset.Role.IDENTIFIER)
+                        : new Structured.Component(component))
+            .toList();
+    return new Structured.DataStructure(components);
   }
 }

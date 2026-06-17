@@ -1,5 +1,6 @@
 package fr.insee.vtl.engine.membership;
 
+import fr.insee.vtl.engine.DatasetResults;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -15,17 +16,24 @@ public final class MembershipOperations {
   public static DatasetExpression execute(
       ProcessingEngine engine, DatasetExpression dataset, String memberComponentName) {
     MembershipPlan plan = MembershipPlan.of(dataset.getDataStructure(), memberComponentName);
+    Structured.DataStructure resultStructure =
+        MembershipStructureBuilder.build(dataset.getDataStructure(), plan);
+
+    DatasetExpression mechanical;
     if (!plan.promoteToMeasure()) {
-      return engine.executeProject(dataset, plan.projectColumns());
+      mechanical = engine.executeProject(dataset, plan.projectColumns());
+    } else {
+      Structured.Component member = dataset.getDataStructure().get(plan.memberComponentName());
+      ComponentExpression memberRef = new ComponentExpression(member, dataset);
+      mechanical =
+          engine.executeProject(
+              engine.executeCalc(
+                  dataset,
+                  Map.of(plan.derivedMeasureName(), memberRef),
+                  Map.of(plan.derivedMeasureName(), Dataset.Role.MEASURE),
+                  Map.of()),
+              plan.projectColumns());
     }
-    Structured.Component member = dataset.getDataStructure().get(plan.memberComponentName());
-    ComponentExpression memberRef = new ComponentExpression(member, dataset);
-    DatasetExpression withMeasure =
-        engine.executeCalc(
-            dataset,
-            Map.of(plan.derivedMeasureName(), memberRef),
-            Map.of(plan.derivedMeasureName(), Dataset.Role.MEASURE),
-            Map.of());
-    return engine.executeProject(withMeasure, plan.projectColumns());
+    return DatasetResults.withStructure(mechanical, resultStructure);
   }
 }

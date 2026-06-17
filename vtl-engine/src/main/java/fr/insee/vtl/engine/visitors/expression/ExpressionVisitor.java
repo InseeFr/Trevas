@@ -6,6 +6,7 @@ import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.aggregation.AggregateInvocationExecutor;
 import fr.insee.vtl.engine.aggregation.AggregationColumnReferences;
+import fr.insee.vtl.engine.analytic.MultiMeasureAnalyticExecutor;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -31,12 +32,9 @@ import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <code>ExpressionVisitor</code> is the base visitor for expressions. It essentially passes the
@@ -405,133 +403,37 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   @Override
   public ResolvableExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
     var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
-
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
-    }
-    return processingEngine.executeInnerJoin(analytics);
+    return MultiMeasureAnalyticExecutor.execute(
+        processingEngine,
+        datasetExpression,
+        ctx.expr().getText(),
+        ctx.op.getText(),
+        (mono, targetColumnName) ->
+            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
   }
 
   @Override
   public ResolvableExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
     var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
-
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
-    }
-    return processingEngine.executeInnerJoin(analytics);
+    return MultiMeasureAnalyticExecutor.execute(
+        processingEngine,
+        datasetExpression,
+        ctx.expr().getText(),
+        ctx.op.getText(),
+        (mono, targetColumnName) ->
+            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
   }
 
   @Override
   public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
     var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
-
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
-    }
-    return processingEngine.executeInnerJoin(analytics);
+    return MultiMeasureAnalyticExecutor.execute(
+        processingEngine,
+        datasetExpression,
+        ctx.expr().getText(),
+        ctx.op.getText(),
+        (mono, targetColumnName) ->
+            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
   }
 
   /**
