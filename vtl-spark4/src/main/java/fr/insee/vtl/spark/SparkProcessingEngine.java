@@ -17,7 +17,6 @@ import static scala.collection.JavaConverters.iterableAsScalaIterable;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.join.JoinStructureBuilder;
 import fr.insee.vtl.model.*;
-import fr.insee.vtl.spark.attribute.SparkViralAttributePropagation;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.ScriptEngine;
@@ -337,14 +336,10 @@ public class SparkProcessingEngine implements ProcessingEngine {
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
     SparkDataset dataset = asSparkDataset(expression);
     org.apache.spark.sql.Dataset<Row> sparkDataset = dataset.getSparkDataset();
-    Structured.DataStructure structure = dataset.getDataStructure();
 
     List<Column> columns =
         columnNames.stream()
-            .map(
-                name ->
-                    SparkViralAttributePropagation.resolveProjectColumn(
-                        sparkDataset, structure, name))
+            .map(name -> SparkUtils.safeCol(name).as(name))
             .collect(Collectors.toList());
     Column[] columnArray = columns.toArray(new Column[0]);
 
@@ -353,31 +348,6 @@ public class SparkProcessingEngine implements ProcessingEngine {
     return new SparkDatasetExpression(
         new SparkDataset(result, getRoleMap(expression.getDataStructure(), columnNames)),
         expression);
-  }
-
-  @Override
-  public DatasetExpression executeJoinProjection(
-      DatasetExpression expression, List<String> outputColumnNames) {
-    return SparkViralAttributePropagation.joinProjection(
-        (SparkDatasetExpression) expression, outputColumnNames);
-  }
-
-  @Override
-  public DatasetExpression reattachUnaryViralAttributes(
-      DatasetExpression sourceDataset,
-      DatasetExpression transformed,
-      Map<String, Class<?>> outputMeasuresByName) {
-    return SparkViralAttributePropagation.reattachUnary(
-        sourceDataset, (SparkDatasetExpression) transformed, outputMeasuresByName);
-  }
-
-  @Override
-  public DatasetExpression reattachBinaryViralAttributes(
-      List<DatasetExpression> sources,
-      DatasetExpression transformed,
-      Map<String, Class<?>> outputMeasuresByName) {
-    return SparkViralAttributePropagation.reattachBinary(
-        sources, (SparkDatasetExpression) transformed, outputMeasuresByName);
   }
 
   private boolean checkColNameCompatibility(List<DatasetExpression> datasets) {
@@ -617,11 +587,9 @@ public class SparkProcessingEngine implements ProcessingEngine {
     List<String> identifiers = identifierNames(joinKeys);
     Structured.DataStructure structure = joinStructure(joinKeys, datasets);
     Dataset<Row> joined = executeJoin(sparkDatasets, identifiers, joinType);
-    joined = SparkViralAttributePropagation.collapseHomonymViralColumns(joined, structure);
     DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
     return new SparkDatasetExpression(
-        new SparkDataset(joined, SparkViralAttributePropagation.rolesFromStructure(structure)),
-        datasetExpression);
+        new SparkDataset(joined, structure.getRoles()), datasetExpression);
   }
 
   private static Structured.DataStructure joinStructure(

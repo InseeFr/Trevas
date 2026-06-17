@@ -7,6 +7,7 @@ import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.attribute.AttributePropagation;
 import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
+import fr.insee.vtl.engine.attribute.ViralReattach;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -152,7 +153,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             joined.getDataStructure().getMeasures().stream()
                 .collect(
                     Collectors.toMap(Structured.Component::getName, Structured.Component::getType));
-        finalRes = proc.reattachUnaryViralAttributes(viralSource, joined, outputMeasures);
+        finalRes =
+            ViralReattach.unary(engine.getProcessingEngine(), viralSource, joined, outputMeasures);
       }
       return finalRes;
     } catch (NoSuchMethodException e) {
@@ -266,7 +268,8 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
             .toList();
     if (!datasetOperands.isEmpty()) {
       Map<String, Class<?>> outputMeasures = Map.of(outputMeasureName, resultType);
-      return proc.reattachBinaryViralAttributes(datasetOperands, ds, outputMeasures);
+      return ViralReattach.binary(
+          engine.getProcessingEngine(), datasetOperands, ds, outputMeasures);
     }
     return ds;
   }

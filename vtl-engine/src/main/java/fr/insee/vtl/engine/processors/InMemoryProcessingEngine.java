@@ -3,11 +3,8 @@ package fr.insee.vtl.engine.processors;
 import static fr.insee.vtl.model.Structured.*;
 
 import fr.insee.vtl.engine.aggregation.AggregationResultStructureBuilder;
-import fr.insee.vtl.engine.attribute.BinaryAttributePropagation;
-import fr.insee.vtl.engine.attribute.UnaryAttributePropagation;
 import fr.insee.vtl.engine.attribute.ViralAttributeCollectors;
 import fr.insee.vtl.engine.join.InMemoryJoinExecutor;
-import fr.insee.vtl.engine.join.JoinProjection;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
@@ -142,30 +139,6 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
         return renamedStructure;
       }
     };
-  }
-
-  @Override
-  public DatasetExpression executeJoinProjection(
-      DatasetExpression expression, List<String> outputColumnNames) {
-    return JoinProjection.project(expression, outputColumnNames);
-  }
-
-  @Override
-  public DatasetExpression reattachUnaryViralAttributes(
-      DatasetExpression sourceDataset,
-      DatasetExpression transformed,
-      Map<String, Class<?>> outputMeasuresByName) {
-    return UnaryAttributePropagation.reattachViralAttributes(
-        sourceDataset, transformed, outputMeasuresByName);
-  }
-
-  @Override
-  public DatasetExpression reattachBinaryViralAttributes(
-      List<DatasetExpression> sources,
-      DatasetExpression transformed,
-      Map<String, Class<?>> outputMeasuresByName) {
-    return BinaryAttributePropagation.reattachViralAttributes(
-        sources, transformed, outputMeasuresByName);
   }
 
   @Override

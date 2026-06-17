@@ -7,6 +7,7 @@ import static fr.insee.vtl.model.Dataset.Role;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.join.JoinFinalization;
 import fr.insee.vtl.engine.join.JoinResultColumnOrder;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
@@ -28,12 +29,6 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
   private final ExpressionVisitor expressionVisitor;
   private final ProcessingEngine processingEngine;
 
-  /**
-   * Constructor taking an expression visitor and a processing engine.
-   *
-   * @param expressionVisitor A visitor for the expression corresponding to the join function.
-   * @param processingEngine The processing engine.
-   */
   public JoinFunctionsVisitor(
       ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
     this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
@@ -166,7 +161,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
     List<Structured.DataStructure> operandStructures =
         operandsInJoinOrder.stream().map(DatasetExpression::getDataStructure).toList();
     List<String> toKeep = JoinResultColumnOrder.compute(structure, joinKeys, operandStructures);
-    return processingEngine.executeJoinProjection(dataset, toKeep);
+    return JoinFinalization.apply(processingEngine, dataset, toKeep);
   }
 
   private DatasetExpression leftJoin(VtlParser.JoinExprContext ctx) {
@@ -191,7 +186,7 @@ public class JoinFunctionsVisitor extends VtlBaseVisitor<DatasetExpression> {
       if (operandStructures.size() == 2) {
         List<String> columnOrder =
             JoinResultColumnOrder.crossJoinTwoOperandColumnOrder(operandStructures);
-        return processingEngine.executeJoinProjection(res, columnOrder);
+        return JoinFinalization.apply(processingEngine, res, columnOrder);
       }
       return res;
     }
