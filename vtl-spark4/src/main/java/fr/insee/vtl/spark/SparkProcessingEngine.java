@@ -14,8 +14,7 @@ import static org.apache.spark.sql.functions.sum;
 import static scala.collection.JavaConverters.iterableAsScalaIterable;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.join.JoinStructureBuilder;
-import fr.insee.vtl.engine.validation.HierarchicalValidationRuntime;
+import fr.insee.vtl.engine.semantics.validation.HierarchicalValidationRuntime;
 import fr.insee.vtl.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -545,18 +544,21 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
       Map<String, DatasetExpression> datasets, List<Component> joinKeys, String joinType) {
     List<Dataset<Row>> sparkDatasets = toAliasedDatasets(datasets);
     List<String> identifiers = identifierNames(joinKeys);
-    Structured.DataStructure structure = joinStructure(joinKeys, datasets);
     Dataset<Row> joined = executeJoin(sparkDatasets, identifiers, joinType);
+    Map<String, Role> roles = mergeJoinRoles(datasets, joined);
     DatasetExpression datasetExpression = datasets.entrySet().iterator().next().getValue();
-    return new SparkDatasetExpression(
-        new SparkDataset(joined, structure.getRoles()), datasetExpression);
+    return new SparkDatasetExpression(new SparkDataset(joined, roles), datasetExpression);
   }
 
-  private static Structured.DataStructure joinStructure(
-      List<Component> joinKeys, Map<String, DatasetExpression> datasets) {
-    List<Structured.DataStructure> operands =
-        datasets.values().stream().map(DatasetExpression::getDataStructure).toList();
-    return JoinStructureBuilder.build(joinKeys, operands);
+  private Map<String, Role> mergeJoinRoles(
+      Map<String, DatasetExpression> datasets, Dataset<Row> joined) {
+    Map<String, Role> roles = new LinkedHashMap<>();
+    for (DatasetExpression expression : datasets.values()) {
+      getRoleMap(asSparkDataset(expression)).forEach(roles::putIfAbsent);
+    }
+    Set<String> columns = Set.of(joined.columns());
+    roles.keySet().retainAll(columns);
+    return roles;
   }
 
   @Override

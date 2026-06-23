@@ -2,33 +2,26 @@ package fr.insee.vtl.engine.visitors.expression;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
-import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
-import fr.insee.vtl.engine.aggregation.AggregateInvocationExecutor;
-import fr.insee.vtl.engine.aggregation.AggregationColumnReferences;
-import fr.insee.vtl.engine.analytic.MultiMeasureAnalyticExecutor;
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.membership.MembershipOperations;
-import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.AggregateFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.AnalyticFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.JoinFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.MembershipFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
@@ -54,11 +47,14 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
   private final NumericFunctionsVisitor numericFunctionsVisitor;
   private final SetFunctionsVisitor setFunctionsVisitor;
+  private final MembershipFunctionsVisitor membershipFunctionsVisitor;
   private final JoinFunctionsVisitor joinFunctionsVisitor;
   private final GenericFunctionsVisitor genericFunctionsVisitor;
   private final DistanceFunctionsVisitor distanceFunctionsVisitor;
   private final TimeFunctionsVisitor timeFunctionsVisitor;
   private final ValidationFunctionsVisitor validationFunctionsVisitor;
+  private final AggregateFunctionsVisitor aggregateFunctionsVisitor;
+  private final AnalyticFunctionsVisitor analyticFunctionsVisitor;
   private final ProcessingEngine processingEngine;
   private final VtlScriptEngine engine;
 
@@ -84,12 +80,15 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     stringFunctionsVisitor = new StringFunctionsVisitor(this, genericFunctionsVisitor);
     comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this, genericFunctionsVisitor);
     setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
+    membershipFunctionsVisitor = new MembershipFunctionsVisitor(this, processingEngine);
     joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
     numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
     distanceFunctionsVisitor = new DistanceFunctionsVisitor(this, genericFunctionsVisitor);
     timeFunctionsVisitor =
         new TimeFunctionsVisitor(genericFunctionsVisitor, this, processingEngine);
     validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine, engine);
+    aggregateFunctionsVisitor = new AggregateFunctionsVisitor(this, processingEngine);
+    analyticFunctionsVisitor = new AnalyticFunctionsVisitor(this, processingEngine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
     this.engine = Objects.requireNonNull(engine);
   }
@@ -126,24 +125,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   @Override
   public ResolvableExpression visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
-    try {
-      ResolvableExpression ds = this.visit(ctx.expr());
-      if (!(ds instanceof DatasetExpression)) {
-        throw new InvalidTypeException(Dataset.class, ds.getType(), fromContext(ctx.expr()));
-      }
-      Structured.DataStructure structure = ((DatasetExpression) ds).getDataStructure();
-      String componentName = ctx.simpleComponentId().getText();
-      if (!structure.containsKey(componentName)) {
-        throw new VtlScriptException(
-            "column %s not found in %s".formatted(componentName, ctx.expr().getText()),
-            fromContext(ctx));
-      }
-
-      return MembershipOperations.execute(
-          this.engine.getProcessingEngine(), (DatasetExpression) ds, componentName);
-    } catch (VtlScriptException vse) {
-      throw new VtlRuntimeException(vse);
-    }
+    return membershipFunctionsVisitor.visit(ctx);
   }
 
   /**
@@ -310,7 +292,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
    */
   @Override
   public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
-    return joinFunctionsVisitor.visitJoinFunctions(ctx);
+    return joinFunctionsVisitor.visit(ctx.joinOperators());
   }
 
   /**
@@ -369,21 +351,21 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   /**
    * Dataset-level aggregate invocation ({@code sum(DS group by …)}, etc.).
    *
-   * @see AggregateInvocationExecutor
+   * @see AggregateFunctionsVisitor
    */
   @Override
   public ResolvableExpression visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
-    return visit(ctx.aggrOperatorsGrouping());
+    return aggregateFunctionsVisitor.visit(ctx.aggrOperatorsGrouping());
   }
 
   @Override
   public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
-    return AggregateInvocationExecutor.executeAggrDataset(ctx, this, processingEngine);
+    return aggregateFunctionsVisitor.visitAggrDataset(ctx);
   }
 
   @Override
   public ResolvableExpression visitCountAggr(VtlParser.CountAggrContext ctx) {
-    return AggregationColumnReferences.countMeasure(fromContext(ctx));
+    return aggregateFunctionsVisitor.visitCountAggr(ctx);
   }
 
   /**
@@ -402,38 +384,17 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   @Override
   public ResolvableExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    return MultiMeasureAnalyticExecutor.execute(
-        processingEngine,
-        datasetExpression,
-        ctx.expr().getText(),
-        ctx.op.getText(),
-        (mono, targetColumnName) ->
-            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
+    return analyticFunctionsVisitor.visitRatioToReportAn(ctx);
   }
 
   @Override
   public ResolvableExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    return MultiMeasureAnalyticExecutor.execute(
-        processingEngine,
-        datasetExpression,
-        ctx.expr().getText(),
-        ctx.op.getText(),
-        (mono, targetColumnName) ->
-            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
+    return analyticFunctionsVisitor.visitLagOrLeadAn(ctx);
   }
 
   @Override
   public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    return MultiMeasureAnalyticExecutor.execute(
-        processingEngine,
-        datasetExpression,
-        ctx.expr().getText(),
-        ctx.op.getText(),
-        (mono, targetColumnName) ->
-            new AnalyticsVisitor(processingEngine, mono, targetColumnName).visit(ctx));
+    return analyticFunctionsVisitor.visitAnSimpleFunction(ctx);
   }
 
   /**
@@ -447,15 +408,6 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     } catch (VtlScriptException e) {
       throw new VtlRuntimeException(e);
     }
-  }
-
-  private DatasetExpression asDataset(ResolvableExpression expression, ParserRuleContext ctx) {
-    if (expression instanceof DatasetExpression datasetExpression) {
-      return datasetExpression;
-    }
-    throw new VtlRuntimeException(
-        new InvalidArgumentException(
-            "aggregate invocation first operand must be a dataset", fromContext(ctx)));
   }
 
   @Override

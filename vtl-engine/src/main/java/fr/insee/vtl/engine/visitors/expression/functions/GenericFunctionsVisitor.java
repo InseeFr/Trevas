@@ -6,13 +6,10 @@ import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
-import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
-import fr.insee.vtl.engine.expressions.FunctionExpression;
-import fr.insee.vtl.engine.functions.DatasetScalarFunctionExecutor;
+import fr.insee.vtl.engine.semantics.functions.DatasetScalarFunctionExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -55,38 +52,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
       String funcName, List<ResolvableExpression> parameters, Positioned position)
       throws VtlScriptException {
     try {
-      List<DatasetExpression> multiMeasureOperands =
-          parameters.stream()
-              .filter(e -> e instanceof DatasetExpression de && !de.isMonoMeasure())
-              .map(DatasetExpression.class::cast)
-              .toList();
-      if (multiMeasureOperands.size() > 2) {
-        throw new VtlRuntimeException(
-            new InvalidArgumentException(
-                "too many no mono-measure datasets (" + multiMeasureOperands.size() + ")",
-                position));
-      }
-
-      List<Class> parameterTypes =
-          parameters.stream().map(ResolvableExpression::getType).collect(Collectors.toList());
-      var method = engine.findGlobalMethod(funcName, parameterTypes);
-      if (parameters.stream().noneMatch(DatasetExpression.class::isInstance) || method != null) {
-        if (method == null) {
-          method = engine.findMethod(funcName, parameterTypes);
-        }
-        return new FunctionExpression(method, parameters, position);
-      }
-      if (multiMeasureOperands.isEmpty()) {
-        return DatasetScalarFunctionExecutor.invokeOnMonoMeasureOperands(
-            engine, funcName, parameters, position, true);
-      }
-      return DatasetScalarFunctionExecutor.invokePerMeasureWithViralReattach(
-          engine,
-          funcName,
-          parameters,
-          position,
-          multiMeasureOperands.get(0),
-          multiMeasureOperands.get(0).getDataStructure().getMeasures());
+      return DatasetScalarFunctionExecutor.invoke(engine, funcName, parameters, position);
     } catch (NoSuchMethodException e) {
       throw new VtlRuntimeException(new FunctionNotFoundException(e.getMessage(), position));
     }

@@ -2,8 +2,8 @@ package fr.insee.vtl.engine.processors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import fr.insee.vtl.engine.aggregation.AggregationPlan;
-import fr.insee.vtl.engine.aggregation.AggregationResults;
+import fr.insee.vtl.engine.semantics.aggregation.AggregationPlan;
+import fr.insee.vtl.engine.semantics.aggregation.AggregationResults;
 import fr.insee.vtl.model.*;
 import java.util.List;
 import java.util.Map;

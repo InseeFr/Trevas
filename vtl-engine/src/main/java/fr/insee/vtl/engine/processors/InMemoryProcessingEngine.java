@@ -4,7 +4,7 @@ import static fr.insee.vtl.model.Structured.Component;
 import static fr.insee.vtl.model.Structured.DataStructure;
 import static java.util.stream.Collectors.toList;
 
-import fr.insee.vtl.engine.join.InMemoryJoinExecutor;
+import fr.insee.vtl.engine.semantics.join.InMemoryJoinExecutor;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
