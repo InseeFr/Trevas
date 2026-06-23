@@ -1,17 +1,18 @@
 package fr.insee.vtl.model;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import javax.script.ScriptEngine;
 
-/** The function provider is used to register new function to be made available in the VTLEngine. */
+/** Registers extension functions to be made available in the VTL engine. */
 public interface FunctionProvider {
 
   /**
-   * Return a map of functions to add to the VTL engine.
+   * Returns functions to add to the VTL engine.
    *
    * @param vtlEngine the VTL implementation of the {@link ScriptEngine}.
-   * @return a map of function name and {@link Method}.
+   * @return VTL function name to reflective {@link Method} bindings (supports overloads).
    */
-  Map<String, Method> getFunctions(ScriptEngine vtlEngine);
+  Map<String, List<Method>> getFunctions(ScriptEngine vtlEngine);
 }

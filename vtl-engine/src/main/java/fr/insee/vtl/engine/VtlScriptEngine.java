@@ -1,13 +1,12 @@
 package fr.insee.vtl.engine;
 
-import static fr.insee.vtl.engine.VtlNativeMethods.NATIVE_METHODS;
-
 import fr.insee.vtl.antlr.runtime.*;
 import fr.insee.vtl.antlr.runtime.misc.Interval;
 import fr.insee.vtl.antlr.runtime.tree.ParseTree;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.engine.functions.NativeFunctionRegistry;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -21,7 +20,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.script.*;
 
 /**
@@ -50,9 +48,9 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
   private final ScriptEngineFactory factory;
   private final VtlParseCache parseCache = new VtlParseCache();
-  private Map<String, Method> methodCache;
-
-  private Map<String, Method> globalMethodCache;
+  private final NativeFunctionRegistry builtinRegistry = NativeFunctionRegistry.builtins();
+  private NativeFunctionRegistry extensionRegistry;
+  private NativeFunctionRegistry globalRegistry;
 
   private volatile Map<String, ProcessingEngineFactory> processingEngineFactories;
   private volatile String cachedProcessingEngineName;
@@ -124,7 +122,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     return () -> position;
   }
 
-  static boolean matchParameters(Method method, Class<?>... classes) {
+  public static boolean matchParameters(Method method, Class<?>... classes) {
     Type[] genericParameterTypes = method.getGenericParameterTypes();
     Class<?>[] parameterTypes = method.getParameterTypes();
 
@@ -431,91 +429,42 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   }
 
   public VtlMethod findMethod(String name, Collection<Class> types) throws NoSuchMethodException {
-    Set<Method> customMethods =
-        methodCache == null ? Set.of() : new HashSet<>(methodCache.values());
-    Set<Method> methods =
-        Stream.concat(NATIVE_METHODS.stream(), customMethods.stream()).collect(Collectors.toSet());
-
-    List<Method> candidates =
-        methods.stream()
-            .filter(method -> method.getName().equals(name))
-            .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
-            .collect(Collectors.toList());
-    if (candidates.size() == 1) {
-      return new VtlMethod(candidates.get(0));
+    ensureExtensionRegistryLoaded();
+    try {
+      return extensionRegistry.resolve(name, types);
+    } catch (NoSuchMethodException ignored) {
+      return builtinRegistry.resolve(name, types);
     }
-    // TODO: Handle parameter resolution.
-    for (Method method : methods) {
-      if (method.getName().equals(name)
-          && types.equals(Arrays.asList(method.getParameterTypes()))) {
-        return new VtlMethod(method);
-      }
-    }
-    throw new NoSuchMethodException(methodToString(name, types));
   }
 
   public VtlMethod findGlobalMethod(String name, Collection<Class> types)
       throws NoSuchMethodException {
-    if (globalMethodCache == null) return null;
-    Set<Method> methods = new HashSet<>(globalMethodCache.values());
-
-    List<Method> candidates =
-        methods.stream()
-            .filter(method -> method.getName().equals(name))
-            .filter(method -> matchParameters(method, types.toArray(Class[]::new)))
-            .collect(Collectors.toList());
-
-    if (candidates.size() == 0) {
-      // It's not a global method
+    if (globalRegistry == null) {
       return null;
     }
-
-    if (candidates.size() == 1) {
-      return new VtlMethod(candidates.get(0));
-    }
-    // TODO: Handle parameter resolution.
-    for (Method method : methods) {
-      if (method.getName().equals(name)
-          && types.equals(Arrays.asList(method.getParameterTypes()))) {
-        return new VtlMethod(method);
-      }
-    }
-    throw new NoSuchMethodException(methodToString(name, types));
-  }
-
-  private String methodToString(String name, Collection<Class> argTypes) {
-    StringJoiner sj = new StringJoiner(", ", name + "(", ")");
-    if (argTypes != null) {
-      for (Class<?> c : argTypes) {
-        sj.add(c == null ? "null" : c.getSimpleName());
-      }
-    }
-    return sj.toString();
+    return globalRegistry.resolveOrNull(name, types);
   }
 
   public Method registerMethod(String name, Method method) {
-    if (methodCache == null) {
-      loadMethods();
-    }
-    return methodCache.put(name, method);
+    ensureExtensionRegistryLoaded();
+    return extensionRegistry.putAndReturnPrevious(name, method);
   }
 
   public Method registerGlobalMethod(String name, Method method) {
-    if (globalMethodCache == null) {
-      globalMethodCache = new LinkedHashMap<>();
+    if (globalRegistry == null) {
+      globalRegistry = NativeFunctionRegistry.empty();
     }
-    return globalMethodCache.put(name, method);
+    return globalRegistry.putAndReturnPrevious(name, method);
   }
 
-  private void loadMethods() {
-    methodCache = new LinkedHashMap<>();
+  private void ensureExtensionRegistryLoaded() {
+    if (extensionRegistry != null) {
+      return;
+    }
+    extensionRegistry = NativeFunctionRegistry.empty();
     ServiceLoader<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class);
     for (FunctionProvider provider : providers) {
-      Map<String, Method> functions = provider.getFunctions(this);
-      // TODO: rename function name with 'name' instead of java name
-      for (String name : functions.keySet()) {
-        methodCache.put(name, functions.get(name));
-      }
+      extensionRegistry.registerAll(provider.getFunctions(this));
     }
   }
 }

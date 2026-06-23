@@ -1,6 +1,5 @@
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
-import fr.insee.vtl.engine.semantics.functions.LevenshteinProvider;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
@@ -24,8 +23,6 @@ module fr.insee.vtl.engine {
   uses ProcessingEngineFactory;
   uses FunctionProvider;
 
-  provides FunctionProvider with
-      LevenshteinProvider;
   provides ProcessingEngineFactory with
       InMemoryProcessingEngine.Factory;
   provides ScriptEngineFactory with
