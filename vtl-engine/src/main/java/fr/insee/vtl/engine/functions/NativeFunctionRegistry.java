@@ -16,24 +16,10 @@ import java.util.stream.Collectors;
 /** VTL-name keyed catalogue of native {@link Method} bindings with overload resolution. */
 public final class NativeFunctionRegistry {
 
-  private static final NativeFunctionRegistry BUILTINS = loadBuiltins();
-
   private final Map<String, List<Method>> byVtlName = new LinkedHashMap<>();
-
-  private NativeFunctionRegistry() {}
-
-  public static NativeFunctionRegistry builtins() {
-    return BUILTINS;
-  }
 
   public static NativeFunctionRegistry empty() {
     return new NativeFunctionRegistry();
-  }
-
-  private static NativeFunctionRegistry loadBuiltins() {
-    NativeFunctionRegistry registry = new NativeFunctionRegistry();
-    registry.registerAll(NativeFunctionProviders.builtinFunctions());
-    return registry;
   }
 
   public void registerAll(Map<String, List<Method>> functions) {
@@ -54,12 +40,6 @@ public final class NativeFunctionRegistry {
           updated.add(method);
           return List.copyOf(updated);
         });
-  }
-
-  public void put(String vtlName, Method method) {
-    Objects.requireNonNull(vtlName);
-    Objects.requireNonNull(method);
-    byVtlName.put(vtlName, List.of(method));
   }
 
   public Method putAndReturnPrevious(String vtlName, Method method) {

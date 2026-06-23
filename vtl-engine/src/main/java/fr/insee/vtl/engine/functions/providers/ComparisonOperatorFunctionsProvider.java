@@ -1,13 +1,12 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public final class ComparisonOperatorFunctionsProvider implements BuiltinFunctionProvider {
+public final class ComparisonOperatorFunctionsProvider {
 
   private static Integer compare(Object left, Object right) throws Exception {
     if (left == null || right == null) {
@@ -93,7 +92,6 @@ public final class ComparisonOperatorFunctionsProvider implements BuiltinFunctio
     return !list.contains(obj);
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     Map<String, List<Method>> functions = new java.util.LinkedHashMap<>();
     functions.put("isEqual", List.of(Fun.toMethod(ComparisonOperatorFunctionsProvider::isEqual)));

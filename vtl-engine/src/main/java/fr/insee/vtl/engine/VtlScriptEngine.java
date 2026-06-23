@@ -6,6 +6,7 @@ import fr.insee.vtl.antlr.runtime.tree.ParseTree;
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
+import fr.insee.vtl.engine.functions.NativeFunctionProviders;
 import fr.insee.vtl.engine.functions.NativeFunctionRegistry;
 import fr.insee.vtl.engine.visitors.AssignmentVisitor;
 import fr.insee.vtl.model.*;
@@ -48,8 +49,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
 
   private final ScriptEngineFactory factory;
   private final VtlParseCache parseCache = new VtlParseCache();
-  private final NativeFunctionRegistry builtinRegistry = NativeFunctionRegistry.builtins();
-  private NativeFunctionRegistry extensionRegistry;
+  private final NativeFunctionRegistry functionRegistry = NativeFunctionRegistry.empty();
   private NativeFunctionRegistry globalRegistry;
 
   private volatile Map<String, ProcessingEngineFactory> processingEngineFactories;
@@ -63,6 +63,10 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    */
   public VtlScriptEngine(ScriptEngineFactory factory) {
     this.factory = factory;
+    registerProvider(NativeFunctionProviders.INSTANCE);
+    for (FunctionProvider provider : ServiceLoader.load(FunctionProvider.class)) {
+      registerProvider(provider);
+    }
   }
 
   public static Positioned toPositioned(ParseTree tree) {
@@ -429,12 +433,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   }
 
   public VtlMethod findMethod(String name, Collection<Class> types) throws NoSuchMethodException {
-    ensureExtensionRegistryLoaded();
-    try {
-      return extensionRegistry.resolve(name, types);
-    } catch (NoSuchMethodException ignored) {
-      return builtinRegistry.resolve(name, types);
-    }
+    return functionRegistry.resolve(name, types);
   }
 
   public VtlMethod findGlobalMethod(String name, Collection<Class> types)
@@ -445,9 +444,13 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     return globalRegistry.resolveOrNull(name, types);
   }
 
+  public void registerProvider(FunctionProvider provider) {
+    Objects.requireNonNull(provider);
+    functionRegistry.registerAll(provider.getFunctions(this));
+  }
+
   public Method registerMethod(String name, Method method) {
-    ensureExtensionRegistryLoaded();
-    return extensionRegistry.putAndReturnPrevious(name, method);
+    return functionRegistry.putAndReturnPrevious(name, method);
   }
 
   public Method registerGlobalMethod(String name, Method method) {
@@ -455,16 +458,5 @@ public class VtlScriptEngine extends AbstractScriptEngine {
       globalRegistry = NativeFunctionRegistry.empty();
     }
     return globalRegistry.putAndReturnPrevious(name, method);
-  }
-
-  private void ensureExtensionRegistryLoaded() {
-    if (extensionRegistry != null) {
-      return;
-    }
-    extensionRegistry = NativeFunctionRegistry.empty();
-    ServiceLoader<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class);
-    for (FunctionProvider provider : providers) {
-      extensionRegistry.registerAll(provider.getFunctions(this));
-    }
   }
 }

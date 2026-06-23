@@ -1,12 +1,11 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-public final class ArithmeticFunctionsProvider implements BuiltinFunctionProvider {
+public final class ArithmeticFunctionsProvider {
 
   public static Long addition(Long valueA, Long valueB) {
     if (valueA == null || valueB == null) {
@@ -121,7 +120,6 @@ public final class ArithmeticFunctionsProvider implements BuiltinFunctionProvide
     return valueA / valueB;
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     return Map.of(
         "addition",

@@ -1,14 +1,13 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
-public final class StringFunctionsProvider implements BuiltinFunctionProvider {
+public final class StringFunctionsProvider {
 
   private static final Pattern LTRIM = Pattern.compile("^\\s+");
   private static final Pattern RTRIM = Pattern.compile("\\s+$");
@@ -102,7 +101,6 @@ public final class StringFunctionsProvider implements BuiltinFunctionProvider {
     return StringUtils.ordinalIndexOf(v.substring(start.intValue()), v2, occurence.intValue()) + 1L;
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     Map<String, List<Method>> functions = new java.util.LinkedHashMap<>();
     functions.put("trim", List.of(Fun.toMethod(StringFunctionsProvider::trim)));

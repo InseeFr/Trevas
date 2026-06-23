@@ -1,12 +1,11 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-public final class ConditionalFunctionsProvider implements BuiltinFunctionProvider {
+public final class ConditionalFunctionsProvider {
 
   public static Long ifThenElse(Boolean condition, Long thenExpr, Long elseExpr) {
     if (condition == null) {
@@ -60,7 +59,6 @@ public final class ConditionalFunctionsProvider implements BuiltinFunctionProvid
     return value == null ? defaultValue : value;
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     return Map.of(
         "ifThenElse",

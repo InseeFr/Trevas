@@ -1,12 +1,11 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-public final class UnaryFunctionsProvider implements BuiltinFunctionProvider {
+public final class UnaryFunctionsProvider {
 
   public static Long plus(Long right) {
     return right;
@@ -37,7 +36,6 @@ public final class UnaryFunctionsProvider implements BuiltinFunctionProvider {
     return !right;
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     return Map.of(
         "plus",

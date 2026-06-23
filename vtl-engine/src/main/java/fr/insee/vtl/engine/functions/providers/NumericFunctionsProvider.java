@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -9,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public final class NumericFunctionsProvider implements BuiltinFunctionProvider {
+public final class NumericFunctionsProvider {
 
   public static Long ceil(Number value) {
     if (value == null) {
@@ -119,7 +118,6 @@ public final class NumericFunctionsProvider implements BuiltinFunctionProvider {
     return Math.log(operand.doubleValue()) / Math.log(base.doubleValue());
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     Map<String, List<Method>> functions = new java.util.LinkedHashMap<>();
     functions.put("ceil", List.of(Fun.toMethod(NumericFunctionsProvider::ceil)));

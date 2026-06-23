@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class ComparisonFunctionsProvider implements BuiltinFunctionProvider {
+public final class ComparisonFunctionsProvider {
 
   public static Boolean between(Number operand, Number from, Number to) {
     if (operand == null || from == null || to == null) {
@@ -46,7 +45,6 @@ public final class ComparisonFunctionsProvider implements BuiltinFunctionProvide
     return Boolean.FALSE;
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     return Map.of(
         "between", List.of(Fun.toMethod(ComparisonFunctionsProvider::between)),

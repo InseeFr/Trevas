@@ -1,7 +1,6 @@
 package fr.insee.vtl.engine.functions.providers;
 
 import com.github.hervian.reflection.Fun;
-import fr.insee.vtl.engine.functions.BuiltinFunctionProvider;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -15,7 +14,7 @@ import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
 /** Native temporal scalar operators. */
-public final class TemporalFunctionsProvider implements BuiltinFunctionProvider {
+public final class TemporalFunctionsProvider {
 
   public static Instant addition(Instant op, PeriodDuration dur) {
     return op.plus(dur);
@@ -183,7 +182,6 @@ public final class TemporalFunctionsProvider implements BuiltinFunctionProvider 
     };
   }
 
-  @Override
   public Map<String, List<Method>> getFunctions() {
     Map<String, List<Method>> functions = new java.util.LinkedHashMap<>();
     functions.put(
