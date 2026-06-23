@@ -24,9 +24,17 @@ public interface Dataset extends Structured {
   List<DataPoint> getDataPoints();
 
   default List<List<Object>> getDataAsList() {
-    var columns = getDataStructure().keySet();
+    var structure = getDataStructure();
+    int columnCount = structure.size();
     return getDataPoints().stream()
-        .map(dataPoint -> columns.stream().map(dataPoint::get).collect(Collectors.toList()))
+        .map(
+            dataPoint -> {
+              List<Object> row = new java.util.ArrayList<>(columnCount);
+              for (int i = 0; i < columnCount; i++) {
+                row.add(dataPoint.get(i));
+              }
+              return row;
+            })
         .collect(Collectors.toList());
   }
 
@@ -41,6 +49,16 @@ public interface Dataset extends Structured {
   }
 
   /**
+   * Returns the same data with updated structure metadata (column names and values unchanged).
+   *
+   * <p>Engines use this indirectly via vtl-engine after mechanical aggregation; implementations may
+   * avoid materializing rows when only metadata changes.
+   */
+  default Dataset withDataStructure(DataStructure structure) {
+    return InMemoryDataset.ofDataPoints(getDataPoints(), structure);
+  }
+
+  /**
    * The <code>Role</code> <code>Enumeration</code> lists the roles of a component in a dataset
    * structure.
    */
@@ -52,6 +70,14 @@ public interface Dataset extends Structured {
     /** The component is an attribute in the data structure */
     ATTRIBUTE,
     /** The component is a viral attribute in the data structure */
-    VIRALATTRIBUTE
+    VIRALATTRIBUTE;
+
+    /** Parses a role name from metadata (JSON {@code role}, Spark {@code vtlRole}, etc.). */
+    public static Role fromName(String roleName) {
+      if (roleName == null || roleName.isBlank()) {
+        throw new IllegalArgumentException("role name is blank");
+      }
+      return valueOf(roleName.trim().replaceAll("\\s+", "").toUpperCase());
+    }
   }
 }

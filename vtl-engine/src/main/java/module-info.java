@@ -1,6 +1,6 @@
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
-import fr.insee.vtl.engine.functions.LevenshteinProvider;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
+import fr.insee.vtl.engine.semantics.functions.LevenshteinProvider;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
@@ -14,8 +14,6 @@ module fr.insee.vtl.engine {
   requires transitive java.scripting;
   requires transitive fr.insee.vtl.parser;
   requires transitive fr.insee.vtl.model;
-
-  // TODO: Consider removing these.
   requires org.apache.commons.lang3;
   requires org.apache.commons.text;
   requires safety.mirror;

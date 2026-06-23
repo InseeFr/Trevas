@@ -1,6 +1,7 @@
 package fr.insee.vtl.engine;
 
 import com.github.hervian.reflection.Fun;
+import fr.insee.vtl.engine.expressions.TemporalFunctions;
 import fr.insee.vtl.engine.visitors.expression.*;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;

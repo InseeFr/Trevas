@@ -38,7 +38,7 @@ public class JSONStructureLoader {
         if (componentArray != null && componentArray.isArray()) {
           for (JsonNode componentNode : componentArray) {
             String name = componentNode.get("name").asText();
-            String role = componentNode.get("role").asText().toUpperCase();
+            String role = TckComponentRoles.toTrevasRole(componentNode.get("role").asText());
             String type = componentNode.get("data_type").asText().toUpperCase();
 
             // Build the JSON string dynamically

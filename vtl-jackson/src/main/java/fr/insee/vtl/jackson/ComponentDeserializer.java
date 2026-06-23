@@ -45,7 +45,7 @@ public class ComponentDeserializer extends StdDeserializer<Structured.Component>
     var node = ctxt.readTree(p);
     var name = node.get("name").asText();
     var type = node.get("type").asText();
-    var role = Dataset.Role.valueOf(node.get("role").asText());
+    var role = Dataset.Role.fromName(node.get("role").asText());
     var nullable = node.get("nullable") != null ? node.get("nullable").asBoolean() : null;
     return new Dataset.Component(name, asType(type), role, nullable);
   }

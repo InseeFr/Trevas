@@ -2,11 +2,8 @@ package fr.insee.vtl.model;
 
 import static fr.insee.vtl.model.Structured.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /** Interface used for dataset transformations. */
 public interface ProcessingEngine {
@@ -58,15 +55,17 @@ public interface ProcessingEngine {
   /**
    * Execute a union transformations on the dataset expression.
    *
-   * @param datasets list of dataset expression to union
-   * @return the result of the union transformation
+   * @param dedupeOnColumns when non-empty, rows with the same values on these columns are collapsed
    */
-  DatasetExpression executeUnion(List<DatasetExpression> datasets);
+  DatasetExpression executeUnion(List<DatasetExpression> datasets, List<String> dedupeOnColumns);
 
   /**
    * Execute an aggregate transformations on the dataset expression.
    *
-   * <p>The API of this method is not stable yet.
+   * <p>Produces grouped rows and aggregated column values only. VTL roles and attribute propagation
+   * are applied upstream in vtl-engine before exposing the result.
+   *
+   * @param collectorMap aggregation expressions keyed by output column name
    */
   DatasetExpression executeAggr(
       DatasetExpression expression,
@@ -147,15 +146,6 @@ public interface ProcessingEngine {
   DatasetExpression executeInnerJoin(
       Map<String, DatasetExpression> datasets, List<Component> components);
 
-  default DatasetExpression executeInnerJoin(Map<String, DatasetExpression> datasets) {
-    Set<Component> commonIdentifiers =
-        datasets.values().stream()
-            .flatMap(datasetExpression -> datasetExpression.getDataStructure().values().stream())
-            .filter(Structured.Component::isIdentifier)
-            .collect(Collectors.toSet());
-    return executeInnerJoin(datasets, new ArrayList<>(commonIdentifiers));
-  }
-
   /**
    * Execute a cross join transformations on the dataset expressions.
    *
@@ -175,51 +165,6 @@ public interface ProcessingEngine {
    */
   DatasetExpression executeFullJoin(
       Map<String, DatasetExpression> datasets, List<Component> identifiers);
-
-  /**
-   * Execute a validation DP ruleset on the dataset expressions.
-   *
-   * @param dpr datapoint ruleset
-   * @param datasetExpression datasets
-   * @param output validation output
-   * @param pos script error position
-   * @param toDrop variables to drop
-   * @return the result of the validation DP ruleset transformation
-   */
-  DatasetExpression executeValidateDPruleset(
-      DataPointRuleset dpr,
-      DatasetExpression datasetExpression,
-      String output,
-      Positioned pos,
-      List<String> toDrop);
-
-  /**
-   * Execute a simple validation on dataset expressions.
-   *
-   * @param dsExpr dataset expression
-   * @param erCodeExpr error code expression
-   * @param erLevelExpr error level expression
-   * @param imbalanceExpr dataset expression
-   * @param output validation output
-   * @param pos script error position
-   * @return the result of the validation
-   */
-  DatasetExpression executeValidationSimple(
-      DatasetExpression dsExpr,
-      ResolvableExpression erCodeExpr,
-      ResolvableExpression erLevelExpr,
-      DatasetExpression imbalanceExpr,
-      String output,
-      Positioned pos);
-
-  ResolvableExpression executeHierarchicalValidation(
-      DatasetExpression dsExpression,
-      HierarchicalRuleset hr,
-      String componentID,
-      String validationMode,
-      String inputMode,
-      String validationOutput,
-      Positioned pos);
 
   /**
    * Execute pivot on dataset expression.
