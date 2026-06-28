@@ -34,7 +34,7 @@ Trevas 侧运行时代码不再使用 `org.antlr.v4`，而是使用 `fr.insee.vt
 | 作用 | 已 shade、已重定位的 ANTLR 4 运行时 |
 | JPMS 模块 | `fr.insee.vtl.antlr` |
 
-Shade 在 **`process-classes`** 阶段执行，以便在编译 `vtl-parser` **之前**就生成最终 JAR。`org.antlr` 依赖标记为 `optional`，避免向下游传递泄漏。
+Shade 在 **`compile`** 阶段执行（本模块无 Java 源码），以便在同一 reactor 的 `compile` 过程中、编译 `vtl-parser` **之前**就生成带 module-info 的 shaded JAR。`org.antlr` 依赖标记为 `optional`，避免向下游传递泄漏。
 
 ## 模块 `vtl-parser`
 

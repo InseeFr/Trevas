@@ -34,7 +34,7 @@ Le code aval ne référence jamais `org.antlr.v4` au runtime côté Trevas ; il 
 | Rôle | Runtime ANTLR 4 empaqueté et relocalisé |
 | Module JPMS | `fr.insee.vtl.antlr` |
 
-Le shading s’exécute en phase **`process-classes`** afin que le JAR final soit disponible **avant** la compilation de `vtl-parser`. La dépendance `org.antlr` est marquée `optional` pour ne pas fuir transitivement vers les consommateurs.
+Le shading s’exécute en phase **`compile`** (ce module n’a pas de sources Java) afin que le JAR modulaire shaded soit disponible **avant** la compilation de `vtl-parser` dans le même passage reactor `compile`. La dépendance `org.antlr` est marquée `optional` pour ne pas fuir transitivement vers les consommateurs.
 
 ## Module `vtl-parser`
 

@@ -363,8 +363,6 @@ public class ClauseVisitorTest {
         List.of(
             "res := ds1[aggr a :=         sum(name) group by country];",
             "res := ds1[aggr a :=         avg(name) group by country];",
-            "res := ds1[aggr a :=         max(name) group by country];",
-            "res := ds1[aggr a :=         min(name) group by country];",
             "res := ds1[aggr a :=      median(name) group by country];",
             "res := ds1[aggr a :=  stddev_pop(name) group by country];",
             "res := ds1[aggr a := stddev_samp(name) group by country];",
@@ -372,6 +370,12 @@ public class ClauseVisitorTest {
             "res := ds1[aggr a :=    var_samp(name) group by country];");
     ScriptContext context = engine.getContext();
     context.setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    for (String script : cases) {
+      assertThatThrownBy(() -> engine.eval(script))
+          .as("script should reject non numeric aggregate operand: %s", script)
+          .isInstanceOf(VtlScriptException.class);
+    }
   }
 
   @Test
@@ -429,7 +433,7 @@ public class ClauseVisitorTest {
                 "country",
                 "france",
                 "sumAge",
-                23L,
+                23.0,
                 "avgWeight",
                 11.5,
                 "countVal",
@@ -450,7 +454,7 @@ public class ClauseVisitorTest {
                 "country",
                 "norway",
                 "sumAge",
-                10L,
+                10.0,
                 "avgWeight",
                 10.0,
                 "countVal",
@@ -532,5 +536,169 @@ public class ClauseVisitorTest {
     assertThat((Double) no.get("var_popWeight")).isEqualTo(0.0);
     assertThat((Double) no.get("var_sampAge")).isEqualTo(0.0);
     assertThat((Double) no.get("var_sampWeight")).isEqualTo(0.0);
+  }
+
+  @Test
+  public void testSubspaceClause() throws ScriptException {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("Id_1", 1L, "Id_2", "A", "Id_3", "X", "Me_1", 100L, "At_1", "a"),
+                Map.of("Id_1", 1L, "Id_2", "A", "Id_3", "Y", "Me_1", 200L, "At_1", "b"),
+                Map.of("Id_1", 1L, "Id_2", "B", "Id_3", "Z", "Me_1", 300L, "At_1", "c"),
+                Map.of("Id_1", 2L, "Id_2", "A", "Id_3", "W", "Me_1", 400L, "At_1", "d")),
+            Map.of(
+                "Id_1", Long.class,
+                "Id_2", String.class,
+                "Id_3", String.class,
+                "Me_1", Long.class,
+                "At_1", String.class),
+            Map.of(
+                "Id_1", Role.IDENTIFIER,
+                "Id_2", Role.IDENTIFIER,
+                "Id_3", Role.IDENTIFIER,
+                "Me_1", Role.MEASURE,
+                "At_1", Role.ATTRIBUTE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval("ds_r := ds1[sub Id_1 = 1, Id_2 = \"A\"];");
+
+    Dataset dsR = (Dataset) engine.getContext().getAttribute("ds_r");
+    assertThat(dsR.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("Id_3", "X", "Me_1", 100L, "At_1", "a"),
+            Map.of("Id_3", "Y", "Me_1", 200L, "At_1", "b"));
+    assertThat(dsR.getDataStructure().getIdentifiers())
+        .extracting(Structured.Component::getName)
+        .containsExactly("Id_3");
+    assertThat(dsR.getDataStructure().getMeasures())
+        .extracting(Structured.Component::getName)
+        .containsExactly("Me_1");
+    assertThat(dsR.getDataStructure().getAttributes())
+        .extracting(Structured.Component::getName)
+        .containsExactly("At_1");
+  }
+
+  @Test
+  public void testSubspaceClause_singleIdentifier() throws ScriptException {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("country", "france", "name", "Nico", "age", 11L),
+                Map.of("country", "france", "name", "Hadrien", "age", 10L),
+                Map.of("country", "norway", "name", "Franck", "age", 12L)),
+            Map.of("country", String.class, "name", String.class, "age", Long.class),
+            Map.of("country", Role.IDENTIFIER, "name", Role.IDENTIFIER, "age", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    engine.eval("ds2 := ds1[sub country = \"france\"];");
+
+    Dataset ds2 = (Dataset) engine.getContext().getAttribute("ds2");
+    assertThat(ds2.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("name", "Nico", "age", 11L), Map.of("name", "Hadrien", "age", 10L));
+    assertThat(ds2.getDataStructure().getIdentifiers())
+        .extracting(Structured.Component::getName)
+        .containsExactly("name");
+  }
+
+  @Test
+  public void testSubspaceClause_chainedWithCalc() throws ScriptException {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(
+                Map.of("region", "EU", "name", "Nico", "value", 10L),
+                Map.of("region", "EU", "name", "Hadrien", "value", 20L)),
+            Map.of("region", String.class, "name", String.class, "value", Long.class),
+            Map.of("region", Role.IDENTIFIER, "name", Role.IDENTIFIER, "value", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    engine.eval("ds2 := ds1[sub region = \"EU\"][calc doubled := value * 2];");
+
+    Dataset ds2 = (Dataset) engine.getContext().getAttribute("ds2");
+    assertThat(ds2.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("name", "Nico", "value", 10L, "doubled", 20L),
+            Map.of("name", "Hadrien", "value", 20L, "doubled", 40L));
+  }
+
+  @Test
+  public void testSubspaceClause_unknownIdentifier() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(Map.of("name", "Nico", "age", 11L)),
+            Map.of("name", String.class, "age", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(() -> engine.eval("ds := ds1[sub missing = 1];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("undefined variable 'missing' in 'ds1'");
+  }
+
+  @Test
+  public void testSubspaceClause_duplicateIdentifier() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(Map.of("country", "france", "name", "Nico")),
+            Map.of("country", String.class, "name", String.class),
+            Map.of("country", Role.IDENTIFIER, "name", Role.IDENTIFIER));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () -> engine.eval("ds := ds1[sub country = \"france\", country = \"norway\"];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessageContaining("duplicate identifier 'country'");
+  }
+
+  @Test
+  public void testSubspaceClause_notAnIdentifier() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(Map.of("name", "Nico", "age", 11L)),
+            Map.of("name", String.class, "age", Long.class),
+            Map.of("name", Role.IDENTIFIER, "age", Role.MEASURE));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(() -> engine.eval("ds := ds1[sub age = 11];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessage("sub can only fix identifier components");
+  }
+
+  @Test
+  public void testSubspaceClause_typeMismatch() {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(Map.of("name", "Nico", "code", 1L)),
+            Map.of("name", String.class, "code", Long.class),
+            Map.of("name", Role.IDENTIFIER, "code", Role.IDENTIFIER));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(() -> engine.eval("ds := ds1[sub name = 1];"))
+        .isInstanceOf(VtlScriptException.class)
+        .hasMessageContaining("invalid type");
+  }
+
+  @Test
+  public void testSubspaceClause_emptyResult() throws ScriptException {
+    InMemoryDataset dataset =
+        new InMemoryDataset(
+            List.of(Map.of("country", "france", "name", "Nico")),
+            Map.of("country", String.class, "name", String.class),
+            Map.of("country", Role.IDENTIFIER, "name", Role.IDENTIFIER));
+
+    engine.getContext().setAttribute("ds1", dataset, ScriptContext.ENGINE_SCOPE);
+    engine.eval("ds2 := ds1[sub country = \"norway\"];");
+
+    Dataset ds2 = (Dataset) engine.getContext().getAttribute("ds2");
+    assertThat(ds2.getDataAsMap()).isEmpty();
+    assertThat(ds2.getDataStructure().getIdentifiers())
+        .extracting(Structured.Component::getName)
+        .containsExactly("name");
   }
 }

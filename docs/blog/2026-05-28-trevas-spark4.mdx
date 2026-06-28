@@ -1,0 +1,57 @@
+---
+slug: /trevas-spark4
+title: Spark 4 in Trevas
+date: 2026-05-28
+authors: [nicolas]
+tags: [Trevas]
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import Link from '@theme/Link';
+
+We are happy to announce **Trevas 2.4.0**, which adds **Apache Spark 4** support through the new **`vtl-spark4`** module.
+
+If you want to move your Spark-based client applications to Spark 4, you can depend on `fr.insee.trevas:vtl-spark4` alongside the rest of the Trevas stack. The VTL API and behaviour stay the same; only the Spark integration layer changes.
+
+**Spark 3 is not going away.** The existing **`vtl-spark`** module remains fully maintained in parallel. You can stay on Spark 3 for as long as you need—there is no forced migration timeline.
+
+See the <Link label="2.4.0 release notes" href={useBaseUrl('/releases/2.x.x')} /> and the <Link label="GitHub release" href="https://github.com/InseeFr/Trevas/releases/tag/v2.4.0" /> for the full changelog.
+
+## Trevas client apps — shaded ANTLR imports
+
+Keeping **Spark 3** and **Spark 4** on the same Trevas codebase also pushed us to **refine how ANTLR is packaged**: the runtime is now shaded and relocated so Trevas and Spark no longer fight over the same `org.antlr.v4` classes on the classpath.
+
+Starting with Trevas **2.4.0**, this note applies only to **client applications** that **explicitly use ANTLR APIs** in their own code (lexer, token stream, parse tree, listeners, and so on) **in addition to** Trevas. If your app only calls Trevas APIs and never imports or manipulates ANTLR types directly, **nothing changes for you**.
+
+If you do touch ANTLR yourself—whether you stay on **Apache Spark 3** (`vtl-spark`) or move to **Spark 4** (`vtl-spark4`)—you must import the runtime from the **relocated** package namespace:
+
+```java
+import fr.insee.vtl.antlr.runtime.*;
+import fr.insee.vtl.antlr.runtime.tree.*;
+// … and other fr.insee.vtl.antlr.* subpackages as needed
+```
+
+Previously, code that touched the parser or ANTLR APIs directly often used the stock ANTLR packages, for example:
+
+```java
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+```
+
+Those imports **no longer match** the classes Trevas ships at runtime. Trevas shades `org.antlr:antlr4-runtime` into the `vtl-antlr` artifact and relocates `org.antlr.v4` → `fr.insee.vtl.antlr` so Trevas and Spark can share a JVM without loading two competing ANTLR runtimes.
+
+### What you need to change
+
+- Update **every** `org.antlr.v4…` import in your application (and in any code generated against Trevas parser types) to the matching `fr.insee.vtl.antlr…` package.
+- Rely on **`fr.insee.trevas:vtl-antlr`** (transitively via `vtl-parser` / `vtl-engine`) for the runtime; do **not** add a separate dependency on `org.antlr:antlr4-runtime` for Trevas-related parsing.
+- This applies equally to Spark 3 and Spark 4 integrations: both use the same shaded parser stack.
+
+A typical mapping:
+
+| Before                                   | After                                          |
+| ---------------------------------------- | ---------------------------------------------- |
+| `org.antlr.v4.runtime.CharStreams`       | `fr.insee.vtl.antlr.runtime.CharStreams`       |
+| `org.antlr.v4.runtime.CommonTokenStream` | `fr.insee.vtl.antlr.runtime.CommonTokenStream` |
+| `org.antlr.v4.runtime.tree.ParseTree`    | `fr.insee.vtl.antlr.runtime.tree.ParseTree`    |
+
+For more technical details, see <Link label="here" href={useBaseUrl('/developer-guide/antlr-shaded-runtime')} /> the documentation.

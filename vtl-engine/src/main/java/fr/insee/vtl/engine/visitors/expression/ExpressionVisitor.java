@@ -5,33 +5,29 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
-import fr.insee.vtl.engine.visitors.AnalyticsVisitor;
 import fr.insee.vtl.engine.visitors.ClauseVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.AggregateFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.AnalyticFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ComparisonFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.DistanceFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.GenericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.JoinFunctionsVisitor;
+import fr.insee.vtl.engine.visitors.expression.functions.MembershipFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.NumericFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.SetFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.StringFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.TimeFunctionsVisitor;
 import fr.insee.vtl.engine.visitors.expression.functions.ValidationFunctionsVisitor;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
+import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.Structured;
-import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <code>ExpressionVisitor</code> is the base visitor for expressions. It essentially passes the
@@ -51,11 +47,14 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   private final ComparisonFunctionsVisitor comparisonFunctionsVisitor;
   private final NumericFunctionsVisitor numericFunctionsVisitor;
   private final SetFunctionsVisitor setFunctionsVisitor;
+  private final MembershipFunctionsVisitor membershipFunctionsVisitor;
   private final JoinFunctionsVisitor joinFunctionsVisitor;
   private final GenericFunctionsVisitor genericFunctionsVisitor;
   private final DistanceFunctionsVisitor distanceFunctionsVisitor;
   private final TimeFunctionsVisitor timeFunctionsVisitor;
   private final ValidationFunctionsVisitor validationFunctionsVisitor;
+  private final AggregateFunctionsVisitor aggregateFunctionsVisitor;
+  private final AnalyticFunctionsVisitor analyticFunctionsVisitor;
   private final ProcessingEngine processingEngine;
   private final VtlScriptEngine engine;
 
@@ -81,12 +80,15 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     stringFunctionsVisitor = new StringFunctionsVisitor(this, genericFunctionsVisitor);
     comparisonFunctionsVisitor = new ComparisonFunctionsVisitor(this, genericFunctionsVisitor);
     setFunctionsVisitor = new SetFunctionsVisitor(this, processingEngine);
+    membershipFunctionsVisitor = new MembershipFunctionsVisitor(this, processingEngine);
     joinFunctionsVisitor = new JoinFunctionsVisitor(this, processingEngine);
     numericFunctionsVisitor = new NumericFunctionsVisitor(this, genericFunctionsVisitor);
     distanceFunctionsVisitor = new DistanceFunctionsVisitor(this, genericFunctionsVisitor);
     timeFunctionsVisitor =
         new TimeFunctionsVisitor(genericFunctionsVisitor, this, processingEngine);
     validationFunctionsVisitor = new ValidationFunctionsVisitor(this, processingEngine, engine);
+    aggregateFunctionsVisitor = new AggregateFunctionsVisitor(this, processingEngine);
+    analyticFunctionsVisitor = new AnalyticFunctionsVisitor(this, processingEngine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
     this.engine = Objects.requireNonNull(engine);
   }
@@ -123,29 +125,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   @Override
   public ResolvableExpression visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
-    try {
-      ResolvableExpression ds = this.visit(ctx.expr());
-      if (!(ds instanceof DatasetExpression)) {
-        throw new InvalidTypeException(Dataset.class, ds.getType(), fromContext(ctx.expr()));
-      }
-      Structured.DataStructure structure = ((DatasetExpression) ds).getDataStructure();
-      String componentName = ctx.simpleComponentId().getText();
-      if (!structure.containsKey(componentName)) {
-        throw new VtlScriptException(
-            "column %s not found in %s".formatted(componentName, ctx.expr().getText()),
-            fromContext(ctx));
-      }
-
-      ArrayList<String> components =
-          structure.values().stream()
-              .filter(Structured.Component::isIdentifier)
-              .map(Structured.Component::getName)
-              .collect(Collectors.toCollection(ArrayList::new));
-      components.add(componentName);
-      return this.engine.getProcessingEngine().executeProject((DatasetExpression) ds, components);
-    } catch (VtlScriptException vse) {
-      throw new VtlRuntimeException(vse);
-    }
+    return membershipFunctionsVisitor.visit(ctx);
   }
 
   /**
@@ -312,7 +292,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
    */
   @Override
   public ResolvableExpression visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
-    return joinFunctionsVisitor.visitJoinFunctions(ctx);
+    return joinFunctionsVisitor.visit(ctx.joinOperators());
   }
 
   /**
@@ -369,6 +349,26 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   }
 
   /**
+   * Dataset-level aggregate invocation ({@code sum(DS group by …)}, etc.).
+   *
+   * @see AggregateFunctionsVisitor
+   */
+  @Override
+  public ResolvableExpression visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
+    return aggregateFunctionsVisitor.visit(ctx.aggrOperatorsGrouping());
+  }
+
+  @Override
+  public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    return aggregateFunctionsVisitor.visitAggrDataset(ctx);
+  }
+
+  @Override
+  public ResolvableExpression visitCountAggr(VtlParser.CountAggrContext ctx) {
+    return aggregateFunctionsVisitor.visitCountAggr(ctx);
+  }
+
+  /**
    * Visits clause expressions.
    *
    * @param ctx The scripting context for the expression.
@@ -384,134 +384,30 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   @Override
   public ResolvableExpression visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
-
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
-    }
-    return processingEngine.executeInnerJoin(analytics);
+    return analyticFunctionsVisitor.visitRatioToReportAn(ctx);
   }
 
   @Override
   public ResolvableExpression visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
-
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
-    }
-    return processingEngine.executeInnerJoin(analytics);
+    return analyticFunctionsVisitor.visitLagOrLeadAn(ctx);
   }
 
   @Override
   public DatasetExpression visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
-    var datasetExpression = (DatasetExpression) visit(ctx.expr());
-    var dsName = ctx.expr().getText();
-    var structure = datasetExpression.getDataStructure();
-    var ids = structure.getIdentifiers();
+    return analyticFunctionsVisitor.visitAnSimpleFunction(ctx);
+  }
 
-    Map<String, DatasetExpression> analytics = new LinkedHashMap<>();
-    for (Structured.Component measure : structure.getMeasures()) {
-
-      // Convert each measure to an equivalent [calc xx := analyticFunction].
-      // where xx is [function name]_[original_measure_name]
-      List<String> colNames =
-          Stream.concat(ids.stream(), Stream.of(measure))
-              .map(Structured.Component::getName)
-              .collect(Collectors.toList());
-
-      // Filter out measure we don't need and rename the measure to the name of
-      // the dataset.
-      var tempDs = processingEngine.executeProject(datasetExpression, colNames);
-      tempDs = processingEngine.executeRename(tempDs, Map.of(measure.getName(), dsName));
-
-      // Execute the calc.
-      String targetColumnName = ctx.op.getText() + "_" + measure.getName();
-      AnalyticsVisitor analyticsVisitor =
-          new AnalyticsVisitor(processingEngine, tempDs, targetColumnName);
-      var result = analyticsVisitor.visit(ctx);
-
-      // Rename back to the original name.
-      result = processingEngine.executeRename(result, Map.of(targetColumnName, measure.getName()));
-
-      // Drop the ds1 column.
-      result =
-          processingEngine.executeProject(
-              result,
-              result.getColumnNames().stream()
-                  .filter(n -> !n.equals(dsName))
-                  .collect(Collectors.toList()));
-
-      analytics.put(targetColumnName, result);
+  /**
+   * Invokes a scalar VTL function (e.g. {@code isEqual}, {@code and}) in the current expression
+   * context.
+   */
+  public ResolvableExpression invokeScalarFunction(
+      String functionName, List<ResolvableExpression> parameters, Positioned position) {
+    try {
+      return genericFunctionsVisitor.invokeFunction(functionName, parameters, position);
+    } catch (VtlScriptException e) {
+      throw new VtlRuntimeException(e);
     }
-    return processingEngine.executeInnerJoin(analytics);
   }
 
   @Override

@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.4.0</version>
+        <version>2.5.0</version>
     </parent>
 
     <artifactId>vtl-spark4</artifactId>
     <name>VTL Spark4</name>
     <description>Trevas engine for Apache Spark 4</description>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -25,18 +25,24 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.4.0</version>
+            <version>2.5.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.4.0</version>
+            <version>2.5.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${spark4.scala.binary}</artifactId>
+        </dependency>
+        <!-- Spark 4 SQL parser requires ANTLR 4.13.x (ATN v4). -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.spark4.version}</version>
         </dependency>
 
         <dependency>

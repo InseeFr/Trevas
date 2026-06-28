@@ -10,13 +10,15 @@ import io.sdmx.api.sdmx.model.beans.SdmxBeans;
 import io.sdmx.api.sdmx.model.beans.base.ComponentBean;
 import io.sdmx.api.sdmx.model.beans.base.INamedBean;
 import io.sdmx.api.sdmx.model.beans.datastructure.DataStructureBean;
+import io.sdmx.api.sdmx.model.beans.datastructure.DataflowBean;
+import io.sdmx.api.sdmx.model.beans.reference.ICrossReferenceBean;
 import io.sdmx.api.sdmx.model.beans.transformation.IVtlMappingBean;
 import io.sdmx.format.ml.api.engine.StaxStructureReaderEngine;
 import io.sdmx.format.ml.engine.structure.reader.v3.StaxStructureReaderEngineV3;
+import io.sdmx.im.beans.builder.V3BeansBuilder;
 import io.sdmx.utils.core.io.InMemoryReadableDataLocation;
 import io.sdmx.utils.core.io.ReadableDataLocationTmp;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
@@ -27,6 +29,10 @@ public class TrevasSDMXUtils {
 
   private static final StaxStructureReaderEngine structureReaderSDMX3 =
       StaxStructureReaderEngineV3.getInstance();
+
+  public static SdmxBeans parseSdmxBeans(ReadableDataLocation rdl) {
+    return structureReaderSDMX3.getSdmxBeans(rdl, V3BeansBuilder.DEFAULT_INSTANCE);
+  }
 
   public static Map<String, Structured.DataStructure> parseDataStructure(SdmxBeans sdmxBeans) {
     Map<String, DataStructureBean> mapping = vtlMapping(sdmxBeans);
@@ -80,7 +86,11 @@ public class TrevasSDMXUtils {
   private static String convertValuedomain(ComponentBean sdmxComp) {
     if (null == sdmxComp.getRepresentation()
         || null == sdmxComp.getRepresentation().getRepresentation()) return null;
-    return sdmxComp.getRepresentation().getRepresentation().getMaintainableId();
+    var codelistRef = sdmxComp.getRepresentation().getRepresentation();
+    if (codelistRef == null || codelistRef.getReference() == null) {
+      return null;
+    }
+    return codelistRef.getReference().getIdentifiableId();
   }
 
   private static Dataset.Role convertTypeToRole(ComponentBean.COMPONENT_TYPE type) {
@@ -109,11 +119,17 @@ public class TrevasSDMXUtils {
         });
   }
 
+  private static DataStructureBean resolveDataStructure(
+      SdmxBeans sdmxBeans, ICrossReferenceBean<DataStructureBean> dataStructureRef) {
+    return sdmxBeans.getDataStructures().stream()
+        .filter(dataStructureRef::isMatch)
+        .collect(toSingleton());
+  }
+
   public static Map<String, DataStructureBean> dataflows(SdmxBeans sdmxBeans) {
     return sdmxBeans.getDataflows().stream()
-        .map(df -> sdmxBeans.getDataStructures(df.getDataStructureRef()))
-        .distinct()
-        .flatMap(Collection::stream)
+        .map(DataflowBean::getDataStructureRef)
+        .map(ref -> resolveDataStructure(sdmxBeans, ref))
         .collect(Collectors.toMap(INamedBean::getId, dataStructureBean -> dataStructureBean));
   }
 
@@ -127,16 +143,16 @@ public class TrevasSDMXUtils {
             Collectors.toMap(
                 IVtlMappingBean::getAlias,
                 m ->
-                    sdmxBeans.getDataflows(m.getMapped()).stream()
-                        .flatMap(
-                            flow ->
-                                sdmxBeans.getDataStructures(flow.getDataStructureRef()).stream())
+                    sdmxBeans.getDataflows().stream()
+                        .filter(df -> m.getMapped().isMatch(df))
+                        .map(DataflowBean::getDataStructureRef)
+                        .map(ref -> resolveDataStructure(sdmxBeans, ref))
                         .collect(toSingleton())));
   }
 
   public static Structured.DataStructure buildStructureFromSDMX3(
       ReadableDataLocation rdl, String structureID) {
-    SdmxBeans sdmxBeans = structureReaderSDMX3.getSdmxBeans(rdl);
+    SdmxBeans sdmxBeans = parseSdmxBeans(rdl);
     return buildStructureFromSDMX3(sdmxBeans, structureID);
   }
 

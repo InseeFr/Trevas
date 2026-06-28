@@ -1,13 +1,20 @@
 package fr.insee.vtl.engine.processors;
 
-import static fr.insee.vtl.model.Structured.*;
+import static fr.insee.vtl.model.Structured.Component;
+import static fr.insee.vtl.model.Structured.DataStructure;
+import static java.util.stream.Collectors.toList;
 
+import fr.insee.vtl.engine.semantics.join.InMemoryJoinExecutor;
 import fr.insee.vtl.engine.utils.KeyExtractor;
 import fr.insee.vtl.engine.utils.MapCollector;
 import fr.insee.vtl.model.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.script.ScriptEngine;
 
 /**
@@ -32,12 +39,13 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
           new Dataset.Component(
               columnName, expressions.get(columnName).getType(), roles.get(columnName), true));
     }
+    newStructure.reindexKeys();
 
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         var dataset = expression.resolve(context);
-        List<List<Object>> result =
+        List<DataPoint> result =
             dataset.getDataPoints().stream()
                 .map(
                     dataPoint -> {
@@ -48,8 +56,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       }
                       return newDataPoint;
                     })
-                .collect(Collectors.toList());
-        return new InMemoryDataset(result, newStructure);
+                .collect(toList());
+        return InMemoryDataset.ofDataPoints(result, newStructure);
       }
 
       @Override
@@ -72,7 +80,7 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         Dataset resolve = expression.resolve(context);
-        List<List<Object>> result =
+        List<DataPoint> result =
             resolve.getDataPoints().stream()
                 .filter(
                     map -> {
@@ -80,8 +88,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       if (res == null) return false;
                       return (boolean) res;
                     })
-                .collect(Collectors.toList());
-        return new InMemoryDataset(result, getDataStructure());
+                .collect(toList());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
     };
   }
@@ -91,35 +99,37 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     if (fromTo.isEmpty()) {
       return expression;
     }
-    var structure =
-        expression.getDataStructure().values().stream()
-            .map(
-                component ->
-                    !fromTo.containsKey(component.getName())
-                        ? component
-                        : new Dataset.Component(
-                            fromTo.get(component.getName()),
-                            component.getType(),
-                            component.getRole(),
-                            component.getNullable()))
-            .collect(Collectors.toList());
-    DataStructure renamedStructure = new DataStructure(structure);
+    Map<String, Component> components = new LinkedHashMap<>();
+    for (Component component : expression.getDataStructure().values()) {
+      String name = fromTo.getOrDefault(component.getName(), component.getName());
+      components.put(
+          name,
+          name.equals(component.getName())
+              ? component
+              : new Component(
+                  name, component.getType(), component.getRole(), component.getNullable()));
+    }
+    DataStructure renamedStructure = new DataStructure(components.values());
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var result =
+        DataStructure sourceStructure = expression.getDataStructure();
+        List<DataPoint> result =
             expression.resolve(context).getDataPoints().stream()
                 .map(
                     dataPoint -> {
-                      var newDataPoint = new DataPoint(renamedStructure, dataPoint);
-                      for (String fromName : fromTo.keySet()) {
-                        var toName = fromTo.get(fromName);
-                        newDataPoint.set(toName, dataPoint.get(fromName));
+                      var newDataPoint = new DataPoint(renamedStructure);
+                      for (Component component : sourceStructure.values()) {
+                        String from = component.getName();
+                        String to = fromTo.getOrDefault(from, from);
+                        if (renamedStructure.containsKey(to)) {
+                          newDataPoint.set(to, dataPoint.get(from));
+                        }
                       }
                       return newDataPoint;
                     })
-                .collect(Collectors.toList());
-        return new InMemoryDataset(result, getDataStructure());
+                .collect(toList());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
       @Override
@@ -131,18 +141,16 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   @Override
   public DatasetExpression executeProject(DatasetExpression expression, List<String> columnNames) {
-
+    DataStructure source = expression.getDataStructure();
     var structure =
-        expression.getDataStructure().values().stream()
-            .filter(component -> columnNames.contains(component.getName()))
-            .collect(Collectors.toList());
+        columnNames.stream().map(source::get).filter(Objects::nonNull).collect(toList());
     var newStructure = new DataStructure(structure);
 
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
         var columnNames = getColumnNames();
-        List<List<Object>> result =
+        List<DataPoint> result =
             expression.resolve(context).getDataPoints().stream()
                 .map(
                     data -> {
@@ -152,9 +160,8 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                       }
                       return projectedDataPoint;
                     })
-                .collect(Collectors.toList());
-        // TODO: Use List<Datapoint> type for result to avoid conversion.
-        return new InMemoryDataset(result, getDataStructure());
+                .collect(toList());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
       }
 
       @Override
@@ -165,22 +172,33 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   }
 
   @Override
-  public DatasetExpression executeUnion(List<DatasetExpression> datasets) {
+  public DatasetExpression executeUnion(
+      List<DatasetExpression> datasets, List<String> dedupeOnColumns) {
     return new DatasetExpression(datasets.get(0)) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        Stream<DataPoint> stream = Stream.empty();
-        for (DatasetExpression datasetExpression : datasets) {
-          var dataset = datasetExpression.resolve(context);
-          stream = Stream.concat(stream, dataset.getDataPoints().stream());
+        List<DataPoint> data =
+            datasets.stream()
+                .flatMap(ds -> ds.resolve(context).getDataPoints().stream())
+                .collect(toList());
+        if (!dedupeOnColumns.isEmpty()) {
+          Set<List<Object>> seen = new LinkedHashSet<>();
+          data =
+              data.stream()
+                  .filter(
+                      point -> {
+                        List<Object> key =
+                            dedupeOnColumns.stream().map(point::get).collect(toList());
+                        return seen.add(key);
+                      })
+                  .collect(toList());
         }
-        List<DataPoint> data = stream.distinct().collect(Collectors.toList());
-        return new InMemoryDataset(data, getDataStructure());
+        return InMemoryDataset.ofDataPoints(data, getDataStructure());
       }
 
       @Override
       public DataStructure getDataStructure() {
-        return (datasets.get(0)).getDataStructure();
+        return datasets.get(0).getDataStructure();
       }
     };
   }
@@ -190,31 +208,17 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
       DatasetExpression expression,
       List<String> groupBy,
       Map<String, AggregationExpression> collectorMap) {
-    // Create a keyExtractor with the columns we group by.
+    DataStructure inputStructure = expression.getDataStructure();
+    DataStructure outputStructure =
+        AggregationOutputStructure.mechanical(inputStructure, groupBy, collectorMap);
+    DataStructure collectorStructure = collectorOnlyStructure(outputStructure, collectorMap);
     var keyExtractor = new KeyExtractor(groupBy);
 
-    // Compute the new data structure.
-    Map<String, Dataset.Component> newStructure = new LinkedHashMap<>();
-    for (Dataset.Component component : expression.getDataStructure().values()) {
-      if (groupBy.contains(component.getName())) {
-        newStructure.put(component.getName(), component);
-      }
-    }
-    for (Map.Entry<String, AggregationExpression> entry : collectorMap.entrySet()) {
-      // TODO: refine nullable strategy
-      newStructure.put(
-          entry.getKey(),
-          new Dataset.Component(
-              entry.getKey(), entry.getValue().getType(), Dataset.Role.MEASURE, true));
-    }
-
-    Structured.DataStructure structure = new Structured.DataStructure(newStructure.values());
     return new DatasetExpression(expression) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-
         List<DataPoint> data = expression.resolve(Map.of()).getDataPoints();
-        MapCollector collector = new MapCollector(structure, collectorMap);
+        MapCollector collector = new MapCollector(collectorStructure, collectorMap);
         List<DataPoint> collect =
             data.stream()
                 .collect(Collectors.groupingBy(keyExtractor, collector))
@@ -222,23 +226,33 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
                 .stream()
                 .map(
                     e -> {
-                      DataPoint dataPoint = e.getValue();
-                      Map<String, Object> identifiers = e.getKey();
-                      for (Map.Entry<String, Object> identifierElement : identifiers.entrySet()) {
-                        dataPoint.set(identifierElement.getKey(), identifierElement.getValue());
+                      DataPoint aggregated = e.getValue();
+                      DataPoint resultPoint = new DataPoint(outputStructure);
+                      for (String key : groupBy) {
+                        resultPoint.set(key, e.getKey().get(key));
                       }
-                      return dataPoint;
+                      for (String column : collectorMap.keySet()) {
+                        resultPoint.set(column, aggregated.get(column));
+                      }
+                      return resultPoint;
                     })
-                .collect(Collectors.toList());
+                .collect(toList());
 
-        return new InMemoryDataset(collect, structure);
+        return InMemoryDataset.ofDataPoints(collect, outputStructure);
       }
 
       @Override
       public DataStructure getDataStructure() {
-        return structure;
+        return outputStructure;
       }
     };
+  }
+
+  private static DataStructure collectorOnlyStructure(
+      DataStructure outputStructure, Map<String, AggregationExpression> collectorMap) {
+    List<Component> components =
+        collectorMap.keySet().stream().map(outputStructure::get).filter(Objects::nonNull).toList();
+    return new DataStructure(components);
   }
 
   @Override
@@ -329,104 +343,27 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     return leftMost;
   }
 
-  @Override
-  public DatasetExpression executeValidateDPruleset(
-      DataPointRuleset dpr,
-      DatasetExpression dataset,
-      String output,
-      Positioned pos,
-      List<String> toDrop) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DatasetExpression executeValidationSimple(
-      DatasetExpression dsE,
-      ResolvableExpression erCodeE,
-      ResolvableExpression erLevelE,
-      DatasetExpression imbalanceE,
-      String output,
-      Positioned pos) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DatasetExpression executeHierarchicalValidation(
-      DatasetExpression dsE,
-      HierarchicalRuleset hr,
-      String componentID,
-      String validationMode,
-      String inputMode,
-      String validationOutput,
-      Positioned pos) {
-    throw new UnsupportedOperationException();
-  }
-
-  /** Returns a structure with the common identifiers only once. */
-  private DataStructure createCommonStructure(
-      List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    List<Component> components = new ArrayList<>(identifiers);
-    for (Component component : left.getDataStructure().values()) {
-      if (!identifiers.contains(component)) {
-        components.add(component);
-      }
-    }
-    for (Component component : right.getDataStructure().values()) {
-      if (!identifiers.contains(component)) {
-        components.add(component);
-      }
-    }
-    return new DataStructure(components);
-  }
-
-  /** Creates a datapoint comparator that operates on the given identifiers only. */
-  private Comparator<DataPoint> createPredicate(List<Component> identifiers) {
-    return (dl, dr) -> {
-      for (Component identifier : identifiers) {
-        if (!Objects.equals(dl.get(identifier.getName()), dr.get(identifier.getName()))) {
-          return -1;
-        }
-      }
-      return 0;
-    };
-  }
-
   private DatasetExpression handleInnerJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
-    var predicate = createPredicate(identifiers);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var joinKeys = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
+    var leftColumns = left.getColumnNames();
 
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        for (DataPoint leftPoint : leftPoints) {
-          List<DataPoint> matches = new ArrayList<>();
-          for (DataPoint rightPoint : rightPoints) {
-            // Check equality
-            if (predicate.compare(leftPoint, rightPoint) == 0) {
-              matches.add(rightPoint);
-            }
-          }
-
-          if (!matches.isEmpty()) {
-            // Create merge datapoint.
-            var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getDataStructure().keySet()) {
-              mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-            }
-            for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, mergedPoint);
-              for (String rightColumn : right.getDataStructure().keySet()) {
-                matchPoint.set(rightColumn, match.get(rightColumn));
-              }
-              result.add(matchPoint);
-            }
-          }
-        }
-        return new InMemoryDataset(result, structure);
+        var leftStructure = left.getDataStructure();
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.innerJoin(
+                structure,
+                leftStructure,
+                rightStructure,
+                leftColumns,
+                joinKeys,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override
@@ -438,51 +375,33 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   private DatasetExpression handleFullJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    // Naive implementation, left and right union. Could be optimized.
+    List<String> dedupeOn = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
     return executeUnion(
-        List.of(
-            handleLeftJoin(identifiers, left, right), handleLeftJoin(identifiers, right, left)));
+        List.of(handleLeftJoin(identifiers, left, right), handleLeftJoin(identifiers, right, left)),
+        dedupeOn);
   }
 
   private DatasetExpression handleLeftJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
-    var predicate = createPredicate(identifiers);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var joinKeys = InMemoryJoinExecutor.joinKeyColumnNames(identifiers);
+    var leftColumns = left.getColumnNames();
 
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        for (DataPoint leftPoint : leftPoints) {
-          List<DataPoint> matches = new ArrayList<>();
-          for (DataPoint rightPoint : rightPoints) {
-            // Check equality
-            if (predicate.compare(leftPoint, rightPoint) == 0) {
-              matches.add(rightPoint);
-            }
-          }
-
-          // Create merge datapoint.
-          var mergedPoint = new DataPoint(structure);
-          for (String leftColumn : left.getDataStructure().keySet()) {
-            mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-          }
-
-          if (matches.isEmpty()) {
-            result.add(mergedPoint);
-          } else {
-            for (DataPoint match : matches) {
-              var matchPoint = new DataPoint(structure, mergedPoint);
-              for (String rightColumn : right.getDataStructure().keySet()) {
-                matchPoint.set(rightColumn, match.get(rightColumn));
-              }
-              result.add(matchPoint);
-            }
-          }
-        }
-        return new InMemoryDataset(result, structure);
+        var leftStructure = left.getDataStructure();
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.leftJoin(
+                structure,
+                leftStructure,
+                rightStructure,
+                leftColumns,
+                joinKeys,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override
@@ -494,27 +413,21 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
 
   private DatasetExpression handleCrossJoin(
       List<Component> identifiers, DatasetExpression left, DatasetExpression right) {
-    var structure = createCommonStructure(identifiers, left, right);
+    var structure = InMemoryJoinExecutor.commonStructure(identifiers, left, right);
+    var leftColumns = left.getColumnNames();
+
     return new DatasetExpression(left) {
       @Override
       public Dataset resolve(Map<String, Object> context) {
-        var leftPoints = left.resolve(context).getDataPoints();
-        var rightPoints = right.resolve(context).getDataPoints();
-        List<DataPoint> result = new ArrayList<>();
-        // Nested-loop implementation
-        for (DataPoint leftPoint : leftPoints) {
-          for (DataPoint rightPoint : rightPoints) {
-            var mergedPoint = new DataPoint(structure);
-            for (String leftColumn : left.getDataStructure().keySet()) {
-              mergedPoint.set(leftColumn, leftPoint.get(leftColumn));
-            }
-            for (String rightColumn : right.getDataStructure().keySet()) {
-              mergedPoint.set(rightColumn, rightPoint.get(rightColumn));
-            }
-            result.add(mergedPoint);
-          }
-        }
-        return new InMemoryDataset(result, structure);
+        var rightStructure = right.getDataStructure();
+        List<DataPoint> result =
+            InMemoryJoinExecutor.crossJoin(
+                structure,
+                rightStructure,
+                leftColumns,
+                left.resolve(context).getDataPoints(),
+                right.resolve(context).getDataPoints());
+        return InMemoryDataset.ofDataPoints(result, structure);
       }
 
       @Override

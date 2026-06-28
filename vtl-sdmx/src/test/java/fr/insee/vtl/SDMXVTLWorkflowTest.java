@@ -16,7 +16,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class SDMXVTLWorkflowTest {
@@ -30,11 +29,9 @@ public class SDMXVTLWorkflowTest {
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
 
-    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark4");
   }
 
-  // Disabled for now, we have to update the remote resource
-  @Disabled
   @Test
   void testRefFromRepo() {
 

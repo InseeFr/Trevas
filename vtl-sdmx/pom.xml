@@ -7,25 +7,16 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.4.0</version>
+        <version>2.5.0</version>
     </parent>
 
     <artifactId>vtl-sdmx</artifactId>
     <name>VTL SDMX</name>
     <description>Dataset wrapper around SDMX</description>
-    <version>2.4.0</version>
-
-    <repositories>
-        <repository>
-            <id>Github</id>
-            <url>https://maven.pkg.github.com/bis-med-it/sdmx-core</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+    <version>2.5.0</version>
 
     <properties>
+        <sdmx.version>2.5.2</sdmx.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -35,29 +26,51 @@
         <dependency>
             <groupId>io.sdmx</groupId>
             <artifactId>fusion-sdmx-ml</artifactId>
-            <version>1.1.10</version>
+            <version>${sdmx.version}</version>
+            <exclusions>
+                <!-- fusion-sdmx-vtl pulls antlr4-runtime 4.13.x, which breaks Spark 3.5 SQL parser (4.9.x). -->
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+                <!-- Keep Jackson aligned with Spark / vtl-jackson (2.15.x). -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.4.0</version>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.4.0</version>
+            <version>2.5.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-csv</artifactId>
-            <version>2.4.0</version>
+            <version>2.5.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Integration tests use Spark 4: fusion-sdmx-vtl and Spark 4 both need ANTLR 4.13.x,
+             which is incompatible with Spark 3.5 (4.9.x) on a single classpath. -->
         <dependency>
             <groupId>fr.insee.trevas</groupId>
-            <artifactId>vtl-spark</artifactId>
-            <version>2.4.0</version>
+            <artifactId>vtl-spark4</artifactId>
+            <version>2.5.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -66,6 +79,12 @@
             <artifactId>slf4j-simple</artifactId>
             <version>2.1.0-alpha1</version>
             <scope>test</scope>
+        </dependency>
+        <!-- fusion-sdmx-vtl and Spark 4 share org.antlr.v4.runtime (not fr.insee.vtl.antlr). -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.spark4.version}</version>
         </dependency>
 
     </dependencies>

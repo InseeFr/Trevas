@@ -76,6 +76,32 @@ public class IndexedHashMap<K, V> implements Map<K, V> {
   }
 
   /**
+   * Returns the key at the given row index (see {@link #indexOfKey(Object)}).
+   *
+   * @throws IndexOutOfBoundsException if no key is assigned that index
+   */
+  public K keyAtIndex(int index) {
+    for (Map.Entry<K, Integer> entry : indices.entrySet()) {
+      if (entry.getValue() == index) {
+        return entry.getKey();
+      }
+    }
+    throw new IndexOutOfBoundsException("no key at index " + index);
+  }
+
+  /**
+   * Reassigns indices {@code 0..size-1} in {@link #keySet()} insertion order. Keeps {@link
+   * #indexOfKey} aligned with column order after in-place key updates (e.g. join rename merging two
+   * components to the same name).
+   */
+  public void reindexKeys() {
+    int index = 0;
+    for (K key : delegate.keySet()) {
+      indices.put(key, index++);
+    }
+  }
+
+  /**
    * The index of the first occurrence of a given value in the map, or -1 if the value is not
    * present.
    *

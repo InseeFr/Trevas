@@ -31,7 +31,7 @@ public class BPETest {
 
     ScriptEngineManager mgr = new ScriptEngineManager();
     engine = mgr.getEngineByExtension("vtl");
-    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark");
+    engine.put(VtlScriptEngine.PROCESSING_ENGINE_NAMES, "spark4");
   }
 
   @Test

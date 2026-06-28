@@ -6,6 +6,21 @@ slug: /releases/2.x.x
 custom_edit_url: null
 ---
 
+## 版本 2.5.0 - 06/28/26
+
+(请参阅技术发布 [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.5.0))
+
+- 完整支持聚合语法并重构聚合流水线
+- 病毒属性：`VIRALATTRIBUTE` 角色，一元与二元传播
+- 病毒属性在 membership、join 和聚合结果中的支持
+- 新增 `sub` 运算符
+- Join 改进：join 后的列顺序、内存引擎与 Spark
+- 单度量数据集上符合 VTL 规范的 `*_var` 重命名
+- 引擎重构：语义执行器层（`semantics/*`）、验证与 join 编排
+- 性能：AST 解析缓存、聚合的 Welford 累加器、分层验证减少 Spark driver collect
+- SDMX 依赖升级至 2.5.2
+- TCK 稳定性改进（输出顺序、比较、CSV、SDMX 工作流）
+
 ## 版本 2.4.0 - 05/28/26
 
 (请参阅技术发布 [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.4.0))
