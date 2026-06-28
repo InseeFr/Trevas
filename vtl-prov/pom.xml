@@ -24,7 +24,7 @@
              Default Spark 4: vtl-sdmx (test) and fusion-sdmx-vtl need ANTLR 4.13.x on the classpath. -->
         <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
         <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
-        <jackson.version>2.18.2</jackson.version>
+        <jackson.version>2.22.0</jackson.version>
         <antlr.runtime.version>${antlr4.spark4.version}</antlr.runtime.version>
     </properties>
 
