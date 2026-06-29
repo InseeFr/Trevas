@@ -6,13 +6,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>2.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>coverage</artifactId>
     <description>Aggregate Coverage Report</description>
     <name>VTL coverage</name>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>2.6.0-SNAPSHOT</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -21,56 +21,50 @@
         <!-- Spark backend for TCK: default vtl-spark (Spark 3); profile spark4-tck uses vtl-spark4 -->
         <trevas.spark.artifact>vtl-spark</trevas.spark.artifact>
         <tck.suite.title>TCK VTL v2.1 (Spark 3)</tck.suite.title>
+        <!-- TCK default runs on Spark 3.5 (Jackson 2.15.x). -->
+        <jackson-bom.version>${jackson-bom.spark3.version}</jackson-bom.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-jackson</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-jdbc</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>${trevas.spark.artifact}</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-csv</artifactId>
-            <version>2.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
                     <systemPropertyVariables>

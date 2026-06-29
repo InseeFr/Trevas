@@ -6,6 +6,21 @@ slug: /releases/2.x.x
 custom_edit_url: null
 ---
 
+## Version 2.5.0 - 28/06/26
+
+(Voir la note technique sur [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.5.0))
+
+- Prise en charge complète de la syntaxe d'agrégation et refonte du pipeline d'agrégation
+- Attributs viraux : rôle `VIRALATTRIBUTE`, propagation unaire et binaire
+- Attributs viraux dans le membership, les joins et les résultats d'agrégation
+- Nouvel opérateur `sub`
+- Améliorations des joins : ordre des colonnes après join, in-memory et Spark
+- Renommage `*_var` conforme à la spec VTL sur les datasets mono-measure
+- Refactorisation du moteur : couche d'executors sémantiques (`semantics/*`), orchestration validation et join
+- Performances : cache du parse tree AST, accumulateur de Welford pour les agrégations, moins de collects driver Spark pour la validation hiérarchique
+- Mise à jour de la dépendance SDMX en 2.5.2
+- Stabilisation du TCK (ordre des sorties, comparaisons, CSV, workflow SDMX)
+
 ## Version 2.4.0 - 28/05/26
 
 (Voir la note technique sur [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.4.0))

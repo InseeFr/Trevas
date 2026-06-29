@@ -6,6 +6,21 @@ slug: /releases/2.x.x
 custom_edit_url: null
 ---
 
+## Versjon 2.5.0 - 06/28/26
+
+(Se teknisk utgivelse på [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.5.0))
+
+- Full støtte for aggregeringssyntaks og refaktorert aggregeringspipeline
+- Virale attributter: `VIRALATTRIBUTE`-rolle, unær og binær propagering
+- Virale attributter i membership, joins og aggregeringsresultater
+- Ny `sub`-operator
+- Join-forbedringer: kolonnerekkefølge etter join, in-memory og Spark
+- VTL-kompatibel `*_var`-omdøping på mono-measure datasett
+- Motorrefaktorering: semantisk executor-lag (`semantics/*`), validerings- og join-orkestrering
+- Ytelse: AST parse cache, Welford-akkumulator for aggregeringer, færre Spark driver collects for hierarkisk validering
+- SDMX-avhengighet oppdatert til 2.5.2
+- TCK-stabilitet (output-rekkefølge, sammenligninger, CSV, SDMX workflow)
+
 ## Versjon 2.4.0 - 05/28/26
 
 (Se teknisk utgivelse på [Github](https://github.com/InseeFr/Trevas/releases/tag/v2.4.0))
