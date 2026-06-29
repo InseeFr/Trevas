@@ -10,14 +10,6 @@
         <version>2.6.0-SNAPSHOT</version>
     </parent>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.threeten</groupId>
-            <artifactId>threeten-extra</artifactId>
-            <version>1.8.0</version>
-        </dependency>
-    </dependencies>
-
     <artifactId>vtl-model</artifactId>
     <name>VTL Model</name>
     <description>Model describing VTL expressions and bindings</description>
@@ -28,5 +20,12 @@
             ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.threeten</groupId>
+            <artifactId>threeten-extra</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>
