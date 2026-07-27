@@ -10,6 +10,7 @@ import fr.insee.vtl.engine.exceptions.VtlSyntaxException;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -244,6 +245,29 @@ public class VtlScriptEngineTest {
                         res1 := testTrim(res);\
                         """);
     assertThat(engine.get("res1")).isEqualTo("FOO BAR");
+  }
+
+  @Test
+  public void testRegisterProvider() throws ScriptException {
+    VtlScriptEngine engine = (VtlScriptEngine) this.engine;
+    engine.registerProvider(
+        new FunctionProvider() {
+          @Override
+          public Map<String, List<Method>> getFunctions(ScriptEngine vtlEngine) {
+            return Map.of(
+                "providerUpper",
+                List.of(Fun.toMethod(TextFunctions::testUpper)),
+                "providerTrim",
+                List.of(Fun.toMethod(TextFunctions::testTrim)));
+          }
+        });
+
+    engine.eval(
+        """
+                        res := providerUpper("  foo ");
+                        res1 := providerTrim(res);\
+                        """);
+    assertThat(engine.get("res1")).isEqualTo("FOO");
   }
 
   @Test

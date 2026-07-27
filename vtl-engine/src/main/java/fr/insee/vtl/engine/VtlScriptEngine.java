@@ -16,9 +16,6 @@ import fr.insee.vtl.parser.VtlParser;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.script.*;
@@ -124,63 +121,6 @@ public class VtlScriptEngine extends AbstractScriptEngine {
             from.getCharPositionInLine(),
             to.getCharPositionInLine() + (to.getStopIndex() - to.getStartIndex() + 1));
     return () -> position;
-  }
-
-  public static boolean matchParameters(Method method, Class<?>... classes) {
-    Type[] genericParameterTypes = method.getGenericParameterTypes();
-    Class<?>[] parameterTypes = method.getParameterTypes();
-
-    if (classes.length != parameterTypes.length) {
-      return false;
-    }
-
-    Map<TypeVariable<?>, Class<?>> typeArguments = new HashMap<>();
-
-    for (int i = 0; i < parameterTypes.length; i++) {
-      if (!isAssignableTo(classes[i], parameterTypes[i], genericParameterTypes[i], typeArguments)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  static boolean isAssignableTo(
-      Class<?> clazz,
-      Class<?> target,
-      Type genericTarget,
-      Map<TypeVariable<?>, Class<?>> typeArguments) {
-    if (target.isAssignableFrom(clazz)) {
-      if (genericTarget instanceof TypeVariable<?> typeVariable) {
-        Class<?> existingTypeArgument = typeArguments.get(typeVariable);
-        if (existingTypeArgument == null) {
-          typeArguments.put(typeVariable, clazz);
-        } else return existingTypeArgument.equals(clazz);
-      }
-      return true;
-    }
-
-    if (genericTarget instanceof ParameterizedType parameterizedType) {
-      Type[] typeArgumentsArray = parameterizedType.getActualTypeArguments();
-
-      if (typeArgumentsArray.length != 1) {
-        return false;
-      }
-
-      Type typeArgument = typeArgumentsArray[0];
-
-      if (typeArgument instanceof TypeVariable<?> typeVariable) {
-        Class<?> existingTypeArgument = typeArguments.get(typeVariable);
-        if (existingTypeArgument == null) {
-          typeArguments.put(typeVariable, clazz);
-        } else return existingTypeArgument.equals(clazz);
-        return true;
-      } else if (typeArgument instanceof Class<?> classArgument) {
-        return classArgument.isAssignableFrom(clazz);
-      }
-    }
-
-    return false;
   }
 
   /**
