@@ -1,0 +1,75 @@
+# Worked example from spec 02 §2. One statement, two chained clauses:
+#   ds_mul --[filter]--> #s1.1 (anon) --[calc]--> ds_res
+# Expression nodes: e1.1 (filter predicate), e1.2 (calc RHS).
+
+# --- input binding: ds_mul
+ds_mul@0         a          dataset
+ds_mul@0.id      a          variable
+ds_mul@0.id      dataset    ds_mul@0
+ds_mul@0.id      role       IDENTIFIER
+ds_mul@0.id      type       STRING
+ds_mul@0.var1    a          variable
+ds_mul@0.var1    dataset    ds_mul@0
+ds_mul@0.var1    role       MEASURE
+ds_mul@0.var1    type       INTEGER
+ds_mul@0.var2    a          variable
+ds_mul@0.var2    dataset    ds_mul@0
+ds_mul@0.var2    role       MEASURE
+ds_mul@0.var2    type       INTEGER
+
+# --- clause 1: filter -> anonymous intermediate #s1.1 (structure unchanged)
+#s1.1            a          dataset
+#s1.1            anon       true
+#s1.1.id         a          variable
+#s1.1.id         dataset    #s1.1
+#s1.1.id         role       IDENTIFIER
+#s1.1.id         type       STRING
+#s1.1.var1       a          variable
+#s1.1.var1       dataset    #s1.1
+#s1.1.var1       role       MEASURE
+#s1.1.var1       type       INTEGER
+#s1.1.var2       a          variable
+#s1.1.var2       dataset    #s1.1
+#s1.1.var2       role       MEASURE
+#s1.1.var2       type       INTEGER
+
+e1.1             a          expression
+e1.1             src        "mod(var1, 2) = 0"
+e1.1             dependsOn  ds_mul@0.var1
+
+#s1.1            dependsOn  ds_mul@0     op=filter
+#s1.1            dependsOn  e1.1         op=filter  role=condition
+#s1.1.id         dependsOn  ds_mul@0.id   op=filter
+#s1.1.var1       dependsOn  ds_mul@0.var1 op=filter
+#s1.1.var2       dependsOn  ds_mul@0.var2 op=filter
+
+# --- clause 2: calc -> ds_res (adds var_sum, others pass through)
+ds_res@1         a          dataset
+ds_res@1         src        "ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2]"
+ds_res@1.id      a          variable
+ds_res@1.id      dataset    ds_res@1
+ds_res@1.id      role       IDENTIFIER
+ds_res@1.id      type       STRING
+ds_res@1.var1    a          variable
+ds_res@1.var1    dataset    ds_res@1
+ds_res@1.var1    role       MEASURE
+ds_res@1.var1    type       INTEGER
+ds_res@1.var2    a          variable
+ds_res@1.var2    dataset    ds_res@1
+ds_res@1.var2    role       MEASURE
+ds_res@1.var2    type       INTEGER
+ds_res@1.var_sum a          variable
+ds_res@1.var_sum dataset    ds_res@1
+ds_res@1.var_sum role       MEASURE
+ds_res@1.var_sum type       INTEGER
+
+e1.2             a          expression
+e1.2             src        "var1 + var2"
+e1.2             dependsOn  #s1.1.var1
+e1.2             dependsOn  #s1.1.var2
+
+ds_res@1         dependsOn  #s1.1        op=calc
+ds_res@1.var_sum dependsOn  e1.2         op=calc
+ds_res@1.id      dependsOn  #s1.1.id     op=calc
+ds_res@1.var1    dependsOn  #s1.1.var1   op=calc
+ds_res@1.var2    dependsOn  #s1.1.var2   op=calc

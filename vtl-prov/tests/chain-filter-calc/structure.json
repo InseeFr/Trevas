@@ -1,0 +1,7 @@
+{
+  "ds_mul": {
+    "id":   { "role": "IDENTIFIER", "type": "STRING" },
+    "var1": { "role": "MEASURE",    "type": "INTEGER" },
+    "var2": { "role": "MEASURE",    "type": "INTEGER" }
+  }
+}
