@@ -35,6 +35,8 @@ import javax.script.*;
  */
 public class VtlScriptEngine extends AbstractScriptEngine {
 
+  private static final System.Logger LOGGER = System.getLogger(VtlScriptEngine.class.getName());
+
   /** Script engine property giving the (comma-separated) list of engine names. */
   public static final String PROCESSING_ENGINE_NAMES = "$vtl.engine.processing_engine_names";
 
@@ -61,8 +63,25 @@ public class VtlScriptEngine extends AbstractScriptEngine {
   public VtlScriptEngine(ScriptEngineFactory factory) {
     this.factory = factory;
     registerProvider(NativeFunctionProviders.INSTANCE);
-    for (FunctionProvider provider : ServiceLoader.load(FunctionProvider.class)) {
-      registerProvider(provider);
+    registerServiceLoaderProviders();
+  }
+
+  /**
+   * Registers every {@link FunctionProvider} discovered on the classpath. A broken provider — an
+   * unloadable class, or one whose {@code getFunctions} throws — is skipped with a warning instead
+   * of preventing the engine from starting.
+   */
+  private void registerServiceLoaderProviders() {
+    Iterator<FunctionProvider> providers = ServiceLoader.load(FunctionProvider.class).iterator();
+    while (true) {
+      try {
+        if (!providers.hasNext()) {
+          break;
+        }
+        registerProvider(providers.next());
+      } catch (ServiceConfigurationError | RuntimeException e) {
+        LOGGER.log(System.Logger.Level.WARNING, "Skipping unloadable VTL FunctionProvider", e);
+      }
     }
   }
 
