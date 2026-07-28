@@ -8,6 +8,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +53,14 @@ public final class NativeFunctionRegistry {
 
   public static NativeFunctionRegistry empty() {
     return new NativeFunctionRegistry();
+  }
+
+  /**
+   * Unmodifiable live view of the registered bindings, keyed by VTL function name. Reflects
+   * subsequent registrations; each value is the (immutable) list of overloads for that name.
+   */
+  public Map<String, List<Method>> asMap() {
+    return Collections.unmodifiableMap(byVtlName);
   }
 
   public void registerAll(Map<String, List<Method>> functions) {

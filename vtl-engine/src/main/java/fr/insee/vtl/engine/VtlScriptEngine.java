@@ -399,4 +399,14 @@ public class VtlScriptEngine extends AbstractScriptEngine {
     }
     return globalRegistry.putAndReturnPrevious(name, method);
   }
+
+  /** Read-only view of the natively registered functions, keyed by VTL function name. */
+  public Map<String, List<Method>> getRegisteredMethods() {
+    return functionRegistry.asMap();
+  }
+
+  /** Read-only view of the globally registered functions, keyed by VTL function name. */
+  public Map<String, List<Method>> getRegisteredGlobalMethods() {
+    return globalRegistry == null ? Map.of() : globalRegistry.asMap();
+  }
 }
