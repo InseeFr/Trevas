@@ -1,95 +1,20 @@
-package fr.insee.vtl.engine.expressions;
+package fr.insee.vtl.engine.functions.providers;
 
-import java.time.*;
-import java.time.temporal.*;
+import com.github.hervian.reflection.Fun;
+import java.lang.reflect.Method;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
-/**
- * This comment explains the temporal functionality supported by Trevas, as defined in the VTL 2.0
- * specification.
- *
- * <p>The specification describes temporal types such as date & time_period, time, and duration.
- * However, Trevas authors find these descriptions unsatisfactory. This section outlines our
- * implementation choices and how they differ from the spec.
- *
- * <p>Supported Java types in Trevas:
- *
- * <ul>
- *   <li>java.time.Instant: Represents a specific moment in time.
- *   <li>java.time.ZonedDateTime: Combines java.time.Instant with time zone information.
- *   <li>java.time.OffsetDateTime: Combines java.time.Instant with a time-zone offset.
- *   <li>org.threeten.extra.PeriodDuration: Represents a duration using both calendar units (years,
- *       months, etc.) and a precise duration between two time points.
- * </ul>
- *
- * <p>In the specification, the types date and time_period are presented as compound types with a
- * start and end, which complicates implementation. By defining a clear algebra between the types,
- * users can combine simple functions to achieve the desired results.
- *
- * <p>Algebraic operations:
- *
- * <ul>
- *   <li>Add or subtract PeriodDuration to/from Instant, ZonedDateTime, or OffsetDateTime, resulting
- *       in the same type.
- *   <li>Subtract one time point from another (Instant, ZonedDateTime, OffsetDateTime), resulting in
- *       PeriodDuration.
- * </ul>
- *
- * <p>Note: Using Instant with PeriodDuration may yield unreliable results without a time zone or
- * offset.
- *
- * <p>The VTL's definition of duration as "regular duration" and "frequency" is ambiguous. Mapping
- * this to PeriodDuration allows expression of both concepts, though operations may fail without
- * Zoned or Offset types.
- *
- * <p>Examples of temporal functions re-implemented in Trevas: <strong>period_indicator</strong>
- *
- * <p>Extracts the period of an interval.
- *
- * <p><strong>flow_to_stock</strong>
- *
- * <p>Replaces flow_to_stock with a summation over time identifiers:
- *
- * <pre>
- *     result := flow_to_stock(dataset)
- *     result := sum ( dataset over ( partition by Id_1, Id_Time ) );
- * </pre>
- *
- * <strong>stock_to_flow</strong>
- *
- * <p>Implements stock_to_flow using a lag function over time identifiers:
- *
- * <pre>
- *     result := stock_to_flow(dataset)
- *     result := dataset[calc lag_Me_1 := lag(Me_1, 1 over(partition by Id_1, order by Id_2))]
- *                        [calc Me_1     := Me_1 - nvl(lag_Me_1, 0)]
- *                        [drop lag_Me_1];
- * </pre>
- *
- * <strong>timeshift</strong>
- *
- * <p>Expresses timeshift as a multiplication operation on duration:
- *
- * <pre>
- *     result := timeshift(dataset, 1);
- *     result := dataset[calc id_time := id_time + duration * 1];
- * </pre>
- *
- * <strong>time_agg</strong>
- *
- * <p>Recommends using the truncate_time function before aggregation rather than using time_agg:
- *
- * <pre>
- *     result := sum(dataset) group all time_agg("A", _, Me_1)
- *     result := dataset[calc id_time := truncate_time(id_time, "year")]
- *                       [aggr Me_1 := sum(Me_1) group by id_time]
- *
- *     // Alternative method
- *     result := ds1[aggr test := sum(me1) group all truncate_time(t, "year")];
- * </pre>
- */
-public class TemporalFunctions {
+/** Native temporal scalar operators. */
+public final class TemporalFunctionsProvider {
 
   public static Instant addition(Instant op, PeriodDuration dur) {
     return op.plus(dur);
@@ -255,5 +180,53 @@ public class TemporalFunctions {
       case "second" -> ChronoUnit.SECONDS;
       default -> throw new IllegalArgumentException("Unsupported unit: " + unit);
     };
+  }
+
+  public Map<String, List<Method>> getFunctions() {
+    Map<String, List<Method>> functions = new java.util.LinkedHashMap<>();
+    functions.put(
+        "addition",
+        List.of(
+            Fun.<Instant, PeriodDuration>toMethod(TemporalFunctionsProvider::addition),
+            Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctionsProvider::addition),
+            Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctionsProvider::addition),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctionsProvider::addition),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctionsProvider::addition),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctionsProvider::addition)));
+    functions.put(
+        "subtraction",
+        List.of(
+            Fun.<Instant, PeriodDuration>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<ZonedDateTime, PeriodDuration>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<OffsetDateTime, PeriodDuration>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<PeriodDuration, Instant>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<PeriodDuration, ZonedDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<PeriodDuration, OffsetDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<Instant, Instant>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<Instant, ZonedDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<Instant, OffsetDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<ZonedDateTime, Instant>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<ZonedDateTime, ZonedDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<ZonedDateTime, OffsetDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<OffsetDateTime, Instant>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<OffsetDateTime, ZonedDateTime>toMethod(TemporalFunctionsProvider::subtraction),
+            Fun.<OffsetDateTime, OffsetDateTime>toMethod(TemporalFunctionsProvider::subtraction)));
+    functions.put(
+        "multiplication",
+        List.of(
+            Fun.<PeriodDuration, Long>toMethod(TemporalFunctionsProvider::multiplication),
+            Fun.<Long, PeriodDuration>toMethod(TemporalFunctionsProvider::multiplication)));
+    functions.put("timeshift", List.of(Fun.toMethod(TemporalFunctionsProvider::timeshift)));
+    functions.put(
+        "truncate_time",
+        List.of(
+            Fun.<Instant, String, String>toMethod(TemporalFunctionsProvider::truncate_time),
+            Fun.<Instant, String>toMethod(TemporalFunctionsProvider::truncate_time),
+            Fun.<ZonedDateTime, String>toMethod(TemporalFunctionsProvider::truncate_time),
+            Fun.<OffsetDateTime, String>toMethod(TemporalFunctionsProvider::truncate_time),
+            Fun.<Interval, String>toMethod(TemporalFunctionsProvider::truncate_time),
+            Fun.<Interval, String, String>toMethod(TemporalFunctionsProvider::truncate_time)));
+    functions.put("at_zone", List.of(Fun.toMethod(TemporalFunctionsProvider::at_zone)));
+    return functions;
   }
 }

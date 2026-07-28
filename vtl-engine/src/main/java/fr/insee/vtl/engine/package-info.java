@@ -23,9 +23,9 @@
  * </pre>
  *
  * <p>Cross-cutting attribute propagation lives in {@code semantics/attribute/}. Scalar native
- * helpers ({@link fr.insee.vtl.engine.expressions.TemporalFunctions}) live in {@code expressions/}.
- * Mechanical row algorithms (e.g. {@code InMemoryJoinExecutor}) live in {@code processors/} or
- * under {@code semantics.join} with an {@code InMemory*} prefix.
+ * helpers ({@link fr.insee.vtl.engine.functions.providers.TemporalFunctionsProvider}) live in
+ * {@code functions/providers/}. Mechanical row algorithms (e.g. {@code InMemoryJoinExecutor}) live
+ * in {@code processors/} or under {@code semantics.join} with an {@code InMemory*} prefix.
  *
  * <h2>Tests</h2>
  *

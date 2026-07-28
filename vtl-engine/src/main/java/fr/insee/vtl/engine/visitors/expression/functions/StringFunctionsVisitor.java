@@ -10,128 +10,19 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringUtils;
 
-/**
- * <code>ComparisonFunctionsVisitor</code> is the base visitor for expressions involving string
- * functions.
- */
+/** Dispatch for string function parse-tree nodes. */
 public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression> {
-
-  static final Pattern LTRIM = Pattern.compile("^\\s+");
-  static final Pattern RTRIM = Pattern.compile("\\s+$");
 
   private final ExpressionVisitor exprVisitor;
   private final GenericFunctionsVisitor genericFunctionsVisitor;
 
-  /**
-   * Constructor taking an expression visitor.
-   *
-   * @param expressionVisitor The visitor for the enclosing expression.
-   */
   public StringFunctionsVisitor(
       ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
     this.exprVisitor = Objects.requireNonNull(expressionVisitor);
     this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
   }
 
-  public static String trim(String value) {
-    if (value == null) {
-      return null;
-    }
-    return value.trim();
-  }
-
-  public static String ltrim(String value) {
-    if (value == null) {
-      return null;
-    }
-    return LTRIM.matcher(value).replaceAll("");
-  }
-
-  public static String rtrim(String value) {
-    if (value == null) {
-      return null;
-    }
-    return RTRIM.matcher(value).replaceAll("");
-  }
-
-  public static String ucase(String value) {
-    if (value == null) {
-      return null;
-    }
-    return value.toUpperCase();
-  }
-
-  public static String lcase(String value) {
-    if (value == null) {
-      return null;
-    }
-    return value.toLowerCase();
-  }
-
-  public static Long len(String value) {
-    if (value == null) {
-      return null;
-    }
-    return (long) value.length();
-  }
-
-  public static String substr(String value, Long start, Long len) {
-    if (value == null) {
-      return null;
-    }
-    if (start == null) {
-      start = 1L;
-    }
-    if (len == null) {
-      len = Long.valueOf(value.length());
-    }
-    if (start > value.length()) {
-      return "";
-    }
-    if (start != 0) {
-      start = start - 1;
-    }
-
-    var end = start + len;
-    if (end > value.length()) {
-      return value.substring(Math.toIntExact(start));
-    }
-    return value.substring(Math.toIntExact(start), Math.toIntExact(end));
-  }
-
-  public static String replace(String value, String pattern, String replacement) {
-    if (value == null || pattern == null) {
-      return null;
-    }
-    if (replacement == null) {
-      replacement = "";
-    }
-    return value.replaceAll(pattern, replacement);
-  }
-
-  public static Long instr(String v, String v2, Long start, Long occurence) {
-    if (v == null || v2 == null) {
-      return null;
-    }
-    if (start == null) {
-      start = 0L;
-    }
-    if (occurence == null) {
-      occurence = 1L;
-    }
-    return StringUtils.ordinalIndexOf(v.substring(start.intValue()), v2, occurence.intValue()) + 1L;
-  }
-
-  /**
-   * Visits expressions corresponding to unary string functions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the result of the string function on
-   *     the operand.
-   */
   @Override
   public ResolvableExpression visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
     try {
@@ -151,13 +42,6 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     }
   }
 
-  /**
-   * Visits expressions corresponding to the substring function on a string operand.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the result of the substring function
-   *     on the operand.
-   */
   @Override
   public ResolvableExpression visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
     try {
@@ -181,13 +65,6 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     }
   }
 
-  /**
-   * Visits expressions corresponding to the replace function on a string operand.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the result of the replace function on
-   *     the operand.
-   */
   @Override
   public ResolvableExpression visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
     try {
@@ -212,13 +89,6 @@ public class StringFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression>
     }
   }
 
-  /**
-   * Visits expressions corresponding to the pattern location function on a string operand.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the result of the pattern location
-   *     function on the operand.
-   */
   @Override
   public ResolvableExpression visitInstrAtom(VtlParser.InstrAtomContext ctx) {
     try {
