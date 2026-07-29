@@ -1,0 +1,3 @@
+// $input ds1: id STRING IDENTIFIER, m1 INTEGER MEASURE
+define operator addone (x integer) returns integer is x + 1 end operator;
+ds2 := ds1[calc m2 := addone(m1)];

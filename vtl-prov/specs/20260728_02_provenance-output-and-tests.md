@@ -2,7 +2,7 @@
 
 > Companion to [`20260728_01_provenance.md`](./20260728_01_provenance.md).
 > Defines the in-memory **graph IR** (the contract) and the corpus of
-> `.vtl` → `expected.facts` golden cases, one per VTL operation.
+> `.vtl` → `expected.dot` golden cases, one per VTL operation.
 
 ## 1. The graph IR
 
@@ -84,77 +84,69 @@ ds_res <- ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];
 
 Data nodes (dataset/variable instances), **expression nodes** (`e1.1` the
 predicate, `e1.2` the calc RHS), and `dependsOn` edges. The filter predicate is a
-first-class node; the anonymous intermediate `#s1a` keeps the two clauses
+first-class node; the anonymous intermediate `#s1.1` keeps the two clauses
 distinct:
 
 ```mermaid
 flowchart RL
     dsres_sum["ds_res@1.var_sum"] -->|dependsOn| e2["e1.2: var1 + var2"]
-    e2 -->|dependsOn| s1a_v1["#s1a.var1"]
-    e2 -->|dependsOn| s1a_v2["#s1a.var2"]
-    s1a["#s1a"] -->|"dependsOn (data)"| dsmul["ds_mul@0"]
+    e2 -->|dependsOn| s1a_v1["#s1.1.var1"]
+    e2 -->|dependsOn| s1a_v2["#s1.1.var2"]
+    s1a["#s1.1"] -->|"dependsOn (data)"| dsmul["ds_mul@0"]
     s1a -->|"dependsOn role=condition"| e1["e1.1: mod(var1,2)=0"]
     e1 -->|dependsOn| dsmul_v1["ds_mul@0.var1"]
     s1a_v1 -->|dependsOn| dsmul_v1
 ```
 
-The same graph as the golden **fact list** (`expected.facts`) — one
-`subject predicate object` line per node-property, one per edge (edges may carry
-trailing `key=value` annotations). `#`-comments and blank lines are cosmetic
-(stripped before comparison); assertion is set-equality over the remaining lines:
+The same graph as the golden **DOT** (`expected.dot`) — nodes carry attributes,
+edges carry `op`/`role` annotations (every edge is a `dependsOn`). Ordering is
+irrelevant (imported and compared as sets); `//` comments are ignored:
 
-```
-# dataset instances
-ds_mul@0          a          dataset
-#s1a              a          dataset
-#s1a              anon       true
-ds_res@1          a          dataset
+```dot
+digraph {
+  // dataset instances
+  "ds_mul@0"        [kind=dataset];
+  "#s1.1"           [kind=dataset, anon=true];
+  "ds_res@1"        [kind=dataset, src="ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2]"];
 
-# variable instances — membership via the `dataset` property
-ds_mul@0.var1     a          variable
-ds_mul@0.var1     dataset    ds_mul@0
-ds_mul@0.var1     role       MEASURE
-ds_mul@0.var1     type       INTEGER
-ds_res@1.var_sum  a          variable
-ds_res@1.var_sum  dataset    ds_res@1
-ds_res@1.var_sum  role       MEASURE
-ds_res@1.var_sum  type       INTEGER
-# (ds_mul@0.{id,var2}, #s1a.*, ds_res@1.{id,var1,var2} elided for brevity)
+  // variable instances — membership via the `dataset` attribute
+  "ds_mul@0.var1"    [kind=variable, dataset="ds_mul@0", role=MEASURE, type=INTEGER];
+  "ds_res@1.var_sum" [kind=variable, dataset="ds_res@1", role=MEASURE, type=INTEGER];
+  // (ds_mul@0.{id,var2}, "#s1.1".*, ds_res@1.{id,var1,var2} elided for brevity)
 
-# expression nodes (reference-level: one node per whole expression)
-e1.1              a          expression
-e1.1              src        "mod(var1, 2) = 0"
-e1.2              a          expression
-e1.2              src        "var1 + var2"
+  // expression nodes (reference-level: one node per whole expression)
+  "e1.1"            [kind=expression, src="mod(var1, 2) = 0"];
+  "e1.2"            [kind=expression, src="var1 + var2"];
 
-# dependsOn (dependent -> dependency)
-# -- filter clause: #s1a from the input dataset (data) and the predicate (condition)
-#s1a              dependsOn  ds_mul@0        op=filter
-#s1a              dependsOn  e1.1            op=filter  role=condition
-e1.1              dependsOn  ds_mul@0.var1
-#s1a.var1         dependsOn  ds_mul@0.var1   op=filter
-#s1a.var2         dependsOn  ds_mul@0.var2   op=filter
-# -- calc clause: var_sum from its defining expression; others pass through
-ds_res@1          dependsOn  #s1a            op=calc
-ds_res@1.var_sum  dependsOn  e1.2            op=calc
-e1.2              dependsOn  #s1a.var1
-e1.2              dependsOn  #s1a.var2
-ds_res@1.var1     dependsOn  #s1a.var1       op=calc
-# ... pass-through chains for id/var2 likewise
+  // filter clause: #s1.1 from the input dataset (data) and the predicate (condition)
+  "#s1.1"           -> "ds_mul@0"       [op=filter];
+  "#s1.1"           -> "e1.1"           [op=filter, role=condition];
+  "e1.1"            -> "ds_mul@0.var1";
+  "#s1.1.var1"      -> "ds_mul@0.var1"  [op=filter];
+  "#s1.1.var2"      -> "ds_mul@0.var2"  [op=filter];
+
+  // calc clause: var_sum from its defining expression; others pass through
+  "ds_res@1"        -> "#s1.1"          [op=calc];
+  "ds_res@1.var_sum"-> "e1.2"           [op=calc];
+  "e1.2"            -> "#s1.1.var1";
+  "e1.2"            -> "#s1.1.var2";
+  "ds_res@1.var1"   -> "#s1.1.var1"     [op=calc];
+  // ... pass-through chains for id/var2 likewise
+}
 ```
 
-The filter is now fully represented: `#s1a dependsOn e1.1 (role=condition)`, and
-`e1.1 dependsOn ds_mul@0.var1`. Nothing is dropped and nothing is conflated — the
+The filter is fully represented: `"#s1.1" -> "e1.1" [role=condition]`, and
+`"e1.1" -> "ds_mul@0.var1"`. Nothing is dropped and nothing is conflated — the
 condition points at a *boolean expression node*, structurally distinct from the
-value chain `var_sum → e1.2 → #s1a.var1 → ds_mul.var1`. Dataset-level lineage
-(`ds_res@1 dependsOn ds_mul@0`) and pure value lineage (drop the `condition`
-edge) are *views* (§1.3), not stored here.
+value chain `var_sum → e1.2 → #s1.1.var1 → ds_mul.var1`. Dataset-level lineage
+(`ds_res@1 -> ds_mul@0`) and pure value lineage (drop the `condition` edge) are
+*views* (§1.3), not stored here.
 
 ## 3. Corpus layout
 
 ```
 vtl-prov/tests/
-  01-assignment/     input.vtl  expected.facts   [expected.dot]
+  01-assignment/     input.vtl  expected.dot
   02-arithmetic/     ...
   ...
 ```
@@ -163,55 +155,55 @@ vtl-prov/tests/
   directives (and optional `$output`), so the case is self-contained. Directive
   format: [`20260729_01_vtl-fixture-directives.md`](./20260729_01_vtl-fixture-directives.md)
   (quick reference in `../tests/README.md`); the keyword set is open/extensible.
-- `expected.facts` — the flat fact list (the assertion). Format in §4.
-- `expected.dot` (optional) — generated DOT render, for human review only.
+- `expected.dot` — the provenance graph as Graphviz **DOT** (the assertion, and
+  it renders to a picture for review). Format in §4.
 
-One parameterized test per folder: run provenance → serialize the IR to the fact
-list → assert **set-equality of non-comment lines** against `expected.facts`.
-Because ids are deterministic (§4) no graph isomorphism is needed; a mismatch is
-reported as added/removed lines. A separate, smaller RDF-renderer test covers the
-SDTH projection on a couple of cases.
+One parameterized test per folder: run provenance → get the JGraphT graph;
+**import `expected.dot` via jgrapht-io** into another graph; assert the two are
+equal as sets (vertices with attributes, edges with endpoints + attributes).
+Because ids are deterministic (§4) no isomorphism search is needed.
 
-## 4. The fact-list format & determinism (hard requirement)
+## 4. Golden format: DOT (hard requirement: determinism)
 
-Golden files must be byte-stable. **No random UUIDs.** Local ids are built from
-stable coordinates (readable short forms shown in §2; the exact strings are
-negotiable, they only need to be deterministic and collision-free):
+Goldens are **Graphviz DOT**, read and written with **`jgrapht-io`**
+(`DOTImporter` / `DOTExporter`; add `org.jgrapht:jgrapht-io`, whose parser dep
+`antlr4-runtime` VTL already resembles). DOT is chosen because it carries node
+*and* edge attributes natively, accepts our ids verbatim as quoted strings, is
+hand-writable, and renders to an image directly.
 
-```
-dataset      {name}@{definingStmtIndex}             bindings @0; anon: #s{stmt}{seq}
-variable     {datasetId}.{componentName}            e.g. ds_res@1.var_sum
-expression   e{stmtIndex}.{seq}                      seq = position in a deterministic AST walk
-```
-
-**Grammar** — each non-blank, non-comment line is one fact:
+**Ids** — deterministic, no UUIDs (readable forms; exact strings negotiable):
 
 ```
-line     := nodeProp | edge
-nodeProp := id  ('a' | attrName)  object          # 3 tokens
-edge     := id  relName  id  annotation*          # >=3 tokens
-relName  := 'dependsOn'                            # (also 'memberOf' if a case prefers an edge)
-annotation := key '=' value                        # e.g. op=calc, role=condition
-attrName := 'name' | 'role' | 'type' | 'dataset' | 'src' | 'anon' | ...
-object   := id | bareword | literal                # literal = double-quoted, N-Triples escaping
-comment  := '#' .*            (stripped)
+dataset      "{name}@{definingStmtIndex}"     bindings @0; anon: "#s{stmt}.{seq}"
+variable     "{datasetId}.{componentName}"    e.g. "ds_res@1.var_sum"
+expression   "e{stmtIndex}.{seq}"             seq = position in a deterministic AST walk
 ```
 
-- Node typing is `subject a <kind>` (`dataset` / `variable` / `expression`).
-- Node properties use a lowercase `attrName` predicate; the object is a bareword
-  or a double-quoted literal (N-Triples escaping `\"`, `\\`, `\n`; `src` collapsed
-  to one line).
-- Edges use `dependsOn` (dependent → dependency) and may carry trailing
-  `key=value` annotations — `op` (the clause/operator) and `role` (`condition`
-  for predicates/selectors; absent = value/operand flow). Membership is the node
-  property `dataset` by default.
-- There is **no** fixed edge-kind vocabulary — relations and annotations are open.
+**Conventions:**
 
-**Canonical serialization:** within an edge line, sort annotations by key; then
-emit every fact and sort the lines lexicographically as a set. That is the whole
-canonical form. The test strips comments/blanks from both sides and compares the
-two line-sets, so hand-written fixtures may keep `#` section headers and spacing
-for readability without affecting the assertion.
+- `digraph { … }`; one directed edge per dependency.
+- **Node:** `"id" [kind=<k>, …attrs…];` with `kind` ∈ `dataset | variable |
+  expression`.
+  - variable: `dataset` (owning id), `role`, `type`.
+  - dataset: `src` (defining fragment); `anon=true` for intermediates.
+  - expression: `src`.
+- **Edge:** `"from" -> "to" [op=<clause>, role=condition];`. **Every edge is a
+  `dependsOn`** (dependent → dependency) — no `rel` attribute needed. `op` names
+  the clause/operator; `role=condition` marks predicates/selectors (absent =
+  value/operand flow). Unannotated edges are just `"a" -> "b";`.
+- **Membership** is the variable's `dataset` attribute (not a subgraph cluster;
+  clusters may be added purely for rendering, they carry no assertion).
+- **Quoting:** ids are always quoted. Attribute values are quoted when they
+  contain non-identifier characters (ids, `src` text, `op="+"`); plain enums
+  (`MEASURE`, `STRING`, `condition`) and `true` may be bare. `src` is a
+  single-line string.
+
+**Determinism / comparison.** Ordering is irrelevant: the test imports both sides
+via `DOTImporter` and compares the vertex set (id + attribute map) and edge set
+(ordered endpoints + attribute map). Deterministic ids make this a plain set
+equality; a mismatch reports added/removed vertices or edges. `//` and `/* */`
+comments are allowed and ignored, so fixtures may keep section headers for
+readability.
 
 ## 5. Per-operation rules
 
@@ -343,9 +335,9 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 
 1. Lock the IR (§1) + the worked example (§2).
 2. Define the generic `Node`/`Edge`/`ProvGraph` (thin JGraphT wrapper) +
-   deterministic ids + fact-list writer and the set-equality comparator. Unblocks
-   every golden file, independent of how the graph is populated.
-3. Hand-author the "regular" clause/set cases 01–14 (`expected.facts` written by
+   deterministic ids + a `jgrapht-io` DOT import/export + the set-equality graph
+   comparator. Unblocks every golden file, independent of how the graph is built.
+3. Hand-author the "regular" clause/set cases 01–14 (`expected.dot` written by
    hand from §5) as pure fixtures — no extraction code yet.
 4. Then 08 (join), 16 (check), 17 (UDF); 15 (pivot) last.
 5. Only then pick the extraction mechanism (spec 01: leaning toward walking the

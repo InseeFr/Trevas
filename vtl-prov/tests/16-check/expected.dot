@@ -1,0 +1,27 @@
+digraph {
+  // NOTE: check_datapoint output schema is PROVISIONAL (spec 02 §5.16 open).
+  // Modelled here as: input identifiers + ruleid, plus bool_var/errorcode
+  // deriving from the validated variable. The ruleset is carried as the edge
+  // annotation `ruleset=sexRule` (no ruleset node yet).
+  // stmt 1 = `define datapoint ruleset sexRule ...` (definition, no dataset)
+  // stmt 2 = `ds_check := check_datapoint(ds1, sexRule)`
+
+  // input binding: ds1
+  "ds1@0"     [kind=dataset];
+  "ds1@0.id"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.sex" [kind=variable, dataset="ds1@0", role=MEASURE, type=STRING];
+
+  // stmt 2: ds_check := check_datapoint(ds1, sexRule)
+  "ds_check@2"           [kind=dataset, src="check_datapoint(ds1, sexRule)"];
+  "ds_check@2.id"        [kind=variable, dataset="ds_check@2", role=IDENTIFIER, type=STRING];
+  "ds_check@2.ruleid"    [kind=variable, dataset="ds_check@2", role=IDENTIFIER, type=STRING];
+  "ds_check@2.bool_var"  [kind=variable, dataset="ds_check@2", role=MEASURE, type=BOOLEAN];
+  "ds_check@2.errorcode" [kind=variable, dataset="ds_check@2", role=MEASURE, type=STRING];
+
+  // id passes through; validation columns derive from the validated variable
+  "ds_check@2"           -> "ds1@0"      [op=check_datapoint, ruleset=sexRule];
+  "ds_check@2.id"        -> "ds1@0.id"   [op=check_datapoint];
+  "ds_check@2.bool_var"  -> "ds1@0.sex"  [op=check_datapoint, ruleset=sexRule];
+  "ds_check@2.errorcode" -> "ds1@0.sex"  [op=check_datapoint, ruleset=sexRule];
+  // ruleid originates from the ruleset definition (no input-variable dependency).
+}

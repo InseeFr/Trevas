@@ -23,7 +23,7 @@ ds2 := ds1[calc var_sum := var1 + var2];
 Because the declarations live in comments, the file is still valid VTL: any
 engine can run it, and any tooling can read the directives. This unlocks:
 
-- **provenance corpus** — inputs + `expected.facts` (the current use);
+- **provenance corpus** — inputs + `expected.dot` (the current use);
 - **engine unit tests** — inputs + `$output`, asserted by the engine test-suite;
 - **cross-engine conformance (TCK)** — the same fixtures run against any VTL
   engine to demonstrate compatibility;
@@ -72,9 +72,9 @@ At least one of `structure` / `source` must be present.
 `TYPE` ∈ VTL scalar types (`STRING`, `INTEGER`, `NUMBER`, `BOOLEAN`, `DATE`, …).
 `ROLE` ∈ `IDENTIFIER | MEASURE | ATTRIBUTE`.
 
-> The `positional core + open key=value tail` shape is deliberately the **same**
-> as the provenance `expected.facts` edge annotations — one mental model across
-> the whole test substrate.
+> The `positional core + open key=value tail` shape mirrors DOT attribute lists
+> (`[op=calc, role=condition]`) used in the provenance `expected.dot` goldens —
+> one mental model across the whole test substrate.
 
 ### 3.2 Table (structure + optional data)
 
@@ -170,7 +170,7 @@ certify any VTL engine:
 
 - **Conformance profile** — `$input` + `$output`: run the script, assert the
   result equals `$output`. Demonstrates operator-level compatibility.
-- **Provenance profile** — `$input` + `expected.facts`: assert the emitted
+- **Provenance profile** — `$input` + `expected.dot`: assert the emitted
   provenance graph (Trevas-specific for now; the fixture format is shared).
 
 Fixtures are grouped by operator/feature (mirroring the provenance corpus and the
@@ -180,7 +180,7 @@ VTL operator catalogue) so coverage is legible and gaps are obvious.
 
 The directive format is the shared substrate; assertions layer on top:
 
-- provenance → `expected.facts` (the `dependsOn` graph);
+- provenance → `expected.dot` (the `dependsOn` graph);
 - conformance → `$output` (result data/structure).
 
 `vtl-prov/tests/` is the first corpus. When `vtl-test-utils` exists, the parser

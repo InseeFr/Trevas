@@ -1,0 +1,43 @@
+digraph {
+  // Worked example from spec 02 §2. One statement, two chained clauses:
+  //   ds_mul --[filter]--> #s1.1 (anon) --[calc]--> ds_res
+  // Expression nodes: e1.1 (filter predicate), e1.2 (calc RHS).
+
+  // input binding: ds_mul
+  "ds_mul@0"      [kind=dataset];
+  "ds_mul@0.id"   [kind=variable, dataset="ds_mul@0", role=IDENTIFIER, type=STRING];
+  "ds_mul@0.var1" [kind=variable, dataset="ds_mul@0", role=MEASURE, type=INTEGER];
+  "ds_mul@0.var2" [kind=variable, dataset="ds_mul@0", role=MEASURE, type=INTEGER];
+
+  // clause 1: filter -> anonymous intermediate #s1.1 (structure unchanged)
+  "#s1.1"      [kind=dataset, anon=true];
+  "#s1.1.id"   [kind=variable, dataset="#s1.1", role=IDENTIFIER, type=STRING];
+  "#s1.1.var1" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+  "#s1.1.var2" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+
+  "e1.1"       [kind=expression, src="mod(var1, 2) = 0"];
+  "e1.1" -> "ds_mul@0.var1";
+
+  "#s1.1"      -> "ds_mul@0"      [op=filter];
+  "#s1.1"      -> "e1.1"          [op=filter, role=condition];
+  "#s1.1.id"   -> "ds_mul@0.id"   [op=filter];
+  "#s1.1.var1" -> "ds_mul@0.var1" [op=filter];
+  "#s1.1.var2" -> "ds_mul@0.var2" [op=filter];
+
+  // clause 2: calc -> ds_res (adds var_sum, others pass through)
+  "ds_res@1"        [kind=dataset, src="ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2]"];
+  "ds_res@1.id"     [kind=variable, dataset="ds_res@1", role=IDENTIFIER, type=STRING];
+  "ds_res@1.var1"   [kind=variable, dataset="ds_res@1", role=MEASURE, type=INTEGER];
+  "ds_res@1.var2"   [kind=variable, dataset="ds_res@1", role=MEASURE, type=INTEGER];
+  "ds_res@1.var_sum"[kind=variable, dataset="ds_res@1", role=MEASURE, type=INTEGER];
+
+  "e1.2"       [kind=expression, src="var1 + var2"];
+  "e1.2" -> "#s1.1.var1";
+  "e1.2" -> "#s1.1.var2";
+
+  "ds_res@1"        -> "#s1.1"       [op=calc];
+  "ds_res@1.var_sum"-> "e1.2"        [op=calc];
+  "ds_res@1.id"     -> "#s1.1.id"    [op=calc];
+  "ds_res@1.var1"   -> "#s1.1.var1"  [op=calc];
+  "ds_res@1.var2"   -> "#s1.1.var2"  [op=calc];
+}

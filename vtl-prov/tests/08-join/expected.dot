@@ -1,0 +1,25 @@
+digraph {
+  // input binding: ds1
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // input binding: ds2
+  "ds2@0"    [kind=dataset];
+  "ds2@0.id" [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.m2" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds1_2 := inner_join(ds1, ds2 using id)
+  "ds1_2@1"    [kind=dataset, src="inner_join(ds1, ds2 using id)"];
+  "ds1_2@1.id" [kind=variable, dataset="ds1_2@1", role=IDENTIFIER, type=STRING];
+  "ds1_2@1.m1" [kind=variable, dataset="ds1_2@1", role=MEASURE, type=INTEGER];
+  "ds1_2@1.m2" [kind=variable, dataset="ds1_2@1", role=MEASURE, type=INTEGER];
+
+  // join key from both operands; each measure from its origin operand
+  "ds1_2@1"    -> "ds1@0"    [op=inner_join];
+  "ds1_2@1"    -> "ds2@0"    [op=inner_join];
+  "ds1_2@1.id" -> "ds1@0.id" [op=inner_join];
+  "ds1_2@1.id" -> "ds2@0.id" [op=inner_join];
+  "ds1_2@1.m1" -> "ds1@0.m1" [op=inner_join];
+  "ds1_2@1.m2" -> "ds2@0.m2" [op=inner_join];
+}
