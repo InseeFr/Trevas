@@ -154,14 +154,15 @@ edge) are *views* (§1.3), not stored here.
 
 ```
 vtl-prov/tests/
-  01-assignment/     input.vtl  structure.json  expected.facts   [expected.dot]
+  01-assignment/     input.vtl  expected.facts   [expected.dot]
   02-arithmetic/     ...
   ...
 ```
 
-- `input.vtl` — the script.
-- `structure.json` — declared structure(s) of the input dataset(s) so the case
-  is self-contained and deterministic.
+- `input.vtl` — the script, with input structures declared inline via `$input`
+  directives (and optional `$output`), so the case is self-contained. Directive
+  format: [`20260729_01_vtl-fixture-directives.md`](./20260729_01_vtl-fixture-directives.md)
+  (quick reference in `../tests/README.md`); the keyword set is open/extensible.
 - `expected.facts` — the flat fact list (the assertion). Format in §4.
 - `expected.dot` (optional) — generated DOT render, for human review only.
 

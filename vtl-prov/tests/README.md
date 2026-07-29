@@ -5,25 +5,59 @@ Hand-authored fixtures for the provenance graph IR. See the specs:
 
 Each case is a folder with:
 
-- `input.vtl` — the VTL script.
-- `structure.json` — declared structure of every input (binding) dataset, so the
-  case is self-contained and deterministic.
+- `input.vtl` — the VTL script, **with its input structures declared inline** as
+  `$input` directives (see below), so the case is self-contained.
 - `expected.facts` — the golden graph as a flat fact list (the assertion).
 
 No extraction code exists yet; these are pure fixtures that pin down the *output*.
 
-## `structure.json`
+## Inline dataset directives
 
-Object keyed by dataset name; each component gives its `role` and `type`:
+> Canonical definition: [`../specs/20260729_01_vtl-fixture-directives.md`](../specs/20260729_01_vtl-fixture-directives.md)
+> (external sources, `vtl-test-utils` module, TCK vision). This is a quick reference.
 
-```json
-{
-  "ds1": {
-    "id":   { "role": "IDENTIFIER", "type": "STRING" },
-    "var1": { "role": "MEASURE",    "type": "INTEGER" }
-  }
-}
+Input (and optionally expected-output) structures are declared in VTL comments, so
+each fixture is a single self-contained `.vtl`. A directive is `$<keyword> <target>`
+inside a `//` or `/* */` comment. The keyword set is **open** — a parser dispatches
+on it and ignores unknown directives (forward-compatible). Two are defined:
+
+- `$input <name>` — structure (and optional data) of a binding dataset.
+- `$output <name>` — expected structure/data of a result. Orthogonal to
+  `expected.facts` (which asserts the provenance *graph*, not the data); handy for
+  cases where the result structure is computed (join, aggr).
+
+### One-liner form (structure only — the default)
+
+```vtl
+// $input ds1: id STRING IDENTIFIER, var1 INTEGER MEASURE, var2 INTEGER MEASURE
+ds2 := ds1;
 ```
+
+Each column is `name TYPE ROLE`, comma-separated. Columns may carry an optional
+trailing `key=value` tail for future attributes (same positional-core +
+open-annotations shape as `expected.facts` edges):
+
+```
+// $input ds1: id STRING IDENTIFIER, me1 NUMBER MEASURE null=true
+```
+
+### Table form (when you want data)
+
+Three header rows (names / types / roles), then optional data rows after a
+`|---|` separator — matching the convention in `../docs/model-v1.md`:
+
+```vtl
+/* $input ds1
+ * | id         | var1    | var2    |
+ * | STRING     | INTEGER | INTEGER |
+ * | IDENTIFIER | MEASURE | MEASURE |
+ * |------------|---------|---------|
+ * | 1          | 10      | 11      |
+ */
+```
+
+Data is optional — provenance is built from the declared structure, so include
+rows only for data-dependent cases (`pivot`/`unpivot`) or executable examples.
 
 ## `expected.facts` conventions
 
