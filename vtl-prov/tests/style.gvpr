@@ -1,0 +1,60 @@
+// Render-time styling for provenance expected.dot goldens.
+// Reads a golden graph and rewrites labels/shapes/colors from the node & edge
+// attributes so the PNG shows role/type/src and highlights condition edges.
+// The golden .dot files are NOT modified — this only affects rendering.
+
+BEG_G {
+  // Ensure every attribute we read exists (default "") so aget never fails.
+  setDflt($G, "N", "kind", "");
+  setDflt($G, "N", "role", "");
+  setDflt($G, "N", "type", "");
+  setDflt($G, "N", "src", "");
+  setDflt($G, "N", "anon", "");
+  setDflt($G, "E", "op", "");
+  setDflt($G, "E", "role", "");
+  $G.rankdir = "RL";        // dependency edges point dependent -> dependency
+  $G.nodesep = "0.3";
+}
+
+N {
+  string k = aget($, "kind");
+  string lbl = $.name;
+  string nshape = "ellipse";
+  string nstyle = "filled";
+  string nfill = "white";
+
+  if (k == "variable") {
+    lbl = $.name + "\n" + aget($, "role") + " " + aget($, "type");
+    nshape = "ellipse";
+    nfill = "#e8f0fe";
+  } else if (k == "dataset") {
+    nshape = "box";
+    nfill = "#e6f4ea";
+    if (aget($, "anon") == "true") { nstyle = "filled,dashed"; }
+  } else if (k == "expression") {
+    lbl = $.name + "\n" + aget($, "src");
+    nshape = "note";
+    nfill = "#fef7e0";
+  }
+  $.label = lbl;
+  $.shape = nshape;
+  $.style = nstyle;
+  $.fillcolor = nfill;
+}
+
+E {
+  string op = aget($, "op");
+  string role = aget($, "role");
+  if (role == "condition") {
+    $.label = (op == "") ? "condition" : op + " · cond";
+    $.style = "dashed";
+    $.color = "red";
+    $.fontcolor = "red";
+  } else {
+    $.label = op;
+  }
+}
+
+END_G {
+  write($G);
+}
