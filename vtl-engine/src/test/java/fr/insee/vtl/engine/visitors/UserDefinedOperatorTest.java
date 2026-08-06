@@ -172,43 +172,11 @@ public class UserDefinedOperatorTest {
     assertThat(res.getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of(
-                "id",
-                "Toto",
-                "long1",
-                30L,
-                "long2",
-                300L,
-                "double1",
-                12.2D,
-                "double2",
-                1.22D,
-                "bool1",
-                true,
-                "bool2",
-                false,
-                "string1",
-                "toto",
-                "string2",
-                "t"),
+                "id", "Toto", "long1", 30L, "long2", 300L, "double1", 12.2D, "double2", 1.22D,
+                "bool1", true, "bool2", false, "string1", "toto", "string2", "t"),
             Map.of(
-                "id",
-                "Franck",
-                "long1",
-                100L,
-                "long2",
-                2L,
-                "double1",
-                1.21D,
-                "double2",
-                100.9D,
-                "bool1",
-                false,
-                "bool2",
-                false,
-                "string1",
-                "franck",
-                "string2",
-                "c"));
+                "id", "Franck", "long1", 100L, "long2", 2L, "double1", 1.21D, "double2", 100.9D,
+                "bool1", false, "bool2", false, "string1", "franck", "string2", "c"));
   }
 
   @Test
@@ -226,14 +194,44 @@ public class UserDefinedOperatorTest {
     assertThat(res.getDataAsMap())
         .containsExactlyInAnyOrder(
             Map.of(
-                "id", "Hadrien", "long1", 150L, "double1", 1.1D, "bool1", true, "string1", "hadrien",
-                "long1_x2", 300L),
+                "id",
+                "Hadrien",
+                "long1",
+                150L,
+                "double1",
+                1.1D,
+                "bool1",
+                true,
+                "string1",
+                "hadrien",
+                "long1_x2",
+                300L),
             Map.of(
-                "id", "Nico", "long1", 20L, "double1", 2.2D, "bool1", true, "string1", "nico",
-                "long1_x2", 40L),
+                "id",
+                "Nico",
+                "long1",
+                20L,
+                "double1",
+                2.2D,
+                "bool1",
+                true,
+                "string1",
+                "nico",
+                "long1_x2",
+                40L),
             Map.of(
-                "id", "Franck", "long1", 100L, "double1", -1.21D, "bool1", false, "string1",
-                "franck", "long1_x2", 200L));
+                "id",
+                "Franck",
+                "long1",
+                100L,
+                "double1",
+                -1.21D,
+                "bool1",
+                false,
+                "string1",
+                "franck",
+                "long1_x2",
+                200L));
   }
 
   @Test
@@ -265,9 +263,7 @@ public class UserDefinedOperatorTest {
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
     assertThat(res.getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("id", "a", "me", 1L),
-            Map.of("id", "b", "me", 2L),
-            Map.of("id", "c", "me", 3L));
+            Map.of("id", "a", "me", 1L), Map.of("id", "b", "me", 2L), Map.of("id", "c", "me", 3L));
   }
 
   @Test
@@ -293,7 +289,8 @@ public class UserDefinedOperatorTest {
         """);
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
     assertThat(res.getDataAsMap())
-        .containsExactlyInAnyOrder(Map.of("id", "x", "long1", 11L), Map.of("id", "y", "long1", 21L));
+        .containsExactlyInAnyOrder(
+            Map.of("id", "x", "long1", 11L), Map.of("id", "y", "long1", 21L));
   }
 
   @Test
