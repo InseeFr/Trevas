@@ -2,62 +2,57 @@
 
 ## P0 decision (locked)
 
-**Put a single engine-side artefact in bindings** — no `vtl-model` type in P0.
+**Source of truth:** engine-side `UdoDefinition` in `ENGINE_SCOPE` bindings.  
+**Dispatch hook:** trampoline `java.lang.reflect.Method` registered under the same name (not a second source of truth).
+
+No `vtl-model` DTO in P0.
 
 ```java
-// vtl-engine: fr.insee.vtl.engine.semantics.udo.UdoDefinition
+// fr.insee.vtl.engine.semantics.udo.UdoDefinition
 public final class UdoDefinition {
   private final String name;
   private final List<UdoParameter> parameters;
-  private final /* nullable */ Class<?> returnType; // P0: Java class; null = infer at invoke
-  private final Positioned position;
-  private final VtlParser.ExprContext body;         // parse subtree; not evaluated at define
+  private final /* nullable */ Class<?> returnType; // null → infer at invoke
+  private final VtlParser.ExprContext body;
+  private final VtlScriptEngine engine;             // for body re-entry / PE
 }
 ```
 
 ```java
 public final class UdoParameter {
   private final String name;
-  private final Class<?> type;              // P0 subset (scalars + Dataset.class for opaque dataset)
-  private final /* nullable */ Object defaultValue; // constant only in P0
-  private final boolean optional;           // true iff default present (VTL rule)
+  private final Class<?> type;       // scalars or Dataset.class
+  private final Object defaultValue; // if default clause present
+  private final boolean optional;    // true iff default clause present
 }
 ```
 
-Stored in `ENGINE_SCOPE` under the operator name, same way rulesets are stored.
-
-**Why engine-side:** the body is an ANTLR `ExprContext`. `vtl-model` must stay parser-free. A DTO (`UserDefinedOperator` in `vtl-model`) is optional later for Jackson / SDMX — not a P0 deliverable. See [08 §6](./08-open-questions.md).
-
-Lookup: `bindings.get(name) instanceof UdoDefinition`.
+Factories: `UdoParameter.mandatory(...)`, `UdoParameter.withDefault(...)`.
 
 ## Body representation
 
-**P0 = Option A (parse subtree).** Define captures the body context; invoke re-enters `ExpressionVisitor` with a child scope. Free vars resolve at invoke time ([08 §1](./08-open-questions.md)).
+**Parse subtree** (`ExprContext`). Define does not evaluate the body. Invoke re-enters `ExpressionVisitor` with a child map (params + outer bindings). Free vars resolve at **invoke time** ([08 §1](./08-open-questions.md)).
 
-Do **not** compile the body to `ResolvableExpression` at define time in P0 (Option B stays a possible later optimization).
+## Trampoline (not the model)
 
-## Binding namespace
+`UdoTrampoline.invoke0…invoke8` — public static methods with `Object` parameters. Used only so `FunctionExpression` can call `Method.invoke`. CallSite (`udo` + outer bindings) is set via ThreadLocal around invoke ([04](./04-invoke.md)).
 
-Operators share the flat `ENGINE_SCOPE` bindings map with variables and rulesets.
+## Binding + registry namespace
 
-Collision policy ([08 §2](./08-open-questions.md)):
+| Existing | New define | P0 |
+|----------|------------|----|
+| absent in bindings **and** registries | UDO | ok → put binding + `registerMethod` |
+| any binding (var / ruleset / UDO) | same name | **error** (E6) |
+| native or global registry key | same name | **error** (E8) |
 
-| Existing binding | New define | P0 |
-|------------------|------------|----|
-| absent | UDO | ok |
-| variable | UDO same name | **error** |
-| ruleset | UDO same name | **error** |
-| UDO | UDO same name | **error** |
-| native function name | UDO same name | **error** |
+Keywords like `abs` are rejected by the **parser** (`operatorID` = `IDENTIFIER`) before collision checks — test E8 with a plain identifier pre-registered via `registerMethod`.
 
-Invocation lookup order in `visitCallDataset`:
+### Invoke lookup
 
-1. UDO in bindings (`UdoDefinition`)
-2. native / global method registry
+1. `bindings.get(name) instanceof UdoDefinition` → UDO path  
+2. else native / global `findMethod` path
 
 ## Typing in P0
-
-Map basic scalar tokens to existing Trevas Java classes (same mapping as `cast`):
 
 | VTL | Java |
 |-----|------|
@@ -65,11 +60,8 @@ Map basic scalar tokens to existing Trevas Java classes (same mapping as `cast`)
 | `number` | `Double.class` |
 | `string` | `String.class` |
 | `boolean` | `Boolean.class` |
-| `date` | `Instant.class` (if cast mapping exists; else reject → P1) |
-| `time_period` | `Interval.class` (same) |
-| `duration` | `PeriodDuration.class` (same) |
-| `dataset` (opaque) | `Dataset.class` (or `DatasetExpression` at invoke) |
+| `date` / `time_period` / `duration` | same as `cast` if available |
+| `dataset` (opaque) | `Dataset.class` |
 
-Unsupported type syntax → clear exception at **define** time (fail fast), not at invoke time. See [06-types](./06-types.md).
-
-If `returns` is omitted: infer from body at first invoke (P0). Define-time probe with placeholders = P1 ([03-define](./03-define.md)).
+Unsupported productions → fail at **define**. See [06-types](./06-types.md).  
+Omitted `returns` → infer from body result type at invoke (P0).

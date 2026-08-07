@@ -1,83 +1,77 @@
-# 04 — Invoke path
+# 04 — Invoke path (FunctionExpression + Method)
 
-## Entry point
+## Entry point (as implemented)
 
-`GenericFunctionsVisitor.visitCallDataset` today:
-
-```java
-List<ResolvableExpression> parameters =
-    ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-return invokeFunction(ctx.operatorID().getText(), parameters, fromContext(ctx));
-```
-
-Change to:
+Fork in `visitCallDataset` **before** visiting all parameters (natives still visit eagerly):
 
 ```java
 String name = ctx.operatorID().getText();
-Object maybeUdo = engine.getBindings(ENGINE_SCOPE).get(name);
-if (maybeUdo instanceof UdoDefinition udo) { // engine artefact — see 02-model
-  return UdoInvokeExecutor.invoke(udo, ctx.parameter(), exprVisitor, engine, fromContext(ctx));
+Object binding = engine.getBindings(ENGINE_SCOPE).get(name);
+if (binding instanceof UdoDefinition udo) {
+  return UdoInvokeExecutor.invoke(udo, ctx, exprVisitor, engine, fromContext(ctx));
 }
-// existing native path
-return invokeFunction(name, parameters, fromContext(ctx));
+List<ResolvableExpression> parameters =
+    ctx.parameter().stream().map(exprVisitor::visit).toList();
+return invokeFunction(name, parameters, fromContext(ctx)); // natives only
 ```
 
-Pass the raw `parameter` contexts (not only visited expressions) so `OPTIONAL` can be detected without pretending `_` is a value expression.
+**Do not** move the UDO check into `invokeFunction`: that API only receives visited expressions and cannot see `_` / `OPTIONAL`.
 
-Today `exprVisitor.visit(parameter)` likely breaks or mis-handles `OPTIONAL` — confirm and fix as part of UDO work (natives may already be unable to use `_`).
+## `UdoInvokeExecutor` steps
 
-## `UdoInvokeExecutor.invoke` steps
+1. **Arity / optionality** against formals (extra args → error; missing mandatory → error).
+2. For each formal:
+   - actual `varID` / `constant` → visit, type-check, collect expression
+   - actual `OPTIONAL` → default if optional, else error (E7)
+   - missing trailing → default if optional, else error (E3)
+3. Return `new UdoFunctionExpression(udo, resolvedArgs, position)`.
 
-1. **Arity / optionality**
-   - Count provided args (including `OPTIONAL` placeholders).
-   - For each formal parameter in order:
-     - if actual present and not `OPTIONAL` → visit to `ResolvableExpression`, check type
-     - if actual is `OPTIONAL` or missing trailing optional → use default constant expression
-     - if missing mandatory → error
-   - Reject extra args.
+## `UdoFunctionExpression` (extends `FunctionExpression`)
 
-2. **Build child bindings**
-   - Copy or wrap parent `ENGINE_SCOPE`.
-   - Put each parameter name → resolved value **or** bind `ResolvableExpression`s and resolve lazily consistently with the rest of the engine.
-   - Prefer: resolve actuals against parent bindings, then put **values** (or dataset expressions) into a child map used for body resolve — simplest mental model.
+- Super ctor: `new VtlMethod(UdoTrampoline.methodForArity(n))` with `Object` parameter types (skips strict `checkInstanceOf` on `Object`).
+- `getType()` → declared `returns` or `Object` if inferred.
+- `resolve(context)`:
+  1. `UdoTrampoline.enter(udo, context)`
+  2. `super.resolve(context)` → evaluates args → `Method.invoke(null, args)`
+  3. `UdoTrampoline.exit()` in `finally`
 
-3. **Evaluate body**
-   - `ExpressionVisitor` on body with child bindings (+ same `ProcessingEngine` / engine).
-   - Result is `ResolvableExpression`; resolve if the caller expects a value (assignment path already resolves).
+## `UdoTrampoline.dispatch`
 
-4. **Return type check**
-   - If `returns` declared, assert compatibility (`number` accepting `integer` result, etc. — reuse `TypeChecking` rules).
-   - If undeclared, use body type.
+1. Read CallSite (`udo`, outer bindings).
+2. Child map = copy of outer + formal names → actual values.
+3. `new ExpressionVisitor(child, PE, engine).visit(body)`.
+4. `body.resolve(child)`.
+5. If `returns` declared → assignability check (`integer` ⊆ `number` allowed).
+6. Return result.
 
-5. **Cleanup**
-   - Child bindings discarded; outer scope unchanged.
+ThreadLocal CallSite is the P0 bridge (no per-UDO bytecode). Acceptable for the locked pattern; replace later only if needed.
 
-## Scalar vs dataset results
+## Why FunctionExpression
 
-- If body yields a scalar expression → return it (assignment stores scalar).
-- If body yields `DatasetExpression` → return it; PE already behind the body operators.
-- P0 may restrict signatures to scalars even if the body could return a dataset — keep signature and body aligned.
+Reuses the same resolve machinery as natives (`Method.invoke` + evaluated args) without sending UDOs through `DatasetScalarFunctionExecutor` lift.
 
-## Promotion / mono-measure (P1)
-
-VTL often allows scalar operators to apply to datasets. Natives get this via `DatasetScalarFunctionExecutor`. For UDOs with scalar signature called with dataset actuals:
-
-- **P0:** type error
-- **P1:** optional lifting — either reject still, or implement a dedicated lift that maps the UDO body over measures (complex; do not underestimate)
-
-Do not silently route UDO calls through `DatasetScalarFunctionExecutor`.
-
-## Nested calls
-
-`udoA` body may call `udoB` if `udoB` is in bindings. Works naturally via re-entrant `visitCallDataset`. Recursion: see open questions (default reject via call-stack guard).
-
-## Errors (suggested messages)
-
-| Case | Exception |
+| Path | Mechanism |
 |------|-----------|
-| Unknown operator (not UDO, not native) | existing `FunctionNotFoundException` |
-| Wrong arg type | `InvalidTypeException` / `InvalidArgumentException` |
-| Missing mandatory arg | `InvalidArgumentException` |
-| `OPTIONAL` without default | `InvalidArgumentException` |
-| Return type mismatch | `InvalidTypeException` |
-| Unsupported signature type used at define | `UnimplementedException` with pointer to roadmap phase |
+| Native | `findMethod` → `FunctionExpression` → real Java method |
+| UDO | bindings hit → `UdoFunctionExpression` → trampoline Method → VTL body |
+
+## Scalar vs dataset
+
+- Scalar / dataset body results both OK when signature matches.
+- P0: no scalar-UDO auto-lift onto dataset actuals.
+- Clause bodies (`filter` / `calc`) need outer bindings visible — `ClauseVisitor` merges them (scalar params like `threshold`).
+
+## Nested UDO
+
+Body may call another UDO: re-entrant `visitCallDataset` finds the callee in (copied) outer bindings. S4.
+
+## Errors
+
+| Case | Signal |
+|------|--------|
+| Not UDO, not native | `FunctionNotFoundException` |
+| Wrong arg type | message with expected/got |
+| Missing / extra args | arity message (not “not found”) |
+| `_` without default | E7 |
+| Return mismatch | message contains declared VTL type (e.g. `boolean`) |
+| Define vs registry | E8 `conflicts with native function` |

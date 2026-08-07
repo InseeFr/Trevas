@@ -82,13 +82,26 @@ Partial support does **not** mean a shortcut that bypasses layers:
 
 - visitor still only dispatches
 - `semantics/udo/*Executor` still owns VTL meaning (signature check, defaults, scoped eval)
+- call path reuses `FunctionExpression` + `Method.invoke` via a trampoline (same mechanical shape as natives), without pretending UDOs are pure `FunctionProvider` natives
 - mechanical work stays in existing PE / scalar natives
 
 P0 is a **scope cut on the type surface**, not a layering shortcut.
 
+## Locked runtime pattern (P0)
+
+After the spike, **define / invoke** are fixed as:
+
+| Phase | Behaviour |
+|-------|-----------|
+| **Define** | `UdoDefinition` in bindings (source of truth) + trampoline `Method` registered under the same name |
+| **Invoke** | `visitCallDataset` sees `UdoDefinition` → `UdoInvokeExecutor` (raw `_`) → `UdoFunctionExpression` → `Method.invoke` → body `ExpressionVisitor` |
+| **Not** | UDO fork inside `invokeFunction`; mono-measure lift via `DatasetScalarFunctionExecutor` |
+
+Full diagram and anti-patterns: [01-architecture](./01-architecture.md). Steps: [10-implementation](./10-implementation.md).
+
 ## Success metric for P0
 
-These scripts run end-to-end on in-memory engine (and Spark if the body only uses PE-backed ops):
+**Met (Aug 2026):** acceptance + walkthrough green. These scripts run end-to-end on in-memory engine (and Spark if the body only uses PE-backed ops):
 
 ```vtl
 define operator add (x integer default 0, y integer default 0)
@@ -109,4 +122,4 @@ end operator;
 max_res := max_with_y(2);
 ```
 
-(Second example already exists as a DAG ordering fixture — it should become an execution fixture.)
+(Second example is covered by S2 / DAG + free-var execution.)

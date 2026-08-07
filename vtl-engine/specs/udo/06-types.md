@@ -2,6 +2,8 @@
 
 Based on VTL DL (`vtl_dl_udo.rst`) vs Trevas today.
 
+Type checking for UDO formals / defaults / returns lives in `UdoDefineExecutor` and `UdoInvokeExecutor` / trampoline return check — same pattern as [01](./01-architecture.md), not a parallel type system.
+
 ## Legend
 
 | Symbol | Meaning |

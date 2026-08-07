@@ -8,7 +8,7 @@ Locked for P0 unless marked otherwise. Do not reopen mid-implementation without 
 
 ## 2. Name collisions — **DECIDED (P0)**
 
-**Reject** if bindings already contain that key, or if the name matches a known native in the registry. No silent overwrite.
+**Reject** if bindings already contain that key, **or** if the name matches a known native/global registry entry. No silent overwrite. Covered by E6 (bindings) and E8 (registry). Note: parser keywords (`abs`, …) fail parse before this check — E8 uses a plain `IDENTIFIER` pre-registered via `registerMethod`.
 
 ## 3. Recursion — **DECIDED**
 
@@ -26,6 +26,19 @@ Implement `_` for **UDOs only**. Leave native `callDataset` behaviour unchanged 
 
 Engine-side `UdoDefinition` in bindings (may hold ANTLR `ExprContext`). Keep `vtl-model` free of parser types unless serialization later needs a DTO. **No** `UserDefinedOperator` class in `vtl-model` for P0 — see [02-model](./02-model.md).
 
+## 6a. Invoke via FunctionExpression / Method trampoline — **DECIDED (P0)**
+
+Validated spike:
+
+1. Source of truth = `UdoDefinition` in bindings.
+2. Define also `registerMethod(name, UdoTrampoline.invokeN)`.
+3. Call sites build `UdoFunctionExpression` → `Method.invoke` → trampoline re-enters `ExpressionVisitor`.
+4. UDO fork stays in `visitCallDataset` (raw params for `_`), **not** inside `invokeFunction`.
+5. Do **not** use `DatasetScalarFunctionExecutor` for UDOs (no mono-measure lift in P0).
+6. Trampoline may use ThreadLocal CallSite in P0; refine later if needed.
+
+See [01-architecture](./01-architecture.md), [04-invoke](./04-invoke.md).
+
 ## 6b. `integer` ⊆ `number` — **DECIDED (P0)**
 
 Allow via existing `TypeChecking` (D1: `returns number` with integer body). Do not require exact `Long`/`Double` identity for `number` formals / returns. See [06-types](./06-types.md).
@@ -33,6 +46,10 @@ Allow via existing `TypeChecking` (D1: `returns number` with integer body). Do n
 ## 6c. Closing keyword — **DECIDED (P0)**
 
 Implement `end operator` as in Trevas / SDMX ANTLR (`END OPERATOR`). Ignore RM prose variants such as “end define operator”.
+
+## 6d. Clause outer bindings — **DECIDED (P0)**
+
+`ClauseVisitor` merges outer script bindings into the component expression map so UDO scalar params (`threshold`, `factor`) resolve inside `filter` / `calc`. Components still shadow outer names when equal.
 
 ## 7. Component-level calls
 
