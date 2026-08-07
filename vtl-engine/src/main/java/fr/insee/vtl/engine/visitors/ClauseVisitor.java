@@ -9,9 +9,9 @@ import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /** Parse-tree dispatch for dataset clauses; orchestration lives in {@link ClauseExecutor}. */
 public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
@@ -24,10 +24,20 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       DatasetExpression datasetExpression,
       ProcessingEngine processingEngine,
       VtlScriptEngine engine) {
+    this(datasetExpression, processingEngine, engine, Map.of());
+  }
+
+  public ClauseVisitor(
+      DatasetExpression datasetExpression,
+      ProcessingEngine processingEngine,
+      VtlScriptEngine engine,
+      Map<String, Object> outerBindings) {
     this.datasetExpression = Objects.requireNonNull(datasetExpression);
-    Map<String, Object> componentMap =
-        datasetExpression.getDataStructure().values().stream()
-            .collect(Collectors.toMap(c -> c.getName(), component -> component));
+    Map<String, Object> componentMap = new HashMap<>(outerBindings != null ? outerBindings : Map.of());
+    datasetExpression
+        .getDataStructure()
+        .values()
+        .forEach(component -> componentMap.put(component.getName(), component));
     this.componentExpressionVisitor = new ExpressionVisitor(componentMap, processingEngine, engine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
   }

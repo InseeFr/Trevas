@@ -3,8 +3,10 @@ package fr.insee.vtl.engine.visitors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
+import java.lang.reflect.Method;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import java.util.List;
@@ -395,6 +397,27 @@ public class UserDefinedOperatorTest {
                     end operator;
                     """))
         .isInstanceOf(Exception.class);
+  }
+
+  @Test
+  public void testE8NativeRegistryCollision() throws Exception {
+    // Spec 08 §2: reject UDO name that already exists in the Method registry.
+    VtlScriptEngine vtl = (VtlScriptEngine) engine;
+    Method marker =
+        fr.insee.vtl.engine.semantics.udo.UdoTrampoline.class.getMethod("invoke1", Object.class);
+    vtl.registerMethod("my_native", marker);
+
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator my_native (x integer)
+                       returns integer is
+                          x
+                    end operator;
+                    """))
+        .hasMessageContaining("my_native")
+        .hasMessageContaining("native");
   }
 
   @Test

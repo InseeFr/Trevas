@@ -9,6 +9,8 @@ import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.CastExpression;
 import fr.insee.vtl.engine.semantics.functions.DatasetScalarFunctionExecutor;
+import fr.insee.vtl.engine.semantics.udo.UdoDefinition;
+import fr.insee.vtl.engine.semantics.udo.UdoInvokeExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
@@ -19,6 +21,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.script.ScriptContext;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
@@ -61,9 +64,14 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
   @Override
   public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
     try {
+      String name = ctx.operatorID().getText();
+      Object binding = engine.getBindings(ScriptContext.ENGINE_SCOPE).get(name);
+      if (binding instanceof UdoDefinition udo) {
+        return UdoInvokeExecutor.invoke(udo, ctx, exprVisitor, engine, fromContext(ctx));
+      }
       List<ResolvableExpression> parameters =
           ctx.parameter().stream().map(exprVisitor::visit).collect(Collectors.toList());
-      return invokeFunction(ctx.operatorID().getText(), parameters, fromContext(ctx));
+      return invokeFunction(name, parameters, fromContext(ctx));
     } catch (VtlScriptException e) {
       throw new VtlRuntimeException(e);
     }
