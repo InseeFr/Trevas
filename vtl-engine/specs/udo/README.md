@@ -14,6 +14,19 @@ Parsing and the DAG are already in place. The gap is `define` → binding → in
 **Execution plan (test-first):** [10-implementation.md](./10-implementation.md)  
 **Test catalog (métier + technique):** [09-test-catalog.md](./09-test-catalog.md) + `UserDefinedOperatorTest`
 
+## Working method (mandatory)
+
+**At every implementation step, start with tests.** The slice’s acceptance cases (catalog IDs in [09](./09-test-catalog.md)) must exist and **fail for the right reason** before any production code for that slice. Then implement only what is needed to make those tests pass. Details: [07-testing.md](./07-testing.md), [10-implementation.md](./10-implementation.md).
+
+```
+for each slice:
+  1. write / harden the JUnit cases for that slice’s IDs   → red
+  2. implement the minimal engine change                     → those IDs green
+  3. do not start the next slice until the current IDs pass
+```
+
+No `feat(udo)` without the corresponding red tests. Skip a dedicated “test-only” commit only when the cases already exist from an earlier gate (baseline suite).
+
 ## Status (Aug 2026)
 
 | Step | State |
@@ -44,7 +57,7 @@ Before coding, confirm these P0 locks (details in [08](./08-open-questions.md)):
 2. Resolve `operatorID(…)` to that artefact **before** natives
 3. Evaluate the body in a parameter scope (+ free vars) via existing `ExpressionVisitor`
 4. Support scalars, opaque `dataset`, and mixed signatures (`dataset` + scalar)
-5. Ship in granular commits: **test → implem** per slice
+5. Ship in granular commits: **tests first → then implem** per slice (see [Working method](#working-method-mandatory))
 
 No new `ProcessingEngine` API: the body reuses the current runtime (in-memory / Spark).
 
@@ -118,9 +131,9 @@ The package stays **coherent** if we stick to:
 | Principle | How |
 |-----------|-----|
 | Modular | visitors dispatch only; `semantics/udo/*` owns meaning; no PE API change |
-| Tested | **Test-first:** 20 P0 cases in [09](./09-test-catalog.md) (doc + métier + technique + errors); green = P0 DoD |
+| Tested | **Each step starts with tests** the implem must resolve ([Working method](#working-method-mandatory)); 20 P0 cases in [09](./09-test-catalog.md); all green = P0 DoD |
 | Efficient | body = `ExpressionVisitor` re-entry; no second runtime |
-| No fluff | each `10` commit ships only what its tests require; skip slice **a** if empty |
+| No fluff | each slice ships only what its tests require; skip a test-only commit if cases already exist |
 
 **P0 DoD:** commits 1b→7b + 8 green; no code for constraints / component / HOF / structured enforce; [08](./08-open-questions.md) decisions stay locked.
 
