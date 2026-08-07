@@ -95,8 +95,7 @@ public final class UdoTrampoline {
       child.put(formals.get(i).getName(), args[i]);
     }
     VtlScriptEngine engine = udo.getEngine();
-    ExpressionVisitor visitor =
-        new ExpressionVisitor(child, engine.getProcessingEngine(), engine);
+    ExpressionVisitor visitor = new ExpressionVisitor(child, engine.getProcessingEngine(), engine);
     ResolvableExpression body = visitor.visit(udo.getBody());
     Object result = body.resolve(child);
     Class<?> expected = udo.getReturnType();

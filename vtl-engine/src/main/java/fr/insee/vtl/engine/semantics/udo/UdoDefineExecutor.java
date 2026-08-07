@@ -42,9 +42,7 @@ public final class UdoDefineExecutor {
           Object value = constant.resolve(java.util.Map.of());
           if (value != null && !isAssignable(type, value.getClass())) {
             throw new VtlScriptException(
-                "default value type does not match parameter type "
-                    + vtlTypeName(type),
-                pos);
+                "default value type does not match parameter type " + vtlTypeName(type), pos);
           }
           parameters.add(UdoParameter.withDefault(paramName, type, value));
         } else {
@@ -71,8 +69,7 @@ public final class UdoDefineExecutor {
       return Dataset.class;
     }
     throw new VtlRuntimeException(
-        new UnimplementedException(
-            "UDO parameter type not supported yet: " + ctx.getText(), pos));
+        new UnimplementedException("UDO parameter type not supported yet: " + ctx.getText(), pos));
   }
 
   static Class<?> parseOutputType(VtlParser.OutputParameterTypeContext ctx, Positioned pos)
@@ -84,8 +81,7 @@ public final class UdoDefineExecutor {
       return Dataset.class;
     }
     throw new VtlRuntimeException(
-        new UnimplementedException(
-            "UDO return type not supported yet: " + ctx.getText(), pos));
+        new UnimplementedException("UDO return type not supported yet: " + ctx.getText(), pos));
   }
 
   private static Class<?> parseScalarType(VtlParser.ScalarTypeContext ctx, Positioned pos)

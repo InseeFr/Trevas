@@ -33,7 +33,8 @@ public class ClauseVisitor extends VtlBaseVisitor<DatasetExpression> {
       VtlScriptEngine engine,
       Map<String, Object> outerBindings) {
     this.datasetExpression = Objects.requireNonNull(datasetExpression);
-    Map<String, Object> componentMap = new HashMap<>(outerBindings != null ? outerBindings : Map.of());
+    Map<String, Object> componentMap =
+        new HashMap<>(outerBindings != null ? outerBindings : Map.of());
     datasetExpression
         .getDataStructure()
         .values()

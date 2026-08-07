@@ -31,5 +31,6 @@ module fr.insee.vtl.engine {
   // Fun.toMethod (safety-mirror) reflects into method-reference lambdas in these packages.
   // `opens fr.insee.vtl.engine` does not open subpackages.
   opens fr.insee.vtl.engine;
-  opens fr.insee.vtl.engine.functions.providers to safety.mirror;
+  opens fr.insee.vtl.engine.functions.providers to
+      safety.mirror;
 }
