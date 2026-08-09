@@ -343,3 +343,6 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 5. Only then pick the extraction mechanism (spec 01: leaning toward walking the
    resolved expression tree — one edge per derivation) and make the corpus pass.
 6. Add the SDTH/RDF conversion + its separate test as a view over the graph.
+   For **same triples as today**: project IR → existing `Program` → reuse `RDFUtils`
+   (see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)).
+   Richer RDF is a later, separate view.
