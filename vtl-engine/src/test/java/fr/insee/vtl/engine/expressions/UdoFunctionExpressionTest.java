@@ -53,9 +53,7 @@ class UdoFunctionExpressionTest {
 
     var expr =
         new UdoFunctionExpression(
-            udo,
-            List.of(new ConstantExpression(1L, POS), new ConstantExpression(2L, POS)),
-            POS);
+            udo, List.of(new ConstantExpression(1L, POS), new ConstantExpression(2L, POS)), POS);
 
     assertThat(expr.getType()).isEqualTo(Long.class);
     assertThat(expr.resolve(Map.of())).isEqualTo(3L);
@@ -89,9 +87,7 @@ class UdoFunctionExpressionTest {
 
     var expr =
         new UdoFunctionExpression(
-            udo,
-            List.of(new ConstantExpression(3L, POS), new ConstantExpression(7L, POS)),
-            POS);
+            udo, List.of(new ConstantExpression(3L, POS), new ConstantExpression(7L, POS)), POS);
 
     assertThatThrownBy(() -> expr.resolve(Map.of())).hasMessageContaining("boolean");
   }
