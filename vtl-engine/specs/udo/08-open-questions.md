@@ -4,11 +4,13 @@ Locked for P0 unless marked otherwise. Do not reopen mid-implementation without 
 
 ## 1. Free variable binding time — **DECIDED (P0)**
 
-**Invoke-time lookup** in current bindings. After DAG reorder, free vars exist when the call runs; body resolves names dynamically. Params shadow outer names.
+A free var is a name in the body that is not a parameter. **Invoke-time lookup** in the bindings passed to `resolve`. After DAG reorder, free vars exist when the call runs. Params shadow outer names.
+
+Not a lexical closure in P0 (no snapshot at define). If we want real closures later, snapshot outer bindings at `define` and look up the operator id in a scoped view of the current bindings ([04](./04-invoke.md)).
 
 ## 2. Name collisions — **DECIDED (P0)**
 
-**Reject** if bindings already contain that key, **or** if the name matches a known native/global registry entry. No silent overwrite. Covered by E6 (bindings) and E8 (registry). Note: parser keywords (`abs`, …) fail parse before this check — E8 uses a plain `IDENTIFIER` pre-registered via `registerMethod`.
+**Reject** if bindings already contain that key (`AlreadyDefinedException`, E6), **or** if the name matches a known native/global registry entry (E8). No silent overwrite. Parser keywords (`abs`, …) fail parse before this check — E8 uses a plain `IDENTIFIER` pre-registered as a native via `registerMethod` (test-only; production UDOs are **not** registered).
 
 ## 3. Recursion — **DECIDED**
 
@@ -26,16 +28,18 @@ Implement `_` for **UDOs only**. Leave native `callDataset` behaviour unchanged 
 
 Engine-side `UdoDefinition` in bindings (may hold ANTLR `ExprContext`). Keep `vtl-model` free of parser types unless serialization later needs a DTO. **No** `UserDefinedOperator` class in `vtl-model` for P0 — see [02-model](./02-model.md).
 
-## 6a. Invoke via FunctionExpression / Method trampoline — **DECIDED (P0)**
+## 6a. Invoke: resolve operator id like a variable — **REVISED (review)**
 
-Validated spike:
+Spike used `registerMethod` + trampoline `Method` + `FunctionExpression` so calls looked like natives. That **goes around the bindings** and makes scoping / closures moot.
 
-1. Source of truth = `UdoDefinition` in bindings.
-2. Define also `registerMethod(name, UdoTrampoline.invokeN)`.
-3. Call sites build `UdoFunctionExpression` → `Method.invoke` → trampoline re-enters `ExpressionVisitor`.
-4. UDO fork stays in `visitCallDataset` (raw params for `_`), **not** inside `invokeFunction`.
-5. Do **not** use `DatasetScalarFunctionExecutor` for UDOs (no mono-measure lift in P0).
-6. Trampoline may use ThreadLocal CallSite in P0; refine later if needed.
+Target:
+
+1. Source of truth = `UdoDefinition` in bindings only.
+2. Call: resolve `name` in the **current** expression bindings; if `UdoDefinition` → `UdoFunctionExpression` (`ResolvableExpression`); else natives.
+3. Fork stays in `visitCallDataset` (raw params for `_`), **not** inside `invokeFunction`.
+4. Do **not** use `DatasetScalarFunctionExecutor` for UDOs.
+5. No ThreadLocal trampoline — `resolve` evals the body with a child map.
+6. Unknown `foo(...)` → `FunctionNotFoundException` (same as natives). Bare `foo` → `UndefinedVariableException` (including free vars in the body).
 
 See [01-architecture](./01-architecture.md), [04-invoke](./04-invoke.md).
 
@@ -51,9 +55,9 @@ Implement `end operator` as in Trevas / SDMX ANTLR (`END OPERATOR`). Ignore RM p
 
 `ClauseVisitor` merges outer script bindings into the component expression map so UDO scalar params (`threshold`, `factor`) resolve inside `filter` / `calc`. Components still shadow outer names when equal.
 
-## 7. Component-level calls
+## 7. Component-level calls / `compExpr`
 
-Commented grammar (`genericOperatorsComponent` / `callComponent`) suggests component-level UDO invoke is unfinished upstream. **Out of scope** until grammar is revived.
+`genericOperatorsComponent` / `callComponent` is already commented out in `Vtl.g4`. UDO calls go through the **normal expression path** (`visitCallDataset` → `ResolvableExpression`). If `compExpr` is removed from the grammar, nothing UDO-specific should break — do not add a component-only hook.
 
 ## 8. Evaluation of defaults
 

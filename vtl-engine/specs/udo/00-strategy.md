@@ -82,7 +82,7 @@ Partial support does **not** mean a shortcut that bypasses layers:
 
 - visitor still only dispatches
 - `semantics/udo/*Executor` still owns VTL meaning (signature check, defaults, scoped eval)
-- call path reuses `FunctionExpression` + `Method.invoke` via a trampoline (same mechanical shape as natives), without pretending UDOs are pure `FunctionProvider` natives
+- call path is a `ResolvableExpression` that evals the VTL body (operator id resolved like a variable), without pretending UDOs are `FunctionProvider` natives
 - mechanical work stays in existing PE / scalar natives
 
 P0 is a **scope cut on the type surface**, not a layering shortcut.
@@ -93,9 +93,9 @@ After the spike, **define / invoke** are fixed as:
 
 | Phase | Behaviour |
 |-------|-----------|
-| **Define** | `UdoDefinition` in bindings (source of truth) + trampoline `Method` registered under the same name |
-| **Invoke** | `visitCallDataset` sees `UdoDefinition` → `UdoInvokeExecutor` (raw `_`) → `UdoFunctionExpression` → `Method.invoke` → body `ExpressionVisitor` |
-| **Not** | UDO fork inside `invokeFunction`; mono-measure lift via `DatasetScalarFunctionExecutor` |
+| **Define** | `UdoDefinition` in bindings only (source of truth). No trampoline in the native registry. |
+| **Invoke** | resolve name in current bindings → arg wiring (raw `_`) → `UdoFunctionExpression.resolve` → body `ExpressionVisitor` |
+| **Not** | `registerMethod`; UDO fork inside `invokeFunction`; mono-measure lift via `DatasetScalarFunctionExecutor` |
 
 Full diagram and anti-patterns: [01-architecture](./01-architecture.md). Steps: [10-implementation](./10-implementation.md).
 

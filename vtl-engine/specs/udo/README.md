@@ -1,7 +1,7 @@
 # Roadmap — User Defined Operators (UDO)
 
-**Location:** `vtl-engine/specs/udo/` (engine module specs).  
-**Acceptance:** `UserDefinedOperatorTest` · **Walkthrough:** `UdoPatternWalkthroughTest`
+**Location:** `vtl-engine/specs/udo/`  
+**Acceptance:** `UserDefinedOperatorTest`
 
 Implementation spec for **User Defined Operators** (VTL 2.1) in Trevas.
 
@@ -9,63 +9,58 @@ Implementation spec for **User Defined Operators** (VTL 2.1) in Trevas.
 
 **Partial support (P0):** scalars + opaque `dataset` + mixed signatures. Not full VTL-DL.
 
-**Runtime pattern (locked after spike):** define → `UdoDefinition` in bindings + trampoline `Method` in registry → call → `UdoFunctionExpression` (`FunctionExpression`) → `Method.invoke` → body via `ExpressionVisitor`. See [01-architecture](./01-architecture.md).
+**Runtime pattern (review follow-up):** define → `UdoDefinition` in bindings only → call resolves the operator id like a variable → `UdoFunctionExpression` (`ResolvableExpression`) evals the body. No trampoline `Method` in the native registry. See [01-architecture](./01-architecture.md).
 
-## Working method (mandatory)
+*(This PR still contains the spike trampoline; specs describe the target to replace it.)*
 
-**At every implementation step, start with tests.** Catalog IDs in [09](./09-test-catalog.md) must exist and fail for the right reason before prod for that slice; then implement only what turns those IDs green. Details: [07](./07-testing.md), [10](./10-implementation.md).
+## Working method
 
-```
-for each slice:
-  1. write / harden JUnit for that slice’s IDs   → red
-  2. minimal engine change                         → those IDs green
-  3. next slice only when current IDs pass
-```
+**Tests first.** Unit-test a hardcoded `UdoDefinition` / `UdoFunctionExpression` before more visitor wiring. Catalog IDs: [09](./09-test-catalog.md), [07](./07-testing.md), [10](./10-implementation.md).
 
 ## Status (Aug 2026)
 
 | Step | State |
 |------|-------|
-| Specs + pattern lock | ✅ |
-| Acceptance suite (D/S/DS/E + E8) | ✅ green (DS4 `@Disabled`) |
-| Pattern walkthrough | ✅ `UdoPatternWalkthroughTest` |
-| Define / invoke / trampoline | ✅ in engine |
-| User-facing Docusaurus | ⬜ slice B8 |
+| Specs (target path after review) | ✅ this package |
+| Acceptance suite (D/S/DS/E + E8) | ✅ green (DS4 `@Disabled`) — against spike impl |
+| Hardcoded expression unit tests | ⬜ next |
+| Drop trampoline / `registerMethod` | ⬜ next |
+| User-facing Docusaurus | ⬜ |
 | Structured `dataset {…}` (DS4) | ⬜ P1 |
 
 ```bash
 mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
 ```
 
-## Pattern at a glance
+## Pattern at a glance (target)
 
 ```
 define operator add (…) is x + y end operator;
   AssignmentVisitor.visitDefOperator
     → UdoDefineExecutor.define → UdoDefinition
+    → reject if name in bindings (AlreadyDefined) OR native registry
     → bindings.put("add", udo)
-    → reject if name in bindings OR native/global registry
-    → registerMethod("add", UdoTrampoline.invokeN)
+    → no registerMethod
 
 res := add(1, 2);
   GenericFunctionsVisitor.visitCallDataset
-    → bindings.get("add") instanceof UdoDefinition
-    → UdoInvokeExecutor (defaults / _ / arity)  // needs raw parameter ctx
-    → UdoFunctionExpression extends FunctionExpression
-    → resolve: Trampoline.enter → Method.invoke → ExpressionVisitor(body) → exit
+    → currentBindings.get("add") instanceof UdoDefinition
+    → wire defaults / _ / arity
+    → UdoFunctionExpression extends ResolvableExpression
+    → resolve: child map → ExpressionVisitor(body)
 ```
 
-Do **not** route UDOs through `DatasetScalarFunctionExecutor` (no mono-measure lift in P0).  
+Do **not** route UDOs through `DatasetScalarFunctionExecutor`.  
 `invokeFunction` stays native-only — UDO fork stays in `visitCallDataset` (raw `_` args).
 
-## For reviewers (coherence lock)
+## For reviewers
 
-1. **Artefact** = `UdoDefinition` in bindings (source of truth); trampoline `Method` is dispatch only — [02](./02-model.md)
-2. **Invoke** = `FunctionExpression` / `Method.invoke` via `UdoFunctionExpression` — [04](./04-invoke.md)
-3. **Collisions** = bindings **or** registry name → reject (E6, E8) — [08 §2](./08-open-questions.md)
-4. **Types** = scalars + opaque `dataset`; structured `{…}` not enforced — [06](./06-types.md)
-5. **Clause scope** = outer bindings merged into `ClauseVisitor` (scalar params in filter/calc)
-6. **Not in P0** = HOF, component/set/ruleset types, constraints, scalar→dataset lift, PE API changes
+1. **Artefact** = `UdoDefinition` in bindings; not a `vtl-model` DTO (ANTLR body) — [02](./02-model.md)
+2. **Invoke** = `ResolvableExpression`, operator id like a variable — [04](./04-invoke.md)
+3. **Collisions** = E6 `AlreadyDefinedException` / E8 native — [08 §2](./08-open-questions.md)
+4. **Types** = reuse `TypeChecking`; this file only lists rejected syntax — [06](./06-types.md)
+5. **Clause scope** = outer bindings merged into `ClauseVisitor`
+6. **Not in P0** = HOF, component/set/ruleset types, constraints, scalar→dataset lift, PE API changes, lexical closures
 
 ## In scope (P0)
 
@@ -85,43 +80,20 @@ Do **not** route UDOs through `DatasetScalarFunctionExecutor` (no mono-measure l
 | No HOF / predicate injection | no `filterBy(ds, age >= 18)` |
 | `ds[keep s]` ≠ dynamic keep | `s` is a literal component name |
 | Structured `dataset {…}` | opaque until P1 (DS4) |
-| Trampoline uses `Object` arity + ThreadLocal | spike-validated; refine later if needed |
 | Trevas call args | `varID\|const\|_` vs official `expr` — orthogonal |
-
-## Current state in Trevas
-
-| Layer | Status |
-|-------|--------|
-| Parse / DAG | ✅ |
-| `UdoDefinition` + `UdoParameter` | ✅ |
-| `visitDefOperator` + registry collision | ✅ |
-| `UdoTrampoline` + `registerMethod` | ✅ |
-| `visitCallDataset` UDO branch | ✅ |
-| `UdoInvokeExecutor` + `UdoFunctionExpression` | ✅ |
-| Clause outer-bindings merge | ✅ |
-| Rich DL types / DS4 | ❌ P1+ |
 
 ## Documents
 
 | File | Content |
 |------|---------|
 | [00-strategy.md](./00-strategy.md) | Why partial |
-| [01-architecture.md](./01-architecture.md) | **Locked call path** (bindings + Method + FunctionExpression) |
+| [01-architecture.md](./01-architecture.md) | Target call path |
 | [02-model.md](./02-model.md) | `UdoDefinition` |
-| [03-define.md](./03-define.md) | Define + register trampoline |
-| [04-invoke.md](./04-invoke.md) | Invoke via FunctionExpression |
-| [05-phases.md](./05-phases.md) | P0→P3 |
-| [06-types.md](./06-types.md) | Type matrix |
-| [07-testing.md](./07-testing.md) | Test strategy |
-| [08-open-questions.md](./08-open-questions.md) | Locked decisions |
+| [03-define.md](./03-define.md) | Define (bindings only) |
+| [04-invoke.md](./04-invoke.md) | Invoke via `ResolvableExpression` |
+| [05-phases.md](./05-phases.md) | P0 vs backlog |
+| [06-types.md](./06-types.md) | Syntax accept/reject |
+| [07-testing.md](./07-testing.md) | Hardcoded unit tests first |
+| [08-open-questions.md](./08-open-questions.md) | Decisions |
 | [09-test-catalog.md](./09-test-catalog.md) | Catalog |
-| [10-implementation.md](./10-implementation.md) | Steps aligned on this pattern |
-
-## Definition of Done (P0)
-
-| Principle | How |
-|-----------|-----|
-| Pattern | bindings artefact + trampoline Method + FunctionExpression body eval |
-| Tested | `UserDefinedOperatorTest` green; DS4 skipped; walkthrough green |
-| Modular | visitors thin; `semantics/udo/*` owns meaning; no PE API change |
-| Docs | this package + optional Docusaurus (B8) |
+| [10-implementation.md](./10-implementation.md) | Next steps after review |

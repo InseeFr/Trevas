@@ -1,15 +1,9 @@
 # 09 — Test catalog
 
 **Executable suite:** `vtl-engine/src/test/java/fr/insee/vtl/engine/visitors/UserDefinedOperatorTest.java`  
-**Walkthrough:** `UdoPatternWalkthroughTest` (define → FunctionExpression → Method trampoline)
+**Walkthrough:** `UdoPatternWalkthroughTest` (update after trampoline drop)
 
-**Run:**
-
-```bash
-mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
-```
-
-**Status:** acceptance **green** (DS4 `@Disabled`); walkthrough **green**. Pattern locked — [01](./01-architecture.md). Further slices still test-first ([07](./07-testing.md), [10](./10-implementation.md)).
+**Status:** acceptance **green** against the spike. Specs retargeted — [01](./01-architecture.md). Next: hardcoded expression unit tests ([07](./07-testing.md), [10](./10-implementation.md)).
 
 ---
 
@@ -20,9 +14,9 @@ mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
 | **Red first** | New IDs (P1+) have a JUnit method **before** the implem that makes them green |
 | **One slice ↔ one reason** | Each `feat(udo)` commit turns green **only** the IDs listed for that slice |
 | **Acceptance = script** | `UserDefinedOperatorTest` is the product bar (not unit tests alone) |
-| **Métier + technique** | Métier = reusable VTL recipes; technique = engine semantics (DAG, scope, errors) |
+| **Recipes + technique** | Recipes = reusable VTL pipelines; technique = engine semantics (DAG, scope, errors) |
 | **Precise asserts** | Scalars: exact value + Java type; datasets: row sets; errors: not `FunctionNotFound` when UDO exists |
-| **Pattern** | Walkthrough proves bindings artefact + trampoline `Method` + `UdoFunctionExpression` |
+| **Unit first** | Hardcoded `UdoDefinition` / `UdoFunctionExpression` before more visitor wiring |
 
 ---
 
@@ -32,8 +26,8 @@ mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
 |----------|-----|-------|------|
 | **Doc / RM** | D1–D4 | 4 | VTL 2.1 reference examples (incl. corrected typo) |
 | **Technique** | S1–S4 | 4 | Inference, free vars, `_`, nested UDO |
-| **Métier** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
-| **Erreurs** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
+| **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
+| **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4 | 1 | Structured `dataset {…}` (`@Disabled`) |
 | **Total P0 enabled** | | **21** | All except DS4 |
 
@@ -97,29 +91,29 @@ Preprocessor must reorder to: `b`, `y`, **define**, **call**. At invoke, `y == 4
 
 ---
 
-## Métier (DS*)
+## Recipes (DS*)
 
 Reusable **transformation recipes** — why UDOs exist in production scripts.
 
-| ID | JUnit | Slice | Métier intent | Body pattern | Assert |
-|----|-------|-------|---------------|--------------|--------|
-| **DS1** | `testDs1FilterRecipe` | 5 | **Filtrer** rows by threshold | `ds[filter long1 > threshold]` | 2 rows from `DatasetSamples.ds1` (Toto, Franck); not Hadrien/Nico |
-| **DS2** | `testDs2CalcRecipe` | 5 | **Enrichir** with derived measure | `ds[calc long1_x2 := long1 * 2]` | 3 rows; each has `long1_x2 == 2 * long1` |
-| **DS3** | `testDs3UnionTwoDatasets` | 5 | **Fusionner** two inputs | `union(a, b)` | 3 rows `{a,1}`, `{b,2}`, `{c,3}` |
-| **DS5** | `testDs5DatasetAndScalar` | 5 | **Paramétrer** a calc (scale) | `ds[calc long1 := long1 * factor]` with `factor integer` | Nico row: `long1 == 60` (20×3) |
+| ID | JUnit | Slice | Intent | Body pattern | Assert |
+|----|-------|-------|--------|--------------|--------|
+| **DS1** | `testDs1FilterRecipe` | 5 | Filter rows by threshold | `ds[filter long1 > threshold]` | 2 rows from `DatasetSamples.ds1` (Toto, Franck); not Hadrien/Nico |
+| **DS2** | `testDs2CalcRecipe` | 5 | Enrich with derived measure | `ds[calc long1_x2 := long1 * 2]` | 3 rows; each has `long1_x2 == 2 * long1` |
+| **DS3** | `testDs3UnionTwoDatasets` | 5 | Union two inputs | `union(a, b)` | 3 rows `{a,1}`, `{b,2}`, `{c,3}` |
+| **DS5** | `testDs5DatasetAndScalar` | 5 | Parameterise a calc (scale) | `ds[calc long1 := long1 * factor]` with `factor integer` | Nico row: `long1 == 60` (20×3) |
 | **DS4** | `testDs4StructuredDatasetType` | P1 | Structure contract | typed `dataset { id, long1 }` | `@Disabled` until P1 |
 
 ### DS1 row expectation (reference)
 
 After `keep_long1_gt(ds1, 25)` — ids **Toto** (`long1=30`) and **Franck** (`long1=100`) only.
 
-### DS5 métier note
+### DS5 note
 
 Models “apply same recipe with different factor” without duplicating VTL — shared library pattern (host loads defs, script calls `scale_long1(ds, 3)`).
 
 ---
 
-## Erreurs (E*)
+## Errors (E*)
 
 | ID | JUnit | Slice | Phase | Trigger | Must **not** be | Expected failure |
 |----|-------|-------|-------|---------|-------------------|------------------|

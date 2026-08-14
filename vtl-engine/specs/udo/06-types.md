@@ -1,67 +1,42 @@
 # 06 — Type support matrix
 
-Based on VTL DL (`vtl_dl_udo.rst`) vs Trevas today.
+Not a parallel type system. Assignability for UDO args / `returns` goes through existing `TypeChecking` / `checkInstanceOf` (`integer` ⊆ `number` already works — D1).
 
-Type checking for UDO formals / defaults / returns lives in `UdoDefineExecutor` and `UdoInvokeExecutor` / trampoline return check — same pattern as [01](./01-architecture.md), not a parallel type system.
+This file only lists **which signature syntax** P0 accepts vs rejects at **define**.
 
-## Legend
+## P0 accept
 
-| Symbol | Meaning |
-|--------|---------|
-| ✅ | P0 |
-| 🔜 | P1 |
-| 📦 | P2 |
-| 🧊 | P3 / later |
-| ❌ | out of scope unless demanded |
-
-## Input parameter types
-
-| Syntax | Phase | Notes |
-|--------|-------|-------|
-| `integer` / `number` / `string` / `boolean` | ✅ | Map to existing Java classes |
-| `date` / `time` / `time_period` / `duration` | ✅/🔜 | Include if cast mapping exists; else 🔜 |
-| `scalar` | 🔜 | Top type — only if useful |
-| `integer {0,1}` / `number [value >= 0]` | 🧊 | Needs constraint evaluator |
-| `(not) null` modifiers | 🧊 | |
-| `dataset` | ✅ | Opaque (`instanceof Dataset`) — required in P0 |
-| `dataset { … }` | 🔜 | Structural checks in P1 |
-| `component` / `measure` / … | 📦 | Component visitor context |
-| `set <T>` | 🧊 | |
-| `ruleset` / `datapoint_…` / `hierarchical_…` | 🧊 | Pass ruleset artefacts as args |
-
-## Return types
-
-| Syntax | Phase |
+| Syntax | Notes |
 |--------|-------|
-| basic scalar | ✅ |
-| omitted (`returns` absent) | ✅ infer from body |
-| opaque `dataset` | ✅ |
-| structured `dataset {…}` | 🔜 |
-| `component` | 📦 |
+| `integer` / `number` / `string` / `boolean` | Same Java classes as the rest of the engine |
+| `date` / `time_period` / `duration` | If `cast` already maps them; else reject until then |
+| `dataset` | Opaque (`instanceof Dataset` / `DatasetExpression`) |
+| `dataset { … }` | **Accepted as opaque** — no structure check (DS4 = P1) |
+| omitted `returns` | Infer from body at invoke |
 
-## Assignability (P0 rules) — **locked**
+## P0 reject at define
 
-Reuse `TypeChecking` (same rules as the rest of the engine):
-
-| Case | P0 |
-|------|----|
-| `integer` (`Long`) actual / body → `number` formal / `returns` | **allow** (`TypeChecking` already treats number widenings) — needed for D1 (`returns number` + `x + y` integers) |
-| `number` → `integer` | **reject** |
-| exact scalar match | allow |
-| `null` / unknown (`Object`) | follow existing expression rules |
-| dataset actual → scalar formal | **reject** |
-| scalar actual → opaque `dataset` formal | **reject** |
-| opaque `dataset` ↔ opaque `dataset` | allow (`instanceof Dataset` / `DatasetExpression`) |
-
-Do not invent a parallel assignability table for UDOs.
-
-## Fail-fast policy
-
-Type productions **not** in the active phase must throw at **define** time (e.g. `component`, constraints):
+| Syntax | Until |
+|--------|-------|
+| `component` / `measure` / `attribute` / … | P2 |
+| `set <T>`, ruleset types | later |
+| scalar constraints (`integer {0,1}`, `[value >= 0]`, nullability) | later |
 
 ```
 UnimplementedException: UDO parameter type 'component' is not supported yet
-(see vtl-engine/specs/udo — phase P2)
 ```
 
-Structured `dataset { … }` is **accepted as opaque** in P0 (no structure check). Enforcement = P1 (DS4). Do not silently ignore scalar constraints if the grammar attaches them — reject until P3.
+Do not silently ignore constraint syntax if the grammar attaches it.
+
+## Assignability (reuse engine)
+
+| Case | |
+|------|--|
+| `integer` → `number` formal / `returns` | allow |
+| `number` → `integer` | reject |
+| exact scalar match | allow |
+| `null` / `Object` | same as other expressions |
+| dataset ↔ scalar | reject |
+| opaque dataset ↔ opaque dataset | allow |
+
+No extra table in UDO code — call `TypeChecking` / `checkInstanceOf`.

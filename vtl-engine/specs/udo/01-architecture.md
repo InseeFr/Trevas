@@ -1,8 +1,10 @@
-# 01 — Architecture (locked pattern)
+# 01 — Architecture
 
 UDOs follow `vtl-engine/README.md`: visitors route → semantics decide → processors execute.
 
-**P0 invoke path (validated):** body evaluation goes through `FunctionExpression` → `java.lang.reflect.Method.invoke` (trampoline), not through `DatasetScalarFunctionExecutor`.
+**Target invoke path (review follow-up):** the operator id is resolved like a variable (`UdoDefinition` in bindings). Evaluation is a `ResolvableExpression` that visits the body. No `registerMethod` / `Method.invoke` trampoline.
+
+The spike in this PR still uses a trampoline `Method` so `FunctionExpression` could call `invoke`. That path is **to be replaced** — it bypasses bindings and makes scoping/closures moot. See [08 §6a](./08-open-questions.md).
 
 ## Target flow
 
@@ -20,17 +22,16 @@ flowchart TB
 
   subgraph semantics["semantics/udo"]
     DEFEX["UdoDefineExecutor"]
-    INVEX["UdoInvokeExecutor\n(defaults / _ / arity)"]
-    TRAMP["UdoTrampoline.invokeN"]
+    WIRE["argument wiring\n(defaults / _ / arity)"]
     UDO["UdoDefinition"]
   end
 
   subgraph expr["expressions"]
-    UFE["UdoFunctionExpression\nextends FunctionExpression"]
+    UFE["UdoFunctionExpression\nextends ResolvableExpression"]
   end
 
   subgraph model["unchanged contracts"]
-    BIND["ENGINE_SCOPE bindings"]
+    BIND["current bindings map"]
     REG["NativeFunctionRegistry"]
     EV["ExpressionVisitor\n(body re-entry)"]
     PE["ProcessingEngine"]
@@ -39,16 +40,14 @@ flowchart TB
 
   DEF --> AV --> DEFEX --> UDO
   UDO --> BIND
-  DEFEX --> REG
-  REG -.->|"registerMethod(trampoline)"| TRAMP
 
   CALL --> GFV
-  GFV -->|"instanceof UdoDefinition"| INVEX
+  GFV -->|"resolve name in current bindings\ninstanceof UdoDefinition"| WIRE
   GFV -->|"else"| NAT["DatasetScalarFunctionExecutor\n(natives only)"]
-  INVEX --> UFE
-  UFE -->|"Method.invoke"| TRAMP
-  TRAMP --> EV --> RE
+  WIRE --> UFE
+  UFE -->|"resolve"| EV --> RE
   EV -.-> PE
+  REG -.->|"collision check at define only"| AV
 ```
 
 ## End-to-end steps
@@ -57,18 +56,17 @@ flowchart TB
 
 1. `AssignmentVisitor.visitDefOperator`
 2. `UdoDefineExecutor.define` → parse signature (P0 subset) + capture `ExprContext` body
-3. Reject if `bindings.containsKey(name)` **or** name already in native/global registry (E6 / E8)
-4. `bindings.put(name, udo)` — **source of truth**
-5. `engine.registerMethod(name, UdoTrampoline.methodForArity(n))` — dispatch hook only
+3. Reject if `bindings.containsKey(name)` → `AlreadyDefinedException` (E6)
+4. Reject if name already in native/global registry (E8) — **do not** register a trampoline
+5. `bindings.put(name, udo)` — **only** source of truth
 
 ### Invoke
 
 1. `GenericFunctionsVisitor.visitCallDataset` — **must** keep raw `parameter` contexts (for `_`)
-2. If `bindings.get(name) instanceof UdoDefinition` → `UdoInvokeExecutor.invoke`
-3. Else → existing `invokeFunction` / `DatasetScalarFunctionExecutor` (natives)
-4. `UdoInvokeExecutor` builds `List<ResolvableExpression>` (actuals / defaults / `_`)
-5. Returns `UdoFunctionExpression` (subclass of `FunctionExpression`)
-6. On `resolve`: `UdoTrampoline.enter(udo, outerBindings)` → `Method.invoke` → `dispatch` builds child scope → `ExpressionVisitor.visit(body)` → `exit`
+2. Resolve `name` in the **current** expression bindings (not always `ENGINE_SCOPE`)
+3. If `instanceof UdoDefinition` → wire args (actuals / defaults / `_`) → `UdoFunctionExpression`
+4. Else → existing `invokeFunction` / `DatasetScalarFunctionExecutor` (natives)
+5. On `resolve`: child map = outer bindings + formals → `ExpressionVisitor.visit(body)` → `body.resolve`
 
 Why not put the UDO check inside `invokeFunction`? That API only sees already-visited expressions — `_` and defaults need the parse tree. Keep the fork in `visitCallDataset`.
 
@@ -76,29 +74,28 @@ Why not put the UDO check inside `invokeFunction`? That API only sees already-vi
 
 | Layer | Class | Does | Does not |
 |-------|-------|------|----------|
-| Define visitor | `AssignmentVisitor.visitDefOperator` | Collision checks, put binding, register trampoline | Body eval |
+| Define visitor | `AssignmentVisitor.visitDefOperator` | Collision checks, put binding | Body eval, `registerMethod` |
 | Define semantics | `UdoDefineExecutor` | Signature parse, defaults type-check | Invoke |
-| Invoke visitor | `GenericFunctionsVisitor.visitCallDataset` | UDO vs native fork | Defaulting logic |
-| Invoke semantics | `UdoInvokeExecutor` | Arity, `_`, defaults, arg types | `Method.invoke` |
-| Expression | `UdoFunctionExpression` | ThreadLocal CallSite + `FunctionExpression.resolve` | Body AST walk |
-| Trampoline | `UdoTrampoline` | Child bindings + `ExpressionVisitor` + return check | PE branching |
-| Artefact | `UdoDefinition` | Name, params, returns, body, engine ref | Java Method itself |
+| Invoke visitor | `GenericFunctionsVisitor.visitCallDataset` | UDO vs native fork on **current** bindings | Defaulting logic |
+| Arg wiring | helper (today `UdoInvokeExecutor`) | Arity, `_`, defaults, arg types | Fake `Method.invoke` |
+| Expression | `UdoFunctionExpression` | `ResolvableExpression` contract: type + `resolve` body | Registry / trampoline |
+| Artefact | `UdoDefinition` | Name, params, returns, body, engine ref | Java `Method` |
 | Clauses | `ClauseVisitor` | Merge **outer bindings** into component map | — |
 
-## Artefact vs Method
+## Artefact vs natives
 
-| | Bindings `UdoDefinition` | Registry trampoline `Method` |
-|--|--------------------------|------------------------------|
-| Role | Source of truth (body, formals) | Lets call sites use `FunctionExpression` |
-| Lookup | `instanceof UdoDefinition` first | Registered under same VTL name |
-| Body | ANTLR `ExprContext` | Static `invoke0…8(Object…)` → re-enter visitor |
+| | Bindings `UdoDefinition` | Native registry |
+|--|--------------------------|-----------------|
+| Role | Source of truth (body, formals) | Built-in Java methods only |
+| Lookup | resolve operator id like a variable | `findMethod` if not a UDO |
+| Body | ANTLR `ExprContext` | real `Method` |
 
-Do **not** treat UDOs as normal `FunctionProvider` natives. The trampoline is an adapter so resolution reuses `FunctionExpression` / `Method.invoke`; semantics stay in `semantics/udo`.
+Do **not** treat UDOs as `FunctionProvider` natives and do **not** put a trampoline `Method` in the registry.
 
 ## Scope rules
 
 1. Params shadow outer names inside the body.
-2. Free vars: **invoke-time** lookup in outer bindings ([08 §1](./08-open-questions.md)).
+2. Free vars: **invoke-time** lookup in the bindings passed to `resolve` ([08 §1](./08-open-questions.md)). Not a lexical closure in P0 (no snapshot at define).
 3. Child scope discarded after return.
 4. Dataset clauses see UDO scalar params via outer-bindings merge in `ClauseVisitor` (needed for `ds[filter long1 > threshold]`).
 
@@ -106,28 +103,17 @@ Do **not** treat UDOs as normal `FunctionProvider` natives. The trampoline is an
 
 UDOs **must not** go through mono-measure lift in P0. Scalar UDO + dataset actual → type error (P1 may revisit).
 
-## File placement (as implemented)
+## File placement
 
 ```
 vtl-engine/.../semantics/udo/UdoDefinition.java
 vtl-engine/.../semantics/udo/UdoParameter.java
 vtl-engine/.../semantics/udo/UdoDefineExecutor.java
-vtl-engine/.../semantics/udo/UdoInvokeExecutor.java
-vtl-engine/.../semantics/udo/UdoTrampoline.java
+vtl-engine/.../semantics/udo/UdoInvokeExecutor.java   // arg wiring (defaults / _)
 vtl-engine/.../expressions/UdoFunctionExpression.java
-vtl-engine/.../visitors/AssignmentVisitor.java          // visitDefOperator
+vtl-engine/.../visitors/AssignmentVisitor.java
 vtl-engine/.../visitors/expression/functions/GenericFunctionsVisitor.java
-vtl-engine/.../visitors/ClauseVisitor.java              // outer bindings merge
-vtl-engine/src/test/.../visitors/UserDefinedOperatorTest.java
-vtl-engine/src/test/.../semantics/udo/UdoPatternWalkthroughTest.java
+vtl-engine/.../visitors/ClauseVisitor.java
 ```
 
-## Module note
-
-`Fun.toMethod` (natives) needs:
-
-```java
-opens fr.insee.vtl.engine.functions.providers to safety.mirror;
-```
-
-(`opens fr.insee.vtl.engine` does not open subpackages.)
+`UdoTrampoline` has been removed — evaluation is `UdoFunctionExpression.resolve`.

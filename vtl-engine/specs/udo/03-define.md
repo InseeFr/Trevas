@@ -1,6 +1,6 @@
 # 03 — Define path (`define operator`)
 
-## Entry point (as implemented)
+## Entry point (target)
 
 ```java
 @Override
@@ -8,22 +8,24 @@ public Object visitDefOperator(VtlParser.DefOperatorContext ctx) {
   UdoDefinition udo = UdoDefineExecutor.define(ctx, engine);
   Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
   String name = udo.getName();
+  Positioned pos = fromContext(ctx);
 
   if (bindings.containsKey(name)) {
-    throw … "name already bound";
+    throw new AlreadyDefinedException(/* operator id */, pos); // E6
   }
   if (engine.getRegisteredMethods().containsKey(name)
       || engine.getRegisteredGlobalMethods().containsKey(name)) {
-    throw … "conflicts with native function";
+    throw … "conflicts with native function"; // E8
   }
 
   bindings.put(name, udo);
-  engine.registerMethod(name, UdoTrampoline.methodForArity(udo.getParameters().size()));
   return udo;
 }
 ```
 
 Visitor stays thin. Signature validation lives in `UdoDefineExecutor`.
+
+**Do not** `registerMethod` the UDO. The operator id is resolved like a variable at the call site ([04](./04-invoke.md)). Registering a trampoline `Method` goes around the bindings and makes closure / scoped lookup moot.
 
 ## Grammar note
 
@@ -42,13 +44,14 @@ Close with `end operator` (`END OPERATOR`). Ignore RM prose “end define operat
 
 Light checks only at define. Full body type-check → P1.
 
-## After define (mandatory side effects)
+## After define (side effects)
 
 | Action | Why |
 |--------|-----|
-| `bindings.put(name, udo)` | Source of truth for invoke |
-| `registerMethod(name, trampoline)` | Enables `FunctionExpression` / `Method.invoke` path |
-| Reject registry collision **before** register | E8 — never shadow a native |
+| `bindings.put(name, udo)` | Source of truth for invoke (like a dataset / ruleset) |
+| Reject bindings collision | E6 — `AlreadyDefinedException` |
+| Reject registry collision | E8 — never shadow a native |
+| **No** `registerMethod` | Call site looks up the binding, then evaluates a `ResolvableExpression` |
 
 ## Defaults
 
@@ -62,5 +65,5 @@ Unchanged: `DAGBuildingVisitor.visitDefOperator` already tracks `OPERATOR` + fre
 
 - Do not execute the body at define.
 - Do not write parameter names into outer bindings.
-- Do not rely on registry alone (always keep `UdoDefinition` in bindings).
-- Do not skip the registry collision check when registering the trampoline.
+- Do not register a trampoline `Method` under the operator name.
+- Do not skip the registry collision check (E8 still applies: cannot `define operator` over a native).

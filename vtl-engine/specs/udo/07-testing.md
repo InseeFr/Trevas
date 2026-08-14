@@ -1,48 +1,32 @@
 # 07 — Testing strategy
 
-## Where we are
+**Absolute first step** (before more visitor wiring): unit-test the expression/model with a **hardcoded** `UdoDefinition` — no parse of `define operator`. Replace the hardcoded instance with the dynamically defined one once define/invoke are wired.
 
-| Item | Status |
-|------|--------|
-| Specs `00`–`10` (pattern-locked) | ✅ |
-| `UserDefinedOperatorTest` | ✅ green (DS4 skipped) |
-| `UdoPatternWalkthroughTest` | ✅ green — step through layers |
-| Production P0 path | ✅ in engine |
+Same idea as the provenance corpus: script-level cases as VTL (+ later `.vtl` fixtures), plus engine-level unit tests.
 
-## Test-first (mandatory for further slices)
-
-```
-1. Catalog / JUnit for the slice IDs → red
-2. Implement pattern step (see 10) → green
-3. Check off 09 / 10
-```
-
-## Test layers
+## Layers
 
 | Layer | Location | Purpose |
 |-------|----------|---------|
-| **Acceptance** | `UserDefinedOperatorTest` | Product bar (D/S/DS/E) |
-| **Walkthrough** | `UdoPatternWalkthroughTest` | Breakpoints: define → FunctionExpression → trampoline |
+| **Unit (model)** | `semantics/udo/*Test` (to add) | Hardcoded UDO → `UdoFunctionExpression.resolve` — type, args, body, free vars |
+| **Acceptance** | `UserDefinedOperatorTest` | Product bar (D/S/DS/E) via `engine.eval` |
+| **Walkthrough** | `UdoPatternWalkthroughTest` | Bindings artefact + call path (update after trampoline drop) |
 | **DAG** | `DagDefineStatementsTest` | Reorder; S2 covers execution |
-| **Spark IT** | P1 | Dataset UDO on PE |
+| **Fixtures (later)** | `.vtl` files, prov-style `$input` | Optional; do not block P0 on `vtl-test-utils` |
 
-## Pattern checkpoints (walkthrough)
+## Test-first
 
-Assert after define:
-
-- `bindings.get(name) instanceof UdoDefinition`
-- `getRegisteredMethods()` contains trampoline `UdoTrampoline.invokeN`
-
-Assert after call:
-
-- result value / dataset rows
-- path used `Method.invoke` (debug: break in `UdoTrampoline.dispatch`)
+```
+0. Hardcoded UdoDefinition + UdoFunctionExpression  → green (controls the base)
+1. Catalog / JUnit for the slice IDs                 → red
+2. Minimal engine change                             → those IDs green
+3. Check off 09 / 10
+```
 
 ## Running
 
 ```bash
 mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
-mvn -pl vtl-engine -Dtest=UdoPatternWalkthroughTest#walkthrough_scalarAdd_viaFunctionExpressionAndMethodInvoke test
 ```
 
 IDE: run as JUnit on module `vtl-engine` (factory fallback if SPI `vtl` is null).
@@ -52,13 +36,6 @@ IDE: run as JUnit on module `vtl-engine` (factory fallback if SPI `vtl` is null)
 | Tag | IDs |
 |-----|-----|
 | Doc | D1–D4 |
-| Métier | DS1–DS5 |
+| Recipes | DS1–DS5 |
 | Technique | S1–S4 |
-| Erreurs | E1–E8 |
-
-## After P0
-
-| Phase | Tests |
-|-------|-------|
-| P1 | Enable DS4; recursion; optional Spark IT |
-| P2+ | New catalog section |
+| Errors | E1–E8 |
