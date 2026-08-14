@@ -70,7 +70,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
       Map<String, Object> context, ProcessingEngine processingEngine, VtlScriptEngine engine) {
     Objects.requireNonNull(context);
     this.context = context;
-    genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
+    genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine, context);
     varIdVisitor = new VarIdVisitor(context);
     booleanVisitor = new BooleanVisitor(this, genericFunctionsVisitor);
     arithmeticVisitor = new ArithmeticVisitor(this, genericFunctionsVisitor);

@@ -19,9 +19,9 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.script.ScriptContext;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
@@ -30,10 +30,13 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
 
   private final VtlScriptEngine engine;
   private final ExpressionVisitor exprVisitor;
+  private final Map<String, Object> context;
 
-  public GenericFunctionsVisitor(ExpressionVisitor expressionVisitor, VtlScriptEngine engine) {
+  public GenericFunctionsVisitor(
+      ExpressionVisitor expressionVisitor, VtlScriptEngine engine, Map<String, Object> context) {
     this.engine = Objects.requireNonNull(engine);
     exprVisitor = Objects.requireNonNull(expressionVisitor);
+    this.context = Objects.requireNonNull(context);
   }
 
   private static Class<?> getOutputClass(Integer basicScalarType, String basicScalarText) {
@@ -65,7 +68,7 @@ public class GenericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
   public ResolvableExpression visitCallDataset(VtlParser.CallDatasetContext ctx) {
     try {
       String name = ctx.operatorID().getText();
-      Object binding = engine.getBindings(ScriptContext.ENGINE_SCOPE).get(name);
+      Object binding = context.get(name);
       if (binding instanceof UdoDefinition udo) {
         return UdoInvokeExecutor.invoke(udo, ctx, exprVisitor, engine, fromContext(ctx));
       }

@@ -12,9 +12,10 @@
 |-----------|-------|
 | Spike (trampoline) + acceptance green | ✅ in this PR (to replace) |
 | Specs retargeted after review | ✅ |
-| Hardcoded `UdoFunctionExpression` unit tests | ⬜ |
+| Hardcoded `UdoFunctionExpression` unit tests | ✅ |
 | Drop `registerMethod` / `UdoTrampoline` | ✅ |
 | E6 → `AlreadyDefinedException` | ✅ |
+| Lookup operator id in current visitor bindings | ✅ |
 | Docusaurus | ⬜ |
 | P1 DS4 / recursion / Spark IT | ⬜ |
 
@@ -35,8 +36,8 @@
 
 ### Step 2 — Invoke via bindings lookup
 
-**Tests:** D1, D3, S1  
-**Implement:** `visitCallDataset` resolves **current** bindings; arg wiring for present args; no `DatasetScalarFunctionExecutor`.
+**Tests:** D1, D3, S1 + `UdoCallLookupTest`  
+**Implement:** `visitCallDataset` resolves the **current** visitor map; arg wiring for present args; no `DatasetScalarFunctionExecutor`. **Done.**
 
 ### Step 3–7 — keep existing catalog
 
