@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * Resolves call-site arguments (defaults / {@code _}) then returns a {@link UdoFunctionExpression}
- * so evaluation goes through {@code FunctionExpression} → {@code Method.invoke}.
+ * so evaluation goes through {@code ResolvableExpression#resolve}.
  */
 public final class UdoInvokeExecutor {
 

@@ -7,8 +7,6 @@ import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -22,19 +20,14 @@ import org.junit.jupiter.api.Test;
  * define:
  *   AssignmentVisitor.visitDefOperator
  *     → UdoDefineExecutor.define
+ *     → reject if bindings or native registry already have the name
  *     → bindings.put(name, UdoDefinition)
- *     → engine.registerMethod(name, UdoTrampoline.invokeN)
  *
  * call:
  *   GenericFunctionsVisitor.visitCallDataset
  *     → UdoInvokeExecutor.invoke          (defaults / arity)
- *     → UdoFunctionExpression             (extends FunctionExpression)
- *     → resolve():
- *          UdoTrampoline.enter(udo, ctx)
- *          FunctionExpression.resolve → Method.invoke
- *            → UdoTrampoline.invoke2(…)
- *              → ExpressionVisitor.visit(body)
- *          UdoTrampoline.exit()
+ *     → UdoFunctionExpression.resolve
+ *          → ExpressionVisitor.visit(body)
  * </pre>
  *
  * Run:
@@ -44,7 +37,7 @@ import org.junit.jupiter.api.Test;
  * </pre>
  *
  * Suggested breakpoints: {@code visitDefOperator}, {@code UdoInvokeExecutor.invoke}, {@code
- * UdoFunctionExpression.resolve}, {@code UdoTrampoline.dispatch}.
+ * UdoFunctionExpression.resolve}.
  */
 public class UdoPatternWalkthroughTest {
 
@@ -66,7 +59,7 @@ public class UdoPatternWalkthroughTest {
   }
 
   @Test
-  public void walkthrough_scalarAdd_viaFunctionExpressionAndMethodInvoke() throws ScriptException {
+  public void walkthrough_scalarAdd_viaResolvableExpression() throws ScriptException {
     // --- DEFINE ---------------------------------------------------------------
     // Breakpoint: AssignmentVisitor.visitDefOperator
     engine.eval(
@@ -90,21 +83,15 @@ public class UdoPatternWalkthroughTest {
     assertThat(udo.getReturnType()).isEqualTo(Long.class);
     assertThat(udo.getBody()).isNotNull();
 
-    Map<String, List<Method>> registered = engine.getRegisteredMethods();
-    assertThat(registered)
-        .as("define also registers a trampoline Method in the native registry")
-        .containsKey("add");
-    Method trampoline = registered.get("add").get(0);
-    assertThat(trampoline.getDeclaringClass()).isEqualTo(UdoTrampoline.class);
-    assertThat(trampoline.getName()).isEqualTo("invoke2");
-    assertThat(trampoline.getParameterTypes()).containsExactly(Object.class, Object.class);
+    assertThat(engine.getRegisteredMethods())
+        .as("UDO must not be registered as a native Method")
+        .doesNotContainKey("add");
 
     // --- INVOKE ---------------------------------------------------------------
     // Breakpoints:
     //   GenericFunctionsVisitor.visitCallDataset
     //   UdoInvokeExecutor.invoke
     //   UdoFunctionExpression.resolve
-    //   UdoTrampoline.dispatch
     engine.eval("res := add(10, 32);");
 
     assertThat(engine.getBindings(ScriptContext.ENGINE_SCOPE).get("res")).isEqualTo(42L);
@@ -112,8 +99,8 @@ public class UdoPatternWalkthroughTest {
 
   @Test
   public void walkthrough_rejectsUdoNameAlreadyInNativeRegistry() throws Exception {
-    // Register under a plain IDENTIFIER (avoid Fun.toMethod / keywords like abs).
-    Method marker = UdoTrampoline.class.getMethod("invoke1", Object.class);
+    // Register under a plain IDENTIFIER (avoid keywords like abs).
+    Method marker = String.class.getMethod("valueOf", Object.class);
     engine.registerMethod("my_native", marker);
 
     assertThatThrownBy(

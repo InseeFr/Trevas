@@ -4,11 +4,11 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.antlr.runtime.tree.TerminalNode;
 import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.AlreadyDefinedException;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.semantics.udo.UdoDefineExecutor;
 import fr.insee.vtl.engine.semantics.udo.UdoDefinition;
-import fr.insee.vtl.engine.semantics.udo.UdoTrampoline;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.model.exceptions.InvalidTypeException;
@@ -79,21 +79,15 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
       Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
       String name = udo.getName();
       if (bindings.containsKey(name)) {
-        throw new VtlRuntimeException(
-            new VtlScriptException(
-                "cannot define operator '" + name + "': name already bound", fromContext(ctx)));
+        throw new AlreadyDefinedException(fromContext(ctx.operatorID()));
       }
       if (engine.getRegisteredMethods().containsKey(name)
           || engine.getRegisteredGlobalMethods().containsKey(name)) {
-        throw new VtlRuntimeException(
-            new VtlScriptException(
-                "cannot define operator '" + name + "': conflicts with native function",
-                fromContext(ctx)));
+        throw new VtlScriptException(
+            "cannot define operator '" + name + "': conflicts with native function",
+            fromContext(ctx));
       }
       bindings.put(name, udo);
-      // Register trampoline Method so the UDO is visible in the function registry;
-      // call sites still build FunctionExpression via UdoInvokeExecutor.
-      engine.registerMethod(name, UdoTrampoline.methodForArity(udo.getParameters().size()));
       return udo;
     } catch (VtlScriptException e) {
       throw new VtlRuntimeException(e);

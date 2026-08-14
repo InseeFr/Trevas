@@ -396,15 +396,14 @@ public class UserDefinedOperatorTest {
                           x
                     end operator;
                     """))
-        .isInstanceOf(Exception.class);
+        .hasMessageContaining("already defined");
   }
 
   @Test
   public void testE8NativeRegistryCollision() throws Exception {
     // Spec 08 §2: reject UDO name that already exists in the Method registry.
     VtlScriptEngine vtl = (VtlScriptEngine) engine;
-    Method marker =
-        fr.insee.vtl.engine.semantics.udo.UdoTrampoline.class.getMethod("invoke1", Object.class);
+    Method marker = String.class.getMethod("valueOf", Object.class);
     vtl.registerMethod("my_native", marker);
 
     assertThatThrownBy(
