@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Runtime artefact for a user-defined operator. Stored in {@code ENGINE_SCOPE} bindings under the
- * operator name. The VTL body remains an ANTLR subtree and is evaluated via {@link
- * fr.insee.vtl.engine.visitors.expression.ExpressionVisitor} when the trampoline {@link
- * java.lang.reflect.Method} is invoked through {@link
- * fr.insee.vtl.engine.expressions.FunctionExpression}.
+ * Runtime artefact for a user-defined operator. Stored in script bindings under the operator name.
+ * The VTL body remains an ANTLR subtree and is evaluated by {@link
+ * fr.insee.vtl.engine.expressions.UdoFunctionExpression} via {@link
+ * fr.insee.vtl.engine.visitors.expression.ExpressionVisitor}.
  */
 public final class UdoDefinition {
 

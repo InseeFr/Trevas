@@ -1,44 +1,89 @@
 package fr.insee.vtl.engine.expressions;
 
+import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.semantics.udo.UdoDefinition;
-import fr.insee.vtl.engine.semantics.udo.UdoTrampoline;
+import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
-import fr.insee.vtl.model.VtlMethod;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * {@link FunctionExpression} specialised for UDOs: sets the trampoline {@link
- * UdoTrampoline.CallSite} around {@code Method.invoke} so the reflective call can re-enter the VTL
- * body with the correct definition and outer bindings.
+ * Evaluates a {@link UdoDefinition} body as a normal {@link ResolvableExpression}: bind formals
+ * from resolved arguments, visit the body, {@code resolve} in the child map. No trampoline {@code
+ * Method.invoke}.
  */
-public final class UdoFunctionExpression extends FunctionExpression {
+public final class UdoFunctionExpression extends ResolvableExpression {
 
   private final UdoDefinition udo;
+  private final List<ResolvableExpression> parameters;
   private final Class<?> declaredType;
 
   public UdoFunctionExpression(
-      UdoDefinition udo, List<ResolvableExpression> parameters, Positioned position)
-      throws VtlScriptException {
-    super(new VtlMethod(UdoTrampoline.methodForArity(parameters.size())), parameters, position);
-    this.udo = udo;
+      UdoDefinition udo, List<ResolvableExpression> parameters, Positioned position) {
+    super(position);
+    this.udo = Objects.requireNonNull(udo);
+    this.parameters = List.copyOf(parameters);
     this.declaredType = udo.getReturnType() != null ? udo.getReturnType() : Object.class;
   }
 
   @Override
   public Object resolve(Map<String, Object> context) {
-    UdoTrampoline.enter(udo, context);
-    try {
-      return super.resolve(context);
-    } finally {
-      UdoTrampoline.exit();
+    Map<String, Object> outer = context != null ? context : Map.of();
+    Map<String, Object> child = new HashMap<>(outer);
+    var formals = udo.getParameters();
+    for (int i = 0; i < formals.size(); i++) {
+      child.put(formals.get(i).getName(), parameters.get(i).resolve(outer));
     }
+    VtlScriptEngine engine = udo.getEngine();
+    ExpressionVisitor visitor = new ExpressionVisitor(child, engine.getProcessingEngine(), engine);
+    ResolvableExpression body = visitor.visit(udo.getBody());
+    Object result = body.resolve(child);
+    Class<?> expected = udo.getReturnType();
+    if (expected != null && result != null && !isAssignable(expected, result.getClass())) {
+      throw new VtlRuntimeException(
+          new VtlScriptException(
+              "UDO '"
+                  + udo.getName()
+                  + "' body type incompatible with declared returns "
+                  + vtlTypeName(expected),
+              this));
+    }
+    return result;
   }
 
   @Override
   public Class<?> getType() {
     return declaredType;
+  }
+
+  private static String vtlTypeName(Class<?> type) {
+    if (type == Long.class) {
+      return "integer";
+    }
+    if (type == Double.class) {
+      return "number";
+    }
+    if (type == String.class) {
+      return "string";
+    }
+    if (type == Boolean.class) {
+      return "boolean";
+    }
+    return type.getSimpleName();
+  }
+
+  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
+    if (expected.isAssignableFrom(actual)) {
+      return true;
+    }
+    if (Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual)) {
+      return true;
+    }
+    return expected == Double.class && (actual == Long.class || actual == Integer.class);
   }
 }
