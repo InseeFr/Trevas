@@ -3,7 +3,29 @@
 > Companion to [`20260728_01_provenance.md`](./20260728_01_provenance.md) (strategy),
 > [`20260728_02_provenance-output-and-tests.md`](./20260728_02_provenance-output-and-tests.md)
 > (IR + corpus) and [`20260729_01_vtl-fixture-directives.md`](./20260729_01_vtl-fixture-directives.md)
-> (fixture format). Planning only — no implementation yet.
+> (fixture format).
+
+When a step lands in the tree, mark it `[x]` in the table. Do not add a
+progress paragraph.
+
+| Done | PR | Capability | Turns green |
+|------|----|------------|-------------|
+| [x] | 1 | Corpus harness (DOT import, `GraphAssert`, SPI stub, golden self-check) | self-check |
+| [ ] | 2 | Statement walk + structure oracle (run-once, read bindings) + identity assignment; move SPI out of `ProvenanceTests` | 01 |
+| [ ] | 3 | Component-wise dataset ops | 02, 13 |
+| [ ] | 4 | Expression nodes (calc) | 03 |
+| [ ] | 5 | Condition edges (filter, sub) | 04, 14 |
+| [ ] | 6 | Projection & rename | 05, 06 |
+| [ ] | 7 | Clause chaining + anonymous intermediates | chain-filter-calc |
+| [ ] | 8 | Aggr | 07 |
+| [ ] | 9 | Join | 08 |
+| [ ] | 10 | Set ops | 09, 10, 11 |
+| [ ] | 11 | Analytic | 12 |
+| [ ] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
+| [ ] | 13 | User-defined operators | 17 |
+| [ ] | 14 | Pivot + table-form `$input` parsing | 15 |
+| [ ] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
+| [ ] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
 
 ## Principles
 
@@ -28,7 +50,8 @@
   `UnsupportedOperation` until extraction PRs land. Assertions compare graphs in
   DOT shape (vertex→attrs, edge→attrs, as sets) via `jgrapht-io` — the richer
   `ProvGraph` IR class is *not* needed by the harness and arrives with the first
-  extraction PR.
+  extraction PR. The SPI (and a `ProvGraph` → test `Graph` adapter) moves out of
+  `ProvenanceTests` in PR-2 — main sources cannot implement a nested test type.
 - **Golden self-check.** The harness also lints the corpus itself, with no
   extraction involved: every `expected.dot` imports; every node has `kind`;
   variable `dataset` attrs match id prefixes; edge endpoints are declared nodes;
@@ -36,42 +59,13 @@
   the script's statements are consistent with the golden's statement indices.
   This runs green from day one and catches hand-maintenance drift.
 
-## PR ladder
+## Notes
 
-**PR-1 — Corpus harness (the first step).**
-Test class that reads `tests/*/`, parses **one-liner** `$input` directives
-(table form deferred to PR-16), imports `expected.dot` (adds
-`org.jgrapht:jgrapht-io`), compares graphs as sets with added/removed diff
-output, defines the extractor SPI + stub (all provenance cases failing), and runs the
-golden self-check. Lives in `vtl-prov/src/test` under the **`fr.insee.vtl.prov2.tests`**
-package — the namespace of the new implementation, so the legacy `fr.insee.vtl.prov`
-code stays untouched until the final deletion PR (classes: `ProvenanceTests`, `Graph`,
-`GraphAssert` — a custom AssertJ assertion whose failure message is the
-graph diff). The directive parser is the seed that later migrates to
-`vtl-test-utils` (spec 20260729_01 §6/§8).
-
-**Extraction PRs — one capability each, ordered by the corpus:**
-
-| PR | Capability | Turns green |
-|---|---|---|
-| 2 | statement walk + structure oracle (run-once, read bindings) + identity assignment | 01 |
-| 3 | component-wise dataset ops | 02, 13 |
-| 4 | expression nodes (calc) | 03 |
-| 5 | condition edges (filter, sub) | 04, 14 |
-| 6 | projection & rename | 05, 06 |
-| 7 | clause chaining + anonymous intermediates | chain-filter-calc |
-| 8 | aggr | 07 |
-| 9 | join | 08 |
-| 10 | set ops | 09, 10, 11 |
-| 11 | analytic | 12 |
-| 12 | check/ruleset (resolve provisional schema of 16) | 16 |
-| 13 | user-defined operators | 17 |
-| 14 | pivot (+ table-form `$input` parsing) | 15 |
-
-**Closing PRs:**
-- **PR-15** SDTH/RDF conversion as a view over the graph (own tests).
-- **PR-16** Delete `ProvenanceListener`/`VariableGraphListener`, migrate the
-  public `run()` API — deletion-only, trivially reviewable.
+**PR-1** lives in `vtl-prov/src/test` under **`fr.insee.vtl.prov2.tests`**
+(`ProvenanceTests`, `Graph`, `GraphAssert`) so legacy `fr.insee.vtl.prov` stays
+untouched until PR-16. One-liner `$input` only (table form = PR-14). The
+directive parser later migrates to `vtl-test-utils` (spec 20260729_01 §6/§8).
+Richer RDF than today's triples is a later view, not PR-15.
 
 ## Embedded decisions (flag if you disagree)
 
@@ -85,6 +79,7 @@ graph diff). The directive parser is the seed that later migrates to
 ## Open questions
 
 - Scalar assignment (`x := 1 + 1;`) — node `kind=scalar`? Not yet modelled in
-  spec 20260728_02; surfaced by corpus drift in `13-scalar-mult`.
+  spec 20260728_02, and **not** in the corpus. `13-scalar-mult` is
+  `ds2 := ds1 * 3` (dataset × literal), covered by PR-3.
 - When exactly the fixture parser migrates out to `vtl-test-utils` (after PR-14,
   once table form exists?).
