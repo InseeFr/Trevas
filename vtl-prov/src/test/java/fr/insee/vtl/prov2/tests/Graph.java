@@ -1,5 +1,6 @@
 package fr.insee.vtl.prov2.tests;
 
+import fr.insee.vtl.prov2.ProvGraph;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -17,9 +18,9 @@ import org.jgrapht.graph.DirectedPseudograph;
 import org.jgrapht.nio.dot.DOTImporter;
 
 /**
- * Attribute-level view of a provenance graph: vertex id -> attributes, plus a multiset of
- * (from, to, attributes) edges. This is the shape the corpus assertions compare — deliberately
- * independent of any richer IR class (see specs/20260729_02_work-breakdown.md, PR-1).
+ * Attribute-level view of a provenance graph: vertex id -> attributes, plus a multiset of (from,
+ * to, attributes) edges. This is the shape the corpus assertions compare — deliberately independent
+ * of any richer IR class (see specs/20260729_02_work-breakdown.md, PR-1).
  *
  * <p>Both sides of an assertion are built the same way: the golden via {@link #fromDot(Path)}, the
  * extractor output via {@link #addVertex}/{@link #addEdge}. Comparison is set-equality; ordering
@@ -67,6 +68,15 @@ public final class Graph {
           graph.getEdgeSource(e),
           graph.getEdgeTarget(e),
           edgeAttrs.getOrDefault(e, new TreeMap<>()));
+    }
+    return facts;
+  }
+
+  public static Graph from(ProvGraph graph) {
+    Graph facts = new Graph();
+    graph.vertices().forEach(facts::addVertex);
+    for (ProvGraph.Edge edge : graph.edges()) {
+      facts.addEdge(edge.from(), edge.to(), edge.attrs());
     }
     return facts;
   }

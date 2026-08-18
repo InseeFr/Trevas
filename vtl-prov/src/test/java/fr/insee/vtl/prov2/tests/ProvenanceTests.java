@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
+import fr.insee.vtl.prov2.InputDataset;
+import fr.insee.vtl.prov2.ProvenanceExtractor;
+import fr.insee.vtl.prov2.StatementWalkExtractor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,26 +30,13 @@ import org.junit.jupiter.api.TestFactory;
  * <ul>
  *   <li><b>golden self-check</b> — lints the fixture itself (DOT parses, node conventions hold,
  *       {@code $input} directives are consistent with the golden). Runs green with no extractor.
- *   <li><b>provenance</b> — runs the {@link ProvenanceExtractor} and compares its graph to the
+ *   <li><b>provenance</b> — runs {@link StatementWalkExtractor} and compares its graph to the
  *       golden. Cases fail until extraction supports them: the failing count is the backlog.
  * </ul>
  */
 public class ProvenanceTests {
 
-  /** Minimal SPI; the real extractor arrives with PR-2. */
-  @FunctionalInterface
-  public interface ProvenanceExtractor {
-    Graph extract(String script, List<InputDataset> inputs);
-  }
-
-  private static final ProvenanceExtractor EXTRACTOR =
-      (script, inputs) -> {
-        throw new UnsupportedOperationException("provenance extraction not implemented yet");
-      };
-
-  public record Column(String name, String type, String role, Map<String, String> attrs) {}
-
-  public record InputDataset(String name, List<Column> columns) {}
+  private static final ProvenanceExtractor EXTRACTOR = new StatementWalkExtractor();
 
   private static final Set<String> KINDS = Set.of("dataset", "variable", "expression");
   private static final Set<String> ROLES = Set.of("IDENTIFIER", "MEASURE", "ATTRIBUTE");
@@ -91,7 +81,7 @@ public class ProvenanceTests {
     String name = dir.getFileName().toString();
     String script = Files.readString(dir.resolve("input.vtl"));
     Graph expected = Graph.fromDot(dir.resolve("expected.dot"));
-    Graph actual = EXTRACTOR.extract(script, parseInputs(script));
+    Graph actual = Graph.from(EXTRACTOR.extract(script, parseInputs(script)));
     GraphAssert.assertThat(actual).as("provenance graph for " + name).isSameGraphAs(expected);
   }
 
@@ -199,7 +189,10 @@ public class ProvenanceTests {
     }
     long statementCount = code.chars().filter(c -> c == ';').count();
     int maxIndex =
-        golden.vertices().keySet().stream().mapToInt(ProvenanceTests::statementIndex).max().orElse(0);
+        golden.vertices().keySet().stream()
+            .mapToInt(ProvenanceTests::statementIndex)
+            .max()
+            .orElse(0);
     if (maxIndex > statementCount) {
       problems.add(
           "expected.dot references statement "
@@ -228,7 +221,7 @@ public class ProvenanceTests {
       if (!m.matches()) {
         continue;
       }
-      List<Column> columns = new ArrayList<>();
+      List<InputDataset.Column> columns = new ArrayList<>();
       for (String part : m.group(2).split(",")) {
         String[] tokens = part.strip().split("\\s+");
         if (tokens.length < 3) {
@@ -239,7 +232,7 @@ public class ProvenanceTests {
           String[] kv = tokens[i].split("=", 2);
           attrs.put(kv[0], kv.length > 1 ? kv[1] : "");
         }
-        columns.add(new Column(tokens[0], tokens[1], tokens[2], attrs));
+        columns.add(new InputDataset.Column(tokens[0], tokens[1], tokens[2], attrs));
       }
       inputs.add(new InputDataset(m.group(1), columns));
     }

@@ -10,8 +10,6 @@ Each case is a folder with:
 - `expected.dot` — the provenance graph as Graphviz **DOT** (the assertion; also
   renders to a picture for review).
 
-No extraction code exists yet; these are pure fixtures that pin down the *output*.
-
 ## Inline dataset directives
 
 > Canonical definition: [`../specs/20260729_01_vtl-fixture-directives.md`](../specs/20260729_01_vtl-fixture-directives.md)

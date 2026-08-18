@@ -11,7 +11,7 @@ progress paragraph.
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
 | [x] | 1 | Corpus harness (DOT import, `GraphAssert`, SPI stub, golden self-check) | self-check |
-| [ ] | 2 | Statement walk + structure oracle (run-once, read bindings) + identity assignment; move SPI out of `ProvenanceTests` | 01 |
+| [x] | 2 | Statement walk + structure oracle (run-once, read bindings) + identity assignment; move SPI out of `ProvenanceTests` | 01 |
 | [ ] | 3 | Component-wise dataset ops | 02, 13 |
 | [ ] | 4 | Expression nodes (calc) | 03 |
 | [ ] | 5 | Condition edges (filter, sub) | 04, 14 |
@@ -50,8 +50,7 @@ progress paragraph.
   `UnsupportedOperation` until extraction PRs land. Assertions compare graphs in
   DOT shape (vertex→attrs, edge→attrs, as sets) via `jgrapht-io` — the richer
   `ProvGraph` IR class is *not* needed by the harness and arrives with the first
-  extraction PR. The SPI (and a `ProvGraph` → test `Graph` adapter) moves out of
-  `ProvenanceTests` in PR-2 — main sources cannot implement a nested test type.
+  extraction PR. The SPI lives in `fr.insee.vtl.prov2`; tests adapt via `Graph.from(ProvGraph)`.
 - **Golden self-check.** The harness also lints the corpus itself, with no
   extraction involved: every `expected.dot` imports; every node has `kind`;
   variable `dataset` attrs match id prefixes; edge endpoints are declared nodes;
