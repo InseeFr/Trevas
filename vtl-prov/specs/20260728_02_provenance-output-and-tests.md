@@ -333,16 +333,16 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 
 ## 7. Build order
 
-1. Lock the IR (§1) + the worked example (§2).
-2. Define the generic `Node`/`Edge`/`ProvGraph` (thin JGraphT wrapper) +
-   deterministic ids + a `jgrapht-io` DOT import/export + the set-equality graph
-   comparator. Unblocks every golden file, independent of how the graph is built.
-3. Hand-author the "regular" clause/set cases 01–14 (`expected.dot` written by
-   hand from §5) as pure fixtures — no extraction code yet.
-4. Then 08 (join), 16 (check), 17 (UDF); 15 (pivot) last.
-5. Only then pick the extraction mechanism (spec 01: leaning toward walking the
-   resolved expression tree — one edge per derivation) and make the corpus pass.
-6. Add the SDTH/RDF conversion + its separate test as a view over the graph.
+1. ~~Lock the IR (§1) + the worked example (§2).~~ **Done.**
+2. ~~Hand-author the corpus (`input.vtl` + `expected.dot` per §5).~~ **Done**
+   (cases 01–17 + chain-filter-calc, Graphviz-validated).
+3. Implement in review-sized steps — see the PR ladder in
+   [`20260729_02_work-breakdown.md`](./20260729_02_work-breakdown.md). In short:
+   **harness first** (corpus reader, `$input` parsing, `jgrapht-io` DOT import,
+   set-equality comparator, extractor SPI, golden self-check; all provenance
+   cases failing until implemented), then one extraction capability per PR, each
+   turning specific corpus cases green;
+   SDTH/RDF conversion and deletion of the old listeners close it out.
    For **same triples as today**: project IR → existing `Program` → reuse `RDFUtils`
    (see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)).
    Richer RDF is a later, separate view.
