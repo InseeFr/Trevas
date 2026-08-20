@@ -7,6 +7,9 @@ import fr.insee.vtl.parser.VtlParser;
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
  * corpus backlog stays explicit even when the engine cannot eval the script.
+ *
+ * <p>PR-3: binary arithmetic / concat with leaf operands (varId or constant). Nested arithmetic and
+ * unary stay unsupported for now.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -50,12 +53,12 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
-    throw unsupported("arithmetic");
+    return binaryArithmetic(ctx.left, ctx.right);
   }
 
   @Override
   public Void visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
-    throw unsupported("arithmetic");
+    return binaryArithmetic(ctx.left, ctx.right);
   }
 
   @Override
@@ -78,7 +81,33 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("scalar");
   }
 
-  private static UnsupportedOperationException unsupported(String what) {
+  private Void binaryArithmetic(VtlParser.ExprContext left, VtlParser.ExprContext right) {
+    leafOperand(left);
+    leafOperand(right);
+    return null;
+  }
+
+  /** Dataset name or scalar literal; nested ops deferred. */
+  private void leafOperand(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.VarIdExprContext) {
+      return;
+    }
+    if (current instanceof VtlParser.ConstantExprContext) {
+      return;
+    }
+    throw unsupported("arithmetic");
+  }
+
+  private static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = expr;
+    while (current instanceof VtlParser.ParenthesisExprContext parenthesis) {
+      current = parenthesis.expr();
+    }
+    return current;
+  }
+
+  static UnsupportedOperationException unsupported(String what) {
     return new UnsupportedOperationException("unsupported: " + what);
   }
 }
