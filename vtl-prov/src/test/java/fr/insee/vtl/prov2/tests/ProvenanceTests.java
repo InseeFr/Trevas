@@ -29,8 +29,8 @@ import org.junit.jupiter.api.TestFactory;
  * <ul>
  *   <li><b>golden self-check</b> — lints the fixture itself (DOT parses, node conventions hold,
  *       {@code $input} directives are consistent with the golden). Runs green with no extractor.
- *   <li><b>provenance</b> — runs {@link ProvenanceExtractor} and compares its graph to the
- *       golden. Cases fail until extraction supports them: the failing count is the backlog.
+ *   <li><b>provenance</b> — runs {@link ProvenanceExtractor} and compares its graph to the golden.
+ *       Cases fail until extraction supports them: the failing count is the backlog.
  * </ul>
  */
 public class ProvenanceTests {
