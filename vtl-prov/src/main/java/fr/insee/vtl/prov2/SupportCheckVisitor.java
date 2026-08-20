@@ -9,7 +9,7 @@ import fr.insee.vtl.parser.VtlParser;
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
  * <p>Supported so far: identity assign, binary dataset arithmetic (leaf operands), single {@code
- * calc} clause on a dataset varId (RHS = component refs / literals / binary arithmetic).
+ * calc} / {@code filter} / {@code sub} clause on a dataset varId.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -69,11 +69,18 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
     datasetVarId(ctx.expr());
-    VtlParser.CalcClauseContext calc = ctx.datasetClause().calcClause();
-    if (calc != null) {
-      for (VtlParser.CalcClauseItemContext item : calc.calcClauseItem()) {
+    VtlParser.DatasetClauseContext clause = ctx.datasetClause();
+    if (clause.calcClause() != null) {
+      for (VtlParser.CalcClauseItemContext item : clause.calcClause().calcClauseItem()) {
         calcRhs(item.expr());
       }
+      return null;
+    }
+    if (clause.filterClause() != null) {
+      scalarPredicate(clause.filterClause().expr());
+      return null;
+    }
+    if (clause.subspaceClause() != null) {
       return null;
     }
     throw unsupported("clause");
@@ -131,6 +138,16 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return;
     }
     throw unsupported("clause");
+  }
+
+  /** Filter predicates may use functions/comparisons; reject nested dataset clauses only. */
+  private void scalarPredicate(VtlParser.ExprContext expr) {
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+        throw unsupported("clause");
+      }
+    }.visit(expr);
   }
 
   static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {

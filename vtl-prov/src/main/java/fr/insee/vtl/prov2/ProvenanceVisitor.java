@@ -23,8 +23,8 @@ import java.util.Set;
  *
  * <p>{@code T = Void}: the graph is the artifact; parse {@code ctx} plus run state carry what each
  * visit needs. After visiting an expression: {@code lastOp == null} means identity ({@code
- * lastResultId} is the source dataset); otherwise {@code lastOp} + operands / calc items describe a
- * dataset op whose result node is created by the enclosing assignment.
+ * lastResultId} is the source dataset); otherwise {@code lastOp} + operands / calc / condition
+ * exprs describe a dataset op whose result node is created by the enclosing assignment.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
@@ -32,11 +32,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private final StructureOracle oracle;
   private final Map<String, String> versions = new LinkedHashMap<>();
   private int stmtIndex;
+  private int exprSeq;
 
   /** Dataset id produced by the last varId (identity) expression. */
   private String lastResultId;
 
-  /** Operator of the last dataset expression ({@code +}, {@code *}, {@code calc}, …), or null. */
+  /** Operator of the last dataset expression ({@code +}, {@code calc}, {@code filter}, …). */
   private String lastOp;
 
   /** Dataset operand ids of the last component-wise expression (literals omitted). */
@@ -44,6 +45,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   /** Calc outputs: component name → expression node id. Empty unless {@code lastOp} is calc. */
   private Map<String, String> lastCalcExprs = Map.of();
+
+  /** Condition expression node ids ({@code filter}/{@code sub}). */
+  private List<String> lastConditionExprIds = List.of();
 
   ProvenanceVisitor(ProvGraph graph, StructureOracle oracle, List<InputDataset> inputs) {
     this.graph = graph;
@@ -72,10 +76,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (id == null) {
       throw new IllegalStateException("unknown dataset " + name);
     }
+    clearExprState();
     lastResultId = id;
-    lastOp = null;
     lastOperandIds = List.of(id);
-    lastCalcExprs = Map.of();
     return null;
   }
 
@@ -96,34 +99,61 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       throw unsupported("clause");
     }
     String srcId = lastResultId;
-    VtlParser.CalcClauseContext calc = ctx.datasetClause().calcClause();
-    if (calc != null) {
-      return applyCalc(srcId, calc);
+    VtlParser.DatasetClauseContext clause = ctx.datasetClause();
+    if (clause.calcClause() != null) {
+      return applyCalc(srcId, clause.calcClause());
+    }
+    if (clause.filterClause() != null) {
+      return applyFilter(srcId, clause.filterClause());
+    }
+    if (clause.subspaceClause() != null) {
+      return applySub(srcId, clause.subspaceClause());
     }
     throw unsupported("clause");
   }
 
   private Void applyCalc(String srcId, VtlParser.CalcClauseContext calc) {
     Map<String, String> calcExprs = new LinkedHashMap<>();
-    int exprSeq = 0;
     for (VtlParser.CalcClauseItemContext item : calc.calcClauseItem()) {
-      exprSeq++;
       String component = item.componentID().getText();
       VtlParser.ExprContext rhs = item.expr();
-      String exprId = "e" + stmtIndex + "." + exprSeq;
-      Map<String, String> attrs = new LinkedHashMap<>();
-      attrs.put("kind", "expression");
-      attrs.put("src", text(rhs));
-      graph.addVertex(exprId, attrs);
-      for (String ref : componentRefs(rhs)) {
-        graph.addEdge(exprId, srcId + "." + ref, Map.of());
-      }
+      String exprId = nextExprId();
+      addExpression(exprId, text(rhs), srcId, componentRefs(rhs));
       calcExprs.put(component, exprId);
     }
     lastOp = "calc";
     lastResultId = srcId;
     lastOperandIds = List.of(srcId);
     lastCalcExprs = Map.copyOf(calcExprs);
+    lastConditionExprIds = List.of();
+    return null;
+  }
+
+  private Void applyFilter(String srcId, VtlParser.FilterClauseContext filter) {
+    VtlParser.ExprContext predicate = filter.expr();
+    String exprId = nextExprId();
+    addExpression(exprId, text(predicate), srcId, componentRefs(predicate));
+    lastOp = "filter";
+    lastResultId = srcId;
+    lastOperandIds = List.of(srcId);
+    lastCalcExprs = Map.of();
+    lastConditionExprIds = List.of(exprId);
+    return null;
+  }
+
+  private Void applySub(String srcId, VtlParser.SubspaceClauseContext sub) {
+    List<String> conditionIds = new ArrayList<>();
+    for (VtlParser.SubspaceClauseItemContext item : sub.subspaceClauseItem()) {
+      String exprId = nextExprId();
+      String component = item.componentID().getText();
+      addExpression(exprId, text(item), srcId, Set.of(component));
+      conditionIds.add(exprId);
+    }
+    lastOp = "sub";
+    lastResultId = srcId;
+    lastOperandIds = List.of(srcId);
+    lastCalcExprs = Map.of();
+    lastConditionExprIds = List.copyOf(conditionIds);
     return null;
   }
 
@@ -144,6 +174,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     lastOp = op.getText();
     lastResultId = null;
     lastCalcExprs = Map.of();
+    lastConditionExprIds = List.of();
     return null;
   }
 
@@ -162,6 +193,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   private Void assign(String out, VtlParser.ExprContext expr) {
     stmtIndex++;
+    exprSeq = 0;
     visit(expr);
     String outId = out + "@" + stmtIndex;
     DataStructure outStructure = oracle.requireDataset(out);
@@ -174,15 +206,16 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       linkComponentWise(outId, outStructure, List.of(lastResultId), "assign");
     } else if ("calc".equals(lastOp)) {
       linkCalc(outId, outStructure, lastResultId, lastCalcExprs);
+    } else if ("filter".equals(lastOp) || "sub".equals(lastOp)) {
+      linkConditionClause(outId, outStructure, lastResultId, lastConditionExprIds, lastOp);
     } else {
       linkComponentWise(outId, outStructure, lastOperandIds, lastOp);
     }
 
     versions.put(out, outId);
+    clearExprState();
     lastResultId = outId;
-    lastOp = null;
     lastOperandIds = List.of(outId);
-    lastCalcExprs = Map.of();
     return null;
   }
 
@@ -201,6 +234,25 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
   }
 
+  private void linkConditionClause(
+      String outId,
+      DataStructure outStructure,
+      String srcId,
+      List<String> conditionExprIds,
+      String op) {
+    Map<String, String> edge = Map.of("op", op);
+    Map<String, String> condition = new LinkedHashMap<>();
+    condition.put("op", op);
+    condition.put("role", "condition");
+    graph.addEdge(outId, srcId, edge);
+    for (String exprId : conditionExprIds) {
+      graph.addEdge(outId, exprId, condition);
+    }
+    for (Component component : outStructure.values()) {
+      graph.addEdge(outId + "." + component.getName(), srcId + "." + component.getName(), edge);
+    }
+  }
+
   private void linkComponentWise(
       String outId, DataStructure outStructure, List<String> operandIds, String op) {
     Map<String, String> edge = Map.of("op", op);
@@ -213,6 +265,27 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
         graph.addEdge(outVar, operandId + "." + component.getName(), edge);
       }
     }
+  }
+
+  private void addExpression(String exprId, String src, String datasetId, Set<String> refs) {
+    Map<String, String> attrs = new LinkedHashMap<>();
+    attrs.put("kind", "expression");
+    attrs.put("src", src);
+    graph.addVertex(exprId, attrs);
+    for (String ref : refs) {
+      graph.addEdge(exprId, datasetId + "." + ref, Map.of());
+    }
+  }
+
+  private String nextExprId() {
+    exprSeq++;
+    return "e" + stmtIndex + "." + exprSeq;
+  }
+
+  private void clearExprState() {
+    lastOp = null;
+    lastCalcExprs = Map.of();
+    lastConditionExprIds = List.of();
   }
 
   private void addDataset(String id, DataStructure structure, String src) {
@@ -235,7 +308,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
   }
 
-  /** Component names referenced in a calc RHS (not dataset bindings). */
+  /** Component names referenced in a scalar expression (not dataset bindings). */
   private static Set<String> componentRefs(VtlParser.ExprContext expr) {
     Set<String> refs = new LinkedHashSet<>();
     new VtlBaseVisitor<Void>() {
