@@ -8,8 +8,8 @@ import fr.insee.vtl.parser.VtlParser;
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
- * <p>PR-3: binary arithmetic / concat with leaf operands (varId or constant). Nested arithmetic and
- * unary stay unsupported for now.
+ * <p>Supported so far: identity assign, binary dataset arithmetic (leaf operands), single {@code
+ * calc} clause on a dataset varId (RHS = component refs / literals / binary arithmetic).
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -68,6 +68,14 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+    datasetVarId(ctx.expr());
+    VtlParser.CalcClauseContext calc = ctx.datasetClause().calcClause();
+    if (calc != null) {
+      for (VtlParser.CalcClauseItemContext item : calc.calcClauseItem()) {
+        calcRhs(item.expr());
+      }
+      return null;
+    }
     throw unsupported("clause");
   }
 
@@ -99,7 +107,33 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("arithmetic");
   }
 
-  private static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {
+  private void datasetVarId(VtlParser.ExprContext expr) {
+    if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
+      throw unsupported("clause");
+    }
+  }
+
+  /** Component-level calc RHS (not dataset-level arithmetic). */
+  private void calcRhs(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.VarIdExprContext
+        || current instanceof VtlParser.ConstantExprContext) {
+      return;
+    }
+    if (current instanceof VtlParser.ArithmeticExprContext arithmetic) {
+      calcRhs(arithmetic.left);
+      calcRhs(arithmetic.right);
+      return;
+    }
+    if (current instanceof VtlParser.ArithmeticExprOrConcatContext arithmetic) {
+      calcRhs(arithmetic.left);
+      calcRhs(arithmetic.right);
+      return;
+    }
+    throw unsupported("clause");
+  }
+
+  static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = expr;
     while (current instanceof VtlParser.ParenthesisExprContext parenthesis) {
       current = parenthesis.expr();
