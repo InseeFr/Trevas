@@ -46,6 +46,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /** Calc outputs: component name → expression node id. Empty unless {@code lastOp} is calc. */
   private Map<String, String> lastCalcExprs = Map.of();
 
+  /** Rename map: output component name → source component name. */
+  private Map<String, String> lastRenameFrom = Map.of();
+
   /** Condition expression node ids ({@code filter}/{@code sub}). */
   private List<String> lastConditionExprIds = List.of();
 
@@ -109,6 +112,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (clause.subspaceClause() != null) {
       return applySub(srcId, clause.subspaceClause());
     }
+    if (clause.keepOrDropClause() != null) {
+      return applyKeepOrDrop(srcId, clause.keepOrDropClause());
+    }
+    if (clause.renameClause() != null) {
+      return applyRename(srcId, clause.renameClause());
+    }
     throw unsupported("clause");
   }
 
@@ -125,6 +134,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     lastResultId = srcId;
     lastOperandIds = List.of(srcId);
     lastCalcExprs = Map.copyOf(calcExprs);
+    lastRenameFrom = Map.of();
     lastConditionExprIds = List.of();
     return null;
   }
@@ -137,6 +147,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     lastResultId = srcId;
     lastOperandIds = List.of(srcId);
     lastCalcExprs = Map.of();
+    lastRenameFrom = Map.of();
     lastConditionExprIds = List.of(exprId);
     return null;
   }
@@ -153,7 +164,32 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     lastResultId = srcId;
     lastOperandIds = List.of(srcId);
     lastCalcExprs = Map.of();
+    lastRenameFrom = Map.of();
     lastConditionExprIds = List.copyOf(conditionIds);
+    return null;
+  }
+
+  private Void applyKeepOrDrop(String srcId, VtlParser.KeepOrDropClauseContext keepOrDrop) {
+    lastOp = keepOrDrop.op.getText();
+    lastResultId = srcId;
+    lastOperandIds = List.of(srcId);
+    lastCalcExprs = Map.of();
+    lastRenameFrom = Map.of();
+    lastConditionExprIds = List.of();
+    return null;
+  }
+
+  private Void applyRename(String srcId, VtlParser.RenameClauseContext rename) {
+    Map<String, String> renames = new LinkedHashMap<>();
+    for (VtlParser.RenameClauseItemContext item : rename.renameClauseItem()) {
+      renames.put(item.toName.getText(), item.fromName.getText());
+    }
+    lastOp = "rename";
+    lastResultId = srcId;
+    lastOperandIds = List.of(srcId);
+    lastCalcExprs = Map.of();
+    lastRenameFrom = Map.copyOf(renames);
+    lastConditionExprIds = List.of();
     return null;
   }
 
@@ -174,6 +210,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     lastOp = op.getText();
     lastResultId = null;
     lastCalcExprs = Map.of();
+    lastRenameFrom = Map.of();
     lastConditionExprIds = List.of();
     return null;
   }
@@ -208,6 +245,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       linkCalc(outId, outStructure, lastResultId, lastCalcExprs);
     } else if ("filter".equals(lastOp) || "sub".equals(lastOp)) {
       linkConditionClause(outId, outStructure, lastResultId, lastConditionExprIds, lastOp);
+    } else if ("rename".equals(lastOp)) {
+      linkRename(outId, outStructure, lastResultId, lastRenameFrom);
     } else {
       linkComponentWise(outId, outStructure, lastOperandIds, lastOp);
     }
@@ -253,6 +292,16 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
   }
 
+  private void linkRename(
+      String outId, DataStructure outStructure, String srcId, Map<String, String> renameFrom) {
+    Map<String, String> edge = Map.of("op", "rename");
+    graph.addEdge(outId, srcId, edge);
+    for (Component component : outStructure.values()) {
+      String srcComponent = renameFrom.getOrDefault(component.getName(), component.getName());
+      graph.addEdge(outId + "." + component.getName(), srcId + "." + srcComponent, edge);
+    }
+  }
+
   private void linkComponentWise(
       String outId, DataStructure outStructure, List<String> operandIds, String op) {
     Map<String, String> edge = Map.of("op", op);
@@ -285,6 +334,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private void clearExprState() {
     lastOp = null;
     lastCalcExprs = Map.of();
+    lastRenameFrom = Map.of();
     lastConditionExprIds = List.of();
   }
 

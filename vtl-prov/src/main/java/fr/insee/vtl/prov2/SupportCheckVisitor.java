@@ -9,7 +9,8 @@ import fr.insee.vtl.parser.VtlParser;
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
  * <p>Supported so far: identity assign, binary dataset arithmetic (leaf operands), single {@code
- * calc} / {@code filter} / {@code sub} clause on a dataset varId.
+ * calc} / {@code filter} / {@code sub} / {@code keep}/{@code drop} / {@code rename} clause on a
+ * dataset varId.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -81,6 +82,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return null;
     }
     if (clause.subspaceClause() != null) {
+      return null;
+    }
+    if (clause.keepOrDropClause() != null || clause.renameClause() != null) {
       return null;
     }
     throw unsupported("clause");
