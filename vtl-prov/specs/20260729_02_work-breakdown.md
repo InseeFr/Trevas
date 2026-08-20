@@ -10,8 +10,8 @@ progress paragraph.
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [x] | 1 | Corpus harness (DOT import, `GraphAssert`, SPI stub, golden self-check) | self-check |
-| [x] | 2 | Statement walk + structure oracle (run-once, read bindings) + identity assignment; move SPI out of `ProvenanceTests` | 01 |
+| [x] | 1 | Corpus harness (DOT import, `GraphAssert`, golden self-check) | self-check |
+| [x] | 2 | `VtlBaseVisitor<Void>` + structure oracle (run-once) + identity assignment; `ProvenanceExtractor` entry | 01 |
 | [ ] | 3 | Component-wise dataset ops | 02, 13 |
 | [ ] | 4 | Expression nodes (calc) | 03 |
 | [ ] | 5 | Condition edges (filter, sub) | 04, 14 |
@@ -45,12 +45,16 @@ progress paragraph.
   functional delta is the set of cases it turns green. Note: the module's CI
   stays red until extraction lands — acceptable on the feature branch; revisit
   only if it must merge to `develop` before extraction is complete.
-- **Extractor SPI.** The harness depends on a minimal interface
-  (`ProvenanceExtractor: (script, inputs) → graph`), stubbed to throw
-  `UnsupportedOperation` until extraction PRs land. Assertions compare graphs in
-  DOT shape (vertex→attrs, edge→attrs, as sets) via `jgrapht-io` — the richer
-  `ProvGraph` IR class is *not* needed by the harness and arrives with the first
-  extraction PR. The SPI lives in `fr.insee.vtl.prov2`; tests adapt via `Graph.from(ProvGraph)`.
+- **Extractor.** `ProvenanceExtractor.extract(script, inputs) → ProvGraph`. Assertions
+  compare graphs in DOT shape (vertex→attrs, edge→attrs, as sets) via `jgrapht-io`.
+  Lives in `fr.insee.vtl.prov2`; tests adapt via `Graph.from(ProvGraph)`.
+- **Grammar walk.** Extraction is a **`VtlBaseVisitor<Void>`** (`ProvenanceVisitor`)
+  that mutates one shared `ProvGraph`. Entry: parse → **support check** (same
+  grammar visitor, throws `unsupported: …` before eval) → structure oracle →
+  `ProvenanceVisitor.visit(start)`. Unhandled rules throw (strict
+  `visitChildren`). Run state (`versions`, stmt index, oracle, `lastResultId`)
+  lives on the visitor — not in `T`. `T = Void` on purpose: the graph is the
+  artifact; parse `ctx` holds local syntax.
 - **Golden self-check.** The harness also lints the corpus itself, with no
   extraction involved: every `expected.dot` imports; every node has `kind`;
   variable `dataset` attrs match id prefixes; edge endpoints are declared nodes;
@@ -66,8 +70,16 @@ untouched until PR-16. One-liner `$input` only (table form = PR-14). The
 directive parser later migrates to `vtl-test-utils` (spec 20260729_01 §6/§8).
 Richer RDF than today's triples is a later view, not PR-15.
 
+**PR-2** ships `ProvenanceExtractor` → `SupportCheckVisitor` /
+`ProvenanceVisitor` (identity `:=` / `<-` only). Later PRs add `visit*` methods
+on the same visitor.
+
 ## Embedded decisions (flag if you disagree)
 
+- **Walk: `VtlBaseVisitor<Void>` + mutable `ProvGraph`.** Grammar-driven entry is
+  non-negotiable. Side effects on one graph beat `T = ProvGraph` (no focus/merge)
+  and beat a manual `instanceof` walk. Optional later: a nested expr visitor with
+  `T = String` (result id) if needed — not the default.
 - **Oracle in PR-2:** run-once-and-read-bindings (least invasive); a minimal
   engine hook can replace it later without touching the graph layer
   (spec 20260728_01 §structure-oracle).

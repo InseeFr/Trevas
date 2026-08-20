@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import fr.insee.vtl.prov2.InputDataset;
 import fr.insee.vtl.prov2.ProvenanceExtractor;
-import fr.insee.vtl.prov2.StatementWalkExtractor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,13 +29,13 @@ import org.junit.jupiter.api.TestFactory;
  * <ul>
  *   <li><b>golden self-check</b> — lints the fixture itself (DOT parses, node conventions hold,
  *       {@code $input} directives are consistent with the golden). Runs green with no extractor.
- *   <li><b>provenance</b> — runs {@link StatementWalkExtractor} and compares its graph to the
+ *   <li><b>provenance</b> — runs {@link ProvenanceExtractor} and compares its graph to the
  *       golden. Cases fail until extraction supports them: the failing count is the backlog.
  * </ul>
  */
 public class ProvenanceTests {
 
-  private static final ProvenanceExtractor EXTRACTOR = new StatementWalkExtractor();
+  private static final ProvenanceExtractor EXTRACTOR = new ProvenanceExtractor();
 
   private static final Set<String> KINDS = Set.of("dataset", "variable", "expression");
   private static final Set<String> ROLES = Set.of("IDENTIFIER", "MEASURE", "ATTRIBUTE");

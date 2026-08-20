@@ -339,9 +339,10 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 3. Implement in review-sized steps — see the PR ladder in
    [`20260729_02_work-breakdown.md`](./20260729_02_work-breakdown.md). In short:
    **harness first** (corpus reader, `$input` parsing, `jgrapht-io` DOT import,
-   set-equality comparator, extractor SPI, golden self-check; all provenance
+   set-equality comparator, `ProvenanceExtractor`, golden self-check; all provenance
    cases failing until implemented), then one extraction capability per PR, each
-   turning specific corpus cases green;
+   turning specific corpus cases green. Walk = **`VtlBaseVisitor<Void>`** mutating
+   `ProvGraph` (see work-breakdown Mechanisms);
    SDTH/RDF conversion and deletion of the old listeners close it out.
    For **same triples as today**: project IR → existing `Program` → reuse `RDFUtils`
    (see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)).
