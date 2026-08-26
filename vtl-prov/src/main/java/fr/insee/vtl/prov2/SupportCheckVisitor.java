@@ -7,6 +7,10 @@ import fr.insee.vtl.parser.VtlParser;
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
  * corpus backlog stays explicit even when the engine cannot eval the script.
+ *
+ * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
+ * operands); single {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} /
+ * {@code rename} on a dataset varId. Nested clauses and other ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -50,12 +54,16 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitArithmeticExpr(VtlParser.ArithmeticExprContext ctx) {
-    throw unsupported("arithmetic");
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
   }
 
   @Override
   public Void visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
-    throw unsupported("arithmetic");
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
   }
 
   @Override
@@ -65,6 +73,21 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+    requireDatasetVarId(ctx.expr());
+    VtlParser.DatasetClauseContext clause = ctx.datasetClause();
+    if (clause.calcClause() != null) {
+      clause.calcClause().calcClauseItem().forEach(item -> calcRhs(item.expr()));
+      return null;
+    }
+    if (clause.filterClause() != null) {
+      requireScalarPredicate(clause.filterClause().expr());
+      return null;
+    }
+    if (clause.subspaceClause() != null
+        || clause.keepOrDropClause() != null
+        || clause.renameClause() != null) {
+      return null;
+    }
     throw unsupported("clause");
   }
 
@@ -78,7 +101,61 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("scalar");
   }
 
-  private static UnsupportedOperationException unsupported(String what) {
+  /** Dataset name or scalar literal; nested ops deferred. */
+  private void leafOperand(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.VarIdExprContext
+        || current instanceof VtlParser.ConstantExprContext) {
+      return;
+    }
+    throw unsupported("arithmetic");
+  }
+
+  private void requireDatasetVarId(VtlParser.ExprContext expr) {
+    if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
+      throw unsupported("clause");
+    }
+  }
+
+  /** Component-level calc RHS (not dataset-level arithmetic). */
+  private void calcRhs(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.VarIdExprContext
+        || current instanceof VtlParser.ConstantExprContext) {
+      return;
+    }
+    if (current instanceof VtlParser.ArithmeticExprContext arithmetic) {
+      calcRhs(arithmetic.left);
+      calcRhs(arithmetic.right);
+      return;
+    }
+    if (current instanceof VtlParser.ArithmeticExprOrConcatContext arithmetic) {
+      calcRhs(arithmetic.left);
+      calcRhs(arithmetic.right);
+      return;
+    }
+    throw unsupported("clause");
+  }
+
+  /** Filter predicates may use functions/comparisons; reject nested dataset clauses only. */
+  private void requireScalarPredicate(VtlParser.ExprContext expr) {
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+        throw unsupported("clause");
+      }
+    }.visit(expr);
+  }
+
+  static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = expr;
+    while (current instanceof VtlParser.ParenthesisExprContext parenthesis) {
+      current = parenthesis.expr();
+    }
+    return current;
+  }
+
+  static UnsupportedOperationException unsupported(String what) {
     return new UnsupportedOperationException("unsupported: " + what);
   }
 }
