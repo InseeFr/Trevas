@@ -21,10 +21,6 @@ final class UdoComponentTypeParser {
   static ComponentSignature parse(VtlParser.ComponentTypeContext ctx, Positioned pos)
       throws VtlScriptException {
     Dataset.Role role = ComponentRoles.fromParser(ctx.componentRole());
-    if (role == Dataset.Role.VIRALATTRIBUTE) {
-      throw new VtlRuntimeException(
-          new UnimplementedException("UDO viral attribute component params are not supported yet", pos));
-    }
     Class<?> scalarType = null;
     if (ctx.scalarType() != null) {
       if (ctx.scalarType().scalarTypeConstraint() != null) {
