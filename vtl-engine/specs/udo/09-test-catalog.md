@@ -29,8 +29,8 @@
 | **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
-| **P2** | P2-2, P2-3, P2-4, P2-5 | 4 | component params + wildcard `dataset {…}` |
-| **Total enabled** | | **28** | P0 + P1 + P2 |
+| **P2** | P2-2 … P2-7 | 6 | component params, wildcards, viral attribute |
+| **Total enabled** | | **30** | P0 + P1 + P2 |
 
 ---
 
@@ -143,6 +143,8 @@ Call site passes a **variable** bound to `Structured.Component` (Trevas grammar:
 |----|-------|-------|---------|----------|
 | **P2-4** | `testP2WildcardDatasetSignature` | invoke | `measure < integer > _` in dataset param | matching mono-measure dataset accepted |
 | **P2-5** | `testP2WildcardDatasetMissingMeasureRejected` | invoke | id-only dataset vs `measure _` | `exactly one` in message |
+| **P2-6** | `testP2ViralAttributeComponentParam` | invoke | `viral attribute < string >` formal in filter | one matching row |
+| **P2-7** | `testP2ViralAttributeWildcardDataset` | invoke | `viral attribute < string > _*` in dataset param | dataset with viral attr accepted |
 
 Wildcards: `_` (exactly one), `_+` (one or more), `_*` (zero or more) on non-predetermined components.
 

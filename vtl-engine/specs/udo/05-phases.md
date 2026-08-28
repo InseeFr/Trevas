@@ -8,7 +8,7 @@ Tests first: [09-test-catalog.md](./09-test-catalog.md). Runtime path: [01-archi
 |-------|--------|--------|
 | **P0** | Scalars + opaque `dataset` (param and/or return) | in this PR; rewrite invoke to `ResolvableExpression` (review) |
 | **P1** | Structured `dataset {…}` (DS4), recursion guard, Spark IT | ✅ |
-| **P2** | `component` params, richer structure / viral attrs | P2-2–P2-5 done — wildcards `_` / `_+` / `_*` in `dataset {…}` |
+| **P2** | `component` params, richer structure / viral attrs | P2 done — viral attribute params and wildcards |
 | **P3** | Constraints, `set`, ruleset types | only if scripts demand it |
 
 ### P0 in

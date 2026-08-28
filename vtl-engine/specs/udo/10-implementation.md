@@ -49,11 +49,13 @@ Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/
 
 ---
 
-## P2 (next)
+## P2 status
 
-Component params at define + invoke are green (P2-2, P2-3). Wildcard dataset signatures are green (P2-4, P2-5). Remaining:
+P2 catalog green (P2-2 … P2-7): component params, dataset wildcards, viral attribute.
+
+## P3 (next)
 
 | Focus | Tests to add when slicing |
 |-------|---------------------------|
-| `viral attribute` component params / wildcards | new P2-* |
 | Optional: snapshot closures at define | new S* |
+| `set` / ruleset UDO types | new catalog IDs |
