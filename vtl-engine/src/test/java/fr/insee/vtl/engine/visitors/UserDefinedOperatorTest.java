@@ -112,6 +112,25 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
+  public void testS5LexicalClosureSnapshot() throws ScriptException {
+    engine.eval(
+        """
+        y := 2;
+        define operator max_with_y (x integer)
+           returns number is
+              if x > y then x else y
+        end operator;
+        """);
+    engine.getContext().setAttribute("y", 4L, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        """
+        b := 2;
+        max_res := max_with_y(b);
+        """);
+    assertThat(engine.getContext().getAttribute("max_res")).isEqualTo(2L);
+  }
+
+  @Test
   public void testS3OptionalUnderscore() throws ScriptException {
     engine.eval(
         """

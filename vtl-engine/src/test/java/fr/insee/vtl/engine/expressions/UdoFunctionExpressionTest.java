@@ -113,6 +113,22 @@ class UdoFunctionExpressionTest {
   }
 
   @Test
+  void closureBindingOverridesInvokeContext() {
+    UdoDefinition udo =
+        new UdoDefinition(
+            "max_with_y",
+            List.of(UdoParameter.mandatory("x", Long.class)),
+            Long.class,
+            parseExpr("if x > y then x else y"),
+            engine,
+            Map.of("y", 2L));
+
+    var expr = new UdoFunctionExpression(udo, List.of(new ConstantExpression(2L, POS)), POS);
+
+    assertThat(expr.resolve(Map.of("y", 4L))).isEqualTo(2L);
+  }
+
+  @Test
   void directRecursionIsRejected() {
     UdoDefinition udo =
         new UdoDefinition(
