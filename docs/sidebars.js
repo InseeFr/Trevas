@@ -89,6 +89,7 @@ module.exports = {
 					items: [
 						'user-guide/coverage/index-coverage',
 						'user-guide/coverage/general-operators',
+						'user-guide/coverage/user-defined-operators',
 						'user-guide/coverage/join-operators',
 						'user-guide/coverage/string-operators',
 						'user-guide/coverage/numeric-operators',

@@ -1,0 +1,119 @@
+---
+id: user-defined-operators
+title: VTL - Opérateurs définis par l'utilisateur
+sidebar_label: Opérateurs définis par l'utilisateur
+slug: /user-guide/coverage/user-defined-operators
+custom_edit_url: null
+---
+
+Les opérateurs définis par l'utilisateur (UDO) permettent de nommer et réutiliser une expression VTL sous un identifiant d'opérateur personnalisé.
+Trevas prend en charge la syntaxe VTL 2.1 `define operator` pour les signatures **scalaires** et **dataset** (prise en charge partielle — voir [limitations](#limitations) ci-dessous).
+
+| Capacité | In-memory | Spark |
+| -------- | :-------: | :---: |
+| `define operator` | :heavy_check_mark: | :heavy_check_mark: |
+| Corps scalaire (`integer`, `number`, `string`, `boolean`, …) | :heavy_check_mark: | :heavy_check_mark: |
+| Paramètre et/ou retour `dataset` opaque | :heavy_check_mark: | :heavy_check_mark: |
+| `default` sur les paramètres, `_` à l'appel | :heavy_check_mark: | :heavy_check_mark: |
+| Variables libres du script (après réordonnancement DAG) | :heavy_check_mark: | :heavy_check_mark: |
+| Appels UDO imbriqués | :heavy_check_mark: | :heavy_check_mark: |
+| Contrôle `dataset { … }` structuré | :heavy_check_mark: | :heavy_check_mark: |
+
+Sur Spark, le corps d'un UDO suit le même chemin que du VTL inline via le processing engine.
+Si le corps n'utilise que des opérateurs déjà supportés sur Spark (`filter`, `calc`, `union`, …), le UDO fonctionne sans configuration supplémentaire.
+
+## Définir un opérateur
+
+```vtl
+define operator add (x integer default 0, y integer default 0)
+   returns number is
+      x + y
+end operator;
+
+res := add(1, 2);   /* 3 */
+one := add(5);      /* 5 — y vaut 0 par défaut */
+zero := add();      /* 0 */
+```
+
+`returns` peut être omis ; Trevas infère le type de retour à partir du corps lorsque c'est possible.
+
+`_` sélectionne la valeur par défaut d'un paramètre optionnel :
+
+```vtl
+ten := add(10, _);  /* équivalent à add(10) quand y vaut 0 par défaut */
+```
+
+## Variables libres
+
+Le corps peut référencer des variables du script qui ne sont pas des paramètres.
+Le préprocesseur DAG réordonne les instructions pour que définitions et affectations précèdent les appels.
+
+```vtl
+max_res := max_with_y(b);
+b := 2;
+define operator max_with_y (x integer) returns number is
+   if x > y then x else y
+end operator;
+y := 4;
+/* max_res vaut 4 : à l'appel y vaut 4 et x vaut 2 */
+```
+
+Les paramètres formels masquent les noms extérieurs dans le corps.
+
+## Recettes dataset
+
+Factoriser une transformation réutilisable avec des paramètres `dataset` opaques :
+
+```vtl
+define operator keep_long1_gt (ds dataset, threshold integer)
+   returns dataset is
+      ds[filter long1 > threshold]
+end operator;
+
+filtered := keep_long1_gt(ds1, 25);
+```
+
+Autres motifs courants :
+
+```vtl
+/* mesure dérivée */
+define operator with_double_long1 (ds dataset) returns dataset is
+   ds[calc long1_x2 := long1 * 2]
+end operator;
+
+/* union de deux entrées */
+define operator merge_ds (a dataset, b dataset) returns dataset is
+   union(a, b)
+end operator;
+
+/* paramètre scalaire dans un calc */
+define operator scale_long1 (ds dataset, factor integer) returns dataset is
+   ds[calc long1 := long1 * factor]
+end operator;
+```
+
+Les paramètres scalaires sont visibles dans les clauses (`filter`, `calc`, …) écrites dans le corps du UDO.
+
+## Conventions d'appel
+
+À l'appel, chaque argument doit être un **identifiant de variable**, une **constante**, ou `_`.
+Les expressions arbitraires en argument (par exemple `add(1 + 2, x * 3)`) ne sont pas supportées par la grammaire Trevas.
+
+Un nom d'opérateur ne doit pas entrer en collision avec une liaison existante ni avec une fonction native enregistrée sur le moteur.
+
+## Limitations
+
+Non supporté dans la version actuelle (erreur explicite) :
+
+- types `component`, `set` ou ruleset en paramètre / retour
+- contraintes de type scalaire dans la signature (`integer {0,1}`, `[value >= 0]`, …)
+- contrôle des signatures `dataset { identifier …, measure … }` (DS4)
+- style « fonction d'ordre supérieur » (passer un prédicat ou une expression en paramètre)
+- promotion automatique d'un UDO scalaire sur un dataset (dataset passé là où un scalaire est attendu → erreur de type)
+
+La récursion entre UDO est rejetée avec une erreur explicite `recursive call to UDO`.
+
+## Voir aussi
+
+- [Opérateurs à usage général](/user-guide/coverage/general-operators) — affectations et surface d'appel
+- [Opérateurs de clause](/user-guide/coverage/clause-operators) — opérateurs souvent utilisés dans les corps dataset
