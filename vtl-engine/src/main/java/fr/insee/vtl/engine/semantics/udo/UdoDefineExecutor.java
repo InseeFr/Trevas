@@ -61,10 +61,18 @@ public final class UdoDefineExecutor {
       throws VtlScriptException {
     String paramName = item.varID().getText();
     Structured.DataStructure datasetStructure = null;
+    Dataset.Role componentRole = null;
+    Class<?> componentScalarType = null;
     Class<?> type;
     if (item.inputParameterType().datasetType() != null) {
       datasetStructure = UdoDatasetTypeParser.parse(item.inputParameterType().datasetType(), pos);
       type = Dataset.class;
+    } else if (item.inputParameterType().componentType() != null) {
+      var signature =
+          UdoComponentTypeParser.parse(item.inputParameterType().componentType(), pos);
+      componentRole = signature.role();
+      componentScalarType = signature.scalarType();
+      type = Structured.Component.class;
     } else {
       type = parseInputType(item.inputParameterType(), pos);
     }
@@ -75,9 +83,11 @@ public final class UdoDefineExecutor {
         throw new VtlScriptException(
             "default value type does not match parameter type " + vtlTypeName(type), pos);
       }
-      return UdoParameter.withDefault(paramName, type, datasetStructure, value);
+      return UdoParameter.withDefaultParsed(
+          paramName, type, datasetStructure, componentRole, componentScalarType, value);
     }
-    return UdoParameter.mandatory(paramName, type, datasetStructure);
+    return UdoParameter.mandatoryParsed(
+        paramName, type, datasetStructure, componentRole, componentScalarType);
   }
 
   static Class<?> parseInputType(VtlParser.InputParameterTypeContext ctx, Positioned pos)

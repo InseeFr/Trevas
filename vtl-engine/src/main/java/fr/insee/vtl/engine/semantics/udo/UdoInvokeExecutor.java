@@ -5,11 +5,13 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.UdoFunctionExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.ArrayList;
@@ -82,6 +84,10 @@ public final class UdoInvokeExecutor {
   private static void checkArgType(
       UdoParameter formal, ResolvableExpression expr, Positioned position)
       throws VtlScriptException {
+    if (formal.isComponentParam()) {
+      checkComponentArg(formal, expr, position);
+      return;
+    }
     Class<?> expected = formal.getType();
     Class<?> actual = expr.getType();
     if (Object.class.equals(actual)) {
@@ -106,5 +112,47 @@ public final class UdoInvokeExecutor {
             + ", got "
             + actual.getSimpleName(),
         position);
+  }
+
+  private static void checkComponentArg(
+      UdoParameter formal, ResolvableExpression expr, Positioned position)
+      throws VtlScriptException {
+    if (!(expr instanceof ComponentExpression componentExpr)) {
+      throw new VtlScriptException(
+          "argument type mismatch for parameter '"
+              + formal.getName()
+              + "': expected component, got "
+              + expr.getType().getSimpleName(),
+          position);
+    }
+    Structured.Component component = componentExpr.getComponent();
+    if (component.getRole() != formal.getComponentRole()) {
+      throw new VtlScriptException(
+          "argument '"
+              + formal.getName()
+              + "' has role "
+              + component.getRole()
+              + ", expected "
+              + formal.getComponentRole(),
+          position);
+    }
+    Class<?> expectedScalar = formal.getComponentScalarType();
+    if (expectedScalar != null && !isAssignable(expectedScalar, component.getType())) {
+      throw new VtlScriptException(
+          "argument '"
+              + formal.getName()
+              + "' has type "
+              + component.getType().getSimpleName()
+              + ", expected "
+              + expectedScalar.getSimpleName(),
+          position);
+    }
+  }
+
+  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
+    if (expected.isAssignableFrom(actual)) {
+      return true;
+    }
+    return Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual);
   }
 }

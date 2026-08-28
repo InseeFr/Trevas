@@ -53,16 +53,32 @@ public final class UdoFunctionExpression extends ResolvableExpression {
     var formals = udo.getParameters();
     for (int i = 0; i < formals.size(); i++) {
       UdoParameter formal = formals.get(i);
-      Object argValue = parameters.get(i).resolve(outer);
-      if (formal.getDatasetStructure() != null && argValue instanceof Dataset dataset) {
-        try {
-          UdoStructureCheck.requireDatasetMatches(
-              formal.getDatasetStructure(),
-              dataset,
-              "argument '" + formal.getName() + "' for UDO '" + udo.getName() + "'",
-              this);
-        } catch (VtlScriptException e) {
-          throw new VtlRuntimeException(e);
+      ResolvableExpression argExpr = parameters.get(i);
+      Object argValue;
+      if (formal.isComponentParam()) {
+        if (!(argExpr instanceof ComponentExpression componentExpr)) {
+          throw new VtlRuntimeException(
+              new VtlScriptException(
+                  "argument '"
+                      + formal.getName()
+                      + "' for UDO '"
+                      + udo.getName()
+                      + "' is not a component reference",
+                  this));
+        }
+        argValue = componentExpr.getComponent();
+      } else {
+        argValue = argExpr.resolve(outer);
+        if (formal.getDatasetStructure() != null && argValue instanceof Dataset dataset) {
+          try {
+            UdoStructureCheck.requireDatasetMatches(
+                formal.getDatasetStructure(),
+                dataset,
+                "argument '" + formal.getName() + "' for UDO '" + udo.getName() + "'",
+                this);
+          } catch (VtlScriptException e) {
+            throw new VtlRuntimeException(e);
+          }
         }
       }
       child.put(formal.getName(), argValue);
