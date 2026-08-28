@@ -29,8 +29,8 @@
 | **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
-| **P2** | P2-2, P2-3 | 2 | `measure` component param + role mismatch |
-| **Total enabled** | | **26** | P0 + P1 + P2 |
+| **P2** | P2-2, P2-3, P2-4, P2-5 | 4 | component params + wildcard `dataset {…}` |
+| **Total enabled** | | **28** | P0 + P1 + P2 |
 
 ---
 
@@ -138,6 +138,13 @@ Models “apply same recipe with different factor” without duplicating VTL —
 | **P2-3** | `testP2ComponentRoleMismatchRejected` | invoke | identifier passed for `measure` formal | `role` in message |
 
 Call site passes a **variable** bound to `Structured.Component` (Trevas grammar: `varID` only, not `ds#col`).
+
+| ID | JUnit | Phase | Trigger | Expected |
+|----|-------|-------|---------|----------|
+| **P2-4** | `testP2WildcardDatasetSignature` | invoke | `measure < integer > _` in dataset param | matching mono-measure dataset accepted |
+| **P2-5** | `testP2WildcardDatasetMissingMeasureRejected` | invoke | id-only dataset vs `measure _` | `exactly one` in message |
+
+Wildcards: `_` (exactly one), `_+` (one or more), `_*` (zero or more) on non-predetermined components.
 
 ### Deferred (catalog only)
 

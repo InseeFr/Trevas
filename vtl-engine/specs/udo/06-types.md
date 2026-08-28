@@ -11,7 +11,7 @@ This file only lists **which signature syntax** P0 accepts vs rejects at **defin
 | `integer` / `number` / `string` / `boolean` | Same Java classes as the rest of the engine |
 | `date` / `time_period` / `duration` | If `cast` already maps them; else reject until then |
 | `dataset` | Opaque (`instanceof Dataset` / `DatasetExpression`) |
-| `dataset { … }` | Parsed and enforced at invoke/return (DS4) |
+| `dataset { … }` | Parsed and enforced at invoke/return (DS4); wildcards `_`, `_+`, `_*` (P2-4) |
 | `measure` / `attribute` / `identifier` component params | P2 — role + optional `<scalar>`; invoke via bound `varID` |
 | omitted `returns` | Infer from body at invoke |
 

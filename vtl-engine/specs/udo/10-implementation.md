@@ -51,10 +51,9 @@ Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/
 
 ## P2 (next)
 
-Component params at define + invoke are green (P2-2, P2-3). Remaining slices:
+Component params at define + invoke are green (P2-2, P2-3). Wildcard dataset signatures are green (P2-4, P2-5). Remaining:
 
 | Focus | Tests to add when slicing |
 |-------|---------------------------|
-| Wildcards in `dataset {…}` | extend DS4 / parser tests |
-| `viral attribute` component params | new P2-* |
+| `viral attribute` component params / wildcards | new P2-* |
 | Optional: snapshot closures at define | new S* |
