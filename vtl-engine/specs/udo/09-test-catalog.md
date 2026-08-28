@@ -30,7 +30,8 @@
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
 | **P2** | P2-2 … P2-7 | 6 | component params, wildcards, viral attribute |
-| **Total enabled** | | **31** | P0 + P1 + P2 + S5 |
+| **P3** | P3-1 … P3-3 | 3 | ruleset params, scalar set guard |
+| **Total enabled** | | **34** | P0 + P1 + P2 + P3 + S5 |
 
 ---
 
@@ -152,6 +153,16 @@ Call site passes a **variable** bound to `Structured.Component` (Trevas grammar:
 | **P2-7** | `testP2ViralAttributeWildcardDataset` | invoke | `viral attribute < string > _*` in dataset param | dataset with viral attr accepted |
 
 Wildcards: `_` (exactly one), `_+` (one or more), `_*` (zero or more) on non-predetermined components.
+
+## P3 (ruleset / set)
+
+| ID | JUnit | Phase | Trigger | Expected |
+|----|-------|-------|---------|----------|
+| **P3-1** | `testP3RulesetParamCheckDatapoint` | invoke | `(rs ruleset)` + `check_datapoint(ds, rs)` in body | same result as direct `check_datapoint` |
+| **P3-2** | `testP3RulesetTypeMismatchRejected` | invoke | scalar passed for `ruleset` formal | `ruleset` in message |
+| **P3-3** | `testP3ScalarSetParamRejectedAtDefine` | define | `set < integer >` formal | `scalar set` in message |
+
+Call site passes a **variable** bound to `DataPointRuleset` or `HierarchicalRuleset` (same as component params: `varID` only).
 
 ### Deferred (catalog only)
 

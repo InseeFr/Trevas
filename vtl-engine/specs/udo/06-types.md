@@ -13,15 +13,15 @@ This file only lists **which signature syntax** P0 accepts vs rejects at **defin
 | `dataset` | Opaque (`instanceof Dataset` / `DatasetExpression`) |
 | `dataset { … }` | Parsed and enforced at invoke/return (DS4); wildcards `_`, `_+`, `_*` (P2-4) |
 | `measure` / `attribute` / `identifier` / `viral attribute` component params | role + optional `<scalar>`; invoke via bound `varID` |
+| `ruleset` / `datapoint` / `hierarchical` | P3-1 … P3-2; invoke via bound `varID` |
 | omitted `returns` | Infer from body at invoke |
 
 ## P0 reject at define
 
 | Syntax | Until |
 |--------|-------|
-| `set <T>`, ruleset types | later |
+| `set <T>` | no scalar-set runtime in Trevas yet (P3-3 guard) |
 | scalar constraints (`integer {0,1}`, `[value >= 0]`, nullability) | later |
-| `viral attribute` component params | supported (P2-6) |
 
 Do not silently ignore constraint syntax if the grammar attaches it.
 
