@@ -75,9 +75,8 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
   @Override
   public Object visitDefOperator(VtlParser.DefOperatorContext ctx) {
     try {
-      UdoDefinition udo = UdoDefineExecutor.define(ctx, engine);
       Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-      String name = udo.getName();
+      String name = ctx.operatorID().getText();
       if (bindings.containsKey(name)) {
         throw new AlreadyDefinedException(fromContext(ctx.operatorID()));
       }
@@ -87,6 +86,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
             "cannot define operator '" + name + "': conflicts with native function",
             fromContext(ctx));
       }
+      UdoDefinition udo = UdoDefineExecutor.define(ctx, engine);
       bindings.put(name, udo);
       return udo;
     } catch (VtlScriptException e) {
