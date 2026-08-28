@@ -647,4 +647,74 @@ public class UserDefinedOperatorTest {
                     """))
         .hasMessageContaining("long1");
   }
+
+  @Test
+  public void testP3RulesetParamCheckDatapoint() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)),
+            List.of("a", 10L),
+            List.of("b", -2L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        """
+        define datapoint ruleset dpr1 (variable Id_1, Me_1) is
+           when Id_1 = "b" then Me_1 >= 0 errorcode "neg"
+        end datapoint ruleset;
+
+        define operator apply_check (ds dataset, rs ruleset) returns dataset is
+           check_datapoint(ds, rs)
+        end operator;
+
+        expected := check_datapoint(ds, dpr1);
+        res := apply_check(ds, dpr1);
+        """);
+
+    Dataset expected = (Dataset) engine.getContext().getAttribute("expected");
+    Dataset res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap()).containsExactlyInAnyOrderElementsOf(expected.getDataAsMap());
+  }
+
+  @Test
+  public void testP3RulesetTypeMismatchRejected() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)),
+            List.of("a", 10L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define datapoint ruleset dpr1 (variable Id_1, Me_1) is
+                       when Id_1 = "b" then Me_1 >= 0 errorcode "neg"
+                    end datapoint ruleset;
+
+                    define operator apply_check (ds dataset, rs ruleset) returns dataset is
+                       check_datapoint(ds, rs)
+                    end operator;
+
+                    res := apply_check(ds, 1);
+                    """))
+        .hasMessageContaining("ruleset");
+  }
+
+  @Test
+  public void testP3ScalarSetParamRejectedAtDefine() {
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator with_set (codes set < integer >) returns integer is
+                       1
+                    end operator;
+                    """))
+        .hasMessageContaining("scalar set");
+  }
 }
