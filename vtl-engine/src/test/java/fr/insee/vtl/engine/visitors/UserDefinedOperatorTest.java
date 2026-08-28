@@ -294,6 +294,54 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
+  public void testP2WildcardDatasetSignature() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 10L),
+            List.of("y", 20L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        """
+        define operator bump (
+           ds dataset { identifier < string > id, measure < integer > _ }
+        ) returns dataset is
+           ds[calc long1 := long1 + 1]
+        end operator;
+        res := bump(ds);
+        """);
+    Dataset res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("id", "x", "long1", 11L), Map.of("id", "y", "long1", 21L));
+  }
+
+  @Test
+  public void testP2WildcardDatasetMissingMeasureRejected() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
+            List.of("x"));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator bump (
+                       ds dataset { identifier < string > id, measure < integer > _ }
+                    ) returns dataset is
+                       ds
+                    end operator;
+                    res := bump(ds);
+                    """))
+        .hasMessageContaining("exactly one");
+  }
+
+  @Test
   public void testDs5DatasetAndScalar() throws ScriptException {
     engine.getContext().setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(

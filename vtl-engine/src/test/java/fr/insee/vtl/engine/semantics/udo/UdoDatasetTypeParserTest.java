@@ -1,11 +1,9 @@
 package fr.insee.vtl.engine.semantics.udo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.antlr.runtime.CharStreams;
 import fr.insee.vtl.antlr.runtime.CommonTokenStream;
-import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.Structured;
@@ -25,26 +23,53 @@ class UdoDatasetTypeParserTest {
 
   @Test
   void parsesDs4Signature() throws VtlScriptException {
-    Structured.DataStructure structure =
+    UdoDatasetSignature signature =
         UdoDatasetTypeParser.parse(
             parseDatasetType(
                 "dataset { identifier < string > id, measure < integer > long1 }"),
             POS);
 
-    assertThat(structure.componentsInOrder())
+    assertThat(signature.namedComponents())
         .containsExactly(
             new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
             new Structured.Component("long1", Long.class, Dataset.Role.MEASURE));
+    assertThat(signature.wildcards()).isEmpty();
   }
 
   @Test
-  void wildcardComponentIsRejected() {
-    assertThatThrownBy(
-            () ->
-                UdoDatasetTypeParser.parse(
-                    parseDatasetType("dataset { measure < integer > _ }"), POS))
-        .isInstanceOf(VtlRuntimeException.class)
-        .hasMessageContaining("wildcards");
+  void parsesWildcardMeasure() throws VtlScriptException {
+    UdoDatasetSignature signature =
+        UdoDatasetTypeParser.parse(
+            parseDatasetType(
+                "dataset { identifier < string > id, measure < integer > _ }"),
+            POS);
+
+    assertThat(signature.namedComponents())
+        .containsExactly(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER));
+    assertThat(signature.wildcards())
+        .containsExactly(
+            new UdoDatasetSignature.Wildcard(
+                Dataset.Role.MEASURE,
+                Long.class,
+                UdoDatasetSignature.WildcardMultiplicity.EXACTLY_ONE));
+  }
+
+  @Test
+  void parsesZeroOrMoreAttributes() throws VtlScriptException {
+    UdoDatasetSignature signature =
+        UdoDatasetTypeParser.parse(
+            parseDatasetType("dataset { measure < boolean > _, attribute < string > _* }"), POS);
+
+    assertThat(signature.wildcards())
+        .containsExactly(
+            new UdoDatasetSignature.Wildcard(
+                Dataset.Role.MEASURE,
+                Boolean.class,
+                UdoDatasetSignature.WildcardMultiplicity.EXACTLY_ONE),
+            new UdoDatasetSignature.Wildcard(
+                Dataset.Role.ATTRIBUTE,
+                String.class,
+                UdoDatasetSignature.WildcardMultiplicity.ZERO_OR_MORE));
   }
 
   private static VtlParser.DatasetTypeContext parseDatasetType(String vtl) {

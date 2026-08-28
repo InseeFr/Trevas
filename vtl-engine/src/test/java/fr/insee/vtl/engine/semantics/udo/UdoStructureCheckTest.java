@@ -17,11 +17,12 @@ class UdoStructureCheckTest {
 
   @Test
   void matchingStructurePasses() {
-    Structured.DataStructure expected =
-        new Structured.DataStructure(
+    UdoDatasetSignature expected =
+        new UdoDatasetSignature(
             List.of(
                 new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)));
+                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of());
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(
@@ -37,9 +38,9 @@ class UdoStructureCheckTest {
 
   @Test
   void missingComponentIsRejected() {
-    Structured.DataStructure expected =
-        new Structured.DataStructure(
-            List.of(new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)));
+    UdoDatasetSignature expected =
+        new UdoDatasetSignature(
+            List.of(new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)), List.of());
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
@@ -54,9 +55,9 @@ class UdoStructureCheckTest {
 
   @Test
   void wrongRoleIsRejected() {
-    Structured.DataStructure expected =
-        new Structured.DataStructure(
-            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)));
+    UdoDatasetSignature expected =
+        new UdoDatasetSignature(
+            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)), List.of());
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(new Structured.Component("id", String.class, Dataset.Role.MEASURE)),
@@ -68,5 +69,47 @@ class UdoStructureCheckTest {
         .isInstanceOf(VtlScriptException.class)
         .hasMessageContaining("has role")
         .hasMessageContaining("expected");
+  }
+
+  @Test
+  void wildcardRequiresExactlyOneMeasure() throws VtlScriptException {
+    UdoDatasetSignature expected =
+        new UdoDatasetSignature(
+            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
+            List.of(
+                new UdoDatasetSignature.Wildcard(
+                    Dataset.Role.MEASURE,
+                    Long.class,
+                    UdoDatasetSignature.WildcardMultiplicity.EXACTLY_ONE)));
+    InMemoryDataset ok =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 1L));
+    InMemoryDataset missingMeasure =
+        new InMemoryDataset(
+            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
+            List.of("x"));
+    InMemoryDataset twoMeasures =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("m1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("m2", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 1L, 2L));
+
+    assertThatCode(
+            () -> UdoStructureCheck.requireDatasetMatches(expected, ok, "argument 'ds'", POS))
+        .doesNotThrowAnyException();
+    assertThatThrownBy(
+            () ->
+                UdoStructureCheck.requireDatasetMatches(
+                    expected, missingMeasure, "argument 'ds'", POS))
+        .hasMessageContaining("exactly one");
+    assertThatThrownBy(
+            () ->
+                UdoStructureCheck.requireDatasetMatches(expected, twoMeasures, "argument 'ds'", POS))
+        .hasMessageContaining("exactly one");
   }
 }
