@@ -16,7 +16,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** UDO acceptance tests. Catalog IDs: vtl-engine/specs/udo/09-test-catalog.md */
@@ -269,7 +268,6 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
-  @Disabled("P1 — structured dataset {…} enforcement (see vtl-engine/specs/udo)")
   public void testDs4StructuredDatasetType() throws ScriptException {
     InMemoryDataset ds =
         new InMemoryDataset(
@@ -432,5 +430,57 @@ public class UserDefinedOperatorTest {
                     res := add2(1, _);
                     """))
         .hasMessageNotContaining("not found");
+  }
+
+  @Test
+  public void testE9DirectRecursionRejected() {
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator recurse (x integer) returns integer is
+                       recurse(x)
+                    end operator;
+                    res := recurse(1);
+                    """))
+        .hasMessageContaining("recursive");
+  }
+
+  @Test
+  public void testP2ComponentParamRejected() {
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator bad (m measure < integer >)
+                       returns integer is
+                          1
+                    end operator;
+                    """))
+        .hasMessageContaining("not supported");
+  }
+
+  @Test
+  public void testDs4StructuredDatasetMismatchRejected() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("value", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 10L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    assertThatThrownBy(
+            () ->
+                engine.eval(
+                    """
+                    define operator bump (
+                       ds dataset { identifier < string > id, measure < integer > long1 }
+                    ) returns dataset { identifier < string > id, measure < integer > long1 } is
+                       ds[calc long1 := long1 + 1]
+                    end operator;
+                    res := bump(ds);
+                    """))
+        .hasMessageContaining("long1");
   }
 }
