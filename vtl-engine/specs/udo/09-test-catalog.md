@@ -28,8 +28,9 @@
 | **Technique** | S1–S4 | 4 | Inference, free vars, `_`, nested UDO |
 | **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
-| **P1** | DS4 | 1 | Structured `dataset {…}` (`@Disabled`) |
-| **Total P0 enabled** | | **21** | All except DS4 |
+| **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
+| **P2** | P2-1 | 1 | Reject `component`/`measure` params at define (guard until implemented) |
+| **Total enabled** | | **25** | P0 + P1 + P2 guard |
 
 ---
 
@@ -101,7 +102,7 @@ Reusable **transformation recipes** — why UDOs exist in production scripts.
 | **DS2** | `testDs2CalcRecipe` | 5 | Enrich with derived measure | `ds[calc long1_x2 := long1 * 2]` | 3 rows; each has `long1_x2 == 2 * long1` |
 | **DS3** | `testDs3UnionTwoDatasets` | 5 | Union two inputs | `union(a, b)` | 3 rows `{a,1}`, `{b,2}`, `{c,3}` |
 | **DS5** | `testDs5DatasetAndScalar` | 5 | Parameterise a calc (scale) | `ds[calc long1 := long1 * factor]` with `factor integer` | Nico row: `long1 == 60` (20×3) |
-| **DS4** | `testDs4StructuredDatasetType` | P1 | Structure contract | typed `dataset { id, long1 }` | `@Disabled` until P1 |
+| **DS4** | `testDs4StructuredDatasetType` | P1 | Structure contract | typed `dataset { id, long1 }` | matching dataset accepted |
 
 ### DS1 row expectation (reference)
 
@@ -125,14 +126,21 @@ Models “apply same recipe with different factor” without duplicating VTL —
 | **E6** | `testE6NameCollision` | 1 | define | `add := 1` then `define operator add` | silent overwrite | exception |
 | **E7** | `testE7OptionalWithoutDefault` | 3 | invoke | `add2(1, _)` no default on `y` | `FunctionNotFound` | `_` without default |
 | **E8** | `testE8NativeRegistryCollision` | 1 | define | plain `IDENTIFIER` pre-`registerMethod`'d then `define operator` same name | silent overwrite | reject registry collision |
+| **E9** | `testE9DirectRecursionRejected` | P1 | invoke | `recurse(x)` body | stack overflow | `recursive` message |
 
 **E8 note:** do not use keyword `abs` (parse error). Register a non-keyword name via `registerMethod` before define.
+
+## P2 guard (P2-1)
+
+| ID | JUnit | Phase | Trigger | Expected failure |
+|----|-------|-------|---------|------------------|
+| **P2-1** | `testP2ComponentParamRejected` | define | `(m measure < integer >)` param | `not supported` at define |
 
 ### Deferred (catalog only)
 
 | ID | Category | Trigger | Expected |
 |----|----------|---------|----------|
-| **E9** | define | define UDO same name as existing ruleset | reject (same policy as E6) — add when needed |
+| **E10** | define | define UDO same name as existing ruleset | reject (same policy as E6) — add when needed |
 
 ---
 
@@ -143,11 +151,11 @@ Models “apply same recipe with different factor” without duplicating VTL —
 [x] Each ID maps to exactly one JUnit method
 [x] D* — RM examples covered (D4 = reject typo)
 [x] S* — DAG (S2), inference (S1), _ (S3), nested (S4)
-[x] DS* — filter, calc, union, mixed param (DS4 disabled)
-[x] E* — define + invoke errors incl. E8 registry
+[x] DS* — filter, calc, union, mixed param, structured DS4
+[x] E* — define + invoke errors incl. E8 registry + E9 recursion
 [x] Pattern walkthrough green
 [x] mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest → SUCCESS
-[ ] Docusaurus user docs (B8)
+[x] Docusaurus user docs (B8)
 ```
 
 ---

@@ -7,8 +7,8 @@ Tests first: [09-test-catalog.md](./09-test-catalog.md). Runtime path: [01-archi
 | Phase | Scope | Status |
 |-------|--------|--------|
 | **P0** | Scalars + opaque `dataset` (param and/or return) | in this PR; rewrite invoke to `ResolvableExpression` (review) |
-| **P1** | Structured `dataset {…}` (DS4), recursion guard, Spark IT | backlog |
-| **P2** | `component` params, richer structure / viral attrs | backlog |
+| **P1** | Structured `dataset {…}` (DS4), recursion guard, Spark IT | ✅ |
+| **P2** | `component` params, richer structure / viral attrs | next — guard: P2-1 rejects `measure`/`component` at define |
 | **P3** | Constraints, `set`, ruleset types | only if scripts demand it |
 
 ### P0 in
@@ -28,6 +28,6 @@ Tests first: [09-test-catalog.md](./09-test-catalog.md). Runtime path: [01-archi
 - `component` / `set` / `ruleset` parameter types, scalar constraints
 - Scalar-UDO auto-promotion onto datasets
 - Lexical closures (snapshot bindings at define)
-- Recursion guard, Docusaurus, provenance
+- Recursion guard, provenance
 
 Opaque dataset UDOs package reusable `filter`/`calc`/`join` recipes. Temporary assignments do not replace them when the same recipe is invoked multiple times or shared across scripts.

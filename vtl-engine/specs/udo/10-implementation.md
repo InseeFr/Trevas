@@ -12,12 +12,12 @@
 |-----------|-------|
 | Spike (trampoline) + acceptance green | ✅ in this PR (to replace) |
 | Specs retargeted after review | ✅ |
-| Hardcoded `UdoFunctionExpression` unit tests | ✅ |
+| Hardcoded `UdoFunctionExpression` + `UdoInvokeExecutor` unit tests | ✅ |
 | Drop `registerMethod` / `UdoTrampoline` | ✅ |
 | E6 → `AlreadyDefinedException` | ✅ |
 | Lookup operator id in current visitor bindings | ✅ |
-| Docusaurus | ⬜ |
-| P1 DS4 / recursion / Spark IT | ⬜ |
+| Docusaurus | ✅ |
+| P1 DS4 / recursion / Spark IT | ✅ |
 
 ---
 
@@ -45,15 +45,16 @@ Defaults/`_` (D2, S3, E3–E5, E7), free vars (S2), dataset recipes (DS1–3, DS
 
 ### Step 8 — User docs
 
-Docusaurus when the path is stable.
+Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/user-defined-operators.mdx` (+ FR).
 
 ---
 
-## P1+ (backlog, not a commitment)
+## P2 (next)
 
-| Focus | Tests |
-|-------|--------|
-| Structured `dataset {…}` | DS4 |
-| Recursion guard | new E* |
-| Spark IT | new IT |
+Test-first guard is green (`P2-1`). Implementation slices (not started):
+
+| Focus | Tests to add when slicing |
+|-------|---------------------------|
+| `component` / `measure` params | new P2-* acceptance + unit |
+| Richer `dataset {…}` (wildcards, viral attrs) | extend DS4 / parser tests |
 | Optional: snapshot closures at define | new S* |

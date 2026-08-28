@@ -9,9 +9,7 @@ Implementation spec for **User Defined Operators** (VTL 2.1) in Trevas.
 
 **Partial support (P0):** scalars + opaque `dataset` + mixed signatures. Not full VTL-DL.
 
-**Runtime pattern (review follow-up):** define → `UdoDefinition` in bindings only → call resolves the operator id like a variable → `UdoFunctionExpression` (`ResolvableExpression`) evals the body. No trampoline `Method` in the native registry. See [01-architecture](./01-architecture.md).
-
-*(This PR still contains the spike trampoline; specs describe the target to replace it.)*
+**Runtime pattern:** define → `UdoDefinition` in bindings only → call resolves the operator id like a variable → `UdoFunctionExpression` (`ResolvableExpression`) evals the body. No trampoline `Method` in the native registry. See [01-architecture](./01-architecture.md).
 
 ## Working method
 
@@ -22,14 +20,15 @@ Implementation spec for **User Defined Operators** (VTL 2.1) in Trevas.
 | Step | State |
 |------|-------|
 | Specs (target path after review) | ✅ this package |
-| Acceptance suite (D/S/DS/E + E8) | ✅ green (DS4 `@Disabled`) — against spike impl |
-| Hardcoded expression unit tests | ⬜ next |
-| Drop trampoline / `registerMethod` | ⬜ next |
-| User-facing Docusaurus | ⬜ |
-| Structured `dataset {…}` (DS4) | ⬜ P1 |
+| **Step 0** — hardcoded `UdoFunctionExpression` unit tests | ✅ `UdoFunctionExpressionTest`, `UdoInvokeExecutorTest` |
+| **Step 1** — define without registry (E1, E2, E6, E8) | ✅ |
+| **Step 2** — invoke via bindings lookup (D1, D3, S1) | ✅ `UdoCallLookupTest` |
+| **Steps 3–7** — catalog through new expression path | ✅ (DS4 `@Disabled`) |
+| User-facing Docusaurus (step 8) | ✅ |
+| **P1** — DS4, recursion guard (E9), Spark IT | ✅ |
 
 ```bash
-mvn -pl vtl-engine -Dtest=UserDefinedOperatorTest,UdoPatternWalkthroughTest test
+mvn -pl vtl-engine -Dtest=UdoFunctionExpressionTest,UdoInvokeExecutorTest,UdoCallLookupTest,UserDefinedOperatorTest,UdoPatternWalkthroughTest test
 ```
 
 ## Pattern at a glance (target)
