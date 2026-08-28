@@ -342,6 +342,62 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
+  public void testP2ViralAttributeComponentParam() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("At_1", String.class, Dataset.Role.VIRALATTRIBUTE)),
+            List.of("k1", 1L, "M"),
+            List.of("k2", 2L, "P"));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+    engine
+        .getContext()
+        .setAttribute("vir", ds.getDataStructure().get("At_1"), ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        """
+        define operator keep_viral (ds dataset, v viral attribute < string >, expected string)
+           returns dataset is
+              ds[filter v = expected]
+        end operator;
+        res := keep_viral(ds, vir, "M");
+        """);
+    Dataset res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap())
+        .containsExactly(Map.of("Id_1", "k1", "Me_1", 1L, "At_1", "M"));
+  }
+
+  @Test
+  public void testP2ViralAttributeWildcardDataset() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("At_1", String.class, Dataset.Role.VIRALATTRIBUTE)),
+            List.of("k1", 1L, "M"));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        """
+        define operator pass_viral (
+           ds dataset {
+              identifier < string > Id_1,
+              measure < integer > Me_1,
+              viral attribute < string > _*
+           }
+        ) returns dataset is
+           ds
+        end operator;
+        res := pass_viral(ds);
+        """);
+    Dataset res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap()).containsExactly(Map.of("Id_1", "k1", "Me_1", 1L, "At_1", "M"));
+  }
+
+  @Test
   public void testDs5DatasetAndScalar() throws ScriptException {
     engine.getContext().setAttribute("ds2", DatasetSamples.ds2, ScriptContext.ENGINE_SCOPE);
     engine.eval(

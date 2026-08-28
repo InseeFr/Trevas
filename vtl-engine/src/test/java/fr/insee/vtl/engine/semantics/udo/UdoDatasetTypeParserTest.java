@@ -72,6 +72,22 @@ class UdoDatasetTypeParserTest {
                 UdoDatasetSignature.WildcardMultiplicity.ZERO_OR_MORE));
   }
 
+  @Test
+  void parsesViralAttributeWildcard() throws VtlScriptException {
+    UdoDatasetSignature signature =
+        UdoDatasetTypeParser.parse(
+            parseDatasetType(
+                "dataset { identifier < string > Id_1, viral attribute < string > _* }"),
+            POS);
+
+    assertThat(signature.wildcards())
+        .contains(
+            new UdoDatasetSignature.Wildcard(
+                Dataset.Role.VIRALATTRIBUTE,
+                String.class,
+                UdoDatasetSignature.WildcardMultiplicity.ZERO_OR_MORE));
+  }
+
   private static VtlParser.DatasetTypeContext parseDatasetType(String vtl) {
     VtlLexer lexer = new VtlLexer(CharStreams.fromString(vtl));
     VtlParser parser = new VtlParser(new CommonTokenStream(lexer));

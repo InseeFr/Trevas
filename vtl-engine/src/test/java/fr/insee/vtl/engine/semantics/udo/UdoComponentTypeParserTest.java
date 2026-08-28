@@ -31,6 +31,15 @@ class UdoComponentTypeParserTest {
     assertThat(signature.scalarType()).isNull();
   }
 
+  @Test
+  void parsesViralAttributeWithString() throws VtlScriptException {
+    var signature =
+        UdoComponentTypeParser.parse(parseComponentType("viral attribute < string >"), POS);
+
+    assertThat(signature.role()).isEqualTo(Dataset.Role.VIRALATTRIBUTE);
+    assertThat(signature.scalarType()).isEqualTo(String.class);
+  }
+
   private static VtlParser.ComponentTypeContext parseComponentType(String vtl) {
     VtlLexer lexer = new VtlLexer(CharStreams.fromString(vtl));
     VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
