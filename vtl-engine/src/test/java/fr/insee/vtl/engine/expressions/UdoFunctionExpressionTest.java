@@ -60,6 +60,44 @@ class UdoFunctionExpressionTest {
   }
 
   @Test
+  void defaultedFormalsResolveWhenPassedAsConstants() {
+    UdoDefinition udo =
+        new UdoDefinition(
+            "add",
+            List.of(
+                UdoParameter.withDefault("x", Long.class, 0L),
+                UdoParameter.withDefault("y", Long.class, 0L)),
+            Long.class,
+            parseExpr("x + y"),
+            engine);
+
+    var oneArg =
+        new UdoFunctionExpression(
+            udo, List.of(new ConstantExpression(5L, POS), new ConstantExpression(0L, POS)), POS);
+    var noArgs =
+        new UdoFunctionExpression(
+            udo, List.of(new ConstantExpression(0L, POS), new ConstantExpression(0L, POS)), POS);
+
+    assertThat(oneArg.resolve(Map.of())).isEqualTo(5L);
+    assertThat(noArgs.resolve(Map.of())).isEqualTo(0L);
+  }
+
+  @Test
+  void formalParameterShadowsOuterBinding() {
+    UdoDefinition udo =
+        new UdoDefinition(
+            "id",
+            List.of(UdoParameter.mandatory("x", Long.class)),
+            Long.class,
+            parseExpr("x"),
+            engine);
+
+    var expr = new UdoFunctionExpression(udo, List.of(new ConstantExpression(2L, POS)), POS);
+
+    assertThat(expr.resolve(Map.of("x", 99L))).isEqualTo(2L);
+  }
+
+  @Test
   void freeVarIsLookedUpInResolveContext() {
     UdoDefinition udo =
         new UdoDefinition(
@@ -72,6 +110,23 @@ class UdoFunctionExpressionTest {
     var expr = new UdoFunctionExpression(udo, List.of(new ConstantExpression(2L, POS)), POS);
 
     assertThat(expr.resolve(Map.of("y", 4L))).isEqualTo(4L);
+  }
+
+  @Test
+  void directRecursionIsRejected() {
+    UdoDefinition udo =
+        new UdoDefinition(
+            "recurse",
+            List.of(UdoParameter.mandatory("x", Long.class)),
+            Long.class,
+            parseExpr("recurse(x)"),
+            engine);
+    Map<String, Object> scope = new java.util.HashMap<>();
+    scope.put("recurse", udo);
+
+    var expr = new UdoFunctionExpression(udo, List.of(new ConstantExpression(1L, POS)), POS);
+
+    assertThatThrownBy(() -> expr.resolve(scope)).hasMessageContaining("recursive");
   }
 
   @Test
