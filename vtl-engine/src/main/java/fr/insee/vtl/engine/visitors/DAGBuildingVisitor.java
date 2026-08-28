@@ -93,7 +93,12 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
             : ctx.parameterItem().stream()
                 .map(item -> item.varID().getText())
                 .collect(Collectors.toSet());
-    return new IdentifierExtractingVisitor(paramNames).visit(ctx.expr()).stream()
+    return udoFreeVariableNames(ctx.expr(), paramNames);
+  }
+
+  public static Set<String> udoFreeVariableNames(
+      VtlParser.ExprContext body, Set<String> formalParamNames) {
+    return new IdentifierExtractingVisitor(formalParamNames).visit(body).stream()
         .filter(id -> id.identifierType() == DAGStatement.Identifier.Type.VARIABLE)
         .map(DAGStatement.Identifier::name)
         .collect(Collectors.toSet());

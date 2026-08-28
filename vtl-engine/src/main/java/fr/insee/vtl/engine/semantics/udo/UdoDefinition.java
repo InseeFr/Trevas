@@ -95,4 +95,9 @@ public final class UdoDefinition {
   public Map<String, Object> getClosureBindings() {
     return closureBindings;
   }
+
+  /** Inferred return type when the define form omits {@code returns}. */
+  public Class<?> inferReturnType() {
+    return UdoTypeInference.inferBodyType(this);
+  }
 }

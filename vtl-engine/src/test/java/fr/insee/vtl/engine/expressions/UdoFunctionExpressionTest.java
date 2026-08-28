@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests the UDO expression contract with a <strong>hardcoded</strong> {@link UdoDefinition} —
- * no {@code define operator} parse. Visitor wiring is replaced later by the real define path.
+ * no {@code define operator} parse.
  */
 class UdoFunctionExpressionTest {
 
@@ -57,6 +57,23 @@ class UdoFunctionExpressionTest {
 
     assertThat(expr.getType()).isEqualTo(Long.class);
     assertThat(expr.resolve(Map.of())).isEqualTo(3L);
+  }
+
+  @Test
+  void inferredReturnTypeIsExposedOnGetType() {
+    UdoDefinition udo =
+        new UdoDefinition(
+            "twice",
+            List.of(UdoParameter.mandatory("x", Long.class)),
+            null,
+            parseExpr("x + x"),
+            engine);
+
+    var expr =
+        new UdoFunctionExpression(udo, List.of(new ConstantExpression(21L, POS)), POS);
+
+    assertThat(expr.getType()).isEqualTo(Long.class);
+    assertThat(expr.resolve(Map.of())).isEqualTo(42L);
   }
 
   @Test

@@ -33,7 +33,8 @@ public final class UdoFunctionExpression extends ResolvableExpression {
     super(position);
     this.udo = Objects.requireNonNull(udo);
     this.parameters = List.copyOf(parameters);
-    this.declaredType = udo.getReturnType() != null ? udo.getReturnType() : Object.class;
+    Class<?> explicitReturn = udo.getReturnType();
+    this.declaredType = explicitReturn != null ? explicitReturn : udo.inferReturnType();
   }
 
   @Override
