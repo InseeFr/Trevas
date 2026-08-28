@@ -413,6 +413,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
   }
 
+  /** Binding visible while visiting expressions (UDO formals, clause scopes, etc.). */
+  public Object lookupBinding(String name) {
+    return context.get(name);
+  }
+
   @Override
   public ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
     ResolvableExpression expr = super.visitFunctionsExpression(ctx);
