@@ -12,6 +12,7 @@ public final class UdoParameter {
   private final UdoDatasetSignature datasetSignature;
   private final Dataset.Role componentRole;
   private final Class<?> componentScalarType;
+  private final UdoRulesetKind rulesetKind;
   private final Object defaultValue;
   private final boolean optional;
 
@@ -21,6 +22,7 @@ public final class UdoParameter {
       UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
       Class<?> componentScalarType,
+      UdoRulesetKind rulesetKind,
       Object defaultValue,
       boolean optional) {
     this.name = Objects.requireNonNull(name);
@@ -28,6 +30,7 @@ public final class UdoParameter {
     this.datasetSignature = datasetSignature;
     this.componentRole = componentRole;
     this.componentScalarType = componentScalarType;
+    this.rulesetKind = rulesetKind;
     this.defaultValue = defaultValue;
     this.optional = optional;
   }
@@ -39,7 +42,7 @@ public final class UdoParameter {
 
   public static UdoParameter withDefault(
       String name, Class<?> type, UdoDatasetSignature datasetSignature, Object defaultValue) {
-    return new UdoParameter(name, type, datasetSignature, null, null, defaultValue, true);
+    return new UdoParameter(name, type, datasetSignature, null, null, null, defaultValue, true);
   }
 
   public static UdoParameter mandatory(String name, Class<?> type) {
@@ -48,19 +51,19 @@ public final class UdoParameter {
 
   public static UdoParameter mandatory(
       String name, Class<?> type, UdoDatasetSignature datasetSignature) {
-    return new UdoParameter(name, type, datasetSignature, null, null, null, false);
+    return new UdoParameter(name, type, datasetSignature, null, null, null, null, false);
   }
 
   public static UdoParameter mandatoryComponent(
       String name, Dataset.Role role, Class<?> scalarType) {
     return new UdoParameter(
-        name, Structured.Component.class, null, role, scalarType, null, false);
+        name, Structured.Component.class, null, role, scalarType, null, null, false);
   }
 
   static UdoParameter withDefaultComponent(
       String name, Dataset.Role role, Class<?> scalarType, Object defaultValue) {
     return new UdoParameter(
-        name, Structured.Component.class, null, role, scalarType, defaultValue, true);
+        name, Structured.Component.class, null, role, scalarType, null, defaultValue, true);
   }
 
   static UdoParameter mandatoryParsed(
@@ -68,9 +71,10 @@ public final class UdoParameter {
       Class<?> type,
       UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
-      Class<?> componentScalarType) {
+      Class<?> componentScalarType,
+      UdoRulesetKind rulesetKind) {
     return new UdoParameter(
-        name, type, datasetSignature, componentRole, componentScalarType, null, false);
+        name, type, datasetSignature, componentRole, componentScalarType, rulesetKind, null, false);
   }
 
   static UdoParameter withDefaultParsed(
@@ -79,9 +83,17 @@ public final class UdoParameter {
       UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
       Class<?> componentScalarType,
+      UdoRulesetKind rulesetKind,
       Object defaultValue) {
     return new UdoParameter(
-        name, type, datasetSignature, componentRole, componentScalarType, defaultValue, true);
+        name,
+        type,
+        datasetSignature,
+        componentRole,
+        componentScalarType,
+        rulesetKind,
+        defaultValue,
+        true);
   }
 
   public String getName() {
@@ -106,6 +118,14 @@ public final class UdoParameter {
 
   public Class<?> getComponentScalarType() {
     return componentScalarType;
+  }
+
+  public boolean isRulesetParam() {
+    return rulesetKind != null;
+  }
+
+  public UdoRulesetKind getRulesetKind() {
+    return rulesetKind;
   }
 
   public Object getDefaultValue() {

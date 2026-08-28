@@ -70,6 +70,7 @@ public final class UdoDefineExecutor {
     UdoDatasetSignature datasetSignature = null;
     Dataset.Role componentRole = null;
     Class<?> componentScalarType = null;
+    UdoRulesetKind rulesetKind = null;
     Class<?> type;
     if (item.inputParameterType().datasetType() != null) {
       datasetSignature = UdoDatasetTypeParser.parse(item.inputParameterType().datasetType(), pos);
@@ -80,6 +81,9 @@ public final class UdoDefineExecutor {
       componentRole = signature.role();
       componentScalarType = signature.scalarType();
       type = Structured.Component.class;
+    } else if (item.inputParameterType().rulesetType() != null) {
+      rulesetKind = UdoRulesetTypeParser.parse(item.inputParameterType().rulesetType(), pos);
+      type = UdoRulesetBinding.TYPE;
     } else {
       type = parseInputType(item.inputParameterType(), pos);
     }
@@ -91,10 +95,10 @@ public final class UdoDefineExecutor {
             "default value type does not match parameter type " + vtlTypeName(type), pos);
       }
       return UdoParameter.withDefaultParsed(
-          paramName, type, datasetSignature, componentRole, componentScalarType, value);
+          paramName, type, datasetSignature, componentRole, componentScalarType, rulesetKind, value);
     }
     return UdoParameter.mandatoryParsed(
-        paramName, type, datasetSignature, componentRole, componentScalarType);
+        paramName, type, datasetSignature, componentRole, componentScalarType, rulesetKind);
   }
 
   static Class<?> parseInputType(VtlParser.InputParameterTypeContext ctx, Positioned pos)
@@ -104,6 +108,10 @@ public final class UdoDefineExecutor {
     }
     if (ctx.datasetType() != null) {
       return Dataset.class;
+    }
+    if (ctx.scalarSetType() != null) {
+      throw new VtlRuntimeException(
+          new UnimplementedException("UDO scalar set parameters not supported yet", pos));
     }
     throw new VtlRuntimeException(
         new UnimplementedException("UDO parameter type not supported yet: " + ctx.getText(), pos));
