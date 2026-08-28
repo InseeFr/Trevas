@@ -2,8 +2,12 @@ package fr.insee.vtl.engine.expressions;
 
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.semantics.udo.UdoCallStack;
 import fr.insee.vtl.engine.semantics.udo.UdoDefinition;
+import fr.insee.vtl.engine.semantics.udo.UdoParameter;
+import fr.insee.vtl.engine.semantics.udo.UdoStructureCheck;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -33,11 +37,35 @@ public final class UdoFunctionExpression extends ResolvableExpression {
 
   @Override
   public Object resolve(Map<String, Object> context) {
+    try {
+      UdoCallStack.enter(udo.getName());
+      return resolveBody(context);
+    } catch (IllegalStateException e) {
+      throw new VtlRuntimeException(new VtlScriptException(e.getMessage(), this));
+    } finally {
+      UdoCallStack.leave(udo.getName());
+    }
+  }
+
+  private Object resolveBody(Map<String, Object> context) {
     Map<String, Object> outer = context != null ? context : Map.of();
     Map<String, Object> child = new HashMap<>(outer);
     var formals = udo.getParameters();
     for (int i = 0; i < formals.size(); i++) {
-      child.put(formals.get(i).getName(), parameters.get(i).resolve(outer));
+      UdoParameter formal = formals.get(i);
+      Object argValue = parameters.get(i).resolve(outer);
+      if (formal.getDatasetStructure() != null && argValue instanceof Dataset dataset) {
+        try {
+          UdoStructureCheck.requireDatasetMatches(
+              formal.getDatasetStructure(),
+              dataset,
+              "argument '" + formal.getName() + "' for UDO '" + udo.getName() + "'",
+              this);
+        } catch (VtlScriptException e) {
+          throw new VtlRuntimeException(e);
+        }
+      }
+      child.put(formal.getName(), argValue);
     }
     VtlScriptEngine engine = udo.getEngine();
     ExpressionVisitor visitor = new ExpressionVisitor(child, engine.getProcessingEngine(), engine);
@@ -52,6 +80,17 @@ public final class UdoFunctionExpression extends ResolvableExpression {
                   + "' body type incompatible with declared returns "
                   + vtlTypeName(expected),
               this));
+    }
+    if (udo.getReturnDatasetStructure() != null && result instanceof Dataset dataset) {
+      try {
+        UdoStructureCheck.requireDatasetMatches(
+            udo.getReturnDatasetStructure(),
+            dataset,
+            "return value of UDO '" + udo.getName() + "'",
+            this);
+      } catch (VtlScriptException e) {
+        throw new VtlRuntimeException(e);
+      }
     }
     return result;
   }

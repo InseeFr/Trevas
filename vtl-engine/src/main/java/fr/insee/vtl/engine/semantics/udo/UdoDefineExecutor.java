@@ -6,6 +6,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ConstantVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
+import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlParser;
 import java.time.Instant;
@@ -36,27 +37,47 @@ public final class UdoDefineExecutor {
         if (!seen.add(paramName)) {
           throw new VtlScriptException("duplicate UDO parameter '" + paramName + "'", pos);
         }
-        Class<?> type = parseInputType(item.inputParameterType(), pos);
-        if (item.constant() != null) {
-          var constant = CONSTANTS.visit(item.constant());
-          Object value = constant.resolve(java.util.Map.of());
-          if (value != null && !isAssignable(type, value.getClass())) {
-            throw new VtlScriptException(
-                "default value type does not match parameter type " + vtlTypeName(type), pos);
-          }
-          parameters.add(UdoParameter.withDefault(paramName, type, value));
-        } else {
-          parameters.add(UdoParameter.mandatory(paramName, type));
-        }
+        parameters.add(parseParameter(item, pos));
       }
     }
 
     Class<?> returnType = null;
+    Structured.DataStructure returnDatasetStructure = null;
     if (ctx.outputParameterType() != null) {
-      returnType = parseOutputType(ctx.outputParameterType(), pos);
+      if (ctx.outputParameterType().datasetType() != null) {
+        returnDatasetStructure =
+            UdoDatasetTypeParser.parse(ctx.outputParameterType().datasetType(), pos);
+        returnType = Dataset.class;
+      } else {
+        returnType = parseOutputType(ctx.outputParameterType(), pos);
+      }
     }
 
-    return new UdoDefinition(name, parameters, returnType, ctx.expr(), engine);
+    return new UdoDefinition(
+        name, parameters, returnType, returnDatasetStructure, ctx.expr(), engine);
+  }
+
+  private static UdoParameter parseParameter(VtlParser.ParameterItemContext item, Positioned pos)
+      throws VtlScriptException {
+    String paramName = item.varID().getText();
+    Structured.DataStructure datasetStructure = null;
+    Class<?> type;
+    if (item.inputParameterType().datasetType() != null) {
+      datasetStructure = UdoDatasetTypeParser.parse(item.inputParameterType().datasetType(), pos);
+      type = Dataset.class;
+    } else {
+      type = parseInputType(item.inputParameterType(), pos);
+    }
+    if (item.constant() != null) {
+      var constant = CONSTANTS.visit(item.constant());
+      Object value = constant.resolve(java.util.Map.of());
+      if (value != null && !isAssignable(type, value.getClass())) {
+        throw new VtlScriptException(
+            "default value type does not match parameter type " + vtlTypeName(type), pos);
+      }
+      return UdoParameter.withDefault(paramName, type, datasetStructure, value);
+    }
+    return UdoParameter.mandatory(paramName, type, datasetStructure);
   }
 
   static Class<?> parseInputType(VtlParser.InputParameterTypeContext ctx, Positioned pos)
@@ -65,7 +86,6 @@ public final class UdoDefineExecutor {
       return parseScalarType(ctx.scalarType(), pos);
     }
     if (ctx.datasetType() != null) {
-      // opaque dataset — structured {…} accepted but not enforced
       return Dataset.class;
     }
     throw new VtlRuntimeException(
