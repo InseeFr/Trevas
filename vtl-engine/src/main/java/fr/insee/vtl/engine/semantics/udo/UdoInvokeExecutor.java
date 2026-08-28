@@ -99,15 +99,10 @@ public final class UdoInvokeExecutor {
     if (Object.class.equals(actual)) {
       return;
     }
-    if (expected.isAssignableFrom(actual)) {
+    if (UdoTypes.isAssignable(expected, actual)) {
       return;
     }
-    if (Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual)) {
-      return;
-    }
-    if (fr.insee.vtl.model.Dataset.class.equals(expected)
-        && (fr.insee.vtl.model.Dataset.class.isAssignableFrom(actual)
-            || fr.insee.vtl.model.DatasetExpression.class.isAssignableFrom(actual))) {
+    if (UdoTypes.isDatasetAssignable(expected, actual)) {
       return;
     }
     throw new VtlScriptException(
@@ -180,7 +175,7 @@ public final class UdoInvokeExecutor {
           position);
     }
     Class<?> expectedScalar = formal.getComponentScalarType();
-    if (expectedScalar != null && !isAssignable(expectedScalar, component.getType())) {
+    if (expectedScalar != null && !UdoTypes.isAssignable(expectedScalar, component.getType())) {
       throw new VtlScriptException(
           "argument '"
               + formal.getName()
@@ -190,12 +185,5 @@ public final class UdoInvokeExecutor {
               + expectedScalar.getSimpleName(),
           position);
     }
-  }
-
-  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
-    if (expected.isAssignableFrom(actual)) {
-      return true;
-    }
-    return Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual);
   }
 }

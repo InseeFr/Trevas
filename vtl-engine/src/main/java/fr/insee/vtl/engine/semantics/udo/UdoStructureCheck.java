@@ -56,7 +56,7 @@ public final class UdoStructureCheck {
                 + expectedComponent.getRole(),
             position);
       }
-      if (!isAssignable(expectedComponent.getType(), actualComponent.getType())) {
+      if (!UdoTypes.isAssignable(expectedComponent.getType(), actualComponent.getType())) {
         throw new VtlScriptException(
             label
                 + ": component '"
@@ -109,12 +109,5 @@ public final class UdoStructureCheck {
         + scalar
         + ", found "
         + count;
-  }
-
-  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
-    if (expected.isAssignableFrom(actual)) {
-      return true;
-    }
-    return Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual);
   }
 }

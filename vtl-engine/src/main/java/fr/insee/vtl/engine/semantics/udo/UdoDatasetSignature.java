@@ -69,14 +69,7 @@ public final class UdoDatasetSignature {
     if (wildcard.scalarType() == null) {
       return true;
     }
-    return isAssignable(wildcard.scalarType(), component.getType());
-  }
-
-  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
-    if (expected.isAssignableFrom(actual)) {
-      return true;
-    }
-    return Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual);
+    return UdoTypes.isAssignable(wildcard.scalarType(), component.getType());
   }
 
   @Override

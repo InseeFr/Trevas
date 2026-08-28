@@ -6,6 +6,7 @@ import fr.insee.vtl.engine.semantics.udo.UdoCallStack;
 import fr.insee.vtl.engine.semantics.udo.UdoDefinition;
 import fr.insee.vtl.engine.semantics.udo.UdoParameter;
 import fr.insee.vtl.engine.semantics.udo.UdoStructureCheck;
+import fr.insee.vtl.engine.semantics.udo.UdoTypes;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
@@ -89,13 +90,13 @@ public final class UdoFunctionExpression extends ResolvableExpression {
     ResolvableExpression body = visitor.visit(udo.getBody());
     Object result = body.resolve(child);
     Class<?> expected = udo.getReturnType();
-    if (expected != null && result != null && !isAssignable(expected, result.getClass())) {
+    if (expected != null && result != null && !UdoTypes.isAssignable(expected, result.getClass())) {
       throw new VtlRuntimeException(
           new VtlScriptException(
               "UDO '"
                   + udo.getName()
                   + "' body type incompatible with declared returns "
-                  + vtlTypeName(expected),
+                  + UdoTypes.vtlTypeName(expected),
               this));
     }
     if (udo.getReturnDatasetSignature() != null && result instanceof Dataset dataset) {
@@ -115,31 +116,5 @@ public final class UdoFunctionExpression extends ResolvableExpression {
   @Override
   public Class<?> getType() {
     return declaredType;
-  }
-
-  private static String vtlTypeName(Class<?> type) {
-    if (type == Long.class) {
-      return "integer";
-    }
-    if (type == Double.class) {
-      return "number";
-    }
-    if (type == String.class) {
-      return "string";
-    }
-    if (type == Boolean.class) {
-      return "boolean";
-    }
-    return type.getSimpleName();
-  }
-
-  private static boolean isAssignable(Class<?> expected, Class<?> actual) {
-    if (expected.isAssignableFrom(actual)) {
-      return true;
-    }
-    if (Number.class.isAssignableFrom(expected) && Number.class.isAssignableFrom(actual)) {
-      return true;
-    }
-    return expected == Double.class && (actual == Long.class || actual == Integer.class);
   }
 }
