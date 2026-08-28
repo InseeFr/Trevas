@@ -9,7 +9,7 @@ public final class UdoParameter {
 
   private final String name;
   private final Class<?> type;
-  private final Structured.DataStructure datasetStructure;
+  private final UdoDatasetSignature datasetSignature;
   private final Dataset.Role componentRole;
   private final Class<?> componentScalarType;
   private final Object defaultValue;
@@ -18,14 +18,14 @@ public final class UdoParameter {
   private UdoParameter(
       String name,
       Class<?> type,
-      Structured.DataStructure datasetStructure,
+      UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
       Class<?> componentScalarType,
       Object defaultValue,
       boolean optional) {
     this.name = Objects.requireNonNull(name);
     this.type = Objects.requireNonNull(type);
-    this.datasetStructure = datasetStructure;
+    this.datasetSignature = datasetSignature;
     this.componentRole = componentRole;
     this.componentScalarType = componentScalarType;
     this.defaultValue = defaultValue;
@@ -38,8 +38,8 @@ public final class UdoParameter {
   }
 
   public static UdoParameter withDefault(
-      String name, Class<?> type, Structured.DataStructure datasetStructure, Object defaultValue) {
-    return new UdoParameter(name, type, datasetStructure, null, null, defaultValue, true);
+      String name, Class<?> type, UdoDatasetSignature datasetSignature, Object defaultValue) {
+    return new UdoParameter(name, type, datasetSignature, null, null, defaultValue, true);
   }
 
   public static UdoParameter mandatory(String name, Class<?> type) {
@@ -47,8 +47,8 @@ public final class UdoParameter {
   }
 
   public static UdoParameter mandatory(
-      String name, Class<?> type, Structured.DataStructure datasetStructure) {
-    return new UdoParameter(name, type, datasetStructure, null, null, null, false);
+      String name, Class<?> type, UdoDatasetSignature datasetSignature) {
+    return new UdoParameter(name, type, datasetSignature, null, null, null, false);
   }
 
   public static UdoParameter mandatoryComponent(
@@ -66,22 +66,22 @@ public final class UdoParameter {
   static UdoParameter mandatoryParsed(
       String name,
       Class<?> type,
-      Structured.DataStructure datasetStructure,
+      UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
       Class<?> componentScalarType) {
     return new UdoParameter(
-        name, type, datasetStructure, componentRole, componentScalarType, null, false);
+        name, type, datasetSignature, componentRole, componentScalarType, null, false);
   }
 
   static UdoParameter withDefaultParsed(
       String name,
       Class<?> type,
-      Structured.DataStructure datasetStructure,
+      UdoDatasetSignature datasetSignature,
       Dataset.Role componentRole,
       Class<?> componentScalarType,
       Object defaultValue) {
     return new UdoParameter(
-        name, type, datasetStructure, componentRole, componentScalarType, defaultValue, true);
+        name, type, datasetSignature, componentRole, componentScalarType, defaultValue, true);
   }
 
   public String getName() {
@@ -92,8 +92,8 @@ public final class UdoParameter {
     return type;
   }
 
-  public Structured.DataStructure getDatasetStructure() {
-    return datasetStructure;
+  public UdoDatasetSignature getDatasetSignature() {
+    return datasetSignature;
   }
 
   public boolean isComponentParam() {

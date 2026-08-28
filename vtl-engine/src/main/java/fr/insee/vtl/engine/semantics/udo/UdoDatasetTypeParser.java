@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.semantics.udo;
 import fr.insee.vtl.engine.exceptions.UnimplementedException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.semantics.attribute.ComponentRoles;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -18,36 +19,52 @@ final class UdoDatasetTypeParser {
 
   private UdoDatasetTypeParser() {}
 
-  static Structured.DataStructure parse(VtlParser.DatasetTypeContext ctx, Positioned pos)
+  static UdoDatasetSignature parse(VtlParser.DatasetTypeContext ctx, Positioned pos)
       throws VtlScriptException {
     if (ctx == null || ctx.compConstraint() == null || ctx.compConstraint().isEmpty()) {
       return null;
     }
-    List<Structured.Component> components = new ArrayList<>();
+    List<Structured.Component> namedComponents = new ArrayList<>();
+    List<UdoDatasetSignature.Wildcard> wildcards = new ArrayList<>();
     for (VtlParser.CompConstraintContext constraint : ctx.compConstraint()) {
-      if (constraint.componentID() == null) {
-        throw new VtlRuntimeException(
-            new UnimplementedException(
-                "UDO dataset component wildcards (multModifier) are not supported yet", pos));
-      }
       VtlParser.ComponentTypeContext componentType = constraint.componentType();
-      if (componentType.scalarType() == null) {
+      Dataset.Role role = ComponentRoles.fromParser(componentType.componentRole());
+      Class<?> scalarType = null;
+      if (componentType.scalarType() != null) {
+        if (componentType.scalarType().scalarTypeConstraint() != null) {
+          throw new VtlRuntimeException(
+              new UnimplementedException("UDO scalar constraints not supported yet", pos));
+        }
+        scalarType = parseScalarType(componentType.scalarType(), pos);
+      } else if (constraint.componentID() != null) {
         throw new VtlRuntimeException(
             new UnimplementedException(
                 "UDO dataset component without scalar type is not supported yet", pos));
       }
-      if (componentType.scalarType().scalarTypeConstraint() != null) {
+      if (constraint.componentID() != null) {
+        String name = constraint.componentID().getText();
+        namedComponents.add(new Structured.Component(name, scalarType, role));
+      } else if (constraint.multModifier() != null) {
+        wildcards.add(
+            new UdoDatasetSignature.Wildcard(
+                role, scalarType, parseWildcardMultiplicity(constraint.multModifier())));
+      } else {
         throw new VtlRuntimeException(
-            new UnimplementedException("UDO scalar constraints not supported yet", pos));
+            new UnimplementedException("UDO dataset component constraint is incomplete", pos));
       }
-      String name = constraint.componentID().getText();
-      components.add(
-          new Structured.Component(
-              name,
-              parseScalarType(componentType.scalarType(), pos),
-              ComponentRoles.fromParser(componentType.componentRole())));
     }
-    return new Structured.DataStructure(components);
+    return new UdoDatasetSignature(namedComponents, wildcards);
+  }
+
+  private static UdoDatasetSignature.WildcardMultiplicity parseWildcardMultiplicity(
+      VtlParser.MultModifierContext ctx) {
+    if (ctx.PLUS() != null) {
+      return UdoDatasetSignature.WildcardMultiplicity.ONE_OR_MORE;
+    }
+    if (ctx.MUL() != null) {
+      return UdoDatasetSignature.WildcardMultiplicity.ZERO_OR_MORE;
+    }
+    return UdoDatasetSignature.WildcardMultiplicity.EXACTLY_ONE;
   }
 
   private static Class<?> parseScalarType(VtlParser.ScalarTypeContext ctx, Positioned pos)

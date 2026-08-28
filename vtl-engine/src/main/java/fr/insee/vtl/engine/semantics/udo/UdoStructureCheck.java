@@ -11,16 +11,16 @@ public final class UdoStructureCheck {
   private UdoStructureCheck() {}
 
   public static void requireDatasetMatches(
-      Structured.DataStructure expected, Dataset dataset, String label, Positioned position)
+      UdoDatasetSignature expected, Dataset dataset, String label, Positioned position)
       throws VtlScriptException {
     if (expected == null) {
       return;
     }
-    requireStructureContains(expected, dataset.getDataStructure(), label, position);
+    requireStructureMatches(expected, dataset.getDataStructure(), label, position);
   }
 
-  static void requireStructureContains(
-      Structured.DataStructure expected,
+  static void requireStructureMatches(
+      UdoDatasetSignature expected,
       Structured.DataStructure actual,
       String label,
       Positioned position)
@@ -28,7 +28,17 @@ public final class UdoStructureCheck {
     if (expected == null) {
       return;
     }
-    for (Structured.Component expectedComponent : expected.componentsInOrder()) {
+    requireNamedComponents(expected, actual, label, position);
+    requireWildcards(expected, actual, label, position);
+  }
+
+  private static void requireNamedComponents(
+      UdoDatasetSignature expected,
+      Structured.DataStructure actual,
+      String label,
+      Positioned position)
+      throws VtlScriptException {
+    for (Structured.Component expectedComponent : expected.namedComponents()) {
       String name = expectedComponent.getName();
       Structured.Component actualComponent = actual.get(name);
       if (actualComponent == null) {
@@ -58,6 +68,47 @@ public final class UdoStructureCheck {
             position);
       }
     }
+  }
+
+  private static void requireWildcards(
+      UdoDatasetSignature expected,
+      Structured.DataStructure actual,
+      String label,
+      Positioned position)
+      throws VtlScriptException {
+    for (UdoDatasetSignature.Wildcard wildcard : expected.wildcards()) {
+      int count = expected.wildcardCandidates(actual, wildcard).size();
+      switch (wildcard.multiplicity()) {
+        case EXACTLY_ONE -> {
+          if (count != 1) {
+            throw new VtlScriptException(
+                wildcardMessage(label, wildcard, count, "exactly one"), position);
+          }
+        }
+        case ONE_OR_MORE -> {
+          if (count < 1) {
+            throw new VtlScriptException(
+                wildcardMessage(label, wildcard, count, "at least one"), position);
+          }
+        }
+        case ZERO_OR_MORE -> {}
+      }
+    }
+  }
+
+  private static String wildcardMessage(
+      String label, UdoDatasetSignature.Wildcard wildcard, int count, String requirement) {
+    String scalar =
+        wildcard.scalarType() == null ? "any scalar" : wildcard.scalarType().getSimpleName();
+    return label
+        + ": expected "
+        + requirement
+        + " "
+        + wildcard.role()
+        + " component(s) of type "
+        + scalar
+        + ", found "
+        + count;
   }
 
   private static boolean isAssignable(Class<?> expected, Class<?> actual) {

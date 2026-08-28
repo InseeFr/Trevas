@@ -69,10 +69,10 @@ public final class UdoFunctionExpression extends ResolvableExpression {
         argValue = componentExpr.getComponent();
       } else {
         argValue = argExpr.resolve(outer);
-        if (formal.getDatasetStructure() != null && argValue instanceof Dataset dataset) {
+        if (formal.getDatasetSignature() != null && argValue instanceof Dataset dataset) {
           try {
             UdoStructureCheck.requireDatasetMatches(
-                formal.getDatasetStructure(),
+                formal.getDatasetSignature(),
                 dataset,
                 "argument '" + formal.getName() + "' for UDO '" + udo.getName() + "'",
                 this);
@@ -97,10 +97,10 @@ public final class UdoFunctionExpression extends ResolvableExpression {
                   + vtlTypeName(expected),
               this));
     }
-    if (udo.getReturnDatasetStructure() != null && result instanceof Dataset dataset) {
+    if (udo.getReturnDatasetSignature() != null && result instanceof Dataset dataset) {
       try {
         UdoStructureCheck.requireDatasetMatches(
-            udo.getReturnDatasetStructure(),
+            udo.getReturnDatasetSignature(),
             dataset,
             "return value of UDO '" + udo.getName() + "'",
             this);
