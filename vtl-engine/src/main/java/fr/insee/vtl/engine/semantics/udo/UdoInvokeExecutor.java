@@ -9,6 +9,8 @@ import fr.insee.vtl.engine.expressions.ComponentExpression;
 import fr.insee.vtl.engine.expressions.UdoFunctionExpression;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.ConstantExpression;
+import fr.insee.vtl.model.DataPointRuleset;
+import fr.insee.vtl.model.HierarchicalRuleset;
 import fr.insee.vtl.model.Positioned;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.Structured;
@@ -88,6 +90,10 @@ public final class UdoInvokeExecutor {
       checkComponentArg(formal, expr, position);
       return;
     }
+    if (formal.isRulesetParam()) {
+      checkRulesetArg(formal, expr, position);
+      return;
+    }
     Class<?> expected = formal.getType();
     Class<?> actual = expr.getType();
     if (Object.class.equals(actual)) {
@@ -112,6 +118,43 @@ public final class UdoInvokeExecutor {
             + ", got "
             + actual.getSimpleName(),
         position);
+  }
+
+  private static void checkRulesetArg(
+      UdoParameter formal, ResolvableExpression expr, Positioned position)
+      throws VtlScriptException {
+    Class<?> actual = expr.getType();
+    if (Object.class.equals(actual)) {
+      return;
+    }
+    if (!isRulesetType(formal.getRulesetKind(), actual)) {
+      throw new VtlScriptException(
+          "argument type mismatch for parameter '"
+              + formal.getName()
+              + "': expected "
+              + rulesetKindLabel(formal.getRulesetKind())
+              + ", got "
+              + actual.getSimpleName(),
+          position);
+    }
+  }
+
+  private static boolean isRulesetType(UdoRulesetKind kind, Class<?> actual) {
+    return switch (kind) {
+      case ANY ->
+          DataPointRuleset.class.isAssignableFrom(actual)
+              || HierarchicalRuleset.class.isAssignableFrom(actual);
+      case DATAPOINT -> DataPointRuleset.class.isAssignableFrom(actual);
+      case HIERARCHICAL -> HierarchicalRuleset.class.isAssignableFrom(actual);
+    };
+  }
+
+  private static String rulesetKindLabel(UdoRulesetKind kind) {
+    return switch (kind) {
+      case ANY -> "ruleset";
+      case DATAPOINT -> "datapoint ruleset";
+      case HIERARCHICAL -> "hierarchical ruleset";
+    };
   }
 
   private static void checkComponentArg(
