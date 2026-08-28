@@ -447,17 +447,58 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
-  public void testP2ComponentParamRejected() {
+  public void testP2ScaleByComponentParam() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 10L),
+            List.of("y", 20L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+    engine
+        .getContext()
+        .setAttribute("meas", ds.getDataStructure().get("long1"), ScriptContext.ENGINE_SCOPE);
+
+    engine.eval(
+        """
+        define operator scale_by (ds dataset, m measure < integer >, factor integer)
+           returns dataset is
+              ds[calc scaled := m * factor]
+        end operator;
+        res := scale_by(ds, meas, 3);
+        """);
+    Dataset res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("id", "x", "long1", 10L, "scaled", 30L),
+            Map.of("id", "y", "long1", 20L, "scaled", 60L));
+  }
+
+  @Test
+  public void testP2ComponentRoleMismatchRejected() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of("x", 10L));
+    engine.getContext().setAttribute("ds", ds, ScriptContext.ENGINE_SCOPE);
+    engine
+        .getContext()
+        .setAttribute("wrong", ds.getDataStructure().get("id"), ScriptContext.ENGINE_SCOPE);
+
     assertThatThrownBy(
             () ->
                 engine.eval(
                     """
-                    define operator bad (m measure < integer >)
-                       returns integer is
-                          1
+                    define operator scale_by (ds dataset, m measure < integer >, factor integer)
+                       returns dataset is
+                          ds[calc scaled := m * factor]
                     end operator;
+                    res := scale_by(ds, wrong, 3);
                     """))
-        .hasMessageContaining("not supported");
+        .hasMessageContaining("role");
   }
 
   @Test
