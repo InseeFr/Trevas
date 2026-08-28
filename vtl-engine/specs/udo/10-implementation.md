@@ -53,9 +53,11 @@ Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/
 
 P2 catalog green (P2-2 … P2-7): component params, dataset wildcards, viral attribute.
 
-## P3 (next)
+## P3 status
+
+Closure snapshot at define is green (S5). Remaining:
 
 | Focus | Tests to add when slicing |
 |-------|---------------------------|
-| Optional: snapshot closures at define | new S* |
 | `set` / ruleset UDO types | new catalog IDs |
+| Scalar constraints at define | new catalog IDs |

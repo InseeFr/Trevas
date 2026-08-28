@@ -4,9 +4,9 @@ Locked for P0 unless marked otherwise. Do not reopen mid-implementation without 
 
 ## 1. Free variable binding time — **DECIDED (P0)**
 
-A free var is a name in the body that is not a parameter. **Invoke-time lookup** in the bindings passed to `resolve`. After DAG reorder, free vars exist when the call runs. Params shadow outer names.
+A free var is a name in the body that is not a parameter. **Invoke-time lookup** in the bindings passed to `resolve` for names not snapshotted at define. After DAG reorder, free vars exist when the call runs. Params shadow outer names.
 
-Not a lexical closure in P0 (no snapshot at define). If we want real closures later, snapshot outer bindings at `define` and look up the operator id in a scoped view of the current bindings ([04](./04-invoke.md)).
+**P3:** free variables **already bound** when `define operator` runs are snapshotted into `UdoDefinition.closureBindings` and override invoke-time values (S5). Names unbound at define still use invoke-time lookup (S2).
 
 ## 2. Name collisions — **DECIDED (P0)**
 

@@ -25,12 +25,12 @@
 | Category | IDs | Count | Role |
 |----------|-----|-------|------|
 | **Doc / RM** | D1–D4 | 4 | VTL 2.1 reference examples (incl. corrected typo) |
-| **Technique** | S1–S4 | 4 | Inference, free vars, `_`, nested UDO |
+| **Technique** | S1–S5 | 5 | Inference, free vars, `_`, nested UDO, closure snapshot |
 | **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
 | **P2** | P2-2 … P2-7 | 6 | component params, wildcards, viral attribute |
-| **Total enabled** | | **30** | P0 + P1 + P2 |
+| **Total enabled** | | **31** | P0 + P1 + P2 + S5 |
 
 ---
 
@@ -74,6 +74,7 @@ Engine behaviour — not tied to a RM example.
 | **S2** | `testS2FreeVariable` | 4 | Free var + **DAG reorder** | call before define; `y := 4` after define; body uses `y` | `max_res == 4L` (not 2) |
 | **S3** | `testS3OptionalUnderscore` | 3 | `_` → default | `add(10, _)` with defaults 0 | `10L` |
 | **S4** | `testS4NestedUdoCall` | 7 | UDO calls UDO | `quadruple` body = `twice(x)+twice(x)` | `12L` |
+| **S5** | `testS5LexicalClosureSnapshot` | P3 | Closure snapshot at define | `y := 2` before define; host sets `y := 4` before call | `max_res == 2L` (not 4) |
 
 ### S2 detail (DAG — critical)
 
@@ -89,6 +90,10 @@ y := 4;
 ```
 
 Preprocessor must reorder to: `b`, `y`, **define**, **call**. At invoke, `y == 4`, `x == 2` → `max_res == 4`.
+
+### S5 detail (closure)
+
+Free variables **bound at define** are snapshotted into `UdoDefinition`. At invoke, snapshot values override the current bindings for those names. Variables not yet bound at define still resolve at invoke (S2). S5 uses a host reassignment between define and call (DAG forbids `y := 2` and `y := 4` in one script).
 
 ---
 

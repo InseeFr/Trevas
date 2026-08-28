@@ -43,7 +43,7 @@ define operator max_with_y (x integer) returns number is
 end operator;
 ```
 
-P0 resolves free vars at **invoke time** in the bindings passed to `resolve` ([08 §1](./08-open-questions.md)). Parameters shadow outer names. This is **not** a lexical closure: if `y` is reassigned between define and call, the call sees the new value. Snapshot-at-define (real closures) is later; invoke-time matches DAG reorder (S2).
+P0 resolves free vars at **invoke time** when not snapshotted at define ([08 §1](./08-open-questions.md)). **P3:** names already bound at `define operator` are copied into `UdoDefinition.closureBindings` and win over invoke-time bindings (S5). Parameters shadow outer names.
 
 ## Binding + registry namespace
 
