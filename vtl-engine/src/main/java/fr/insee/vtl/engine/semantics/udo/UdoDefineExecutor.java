@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.script.ScriptContext;
 import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
@@ -54,7 +55,13 @@ public final class UdoDefineExecutor {
     }
 
     return new UdoDefinition(
-        name, parameters, returnType, returnDatasetSignature, ctx.expr(), engine);
+        name,
+        parameters,
+        returnType,
+        returnDatasetSignature,
+        ctx.expr(),
+        engine,
+        UdoClosureBindings.capture(ctx, engine.getBindings(ScriptContext.ENGINE_SCOPE)));
   }
 
   private static UdoParameter parseParameter(VtlParser.ParameterItemContext item, Positioned pos)

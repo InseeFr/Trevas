@@ -50,6 +50,7 @@ public final class UdoFunctionExpression extends ResolvableExpression {
   private Object resolveBody(Map<String, Object> context) {
     Map<String, Object> outer = context != null ? context : Map.of();
     Map<String, Object> child = new HashMap<>(outer);
+    child.putAll(udo.getClosureBindings());
     var formals = udo.getParameters();
     for (int i = 0; i < formals.size(); i++) {
       UdoParameter formal = formals.get(i);

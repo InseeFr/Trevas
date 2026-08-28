@@ -85,6 +85,20 @@ public class DAGBuildingVisitor extends VtlBaseVisitor<List<DAGStatement>> {
             node.getParent()));
   }
 
+  /** Variable names referenced in a UDO body, excluding formal parameters and operator calls. */
+  public static Set<String> udoFreeVariableNames(VtlParser.DefOperatorContext ctx) {
+    Set<String> paramNames =
+        ctx.parameterItem() == null
+            ? Set.of()
+            : ctx.parameterItem().stream()
+                .map(item -> item.varID().getText())
+                .collect(Collectors.toSet());
+    return new IdentifierExtractingVisitor(paramNames).visit(ctx.expr()).stream()
+        .filter(id -> id.identifierType() == DAGStatement.Identifier.Type.VARIABLE)
+        .map(DAGStatement.Identifier::name)
+        .collect(Collectors.toSet());
+  }
+
   // Extract statements that can be reordered
   @Override
   public List<DAGStatement> visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext node) {

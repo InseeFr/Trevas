@@ -3,6 +3,7 @@ package fr.insee.vtl.engine.semantics.udo;
 import fr.insee.vtl.engine.VtlScriptEngine;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -19,6 +20,7 @@ public final class UdoDefinition {
   private final UdoDatasetSignature returnDatasetSignature;
   private final VtlParser.ExprContext body;
   private final VtlScriptEngine engine;
+  private final Map<String, Object> closureBindings;
 
   public UdoDefinition(
       String name,
@@ -26,7 +28,7 @@ public final class UdoDefinition {
       Class<?> returnType,
       VtlParser.ExprContext body,
       VtlScriptEngine engine) {
-    this(name, parameters, returnType, null, body, engine);
+    this(name, parameters, returnType, null, body, engine, Map.of());
   }
 
   public UdoDefinition(
@@ -36,12 +38,34 @@ public final class UdoDefinition {
       UdoDatasetSignature returnDatasetSignature,
       VtlParser.ExprContext body,
       VtlScriptEngine engine) {
+    this(name, parameters, returnType, returnDatasetSignature, body, engine, Map.of());
+  }
+
+  public UdoDefinition(
+      String name,
+      List<UdoParameter> parameters,
+      Class<?> returnType,
+      VtlParser.ExprContext body,
+      VtlScriptEngine engine,
+      Map<String, Object> closureBindings) {
+    this(name, parameters, returnType, null, body, engine, closureBindings);
+  }
+
+  public UdoDefinition(
+      String name,
+      List<UdoParameter> parameters,
+      Class<?> returnType,
+      UdoDatasetSignature returnDatasetSignature,
+      VtlParser.ExprContext body,
+      VtlScriptEngine engine,
+      Map<String, Object> closureBindings) {
     this.name = Objects.requireNonNull(name);
     this.parameters = List.copyOf(parameters);
     this.returnType = returnType;
     this.returnDatasetSignature = returnDatasetSignature;
     this.body = Objects.requireNonNull(body);
     this.engine = Objects.requireNonNull(engine);
+    this.closureBindings = Map.copyOf(closureBindings);
   }
 
   public String getName() {
@@ -66,5 +90,9 @@ public final class UdoDefinition {
 
   public VtlScriptEngine getEngine() {
     return engine;
+  }
+
+  public Map<String, Object> getClosureBindings() {
+    return closureBindings;
   }
 }
