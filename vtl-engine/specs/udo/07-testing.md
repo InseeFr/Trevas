@@ -8,7 +8,7 @@ Same idea as the provenance corpus: script-level cases as VTL (+ later `.vtl` fi
 
 | Layer | Location | Purpose |
 |-------|----------|---------|
-| **Unit (model)** | `expressions/UdoFunctionExpressionTest`, `semantics/udo/UdoInvokeExecutorTest`, `UdoDatasetTypeParserTest`, `UdoStructureCheckTest` | Hardcoded UDO → `resolve`; parser / structure checks in isolation |
+| **Unit (model)** | `expressions/UdoFunctionExpressionTest`, `semantics/udo/UdoInvokeExecutorTest`, `UdoDatasetTypeParserTest`, `UdoStructureCheckTest`, `UdoComponentTypeParserTest` | Hardcoded UDO → `resolve`; parser / structure / component checks in isolation |
 | **Acceptance** | `UserDefinedOperatorTest` | Product bar (D/S/DS/E) via `engine.eval` |
 | **Walkthrough** | `UdoPatternWalkthroughTest` | Bindings artefact + call path (update after trampoline drop) |
 | **DAG** | `DagDefineStatementsTest` | Reorder; S2 covers execution |
@@ -26,7 +26,7 @@ Same idea as the provenance corpus: script-level cases as VTL (+ later `.vtl` fi
 ## Running
 
 ```bash
-mvn -pl vtl-engine -Dtest=UdoFunctionExpressionTest,UdoInvokeExecutorTest,UdoDatasetTypeParserTest,UdoStructureCheckTest,UdoCallLookupTest,UserDefinedOperatorTest,UdoPatternWalkthroughTest test
+mvn -pl vtl-engine -Dtest=UdoFunctionExpressionTest,UdoInvokeExecutorTest,UdoDatasetTypeParserTest,UdoStructureCheckTest,UdoComponentTypeParserTest,UdoCallLookupTest,UserDefinedOperatorTest,UdoPatternWalkthroughTest test
 ```
 
 IDE: run as JUnit on module `vtl-engine` (factory fallback if SPI `vtl` is null).

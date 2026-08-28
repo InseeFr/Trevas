@@ -51,10 +51,10 @@ Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/
 
 ## P2 (next)
 
-Test-first guard is green (`P2-1`). Implementation slices (not started):
+Component params at define + invoke are green (P2-2, P2-3). Remaining slices:
 
 | Focus | Tests to add when slicing |
 |-------|---------------------------|
-| `component` / `measure` params | new P2-* acceptance + unit |
-| Richer `dataset {…}` (wildcards, viral attrs) | extend DS4 / parser tests |
+| Wildcards in `dataset {…}` | extend DS4 / parser tests |
+| `viral attribute` component params | new P2-* |
 | Optional: snapshot closures at define | new S* |

@@ -29,8 +29,8 @@
 | **Recipes** | DS1–DS5 | 5 | Pipeline recipes (filter, calc, union, scale) |
 | **Errors** | E1–E8 | 8 | Define + invoke failure modes (incl. registry collision) |
 | **P1** | DS4, E9 | 2 | Structured `dataset {…}`, recursion guard |
-| **P2** | P2-1 | 1 | Reject `component`/`measure` params at define (guard until implemented) |
-| **Total enabled** | | **25** | P0 + P1 + P2 guard |
+| **P2** | P2-2, P2-3 | 2 | `measure` component param + role mismatch |
+| **Total enabled** | | **26** | P0 + P1 + P2 |
 
 ---
 
@@ -130,11 +130,14 @@ Models “apply same recipe with different factor” without duplicating VTL —
 
 **E8 note:** do not use keyword `abs` (parse error). Register a non-keyword name via `registerMethod` before define.
 
-## P2 guard (P2-1)
+## P2 (component params)
 
-| ID | JUnit | Phase | Trigger | Expected failure |
-|----|-------|-------|---------|------------------|
-| **P2-1** | `testP2ComponentParamRejected` | define | `(m measure < integer >)` param | `not supported` at define |
+| ID | JUnit | Phase | Trigger | Expected |
+|----|-------|-------|---------|----------|
+| **P2-2** | `testP2ScaleByComponentParam` | invoke | `(m measure < integer >)` + `ds[calc scaled := m * factor]` | scaled measure column |
+| **P2-3** | `testP2ComponentRoleMismatchRejected` | invoke | identifier passed for `measure` formal | `role` in message |
+
+Call site passes a **variable** bound to `Structured.Component` (Trevas grammar: `varID` only, not `ds#col`).
 
 ### Deferred (catalog only)
 

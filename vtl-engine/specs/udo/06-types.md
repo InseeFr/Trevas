@@ -12,19 +12,16 @@ This file only lists **which signature syntax** P0 accepts vs rejects at **defin
 | `date` / `time_period` / `duration` | If `cast` already maps them; else reject until then |
 | `dataset` | Opaque (`instanceof Dataset` / `DatasetExpression`) |
 | `dataset { … }` | Parsed and enforced at invoke/return (DS4) |
+| `measure` / `attribute` / `identifier` component params | P2 — role + optional `<scalar>`; invoke via bound `varID` |
 | omitted `returns` | Infer from body at invoke |
 
 ## P0 reject at define
 
 | Syntax | Until |
 |--------|-------|
-| `component` / `measure` / `attribute` / … | P2 |
 | `set <T>`, ruleset types | later |
 | scalar constraints (`integer {0,1}`, `[value >= 0]`, nullability) | later |
-
-```
-UnimplementedException: UDO parameter type 'component' is not supported yet
-```
+| `viral attribute` component params | later |
 
 Do not silently ignore constraint syntax if the grammar attaches it.
 
