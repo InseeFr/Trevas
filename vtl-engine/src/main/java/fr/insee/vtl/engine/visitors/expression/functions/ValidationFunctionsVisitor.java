@@ -34,10 +34,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
   @Override
   public ResolvableExpression visitValidateDPruleset(VtlParser.ValidateDPrulesetContext ctx) {
     String dprName = ctx.dpName.getText();
-    Object dprObject = engine.getContext().getAttribute(dprName);
-    if (!(dprObject instanceof DataPointRuleset dpr)) {
-      throw new VtlRuntimeException(new UndefinedVariableException(dprName, fromContext(ctx)));
-    }
+    DataPointRuleset dpr = resolveDataPointRuleset(dprName, fromContext(ctx));
 
     DatasetExpression ds =
         (DatasetExpression)
@@ -88,10 +85,7 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         (DatasetExpression)
             assertTypeExpression(expressionVisitor.visit(ctx.expr()), Dataset.class, ctx.expr());
     String hrName = ctx.hrName.getText();
-    Object hrObject = engine.getContext().getAttribute(hrName);
-    if (!(hrObject instanceof HierarchicalRuleset hr)) {
-      throw new VtlRuntimeException(new UndefinedVariableException(hrName, pos));
-    }
+    HierarchicalRuleset hr = resolveHierarchicalRuleset(hrName, pos);
 
     return ValidationExecutor.validateHierarchical(
         processingEngine,
@@ -103,6 +97,30 @@ public class ValidationFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
         getInputMode(ctx.inputMode()),
         getValidationOutput(ctx.validationOutput()),
         pos);
+  }
+
+  private DataPointRuleset resolveDataPointRuleset(String name, Positioned pos) {
+    Object binding = expressionVisitor.lookupBinding(name);
+    if (binding instanceof DataPointRuleset dpr) {
+      return dpr;
+    }
+    Object fromEngine = engine.getContext().getAttribute(name);
+    if (fromEngine instanceof DataPointRuleset dpr) {
+      return dpr;
+    }
+    throw new VtlRuntimeException(new UndefinedVariableException(name, pos));
+  }
+
+  private HierarchicalRuleset resolveHierarchicalRuleset(String name, Positioned pos) {
+    Object binding = expressionVisitor.lookupBinding(name);
+    if (binding instanceof HierarchicalRuleset hr) {
+      return hr;
+    }
+    Object fromEngine = engine.getContext().getAttribute(name);
+    if (fromEngine instanceof HierarchicalRuleset hr) {
+      return hr;
+    }
+    throw new VtlRuntimeException(new UndefinedVariableException(name, pos));
   }
 
   private String getValidationOutput(VtlParser.ValidationOutputContext voc) {

@@ -1,0 +1,39 @@
+# 06 — Type support matrix
+
+Not a parallel type system. Assignability for UDO args / `returns` goes through existing `TypeChecking` / `checkInstanceOf` (`integer` ⊆ `number` already works — D1).
+
+This file only lists **which signature syntax** P0 accepts vs rejects at **define**.
+
+## P0 accept
+
+| Syntax | Notes |
+|--------|-------|
+| `integer` / `number` / `string` / `boolean` | Same Java classes as the rest of the engine |
+| `date` / `time_period` / `duration` | If `cast` already maps them; else reject until then |
+| `dataset` | Opaque (`instanceof Dataset` / `DatasetExpression`) |
+| `dataset { … }` | Parsed and enforced at invoke/return (DS4); wildcards `_`, `_+`, `_*` (P2-4) |
+| `measure` / `attribute` / `identifier` / `viral attribute` component params | role + optional `<scalar>`; invoke via bound `varID` |
+| `ruleset` / `datapoint` / `hierarchical` | P3-1 … P3-2; invoke via bound `varID` |
+| omitted `returns` | Infer from body at invoke |
+
+## P0 reject at define
+
+| Syntax | Until |
+|--------|-------|
+| `set <T>` | no scalar-set runtime in Trevas yet (P3-3 guard) |
+| scalar constraints (`integer {0,1}`, `[value >= 0]`, nullability) | later |
+
+Do not silently ignore constraint syntax if the grammar attaches it.
+
+## Assignability (reuse engine)
+
+| Case | |
+|------|--|
+| `integer` → `number` formal / `returns` | allow |
+| `number` → `integer` | reject |
+| exact scalar match | allow |
+| `null` / `Object` | same as other expressions |
+| dataset ↔ scalar | reject |
+| opaque dataset ↔ opaque dataset | allow |
+
+No extra table in UDO code — call `TypeChecking` / `checkInstanceOf`.

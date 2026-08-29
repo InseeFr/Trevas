@@ -36,6 +36,7 @@ import java.util.Objects;
 public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   private static final ConstantVisitor CONSTANT_VISITOR = new ConstantVisitor();
+  private final Map<String, Object> context;
   private final VarIdVisitor varIdVisitor;
   private final BooleanVisitor booleanVisitor;
   private final ArithmeticVisitor arithmeticVisitor;
@@ -68,7 +69,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   public ExpressionVisitor(
       Map<String, Object> context, ProcessingEngine processingEngine, VtlScriptEngine engine) {
     Objects.requireNonNull(context);
-    genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine);
+    this.context = context;
+    genericFunctionsVisitor = new GenericFunctionsVisitor(this, engine, context);
     varIdVisitor = new VarIdVisitor(context);
     booleanVisitor = new BooleanVisitor(this, genericFunctionsVisitor);
     arithmeticVisitor = new ArithmeticVisitor(this, genericFunctionsVisitor);
@@ -378,7 +380,8 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   @Override
   public ResolvableExpression visitClauseExpr(VtlParser.ClauseExprContext ctx) {
     DatasetExpression datasetExpression = (DatasetExpression) visit(ctx.dataset);
-    ClauseVisitor clauseVisitor = new ClauseVisitor(datasetExpression, processingEngine, engine);
+    ClauseVisitor clauseVisitor =
+        new ClauseVisitor(datasetExpression, processingEngine, engine, context);
     return clauseVisitor.visit(ctx.clause);
   }
 
@@ -408,6 +411,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     } catch (VtlScriptException e) {
       throw new VtlRuntimeException(e);
     }
+  }
+
+  /** Binding visible while visiting expressions (UDO formals, clause scopes, etc.). */
+  public Object lookupBinding(String name) {
+    return context.get(name);
   }
 
   @Override
