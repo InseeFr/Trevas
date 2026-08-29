@@ -69,8 +69,7 @@ class UdoFunctionExpressionTest {
             parseExpr("x + x"),
             engine);
 
-    var expr =
-        new UdoFunctionExpression(udo, List.of(new ConstantExpression(21L, POS)), POS);
+    var expr = new UdoFunctionExpression(udo, List.of(new ConstantExpression(21L, POS)), POS);
 
     assertThat(expr.getType()).isEqualTo(Long.class);
     assertThat(expr.resolve(Map.of())).isEqualTo(42L);

@@ -26,8 +26,7 @@ final class UdoTypeInference {
       scope.putIfAbsent(freeName, new UdoBindingPlaceholder(Object.class));
     }
     var engine = udo.getEngine();
-    ExpressionVisitor visitor =
-        new ExpressionVisitor(scope, engine.getProcessingEngine(), engine);
+    ExpressionVisitor visitor = new ExpressionVisitor(scope, engine.getProcessingEngine(), engine);
     return visitor.visit(udo.getBody()).getType();
   }
 

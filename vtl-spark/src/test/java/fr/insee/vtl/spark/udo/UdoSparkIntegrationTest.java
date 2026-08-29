@@ -62,7 +62,9 @@ class UdoSparkIntegrationTest {
         res := keep_age_gt(ds1, 10);
         """);
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataAsMap()).extracting(row -> row.get("name")).containsExactlyInAnyOrder("Nico", "Franck");
+    assertThat(res.getDataAsMap())
+        .extracting(row -> row.get("name"))
+        .containsExactlyInAnyOrder("Nico", "Franck");
   }
 
   @Test

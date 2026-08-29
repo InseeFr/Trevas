@@ -17,7 +17,8 @@ public final class UdoDatasetSignature {
     ZERO_OR_MORE
   }
 
-  public record Wildcard(Dataset.Role role, Class<?> scalarType, WildcardMultiplicity multiplicity) {}
+  public record Wildcard(
+      Dataset.Role role, Class<?> scalarType, WildcardMultiplicity multiplicity) {}
 
   private final List<Structured.Component> namedComponents;
   private final List<Wildcard> wildcards;

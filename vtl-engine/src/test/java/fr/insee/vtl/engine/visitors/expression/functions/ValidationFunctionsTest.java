@@ -163,8 +163,7 @@ public class ValidationFunctionsTest {
     Map<String, Object> scope = Map.of("ds", ds, "rs", dpr1);
 
     VtlScriptEngine vtl = (VtlScriptEngine) engine;
-    ExpressionVisitor visitor =
-        new ExpressionVisitor(scope, vtl.getProcessingEngine(), vtl);
+    ExpressionVisitor visitor = new ExpressionVisitor(scope, vtl.getProcessingEngine(), vtl);
     Object result = visitor.visit(parseExpr("check_datapoint(ds, rs)")).resolve(scope);
 
     assertThat(result).isInstanceOf(Dataset.class);

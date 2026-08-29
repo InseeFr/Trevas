@@ -384,8 +384,7 @@ public class UserDefinedOperatorTest {
         res := keep_viral(ds, vir, "M");
         """);
     Dataset res = (Dataset) engine.getContext().getAttribute("res");
-    assertThat(res.getDataAsMap())
-        .containsExactly(Map.of("Id_1", "k1", "Me_1", 1L, "At_1", "M"));
+    assertThat(res.getDataAsMap()).containsExactly(Map.of("Id_1", "k1", "Me_1", 1L, "At_1", "M"));
   }
 
   @Test
@@ -583,8 +582,7 @@ public class UserDefinedOperatorTest {
            ping(x)
         end operator;
         """);
-    assertThatThrownBy(() -> engine.eval("res := ping(1);"))
-        .hasMessageContaining("recursive");
+    assertThatThrownBy(() -> engine.eval("res := ping(1);")).hasMessageContaining("recursive");
   }
 
   @Test

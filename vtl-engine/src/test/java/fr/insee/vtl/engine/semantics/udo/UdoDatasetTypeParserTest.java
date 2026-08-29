@@ -25,8 +25,7 @@ class UdoDatasetTypeParserTest {
   void parsesDs4Signature() throws VtlScriptException {
     UdoDatasetSignature signature =
         UdoDatasetTypeParser.parse(
-            parseDatasetType(
-                "dataset { identifier < string > id, measure < integer > long1 }"),
+            parseDatasetType("dataset { identifier < string > id, measure < integer > long1 }"),
             POS);
 
     assertThat(signature.namedComponents())
@@ -40,9 +39,7 @@ class UdoDatasetTypeParserTest {
   void parsesWildcardMeasure() throws VtlScriptException {
     UdoDatasetSignature signature =
         UdoDatasetTypeParser.parse(
-            parseDatasetType(
-                "dataset { identifier < string > id, measure < integer > _ }"),
-            POS);
+            parseDatasetType("dataset { identifier < string > id, measure < integer > _ }"), POS);
 
     assertThat(signature.namedComponents())
         .containsExactly(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER));

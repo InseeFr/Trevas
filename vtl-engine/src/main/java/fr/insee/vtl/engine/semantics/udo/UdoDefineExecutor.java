@@ -73,8 +73,7 @@ public final class UdoDefineExecutor {
       datasetSignature = UdoDatasetTypeParser.parse(item.inputParameterType().datasetType(), pos);
       type = Dataset.class;
     } else if (item.inputParameterType().componentType() != null) {
-      var signature =
-          UdoComponentTypeParser.parse(item.inputParameterType().componentType(), pos);
+      var signature = UdoComponentTypeParser.parse(item.inputParameterType().componentType(), pos);
       componentRole = signature.role();
       componentScalarType = signature.scalarType();
       type = Structured.Component.class;
@@ -92,7 +91,13 @@ public final class UdoDefineExecutor {
             "default value type does not match parameter type " + UdoTypes.vtlTypeName(type), pos);
       }
       return UdoParameter.withDefaultParsed(
-          paramName, type, datasetSignature, componentRole, componentScalarType, rulesetKind, value);
+          paramName,
+          type,
+          datasetSignature,
+          componentRole,
+          componentScalarType,
+          rulesetKind,
+          value);
     }
     return UdoParameter.mandatoryParsed(
         paramName, type, datasetSignature, componentRole, componentScalarType, rulesetKind);

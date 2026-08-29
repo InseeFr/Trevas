@@ -31,8 +31,7 @@ class UdoStructureCheckTest {
             List.of("x", 1L));
 
     assertThatCode(
-            () ->
-                UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
+            () -> UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
         .doesNotThrowAnyException();
   }
 
@@ -40,15 +39,15 @@ class UdoStructureCheckTest {
   void missingComponentIsRejected() {
     UdoDatasetSignature expected =
         new UdoDatasetSignature(
-            List.of(new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)), List.of());
+            List.of(new Structured.Component("long1", Long.class, Dataset.Role.MEASURE)),
+            List.of());
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
             List.of("x"));
 
     assertThatThrownBy(
-            () ->
-                UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
+            () -> UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
         .isInstanceOf(VtlScriptException.class)
         .hasMessageContaining("missing component 'long1'");
   }
@@ -57,15 +56,15 @@ class UdoStructureCheckTest {
   void wrongRoleIsRejected() {
     UdoDatasetSignature expected =
         new UdoDatasetSignature(
-            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)), List.of());
+            List.of(new Structured.Component("id", String.class, Dataset.Role.IDENTIFIER)),
+            List.of());
     InMemoryDataset dataset =
         new InMemoryDataset(
             List.of(new Structured.Component("id", String.class, Dataset.Role.MEASURE)),
             List.of("x"));
 
     assertThatThrownBy(
-            () ->
-                UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
+            () -> UdoStructureCheck.requireDatasetMatches(expected, dataset, "argument 'ds'", POS))
         .isInstanceOf(VtlScriptException.class)
         .hasMessageContaining("has role")
         .hasMessageContaining("expected");
@@ -109,7 +108,8 @@ class UdoStructureCheckTest {
         .hasMessageContaining("exactly one");
     assertThatThrownBy(
             () ->
-                UdoStructureCheck.requireDatasetMatches(expected, twoMeasures, "argument 'ds'", POS))
+                UdoStructureCheck.requireDatasetMatches(
+                    expected, twoMeasures, "argument 'ds'", POS))
         .hasMessageContaining("exactly one");
   }
 }
