@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunktrevas_documentation=globalThis.webpackChunktrevas_documentation||[]).push([[8488],{8488(e,t,a){a.d(t,{createArchitectureServices:()=>c.S});var c=a(89221);a(51400)}}]);

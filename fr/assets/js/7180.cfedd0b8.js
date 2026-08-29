@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunktrevas_documentation=globalThis.webpackChunktrevas_documentation||[]).push([[7180],{57180(e,a,t){t.d(a,{createPacketServices:()=>c.$});var c=t(64824);t(69302)}}]);
