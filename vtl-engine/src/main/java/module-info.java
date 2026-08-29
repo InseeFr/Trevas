@@ -1,6 +1,5 @@
 import fr.insee.vtl.engine.VtlScriptEngineFactory;
 import fr.insee.vtl.engine.processors.InMemoryProcessingEngine;
-import fr.insee.vtl.engine.semantics.functions.LevenshteinProvider;
 import fr.insee.vtl.model.FunctionProvider;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ProcessingEngineFactory;
@@ -24,12 +23,14 @@ module fr.insee.vtl.engine {
   uses ProcessingEngineFactory;
   uses FunctionProvider;
 
-  provides FunctionProvider with
-      LevenshteinProvider;
   provides ProcessingEngineFactory with
       InMemoryProcessingEngine.Factory;
   provides ScriptEngineFactory with
       VtlScriptEngineFactory;
 
+  // Fun.toMethod (safety-mirror) reflects into method-reference lambdas in these packages.
+  // `opens fr.insee.vtl.engine` does not open subpackages.
   opens fr.insee.vtl.engine;
+  opens fr.insee.vtl.engine.functions.providers to
+      safety.mirror;
 }

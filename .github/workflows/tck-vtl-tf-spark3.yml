@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TCK_REPORT_TITLE: 'TCK VTL v2.1 (Spark 3)'
-      VTL_TCK_BRANCH: fix/doc-examples
+      VTL_TCK_BRANCH: master
 
     steps:
       - name: Checkout main project

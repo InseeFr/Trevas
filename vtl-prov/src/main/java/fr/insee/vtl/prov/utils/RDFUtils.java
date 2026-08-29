@@ -14,7 +14,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -164,12 +163,11 @@ public class RDFUtils {
       String sparqlEndpointUser,
       String sparqlEndpointPassword) {
     if (!sparqlEndpoint.isEmpty()) {
-      RDFConnection connection =
-          RDFConnectionFactory.connectPW(
-              sparqlEndpoint, sparqlEndpointUser, sparqlEndpointPassword);
-      connection.fetchDataset();
-      connection.load(model);
-      connection.close();
+      try (RDFConnection connection =
+          RDFConnection.connectPW(sparqlEndpoint, sparqlEndpointUser, sparqlEndpointPassword)) {
+        connection.fetchDataset();
+        connection.load(model);
+      }
     }
   }
 

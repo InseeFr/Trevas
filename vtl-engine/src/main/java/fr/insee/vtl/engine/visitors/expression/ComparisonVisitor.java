@@ -18,118 +18,19 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * <code>ComparisonVisitor</code> is the base visitor for comparison, 'element of' and list
- * expressions.
- */
+/** Dispatch for comparison, 'element of' and list expressions. */
 public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   private static final String unknownOperator = "unknown operator ";
   private final ExpressionVisitor exprVisitor;
   private final GenericFunctionsVisitor genericFunctionsVisitor;
 
-  /**
-   * Constructor taking an expression visitor.
-   *
-   * @param expressionVisitor the parent expression visitor.
-   */
   public ComparisonVisitor(
       ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
     exprVisitor = Objects.requireNonNull(expressionVisitor);
     this.genericFunctionsVisitor = genericFunctionsVisitor;
   }
 
-  private static Integer compare(Object left, Object right) throws Exception {
-    if (left == null || right == null) {
-      return null;
-    }
-    if (left instanceof Number leftNumber && right instanceof Number rightNumber) {
-      if (left instanceof Long leftLong && right instanceof Long rightLong) {
-        return Long.compare(leftLong, rightLong);
-      }
-      return Double.compare(leftNumber.doubleValue(), rightNumber.doubleValue());
-    }
-    if (left instanceof Boolean leftBoolean && right instanceof Boolean rightBoolean) {
-      return Boolean.compare(leftBoolean, rightBoolean);
-    }
-    if (left instanceof String leftString && right instanceof String rightString) {
-      return leftString.compareTo(rightString);
-    }
-    if (left instanceof Date leftDate && right instanceof Date rightDate) {
-      return leftDate.compareTo(rightDate);
-    } else {
-      throw new Exception("Comparisons require Comparable params");
-    }
-  }
-
-  public static Boolean isEqual(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare == 0;
-  }
-
-  public static Boolean isNotEqual(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare != 0;
-  }
-
-  public static Boolean isLessThan(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare < 0;
-  }
-
-  public static Boolean isGreaterThan(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare > 0;
-  }
-
-  public static Boolean isLessThanOrEqual(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare <= 0;
-  }
-
-  public static Boolean isGreaterThanOrEqual(Object left, Object right) throws Exception {
-    Integer compare = compare(left, right);
-    if (compare == null) {
-      return null;
-    }
-    return compare >= 0;
-  }
-
-  public static Boolean in(Object obj, List<?> list) {
-    if (obj == null) {
-      return null;
-    }
-    return list.contains(obj);
-  }
-
-  public static Boolean notIn(Object obj, List<?> list) {
-    if (obj == null) {
-      return null;
-    }
-    return !list.contains(obj);
-  }
-
-  /**
-   * Visits expressions with comparisons.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the boolean result of the comparison.
-   */
   @Override
   public ResolvableExpression visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
     try {
@@ -137,12 +38,10 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
       var leftExpression = exprVisitor.visit(ctx.left);
       var rightExpression = exprVisitor.visit(ctx.right);
       List<ResolvableExpression> parameters = List.of(leftExpression, rightExpression);
-      // Check 2 parameters have the same types
       if (!TypeChecking.hasSameTypeOrNumberOrNull(parameters)) {
         var types = List.of(leftExpression.getType(), rightExpression.getType());
         throw new ConflictingTypesException(types, fromContext(ctx));
       }
-      // If a parameter is the null token
       if (parameters.stream().map(TypedExpression::getType).anyMatch(Object.class::equals)) {
         return ResolvableExpression.withType(Boolean.class)
             .withPosition(fromContext(ctx))
@@ -170,13 +69,6 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
   }
 
-  /**
-   * Visits 'element of' ('In' or 'Not in') expressions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the boolean result of the 'element of'
-   *     expression.
-   */
   @Override
   public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
     try {
@@ -194,21 +86,12 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
   }
 
-  /**
-   * Visits list expressions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ListExpression</code> resolving to the list of given values with the given
-   *     contained type.
-   */
   @Override
   public ResolvableExpression visitLists(VtlParser.ListsContext ctx) {
 
-    // Transform all the constants.
     List<ResolvableExpression> listExpressions =
         ctx.constant().stream().map(exprVisitor::visitConstant).collect(Collectors.toList());
 
-    // Find the type of the list.
     Set<Class<?>> types =
         listExpressions.stream().map(TypedExpression::getType).collect(Collectors.toSet());
 
@@ -218,11 +101,8 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
       throw new VtlRuntimeException(new ConflictingTypesException(types, pos));
     }
 
-    // The grammar defines list with minimum one constant so the types will never
-    // be empty.
     Class<?> type = types.iterator().next();
 
-    // Since all expression are constant we don't need any context.
     List<Object> values =
         listExpressions.stream()
             .map(expression -> expression.resolve(Map.of()))

@@ -35,8 +35,8 @@ flowchart TB
       DR["DatasetResults.withStructure"]
     end
 
-    subgraph scalar["expressions — scalar natives"]
-      TF["TemporalFunctions, …"]
+    subgraph scalar["functions/providers — scalar natives"]
+      TF["NumericFunctionsProvider, …"]
     end
 
     subgraph processors["processors — default runtime"]
@@ -95,5 +95,5 @@ flowchart TB
 | **vtl-engine** | `semantics.<domain>` | VTL operator logic (`join`, `aggregation`, `validation`, `time`, …) |
 | **vtl-engine** | `semantics.attribute` | Cross-cutting viral attribute propagation |
 | **vtl-engine** | `processors.InMemoryProcessingEngine` | Default in-memory `ProcessingEngine` |
-| **vtl-engine** | `expressions` | Scalar native helpers (e.g. `TemporalFunctions`) |
+| **vtl-engine** | `functions.providers` | Built-in scalar native functions (`Map<String, List<Method>>`) |
 | **vtl-spark** / **vtl-spark4** | `SparkProcessingEngine` | Spark-backed `ProcessingEngine` |

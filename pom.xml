@@ -5,7 +5,7 @@
     <groupId>fr.insee.trevas</groupId>
     <artifactId>trevas-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
     <modules>
         <module>vtl-antlr</module>
         <module>vtl-parser</module>
@@ -73,7 +73,7 @@
     <properties>
         <jdk.version>17</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jacoco.version>0.8.14</jacoco.version>
+        <jacoco.version>0.8.15</jacoco.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/coverage/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -86,6 +86,24 @@
         <antlr4.version>4.9.3</antlr4.version>
         <!-- Spark 4.0 SQL parser (ATN v4); do not apply reactor-wide — override in vtl-spark4 only. -->
         <antlr4.spark4.version>4.13.1</antlr4.spark4.version>
+        <!-- Third-party library versions (modules inherit via dependencyManagement). -->
+        <jackson-bom.version>2.22.0</jackson-bom.version>
+        <!-- Spark 3.5.8 bundles Jackson 2.15.x; override in spark3-tests / coverage (default TCK). -->
+        <jackson-bom.spark3.version>2.15.4</jackson-bom.spark3.version>
+        <jena.version>5.6.0</jena.version>
+        <jgrapht.version>1.5.3</jgrapht.version>
+        <h2.version>2.4.240</h2.version>
+        <threeten-extra.version>1.10.0</threeten-extra.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
+        <commons-text.version>1.15.0</commons-text.version>
+        <safety-mirror.version>4.0.1</safety-mirror.version>
+        <supercsv.version>2.4.0</supercsv.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <sdmx.version>2.5.3</sdmx.version>
+        <assertj.version>3.27.7</assertj.version>
+        <junit.version>5.14.4</junit.version>
+        <!-- google-java-format 1.34+ requires JDK 21 to run (JCAnyPattern); keep aligned with jdk.version. -->
+        <google-java-format.version>1.27.0</google-java-format.version>
     </properties>
 
     <dependencies>
@@ -102,7 +120,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -112,9 +129,72 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.14.2</version>
+                <version>${junit.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Reactor modules -->
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-antlr</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-parser</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-engine</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-jackson</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-spark</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-spark4</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-sdmx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-csv</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-prov</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -126,6 +206,67 @@
                 <artifactId>spark-sql_2.13</artifactId>
                 <version>${spark4.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>apache-jena-libs</artifactId>
+                <version>${jena.version}</version>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.threeten</groupId>
+                <artifactId>threeten-extra</artifactId>
+                <version>${threeten-extra.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.hervian</groupId>
+                <artifactId>safety-mirror</artifactId>
+                <version>${safety-mirror.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sf.supercsv</groupId>
+                <artifactId>super-csv</artifactId>
+                <version>${supercsv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.sdmx</groupId>
+                <artifactId>fusion-sdmx-ml</artifactId>
+                <version>${sdmx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -136,7 +277,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.7.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -148,7 +289,7 @@
                 <configuration>
                     <java>
                         <googleJavaFormat>
-                            <version>1.27.0</version>
+                            <version>${google-java-format.version}</version>
                         </googleJavaFormat>
                     </java>
                 </configuration>
@@ -157,7 +298,7 @@
                 <!-- Require minimum Java and Maven versions. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -239,6 +380,16 @@
                         <release>${jdk.version}</release>
                         <testRelease>${jdk.version}</testRelease>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.4.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>

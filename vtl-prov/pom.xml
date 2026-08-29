@@ -7,14 +7,14 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.5.0</version>
+        <version>2.6.0</version>
     </parent>
 
     <name>VTL Provenance</name>
     <description>Provenance static analysis</description>
 
     <artifactId>vtl-prov</artifactId>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -24,7 +24,6 @@
              Default Spark 4: vtl-sdmx (test) and fusion-sdmx-vtl need ANTLR 4.13.x on the classpath. -->
         <trevas.spark.integration.test.module>vtl-spark4</trevas.spark.integration.test.module>
         <trevas.spark.processing.engine>spark4</trevas.spark.processing.engine>
-        <jackson.version>2.18.2</jackson.version>
         <antlr.runtime.version>${antlr4.spark4.version}</antlr.runtime.version>
     </properties>
 
@@ -32,60 +31,47 @@
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
-            <version>1.5.2</version>
         </dependency>
-
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-engine</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-sdmx</artifactId>
-            <version>2.5.0</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- Jena 5 requires Java 17+ -->
+        <!-- Jena 5.x requires Java 17+; Jena 6.x requires Java 21. -->
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
-            <version>3.17.0</version>
             <type>pom</type>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
-
         <!-- Spark is not a compile dependency: applications add either vtl-spark or vtl-spark4.
              Tests pick one module via trevas.spark.integration.test.module (profile spark3-tests). -->
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>${trevas.spark.integration.test.module}</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- Pin ANTLR for SDMX + Spark 4; do not rely on transitive mediation across test deps. -->
@@ -95,7 +81,6 @@
             <version>${antlr.runtime.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <profiles>
@@ -104,7 +89,7 @@
             <properties>
                 <trevas.spark.integration.test.module>vtl-spark</trevas.spark.integration.test.module>
                 <trevas.spark.processing.engine>spark</trevas.spark.processing.engine>
-                <jackson.version>2.15.2</jackson.version>
+                <jackson-bom.version>${jackson-bom.spark3.version}</jackson-bom.version>
                 <antlr.runtime.version>${antlr4.version}</antlr.runtime.version>
             </properties>
         </profile>
@@ -119,7 +104,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
                 <configuration>
                     <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED</argLine>
                     <environmentVariables>

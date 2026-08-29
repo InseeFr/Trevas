@@ -15,84 +15,18 @@ import fr.insee.vtl.parser.VtlParser;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** <code>IfVisitor</code> is the base visitor for if-then-else expressions. */
+/** Dispatch for if-then-else and nvl expressions. */
 public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
 
   private final ExpressionVisitor exprVisitor;
-
   private final GenericFunctionsVisitor genericFunctionsVisitor;
 
-  /**
-   * Constructor taking an expression visitor.
-   *
-   * @param expressionVisitor The visitor for the enclosing expression.
-   * @param genericFunctionsVisitor
-   */
   public ConditionalVisitor(
       ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
     this.exprVisitor = Objects.requireNonNull(expressionVisitor);
     this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
   }
 
-  public static Long ifThenElse(Boolean condition, Long thenExpr, Long elseExpr) {
-    if (condition == null) {
-      return null;
-    }
-    return condition ? thenExpr : elseExpr;
-  }
-
-  public static Double ifThenElse(Boolean condition, Double thenExpr, Double elseExpr) {
-    if (condition == null) {
-      return null;
-    }
-    return condition ? thenExpr : elseExpr;
-  }
-
-  public static String ifThenElse(Boolean condition, String thenExpr, String elseExpr) {
-    if (condition == null) {
-      return null;
-    }
-    return condition ? thenExpr : elseExpr;
-  }
-
-  public static Boolean ifThenElse(Boolean condition, Boolean thenExpr, Boolean elseExpr) {
-    if (condition == null) {
-      return null;
-    }
-    return condition ? thenExpr : elseExpr;
-  }
-
-  public static Long nvl(Long value, Long defaultValue) {
-    return value == null ? defaultValue : value;
-  }
-
-  public static Double nvl(Double value, Double defaultValue) {
-    return value == null ? defaultValue : value;
-  }
-
-  public static Double nvl(Double value, Long defaultValue) {
-    return value == null ? defaultValue.doubleValue() : value;
-  }
-
-  public static Double nvl(Long value, Double defaultValue) {
-    return value == null ? defaultValue : value.doubleValue();
-  }
-
-  public static String nvl(String value, String defaultValue) {
-    return value == null ? defaultValue : value;
-  }
-
-  public static Boolean nvl(Boolean value, Boolean defaultValue) {
-    return value == null ? defaultValue : value;
-  }
-
-  /**
-   * Visits if-then-else expressions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the if or else clause resolution
-   *     depending on the condition resolution.
-   */
   @Override
   public ResolvableExpression visitIfExpr(VtlParser.IfExprContext ctx) {
     try {
@@ -110,13 +44,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
     }
   }
 
-  /**
-   * Visits case expressions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the case resolution depending on the
-   *     condition resolution.
-   */
   @Override
   public ResolvableExpression visitCaseExpr(VtlParser.CaseExprContext ctx) {
     try {
@@ -135,7 +62,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
       ResolvableExpression elseExpression = exprVisitor.visit(exprs.get(exprs.size() - 1));
       List<ResolvableExpression> forTypeCheck = (new ArrayList<>(thenExpressions));
       forTypeCheck.add(elseExpression);
-      // TODO: handle better the default element position
       if (!hasSameTypeOrNull(forTypeCheck)) {
         try {
           throw new InvalidTypeException(
@@ -176,12 +102,6 @@ public class ConditionalVisitor extends VtlBaseVisitor<ResolvableExpression> {
         caseCondition);
   }
 
-  /**
-   * Visits nvl expressions.
-   *
-   * @param ctx The scripting context for the expression.
-   * @return A <code>ResolvableExpression</code> resolving to the null value clause.
-   */
   @Override
   public ResolvableExpression visitNvlAtom(VtlParser.NvlAtomContext ctx) {
     try {
