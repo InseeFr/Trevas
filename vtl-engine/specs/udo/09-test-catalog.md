@@ -1,7 +1,7 @@
 # 09 — Test catalog
 
 **Executable suite:** `vtl-engine/src/test/java/fr/insee/vtl/engine/visitors/UserDefinedOperatorTest.java`  
-**Walkthrough:** `UdoPatternWalkthroughTest` (update after trampoline drop)
+**Walkthrough:** `UdoPatternWalkthroughTest`
 
 **Status:** acceptance **green** on `feat/udo` (P0–P3 catalog). Runtime path: [01](./01-architecture.md).
 
@@ -40,7 +40,7 @@
 
 | Slice | Commit type | IDs that turn green | Prod scope | State |
 |-------|-------------|---------------------|------------|-------|
-| **1** | feat | E1, E2, E6, E8 | define + collisions + trampoline register | ✅ |
+| **1** | feat | E1, E2, E6, E8 | define + collisions + bindings only | ✅ |
 | **2** | feat | D1, D3, S1 | scalar invoke via FunctionExpression | ✅ |
 | **3** | feat | D2, S3, E3–E5, E7 | defaults + `_` + arity | ✅ |
 | **4** | feat | S2 | free vars @ invoke | ✅ |

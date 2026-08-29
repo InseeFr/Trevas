@@ -10,7 +10,7 @@ Same idea as the provenance corpus: script-level cases as VTL (+ later `.vtl` fi
 |-------|----------|---------|
 | **Unit (model)** | `expressions/UdoFunctionExpressionTest`, `semantics/udo/UdoInvokeExecutorTest`, `UdoDatasetTypeParserTest`, `UdoStructureCheckTest`, `UdoComponentTypeParserTest` | Hardcoded UDO → `resolve`; parser / structure / component checks in isolation |
 | **Acceptance** | `UserDefinedOperatorTest` | Product bar (D/S/DS/E) via `engine.eval` |
-| **Walkthrough** | `UdoPatternWalkthroughTest` | Bindings artefact + call path (update after trampoline drop) |
+| **Walkthrough** | `UdoPatternWalkthroughTest` | Bindings artefact + call path |
 | **DAG** | `DagDefineStatementsTest` | Reorder; S2 covers execution |
 | **Fixtures (later)** | `.vtl` files, prov-style `$input` | Optional; do not block P0 on `vtl-test-utils` |
 
