@@ -570,6 +570,24 @@ public class UserDefinedOperatorTest {
   }
 
   @Test
+  public void testE9bMutualRecursionRejected() throws ScriptException {
+    engine.eval(
+        """
+        define operator ping (x integer) returns integer is
+           pong(x)
+        end operator;
+        """);
+    engine.eval(
+        """
+        define operator pong (x integer) returns integer is
+           ping(x)
+        end operator;
+        """);
+    assertThatThrownBy(() -> engine.eval("res := ping(1);"))
+        .hasMessageContaining("recursive");
+  }
+
+  @Test
   public void testP2ScaleByComponentParam() throws ScriptException {
     InMemoryDataset ds =
         new InMemoryDataset(
