@@ -19,16 +19,19 @@ Implementation spec for **User Defined Operators** (VTL 2.1) in Trevas.
 
 | Step | State |
 |------|-------|
-| Specs (target path after review) | ✅ this package |
+| Specs (target path) | ✅ this package |
 | **Step 0** — hardcoded `UdoFunctionExpression` unit tests | ✅ `UdoFunctionExpressionTest`, `UdoInvokeExecutorTest` |
 | **Step 1** — define without registry (E1, E2, E6, E8) | ✅ |
 | **Step 2** — invoke via bindings lookup (D1, D3, S1) | ✅ `UdoCallLookupTest` |
-| **Steps 3–7** — catalog through new expression path | ✅ (DS4 `@Disabled`) |
+| **Steps 3–7** — catalog through `UdoFunctionExpression` | ✅ |
 | User-facing Docusaurus (step 8) | ✅ |
-| **P1** — DS4, recursion guard (E9), Spark IT | ✅ |
+| **P1** — DS4, recursion guard (E9, E9-b), Spark IT | ✅ |
+| **P2** — component params, wildcards, viral attribute | ✅ |
+| **P3** — ruleset params, scalar set guard, closure (S5) | ✅ |
+| Hygiene — `UdoTypes`, return inference, specs sync | ✅ |
 
 ```bash
-mvn -pl vtl-engine -Dtest=UdoFunctionExpressionTest,UdoInvokeExecutorTest,UdoCallLookupTest,UserDefinedOperatorTest,UdoPatternWalkthroughTest test
+mvn -pl vtl-engine -Dtest=UdoFunctionExpressionTest,UdoInvokeExecutorTest,UdoCallLookupTest,UdoDatasetTypeParserTest,UdoComponentTypeParserTest,UdoRulesetTypeParserTest,UdoStructureCheckTest,UserDefinedOperatorTest,UdoPatternWalkthroughTest,ValidationFunctionsTest test
 ```
 
 ## Pattern at a glance (target)
@@ -78,7 +81,7 @@ Do **not** route UDOs through `DatasetScalarFunctionExecutor`.
 |------------|-------------|
 | No HOF / predicate injection | no `filterBy(ds, age >= 18)` |
 | `ds[keep s]` ≠ dynamic keep | `s` is a literal component name |
-| Structured `dataset {…}` | opaque until P1 (DS4) |
+| Structured `dataset {…}` | P1 (DS4) — opaque param still accepted without signature |
 | Trevas call args | `varID\|const\|_` vs official `expr` — orthogonal |
 
 ## Documents

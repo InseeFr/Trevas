@@ -2,9 +2,7 @@
 
 UDOs follow `vtl-engine/README.md`: visitors route → semantics decide → processors execute.
 
-**Target invoke path (review follow-up):** the operator id is resolved like a variable (`UdoDefinition` in bindings). Evaluation is a `ResolvableExpression` that visits the body. No `registerMethod` / `Method.invoke` trampoline.
-
-The spike in this PR still uses a trampoline `Method` so `FunctionExpression` could call `invoke`. That path is **to be replaced** — it bypasses bindings and makes scoping/closures moot. See [08 §6a](./08-open-questions.md).
+**Target invoke path:** the operator id is resolved like a variable (`UdoDefinition` in bindings). Evaluation is a `ResolvableExpression` that visits the body. No `registerMethod` / `Method.invoke` trampoline.
 
 ## Target flow
 

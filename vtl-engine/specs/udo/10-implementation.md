@@ -10,54 +10,31 @@
 
 | Milestone | State |
 |-----------|-------|
-| Spike (trampoline) + acceptance green | ✅ in this PR (to replace) |
-| Specs retargeted after review | ✅ |
-| Hardcoded `UdoFunctionExpression` + `UdoInvokeExecutor` unit tests | ✅ |
-| Drop `registerMethod` / `UdoTrampoline` | ✅ |
-| E6 → `AlreadyDefinedException` | ✅ |
-| Lookup operator id in current visitor bindings | ✅ |
-| Docusaurus | ✅ |
-| P1 DS4 / recursion / Spark IT | ✅ |
+| `UdoFunctionExpression` + bindings lookup (no trampoline) | ✅ |
+| Catalog P0–P3 + aux (37 acceptance tests) | ✅ |
+| `UdoTypes` — shared scalar parsing / assignability | ✅ |
+| Omitted `returns` inference on `getType()` | ✅ |
+| Docusaurus user docs | ✅ |
+| P1 DS4 / recursion (E9, E9-b) / Spark IT | ✅ |
+| P2 component params, wildcards, viral attribute | ✅ |
+| P3 ruleset params, scalar set guard, closure (S5) | ✅ |
 
 ---
 
-## Next steps (review follow-up)
+## Backlog (when scripts demand it)
 
-### Step 0 — Control the expression (absolute first)
+| Focus | Notes |
+|-------|-------|
+| `set <T>` runtime | rejected at define today (P3-3); no invoke path |
+| Scalar constraints at define | `scalarTypeConstraint` → `UnimplementedException` |
+| Value domains | `valueDomain` types |
+| Ruleset constraints | `on variable` / `on vd` in ruleset formals |
+| E10 | define UDO same name as existing ruleset |
 
-**Tests first:** hardcoded `UdoDefinition` (body as parsed expr or a tiny script snippet bound by hand) + `UdoFunctionExpression.resolve` — scalar add, defaults, type mismatch, free var in the resolve map.
-
-**Implement:** `UdoFunctionExpression extends ResolvableExpression` evals the body; no `Method.invoke`.
-
-### Step 1 — Define without registry
-
-**Tests:** E1, E2, E6, E8  
-**Implement:** `bindings.put` only; E6 = `AlreadyDefinedException`; E8 = native collision; **no** `registerMethod`. **Done.**
-
-### Step 2 — Invoke via bindings lookup
-
-**Tests:** D1, D3, S1 + `UdoCallLookupTest`  
-**Implement:** `visitCallDataset` resolves the **current** visitor map; arg wiring for present args; no `DatasetScalarFunctionExecutor`. **Done.**
-
-### Step 3–7 — keep existing catalog
-
-Defaults/`_` (D2, S3, E3–E5, E7), free vars (S2), dataset recipes (DS1–3, DS5), returns (D4), nested (S4). Behaviour stays; implementation goes through the new expression.
-
-### Step 8 — User docs
-
-Docusaurus when the path is stable. **Done** — `docs/docs/user-guide/coverage/user-defined-operators.mdx` (+ FR).
+Compile body at `define` time is **not** planned without typed placeholders for all bindings (formals, closure, free vars) — a naive attempt broke inference and dataset typing.
 
 ---
 
-## P2 status
+## Historical steps (P0 rewrite — done)
 
-P2 catalog green (P2-2 … P2-7): component params, dataset wildcards, viral attribute.
-
-## P3 status
-
-Closure snapshot at define is green (S5). Remaining:
-
-| Focus | Tests to add when slicing |
-|-------|---------------------------|
-| `set` / ruleset UDO types | new catalog IDs |
-| Scalar constraints at define | new catalog IDs |
+Steps 0–8 documented the migration from the trampoline spike to `UdoFunctionExpression`. All catalog IDs listed in [09](./09-test-catalog.md) are green on `feat/udo`.

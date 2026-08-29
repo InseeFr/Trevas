@@ -6,10 +6,11 @@ Tests first: [09-test-catalog.md](./09-test-catalog.md). Runtime path: [01-archi
 
 | Phase | Scope | Status |
 |-------|--------|--------|
-| **P0** | Scalars + opaque `dataset` (param and/or return) | in this PR; rewrite invoke to `ResolvableExpression` (review) |
+| **P0** | Scalars + opaque `dataset` (param and/or return) | ✅ |
 | **P1** | Structured `dataset {…}` (DS4), recursion guard, Spark IT | ✅ |
-| **P2** | `component` params, richer structure / viral attrs | P2 done — viral attribute params and wildcards |
-| **P3** | Constraints, `set`, ruleset types | only if scripts demand it |
+| **P2** | `component` params, richer structure / viral attrs | ✅ |
+| **P3** | Ruleset params, scalar `set` guard at define, closure snapshot (S5) | ✅ |
+| **Backlog** | `set <T>` runtime, scalar constraints, value domains, ruleset constraints, E10 | when scripts demand it |
 
 ### P0 in
 
