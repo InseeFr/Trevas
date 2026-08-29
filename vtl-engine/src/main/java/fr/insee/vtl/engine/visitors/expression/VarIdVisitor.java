@@ -5,6 +5,7 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.engine.exceptions.UndefinedVariableException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.expressions.ComponentExpression;
+import fr.insee.vtl.engine.semantics.udo.UdoBindingPlaceholder;
 import fr.insee.vtl.model.ConstantExpression;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.DatasetExpression;
@@ -40,6 +41,19 @@ public class VarIdVisitor extends VtlBaseVisitor<ResolvableExpression> implement
     }
 
     Object value = context.get(variableName);
+    if (value instanceof UdoBindingPlaceholder placeholder) {
+      return new ResolvableExpression(pos) {
+        @Override
+        public Object resolve(Map<String, Object> context) {
+          return context.get(variableName);
+        }
+
+        @Override
+        public Class<?> getType() {
+          return placeholder.type();
+        }
+      };
+    }
     if (value instanceof Dataset dataset) {
       return DatasetExpression.of(dataset, pos);
     }

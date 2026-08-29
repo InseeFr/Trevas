@@ -1,14 +1,24 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import fr.insee.vtl.antlr.runtime.CharStreams;
+import fr.insee.vtl.antlr.runtime.CommonTokenStream;
+import fr.insee.vtl.engine.VtlScriptEngine;
+import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.DataPointRuleset;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
+import fr.insee.vtl.parser.VtlLexer;
+import fr.insee.vtl.parser.VtlParser;
 import java.util.List;
+import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -136,5 +146,32 @@ public class ValidationFunctionsTest {
         .hasMessageContaining("Check imbalance dataset contains several measures");
     assertThatThrownBy(() -> engine.eval("DS_4 := check(dsExprOk imbalance dsExprOk);"))
         .hasMessageContaining("Check imbalance dataset measure has to be numeric");
+  }
+
+  @Test
+  public void testCheckDatapointResolvesRulesetFromExpressionBindings() throws ScriptException {
+    engine.eval(
+        "define datapoint ruleset dpr1 (variable Id_1, Me_1) is when Id_1 = \"b\" then Me_1 >= 0 errorcode \"neg\" end datapoint ruleset;");
+    DataPointRuleset dpr1 = (DataPointRuleset) engine.getContext().getAttribute("dpr1");
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)),
+            List.of("a", 10L),
+            List.of("b", -2L));
+    Map<String, Object> scope = Map.of("ds", ds, "rs", dpr1);
+
+    VtlScriptEngine vtl = (VtlScriptEngine) engine;
+    ExpressionVisitor visitor = new ExpressionVisitor(scope, vtl.getProcessingEngine(), vtl);
+    Object result = visitor.visit(parseExpr("check_datapoint(ds, rs)")).resolve(scope);
+
+    assertThat(result).isInstanceOf(Dataset.class);
+  }
+
+  private static VtlParser.ExprContext parseExpr(String vtl) {
+    VtlLexer lexer = new VtlLexer(CharStreams.fromString(vtl));
+    VtlParser parser = new VtlParser(new CommonTokenStream(lexer));
+    return parser.expr();
   }
 }

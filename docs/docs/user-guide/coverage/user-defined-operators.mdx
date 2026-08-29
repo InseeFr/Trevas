@@ -1,0 +1,119 @@
+---
+id: user-defined-operators
+title: VTL - User-defined operators
+sidebar_label: User-defined operators
+slug: /user-guide/coverage/user-defined-operators
+custom_edit_url: null
+---
+
+User-defined operators (UDO) let you name and reuse a VTL expression under a custom operator id.
+Trevas supports the VTL 2.1 `define operator` syntax for **scalar** and **dataset** signatures (partial support — see [limitations](#limitations) below).
+
+| Capability | In-memory | Spark |
+| ---------- | :-------: | :---: |
+| `define operator` | :heavy_check_mark: | :heavy_check_mark: |
+| Scalar body (`integer`, `number`, `string`, `boolean`, …) | :heavy_check_mark: | :heavy_check_mark: |
+| Opaque `dataset` parameter and/or return | :heavy_check_mark: | :heavy_check_mark: |
+| `default` on parameters, `_` at call site | :heavy_check_mark: | :heavy_check_mark: |
+| Free variables from the script (after DAG reorder) | :heavy_check_mark: | :heavy_check_mark: |
+| Nested UDO calls | :heavy_check_mark: | :heavy_check_mark: |
+| Structured `dataset {…}` enforcement | :heavy_check_mark: | :heavy_check_mark: |
+
+Spark runs the same path as inline VTL: the UDO body is evaluated through the processing engine.
+If the body uses operators supported on Spark (for example `filter`, `calc`, `union`), the UDO works on Spark without extra configuration.
+
+## Define an operator
+
+```vtl
+define operator add (x integer default 0, y integer default 0)
+   returns number is
+      x + y
+end operator;
+
+res := add(1, 2);   /* 3 */
+one := add(5);      /* 5 — y defaults to 0 */
+zero := add();      /* 0 */
+```
+
+You may omit `returns`; Trevas infers the result type from the body when possible.
+
+Use `_` to pick the default value of an optional parameter:
+
+```vtl
+ten := add(10, _);  /* same as add(10) when y defaults to 0 */
+```
+
+## Free variables
+
+The body may reference script-level variables that are **not** parameters.
+The DAG preprocessor reorders statements so definitions and assignments run before calls.
+
+```vtl
+max_res := max_with_y(b);
+b := 2;
+define operator max_with_y (x integer) returns number is
+   if x > y then x else y
+end operator;
+y := 4;
+/* max_res is 4: at invoke time y is 4 and x is 2 */
+```
+
+Formal parameters shadow outer names inside the body.
+
+## Dataset recipes
+
+Package a reusable transformation with opaque `dataset` parameters:
+
+```vtl
+define operator keep_long1_gt (ds dataset, threshold integer)
+   returns dataset is
+      ds[filter long1 > threshold]
+end operator;
+
+filtered := keep_long1_gt(ds1, 25);
+```
+
+Other typical patterns:
+
+```vtl
+/* derived measure */
+define operator with_double_long1 (ds dataset) returns dataset is
+   ds[calc long1_x2 := long1 * 2]
+end operator;
+
+/* union of two inputs */
+define operator merge_ds (a dataset, b dataset) returns dataset is
+   union(a, b)
+end operator;
+
+/* scalar parameter in a calc */
+define operator scale_long1 (ds dataset, factor integer) returns dataset is
+   ds[calc long1 := long1 * factor]
+end operator;
+```
+
+Scalar parameters are visible inside clause expressions (`filter`, `calc`, …) when the clause is written in the UDO body.
+
+## Calling conventions
+
+At a call site, each argument must be a **variable id**, a **constant**, or `_` (optional placeholder).
+Arbitrary expressions as arguments (for example `add(1 + 2, x * 3)`) are not supported by the Trevas grammar.
+
+An operator name must not collide with an existing binding or a native function registered on the engine.
+
+## Limitations
+
+The following are **not** supported in the current release (Trevas fails with an explicit error):
+
+- `component`, `set`, or ruleset parameter / return types
+- Scalar type constraints in signatures (`integer {0,1}`, `[value >= 0]`, …)
+- Enforcement of structured `dataset { identifier …, measure … }` signatures (DS4)
+- Higher-order style APIs (passing a predicate or expression as a parameter)
+- Automatic promotion of a scalar UDO onto a dataset actual (passing a dataset where a scalar is expected is a type error)
+
+Recursion between UDOs is rejected with an explicit `recursive call to UDO` error.
+
+## See also
+
+- [General purpose operators](/user-guide/coverage/general-operators) — assignment and call surface
+- [Clause operators](/user-guide/coverage/clause-operators) — operators commonly used inside dataset UDO bodies

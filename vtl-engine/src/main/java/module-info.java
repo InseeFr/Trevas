@@ -28,5 +28,9 @@ module fr.insee.vtl.engine {
   provides ScriptEngineFactory with
       VtlScriptEngineFactory;
 
+  // Fun.toMethod (safety-mirror) reflects into method-reference lambdas in these packages.
+  // `opens fr.insee.vtl.engine` does not open subpackages.
   opens fr.insee.vtl.engine;
+  opens fr.insee.vtl.engine.functions.providers to
+      safety.mirror;
 }

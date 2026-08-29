@@ -17,6 +17,10 @@ public class ComponentExpression extends ResolvableExpression {
     this.component = Objects.requireNonNull(component);
   }
 
+  public Structured.Component getComponent() {
+    return component;
+  }
+
   @Override
   public Object resolve(Map<String, Object> context) {
     return context.get(component.getName());
