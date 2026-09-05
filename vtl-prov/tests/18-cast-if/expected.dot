@@ -1,0 +1,41 @@
+digraph {
+  // §5.18 — cast + if inside calc: one expression node per RHS; refs via VarId.
+
+  "ds1@0"      [kind=dataset];
+  "ds1@0.id"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.pop"  [kind=variable, dataset="ds1@0", role=MEASURE, type=STRING];
+  "ds1@0.flag" [kind=variable, dataset="ds1@0", role=MEASURE, type=BOOLEAN];
+
+  "ds2@1"        [kind=dataset, src="ds1[calc pop_i := cast(pop, integer)]"];
+  "ds2@1.id"     [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.pop"    [kind=variable, dataset="ds2@1", role=MEASURE, type=STRING];
+  "ds2@1.flag"   [kind=variable, dataset="ds2@1", role=MEASURE, type=BOOLEAN];
+  "ds2@1.pop_i"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="cast(pop, integer)"];
+  "e1.1" -> "ds1@0.pop";
+
+  "ds2@1"       -> "ds1@0"       [op=calc];
+  "ds2@1.pop_i" -> "e1.1"        [op=calc];
+  "ds2@1.id"    -> "ds1@0.id"    [op=calc];
+  "ds2@1.pop"   -> "ds1@0.pop"   [op=calc];
+  "ds2@1.flag"  -> "ds1@0.flag"  [op=calc];
+
+  "ds3@2"      [kind=dataset, src="ds2[calc v := if flag then pop_i else 0]"];
+  "ds3@2.id"   [kind=variable, dataset="ds3@2", role=IDENTIFIER, type=STRING];
+  "ds3@2.pop"  [kind=variable, dataset="ds3@2", role=MEASURE, type=STRING];
+  "ds3@2.flag" [kind=variable, dataset="ds3@2", role=MEASURE, type=BOOLEAN];
+  "ds3@2.pop_i"[kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
+  "ds3@2.v"    [kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
+
+  "e2.1" [kind=expression, src="if flag then pop_i else 0"];
+  "e2.1" -> "ds2@1.flag";
+  "e2.1" -> "ds2@1.pop_i";
+
+  "ds3@2"      -> "ds2@1"      [op=calc];
+  "ds3@2.v"    -> "e2.1"       [op=calc];
+  "ds3@2.id"   -> "ds2@1.id"   [op=calc];
+  "ds3@2.pop"  -> "ds2@1.pop"  [op=calc];
+  "ds3@2.flag" -> "ds2@1.flag" [op=calc];
+  "ds3@2.pop_i"-> "ds2@1.pop_i"[op=calc];
+}

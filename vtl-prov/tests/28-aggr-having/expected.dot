@@ -1,0 +1,20 @@
+digraph {
+  // §5.28 — aggr with having: having predicate is expression role=condition.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.g"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"   [kind=dataset, src="ds1[aggr s := sum(m1) group by g having sum(m1) > 0]"];
+  "ds2@1.g" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.s" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="sum(m1) > 0"];
+  "e1.1" -> "ds1@0.m1";
+
+  "ds2@1"   -> "ds1@0"    [op=aggr];
+  "ds2@1"   -> "e1.1"     [op=aggr, role=condition];
+  "ds2@1.g" -> "ds1@0.g"  [op=aggr];
+  "ds2@1.s" -> "ds1@0.m1" [op=aggr];
+}

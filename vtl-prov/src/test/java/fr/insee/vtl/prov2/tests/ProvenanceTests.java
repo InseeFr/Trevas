@@ -37,7 +37,7 @@ public class ProvenanceTests {
 
   private static final ProvenanceExtractor EXTRACTOR = new ProvenanceExtractor();
 
-  private static final Set<String> KINDS = Set.of("dataset", "variable", "expression");
+  private static final Set<String> KINDS = Set.of("dataset", "variable", "expression", "scalar");
   private static final Set<String> ROLES = Set.of("IDENTIFIER", "MEASURE", "ATTRIBUTE");
 
   private static final Pattern STMT_INDEX = Pattern.compile("(?:@|^e|^#s)(\\d+)");
@@ -122,6 +122,9 @@ public class ProvenanceTests {
     }
     if ("expression".equals(kind) && attrs.get("src") == null) {
       problems.add(id + ": expression without src attribute");
+    }
+    if ("scalar".equals(kind) && attrs.get("type") == null) {
+      problems.add(id + ": scalar without type attribute");
     }
   }
 

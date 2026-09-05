@@ -122,7 +122,14 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return null;
     }
     if (clause.aggrClause() != null) {
+      // having / group except|all: Phase 2 PR-27 — fail loud until covered.
+      if (clause.aggrClause().havingClause() != null) {
+        throw unsupported("aggr");
+      }
       return null;
+    }
+    if (clause.customPivotClause() != null) {
+      throw unsupported("clause");
     }
     if (clause.subspaceClause() != null
         || clause.keepOrDropClause() != null

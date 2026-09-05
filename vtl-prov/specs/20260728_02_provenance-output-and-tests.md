@@ -22,10 +22,11 @@ Edge = { from: Node, to: Node, props: Map<String, Object> }   // directed
 ```
 
 - A **Node** is any provenance entity — a *dataset instance* (`ds_mul@0`), a
-  *variable instance* (`ds_res@1.var_sum`), **or an expression** (a predicate, a
-  `calc` RHS, any sub-expression we name). What it *is* is a property:
-  `kind = dataset|variable|expression`, plus `name`, `role`, `type`, `dataset`
-  (owning dataset id), `src` (source fragment) — added when known.
+  *variable instance* (`ds_res@1.var_sum`), an **expression** (a predicate, a
+  `calc` RHS), **or a scalar binding** (`x@1` from `x := …`). What it *is* is a
+  property: `kind = dataset|variable|expression|scalar`, plus `name`, `role`,
+  `type`, `dataset` (owning dataset id; absent for `scalar`), `src` (source
+  fragment) — added when known.
 - An **Edge** expresses **one relation: `dependsOn`** ("the source is computed or
   selected from the target"), pointing **dependent → dependency** (sink →
   source). Optional annotations: `op` (`filter`, `calc`, `join`…) and `role`
@@ -177,17 +178,18 @@ hand-writable, and renders to an image directly.
 dataset      "{name}@{definingStmtIndex}"     bindings @0; anon: "#s{stmt}.{seq}"
 variable     "{datasetId}.{componentName}"    e.g. "ds_res@1.var_sum"
 expression   "e{stmtIndex}.{seq}"             seq = position in a deterministic AST walk
+scalar       "{name}@{definingStmtIndex}"     like datasets; no component membership
 ```
 
 **Conventions:**
 
 - `digraph { … }`; one directed edge per dependency.
 - **Node:** `"id" [kind=<k>, …attrs…];` with `kind` ∈ `dataset | variable |
-  expression`.
+  expression | scalar`.
   - variable: `dataset` (owning id), `role`, `type`.
   - dataset: `src` (defining fragment); `anon=true` for intermediates.
   - expression: `src`.
-- **Edge:** `"from" -> "to" [op=<clause>, role=condition];`. **Every edge is a
+  - scalar: `type`; optional `src` (often the RHS lives on an expression node).- **Edge:** `"from" -> "to" [op=<clause>, role=condition];`. **Every edge is a
   `dependsOn`** (dependent → dependency) — no `rel` attribute needed. `op` names
   the clause/operator; `role=condition` marks predicates/selectors (absent =
   value/operand flow). Unannotated edges are just `"a" -> "b";`.
@@ -242,9 +244,29 @@ defaults to this principle.
 | 12 | analytic `over(partition by p order by o)` | `out.m ← in.m` (windowed measure, `op=over`); `p`/`o` are conditions → `role=condition`. |
 | 13 | dataset-level scalar/unary fn (`abs(ds)`, `ds1 and ds2`, comparisons) | like calc over all measures: `out.m ← in.m` (and other operand's `m`); scalar literals not nodes. |
 | 14 | `sub` clause (`ds[sub id = "x"]`) | filters on an identifier value **and** drops it: surviving components pass through; the sub condition is an expression node (`role=condition`); the sub'd identifier absent from output. |
-| 15 | `pivot`/`unpivot` | data-dependent output columns; `out.<value> ← pivoted measure + identifier`. Tiny fixed inputs + canonical sort. Lands last. |
-| 16 | `check_datapoint` + `define datapoint ruleset` | Trevas `all` output: operand ids/measures pass through; `bool_var` / `errorcode` / `errorlevel` ← ruleset variables; `ruleid` has no variable dep; edge annotation `ruleset=<name>` (no ruleset node). |
-| 17 | UDF `define operator` + call | black-box: output vars derive from the declared input vars (annotate `op=<operatorName>`). Inlining the body's internal lineage is a later enhancement (flag it). |
+| 15 | `pivot`/`unpivot`/`customPivot` | **pivot** (done): data-dependent measure columns = distinct values of pivoted id; `out.<value> ← pivoted measure`; pivoted id is `role=condition`; remaining ids pass through. Tiny fixed `$input` rows + canonical sort of value columns. **unpivot** (PR-23): inverse — each pivoted measure becomes a row; `out.<idCol> ←` (column name as value, no var dep) + `out.<meaCol> ← in.<measure>`; remaining ids pass through; `op=unpivot`. **customPivot**: same lineage family as pivot with an explicit `IN` value list (structure known without scanning data when `IN` is given); `op=customPivot`. Pure derive OK if engine throws. |
+| 16 | `check_datapoint` + `define datapoint ruleset` | Trevas output modes: **`all`** (done): ids/measures from operand pass through; `bool_var` / `errorcode` / `errorlevel` ← ruleset vars; `ruleid` no var dep; edge `ruleset=<name>`. **`invalid`** (PR-28): same minus `bool_var` (filtered invalid rows). **`all_measures`**: Trevas mode if distinct from `all` — document schema from engine when implementing. |
+| 17 | UDF `define operator` + call | Until PR-39: black-box — output vars ← declared input vars (`op=<operatorName>` on expression edges). PR-39: walk body; emit internal expression/var lineage as if inlined at the call site. |
+| 18 | scalar `cast` / `if`/`nvl`/`case` inside calc (etc.) | Same as §5.03: one expression node for the whole RHS; `out.v ← e`; `e ←` every `VarId` under the AST. No nested expression nodes. Filter/sub already allow rich predicates; calc shares the same scalar allow-list after PR-17. |
+| 19 | string ops in expressions (`substr`, `trim`/`\|\|`, `replace`, `instr`, `length`, …) | Same reference-level rule as §5.18; folder exercises `substr` (representative). |
+| 20 | numeric functions + comparison helpers in expressions | Same; folder exercises `abs` + `between` (representative of §6.6 numeric/comparison). |
+| 21 | date/time *scalars* in expressions (`getyear`, `datediff`, …) | Same; folder exercises `getyear`. Time-series *producers* are §5.33. |
+| 22 | dataset-level component-wise scalar (§5.13 complete) | `abs(ds)`, `ds1 and ds2`, dataset `if`/`nvl`: measures `out.m ← in.m` (+ other operand's `m`); ids pass through / align like arithmetic. `op` = function/operator text. |
+| 23 | membership `ds#comp` | Mono-measure dataset: `out.comp ← ds.comp`; dataset `out ← ds`. (Also noted under §5.05.) |
+| 24 | `unpivot` / `customPivot` | See §5.15. Corpus folder `24-unpivot`. |
+| 25 | `apply` (join body) | Trevas: `joinApplyClause` only (not `ds[apply …]`). After empty join frame `#s{N}.k`, apply emits expression node; measures replaced per Trevas default measure name; ids pass through. `op=apply`. |
+| 26 | join **body** (clauses inside join) | Empty-body join = §5.08. With body: anonymous intermediates `#s{N}.{k}` for clause chain *inside* the join frame; multi-parent dataset edges from join operands; then clause lineage as §5.03–07 on the joined frame. |
+| 27 | `full_join` / `cross_join` | Same variable lineage as §5.08; `op` = join keyword. Corpus if not already covered by `08-join`. |
+| 28 | aggr `having` / `group except` / `group all` | §5.07 + `having` predicate as expression node `role=condition` on the aggr dataset (like filter). `group except`/`all`: keys that survive per VTL; measures aggregated as usual. |
+| 29 | `check_datapoint` modes `invalid` / `all_measures` | See §5.16. |
+| 30 | simple `check` | Boolean dataset (+ optional imbalance): identifiers pass through; `bool_var` / `errorcode` / `errorlevel` / `imbalance` per Trevas schema; value deps from boolean measure(s) and imbalance measures. |
+| 31 | `define hierarchical ruleset` + `hierarchy` + `check_hierarchy` | Definition bumps stmt index (like datapoint ruleset). **hierarchy**: roll-up `out.m ← in.m`; rule/component as condition or edge annotation `ruleset=`. **check_hierarchy**: validation columns like check_datapoint + hierarchy measure deps; pure derive if engine unsupported. |
+| 32 | `customPivot` | See §5.15. Corpus `32-custom-pivot` (with unpivot in PR-23). **`define structure` / `define datastructure`:** not present in Trevas `Vtl.g4` — remain `unsupported:` until the parser adds them (catalogue §6.4 note). |
+| 33 | time-series producers (`fill_time_series`, `flow_to_stock`, `stock_to_flow`, `timeshift`, `time_agg`) | Measures pass through `out.m ← in.m`; time identifier may be reshaped (still `out.t ← in.t` when present). `op` = function name. Pure derive OK. |
+| 34 | `exists_in` | Dataset producer: boolean measure (or per Trevas schema) `←` left components involved; right dataset is often `role=condition` (membership test). Lock schema from Trevas when implementing. |
+| 35 | `eval` (external routine) | Black-box like UDO: outputs ← declared inputs / RETURNS structure; annotate `op=eval` (routine name if useful). |
+| 36 | scalar assignment `x := …` | Node `x@{N}` with `kind=scalar`, `type=…`. RHS → expression node `e{N}.{k}` (reference-level); `x ← e`; `e ←` referenced scalars/vars. No `dataset` attribute. |
+| 37 | leftover grammar (e.g. `symdiff`) | Catalogue gap-fill; same set-op rule as §5.10 (`op=symdiff`). Further leftovers added here during PR-36 audit. |
 
 ### 5.4 Filter/where — resolved by expression nodes
 
@@ -285,7 +307,7 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 | `:=` temporary assign, `<-` persistent assign | producer (§5.01) |
 | `#` membership | producer (§5.05) |
 | user-defined operator call | producer (§5.17) |
-| `eval` (external routine) | producer, black-box like UDF — flag |
+| `eval` (external routine) | producer, black-box like UDF (§5.35) |
 | `cast` | scalar (type conversion) |
 | `( )` parentheses | structural |
 
@@ -306,11 +328,11 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 ### 6.4 Validation & definition
 | Operator | Treatment |
 |---|---|
-| `check`, `check_datapoint`, `check_hierarchy` | producer (§5.16) |
-| `hierarchy` (aggregation) | producer — hierarchical roll-up; `out.m ← in.m` per rule, ruleset as edge annotation. Not yet in §5 — **add** |
-| `define datapoint ruleset`, `define hierarchical ruleset` | definition |
-| `define operator` | definition (used by §5.17) |
-| `define structure` / `define datastructure` | definition |
+| `check`, `check_datapoint`, `check_hierarchy` | producer (§5.16, §5.30–31) |
+| `hierarchy` (aggregation) | producer (§5.31) |
+| `define datapoint ruleset`, `define hierarchical ruleset` | definition (§5.16, §5.31) |
+| `define operator` | definition (used by §5.17 / §5.39) |
+| `define structure` / `define datastructure` | not in Trevas `Vtl.g4` — stay unsupported until grammar adds them (§5.32) |
 
 ### 6.5 Conditional
 | Operator | Treatment |
@@ -321,7 +343,7 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 | Category | Operators |
 |---|---|
 | Numeric | unary `+`/`-`, `+`, `-`, `*`, `/`, `mod`, `round`, `trunc`, `ceil`, `floor`, `abs`, `exp`, `ln`, `log`, `power`, `sqrt` |
-| Comparison | `=`, `<>`, `<`, `<=`, `>`, `>=`, `between`, `in`, `not_in`, `match_characters`, `isnull`; `exists_in` (dataset-level → **producer**, flag) |
+| Comparison | `=`, `<>`, `<`, `<=`, `>`, `>=`, `between`, `in`, `not_in`, `match_characters`, `isnull`; `exists_in` (dataset-level → **producer**, §5.34) |
 | Boolean | `and`, `or`, `xor`, `not` |
 | String | `\|\|`, `trim`, `ltrim`, `rtrim`, `upper`, `lower`, `substr`, `replace`, `instr`, `length` |
 | Date/time scalar | `period_indicator`, `current_date`, `dateadd`, `datediff`, `getyear`, `getmonth`, `daytoyear`, `daytomonth`, `yeartoday`, `monthtoday` |
@@ -329,21 +351,20 @@ has none; see §1). They resolve to `dependsOn` edges annotated with the operati
 ### 6.7 Time-series (producers)
 | Operator | Treatment |
 |---|---|
-| `fill_time_series`, `flow_to_stock`, `stock_to_flow`, `timeshift`, `time_agg` | producer — measures pass through (`out.m ← in.m`), time identifier reshaped. Not yet in §5 — **add** if in scope |
+| `fill_time_series`, `flow_to_stock`, `stock_to_flow`, `timeshift`, `time_agg` | producer (§5.33) |
 
 ## 7. Build order
 
 1. ~~Lock the IR (§1) + the worked example (§2).~~ **Done.**
-2. ~~Hand-author the corpus (`input.vtl` + `expected.dot` per §5).~~ **Done**
-   (cases 01–17 + chain-filter-calc, Graphviz-validated).
-3. Implement in review-sized steps — see the PR ladder in
-   [`20260729_02_work-breakdown.md`](./20260729_02_work-breakdown.md). In short:
-   **harness first** (corpus reader, `$input` parsing, `jgrapht-io` DOT import,
-   set-equality comparator, `ProvenanceExtractor`, golden self-check; all provenance
-   cases failing until implemented), then one extraction capability per PR, each
-   turning specific corpus cases green. Walk = **`VtlBaseVisitor<Void>`** mutating
-   `ProvGraph` (see work-breakdown Mechanisms);
-   SDTH/RDF conversion and deletion of the old listeners close it out.
-   For **same triples as today**: project IR → existing `Program` → reuse `RDFUtils`
-   (see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)).
-   Richer RDF is a later, separate view.
+2. Hand-author the corpus (`input.vtl` + `expected.dot` per §5). **Phase 1
+   (01–17 + chain) done; Phase 2 folders 18–37 authored red until their PR.**
+3. ~~Implement in review-sized steps — architecture ladder.~~ **Done** (PR 1–16
+   in [`20260729_02_work-breakdown.md`](./20260729_02_work-breakdown.md)).
+4. **Full catalogue coverage** — Phase 2 of the same work-breakdown (PR 17–40):
+   scalar-expr surface → remaining producers → validation/DL → time-series/misc
+   (incl. `kind=scalar`) → BPE → rich RDF → UDO inlining → `$input` migrate.
+   Engine unsupported ≠ provenance skip (pure derive). Same rule: corpus case
+   red until implemented; never invent lineage. Walk stays
+   **`VtlBaseVisitor<Void>`** + `ProvGraph`; SDTH path = IR → `SdthProgramView`
+   → `RDFUtils`
+   ([`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)).

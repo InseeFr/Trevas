@@ -68,10 +68,12 @@ Graphviz DOT, imported/compared via `jgrapht-io`. Full spec in
 | anonymous clause intermediate | `#s{N}.{k}` | `"#s1.1"` |
 | variable instance | `{datasetId}.{comp}` | `"ds_res@1.var_sum"` |
 | expression node | `e{N}.{k}` | `"e1.2"` |
+| scalar binding | `{name}@{N}` | `"x@1"` |
 
-**Nodes** — `"id" [kind=<k>, …];` with `kind` ∈ `dataset | variable | expression`.
+**Nodes** — `"id" [kind=<k>, …];` with `kind` ∈ `dataset | variable | expression |
+scalar`.
 Attributes: variable → `dataset` (membership), `role`, `type`; dataset → `src`,
-`anon=true`; expression → `src`.
+`anon=true`; expression → `src`; scalar → `type`, optional `src`.
 
 **Edges** — `"from" -> "to" [op=<clause>, role=condition];`. **Every edge is a
 `dependsOn`** (dependent → dependency). `op` names the clause/operator;
