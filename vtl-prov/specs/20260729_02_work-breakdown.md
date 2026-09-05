@@ -22,7 +22,7 @@ progress paragraph.
 | [x] | 10 | Set ops | 09, 10, 11 |
 | [x] | 11 | Analytic | 12 |
 | [x] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
-| [ ] | 13 | User-defined operators | 17 |
+| [x] | 13 | User-defined operators | 17 |
 | [ ] | 14 | Pivot + table-form `$input` parsing | 15 |
 | [ ] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
 | [ ] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
@@ -78,6 +78,7 @@ arithmetic (`02`, `13`). **PR-4** adds single-clause `calc` + expression nodes
 chaining with anonymous intermediates (`chain-filter-calc`). **PR-8** adds
 `aggr` (`07`). **PR-9** adds empty-body joins (`08`). **PR-10** adds set ops (`09`, `10`, `11`). **PR-11** adds analytic windows inside `calc` (`12`).
 **PR-12** adds `define datapoint ruleset` + `check_datapoint` (`16`).
+**PR-13** adds black-box `define operator` + UDO calls in `calc` (`17`).
 Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)
