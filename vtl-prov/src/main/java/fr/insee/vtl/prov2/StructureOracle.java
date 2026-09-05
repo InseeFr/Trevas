@@ -13,16 +13,25 @@ import javax.script.ScriptException;
 
 /**
  * Run-once structure oracle (spec 20260728_01): eval the script, then read {@link DataStructure}
- * from named bindings. Eval may fail when the engine lacks an operator that provenance already
- * covers (e.g. {@code intersect}); input bindings remain available and the visitor derives missing
- * output structures. Anonymous intermediates are always derived by {@link ProvenanceVisitor}.
+ * from named bindings.
+ *
+ * <p>Eval may fail when the engine lacks an operator that provenance already covers ({@code
+ * intersect}, analytic windows, …). In that case {@link #evalSucceeded()} is {@code false}, input
+ * bindings remain available, and {@link ProvenanceVisitor} derives missing output structures from
+ * {@link PendingOp}. Anonymous intermediates are always derived (never engine-bound).
+ *
+ * <p>Structure rule for a named assignment LHS: if {@link #hasDataset(String)} then use the
+ * engine binding; otherwise derive from the pending op. Do not mix column types from both sources
+ * for one dataset.
  */
 final class StructureOracle {
 
   private final ScriptContext context;
+  private final boolean evalSucceeded;
 
-  private StructureOracle(ScriptContext context) {
+  private StructureOracle(ScriptContext context, boolean evalSucceeded) {
     this.context = context;
+    this.evalSucceeded = evalSucceeded;
   }
 
   static StructureOracle run(String script, List<InputDataset> inputs) {
@@ -34,13 +43,22 @@ final class StructureOracle {
     for (InputDataset input : inputs) {
       context.setAttribute(input.name(), toDataset(input), ScriptContext.ENGINE_SCOPE);
     }
+    boolean succeeded = true;
     try {
       engine.eval(script);
-    } catch (ScriptException | RuntimeException ignored) {
-      // Inputs stay bound; ProvenanceVisitor derives structures the engine did not materialize.
-      // Analytic / set ops may throw bare RuntimeException from the in-memory engine (not wrapped).
+    } catch (ScriptException e) {
+      // Engine wraps many failures; inputs stay bound for derivation.
+      succeeded = false;
+    } catch (UnsupportedOperationException e) {
+      // In-memory engine throws bare UOE for some unimplemented ops (analytic, …).
+      succeeded = false;
     }
-    return new StructureOracle(context);
+    return new StructureOracle(context, succeeded);
+  }
+
+  /** {@code true} when {@code engine.eval} completed without throwing. */
+  boolean evalSucceeded() {
+    return evalSucceeded;
   }
 
   boolean hasDataset(String name) {
