@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
  * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, run state describes
  * what the enclosing assignment materializes: identity ({@code lastOp == null}), component-wise ops
  * ({@code +}, {@code *}, {@code keep}, …), or clause ops ({@code calc}, {@code filter}, {@code
- * sub}, {@code rename}, {@code aggr}). Nested clauses materialize anonymous intermediates ({@code
- * #s{stmt}.{seq}}) before the next clause applies.
+ * sub}, {@code rename}, {@code aggr}), or join ops ({@code inner_join}, …). Nested clauses
+ * materialize anonymous intermediates ({@code #s{stmt}.{seq}}) before the next clause applies.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
@@ -89,6 +89,29 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   @Override
   public Void visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
     return binaryArithmetic(ctx.left, ctx.right, ctx.op);
+  }
+
+  @Override
+  public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
+    requireEmptyJoinBody(ctx.joinBody());
+    List<String> operands = new ArrayList<>();
+    for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
+      if (item.AS() != null) {
+        throw unsupported("functions");
+      }
+      String operandId = datasetOperand(item.expr());
+      if (operandId == null) {
+        throw unsupported("functions");
+      }
+      operands.add(operandId);
+    }
+    if (operands.size() < 2) {
+      throw unsupported("functions");
+    }
+    clearExprState();
+    lastOp = ctx.joinKeyword.getText();
+    lastOperandIds = List.copyOf(operands);
+    return null;
   }
 
   @Override
@@ -296,16 +319,31 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   private DataStructure structureForPendingOp() {
-    DataStructure src = requireStructure(lastResultId);
     return switch (lastOp) {
-      case "filter", "sub" -> new DataStructure(src);
-      case "calc" -> deriveCalcStructure(src, lastCalcTypes);
-      case "aggr" -> deriveAggrStructure(src, lastCalcTypes, lastKeepDropColumns);
-      case "keep" -> deriveKeepStructure(src, lastKeepDropColumns);
-      case "drop" -> deriveDropStructure(src, lastKeepDropColumns);
-      case "rename" -> deriveRenameStructure(src, lastRenameFrom);
+      case "filter", "sub" -> new DataStructure(requireStructure(lastResultId));
+      case "calc" -> deriveCalcStructure(requireStructure(lastResultId), lastCalcTypes);
+      case "aggr" ->
+          deriveAggrStructure(requireStructure(lastResultId), lastCalcTypes, lastKeepDropColumns);
+      case "keep" -> deriveKeepStructure(requireStructure(lastResultId), lastKeepDropColumns);
+      case "drop" -> deriveDropStructure(requireStructure(lastResultId), lastKeepDropColumns);
+      case "rename" -> deriveRenameStructure(requireStructure(lastResultId), lastRenameFrom);
+      case "inner_join", "left_join", "full_join", "cross_join" ->
+          deriveJoinStructure(lastOperandIds);
       default -> throw unsupported("clause");
     };
+  }
+
+  private DataStructure deriveJoinStructure(List<String> operandIds) {
+    List<Component> components = new ArrayList<>();
+    Set<String> seen = new LinkedHashSet<>();
+    for (String operandId : operandIds) {
+      for (Component component : requireStructure(operandId).componentsInOrder()) {
+        if (seen.add(component.getName())) {
+          components.add(new Component(component));
+        }
+      }
+    }
+    return new DataStructure(components);
   }
 
   private static DataStructure deriveAggrStructure(
@@ -415,7 +453,26 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       case "filter", "sub" ->
           linkConditionClause(outId, outStructure, lastResultId, lastConditionExprIds, lastOp);
       case "rename" -> linkRename(outId, outStructure, lastResultId, lastRenameFrom);
+      case "inner_join", "left_join", "full_join", "cross_join" ->
+          linkJoin(outId, outStructure, lastOperandIds, lastOp);
       default -> linkComponentWise(outId, outStructure, lastOperandIds, lastOp);
+    }
+  }
+
+  private void linkJoin(
+      String outId, DataStructure outStructure, List<String> operandIds, String op) {
+    Map<String, String> edge = opEdge(op);
+    for (String operandId : operandIds) {
+      graph.addEdge(outId, operandId, edge);
+    }
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      String outVar = outId + "." + name;
+      for (String operandId : operandIds) {
+        if (requireStructure(operandId).containsKey(name)) {
+          graph.addEdge(outVar, operandId + "." + name, edge);
+        }
+      }
     }
   }
 

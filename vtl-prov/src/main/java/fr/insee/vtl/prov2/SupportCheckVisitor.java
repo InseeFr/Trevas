@@ -3,6 +3,7 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.antlr.runtime.tree.RuleNode;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.List;
 
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
@@ -10,7 +11,7 @@ import fr.insee.vtl.parser.VtlParser;
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
  * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
- * rename} / {@code aggr} on a dataset varId or a nested clause chain. Other ops stay unsupported.
+ * rename} / {@code aggr}; empty-body joins. Other ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -96,12 +97,60 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
+    if (ctx.functions() instanceof VtlParser.JoinFunctionsContext join) {
+      return visit(join);
+    }
     throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitJoinFunctions(VtlParser.JoinFunctionsContext ctx) {
+    return visit(ctx.joinOperators());
+  }
+
+  @Override
+  public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
+    requireEmptyJoinBody(ctx.joinBody());
+    for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
+      if (item.AS() != null) {
+        throw unsupported("functions");
+      }
+      requireDatasetVarId(item.expr());
+    }
+    return null;
   }
 
   @Override
   public Void visitConstantExpr(VtlParser.ConstantExprContext ctx) {
     throw unsupported("scalar");
+  }
+
+  /** Dataset name only (no nested clause / expression operands yet). */
+  private void requireDatasetVarId(VtlParser.ExprContext expr) {
+    if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
+      throw unsupported("functions");
+    }
+  }
+
+  static List<VtlParser.JoinClauseItemContext> joinItems(VtlParser.JoinExprContext ctx) {
+    if (ctx.joinClause() != null) {
+      return ctx.joinClause().joinClauseItem();
+    }
+    return ctx.joinClauseWithoutUsing().joinClauseItem();
+  }
+
+  static void requireEmptyJoinBody(VtlParser.JoinBodyContext body) {
+    if (body == null) {
+      return;
+    }
+    if (body.filterClause() != null
+        || body.calcClause() != null
+        || body.joinApplyClause() != null
+        || body.aggrClause() != null
+        || body.keepOrDropClause() != null
+        || body.renameClause() != null) {
+      throw unsupported("functions");
+    }
   }
 
   /** Dataset name or scalar literal; nested ops deferred. */
