@@ -18,7 +18,7 @@ progress paragraph.
 | [x] | 6 | Projection & rename | 05, 06 |
 | [x] | 7 | Clause chaining + anonymous intermediates | chain-filter-calc |
 | [x] | 8 | Aggr | 07 |
-| [ ] | 9 | Join | 08 |
+| [x] | 9 | Join | 08 |
 | [ ] | 10 | Set ops | 09, 10, 11 |
 | [ ] | 11 | Analytic | 12 |
 | [ ] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
@@ -76,7 +76,7 @@ arithmetic (`02`, `13`). **PR-4** adds single-clause `calc` + expression nodes
 (`03`). **PR-5** adds `filter` / `sub` with `role=condition` (`04`, `14`).
 **PR-6** adds `keep`/`drop` / `rename` (`05`, `06`). **PR-7** adds clause
 chaining with anonymous intermediates (`chain-filter-calc`). **PR-8** adds
-`aggr` (`07`). Later PRs add more `visit*` methods.
+`aggr` (`07`). **PR-9** adds empty-body joins (`08`). Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)
 
