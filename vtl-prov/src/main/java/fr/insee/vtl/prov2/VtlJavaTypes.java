@@ -14,6 +14,7 @@ final class VtlJavaTypes {
       case "INTEGER" -> Long.class;
       case "NUMBER" -> Double.class;
       case "BOOLEAN" -> Boolean.class;
+      case "DATE" -> java.time.Instant.class;
       default -> throw new UnsupportedOperationException("unsupported: type " + vtlType);
     };
   }
@@ -24,6 +25,7 @@ final class VtlJavaTypes {
       case "INTEGER" -> Long.parseLong(raw);
       case "NUMBER" -> Double.parseDouble(raw);
       case "BOOLEAN" -> Boolean.parseBoolean(raw);
+      case "DATE" -> java.time.Instant.parse(raw);
       default -> throw new UnsupportedOperationException("unsupported: type " + vtlType);
     };
   }

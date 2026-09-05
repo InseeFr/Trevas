@@ -8,7 +8,7 @@ digraph {
   "ds2@1"      [kind=dataset, src="ds1[calc a := abs(var1)]"];
   "ds2@1.id"   [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
   "ds2@1.var1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
-  "ds2@1.a"    [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  "ds2@1.a"    [kind=variable, dataset="ds2@1", role=MEASURE, type=NUMBER];
 
   "e1.1" [kind=expression, src="abs(var1)"];
   "e1.1" -> "ds1@0.var1";
@@ -21,7 +21,7 @@ digraph {
   "ds3@2"      [kind=dataset, src="ds2[calc ok := between(var1, 0, 100)]"];
   "ds3@2.id"   [kind=variable, dataset="ds3@2", role=IDENTIFIER, type=STRING];
   "ds3@2.var1" [kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
-  "ds3@2.a"    [kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
+  "ds3@2.a"    [kind=variable, dataset="ds3@2", role=MEASURE, type=NUMBER];
   "ds3@2.ok"   [kind=variable, dataset="ds3@2", role=MEASURE, type=BOOLEAN];
 
   "e2.1" [kind=expression, src="between(var1, 0, 100)"];

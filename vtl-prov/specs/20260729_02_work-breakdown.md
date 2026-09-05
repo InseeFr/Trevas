@@ -58,10 +58,10 @@ SupportCheck + RHS walk (allow the AST; still forbid nested dataset clauses).
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [ ] | 17 | Scalar-expr framework: recursive allow-list in calc/filter/sub/aggr args; `cast`; `if`/`nvl`/`case` | 18-cast-if |
-| [ ] | 18 | String ops in expressions (`substr`, `trim`/`||`, `replace`, `instr`, `length`, …) | 19-string |
-| [ ] | 19 | Numeric *functions* + comparison helpers (`abs`/`round`/…, `between`, `isnull`, `in`/`not_in`, `match_characters`) | 20-numeric-cmp |
-| [ ] | 20 | Date/time *scalars* in expressions (`datediff`, `getyear`, …) | 21-datetime-scalar |
+| [x] | 17 | Scalar-expr framework: recursive allow-list in calc/filter/sub/aggr args; `cast`; `if`/`nvl`/`case` | 18-cast-if |
+| [x] | 18 | String ops in expressions (`substr`, `trim`/`||`, `replace`, `instr`, `length`, …) | 19-string |
+| [x] | 19 | Numeric *functions* + comparison helpers (`abs`/`round`/…, `between`, `isnull`, `in`/`not_in`, `match_characters`) | 20-numeric-cmp |
+| [x] | 20 | Date/time *scalars* in expressions (`datediff`, `getyear`, …) | 21-datetime-scalar |
 
 ### Wave B — Remaining dataset producers (clauses / ops)
 

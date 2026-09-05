@@ -280,34 +280,75 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("clause");
   }
 
-  /** Component-level calc RHS (not dataset-level arithmetic). */
+  /**
+   * Scalar expression allow-list for calc / filter / sub / aggr args (Wave A). Rejects nested
+   * dataset clauses and dataset-level producers; walks everything else so {@code cast}, {@code
+   * if}, string/numeric/time scalars, comparisons, etc. are covered without per-op PendingOps.
+   */
   private void calcRhs(VtlParser.ExprContext expr) {
-    VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.VarIdExprContext
-        || current instanceof VtlParser.ConstantExprContext) {
-      return;
-    }
-    if (current instanceof VtlParser.ArithmeticExprContext arithmetic) {
-      calcRhs(arithmetic.left);
-      calcRhs(arithmetic.right);
-      return;
-    }
-    if (current instanceof VtlParser.ArithmeticExprOrConcatContext arithmetic) {
-      calcRhs(arithmetic.left);
-      calcRhs(arithmetic.right);
-      return;
-    }
-    if (current instanceof VtlParser.FunctionsExpressionContext functions
-        && functions.functions() instanceof VtlParser.AnalyticFunctionsContext) {
-      return;
-    }
-    if (current instanceof VtlParser.FunctionsExpressionContext functions
-        && functions.functions() instanceof VtlParser.GenericFunctionsContext generic
-        && generic.genericOperators() instanceof VtlParser.CallDatasetContext call) {
-      requireKnownUdoCall(call);
-      return;
-    }
-    throw unsupported("calc");
+    requireScalarExpr(expr);
+  }
+
+  /** Filter / sub predicates share the scalar allow-list (nested clauses still {@code clause}). */
+  private void requireScalarPredicate(VtlParser.ExprContext expr) {
+    requireScalarExpr(expr);
+  }
+
+  private void requireScalarExpr(VtlParser.ExprContext expr) {
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
+        throw unsupported("clause");
+      }
+
+      @Override
+      public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+        throw unsupported("calc");
+      }
+
+      @Override
+      public Void visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
+        var functions = ctx.functions();
+        if (functions instanceof VtlParser.JoinFunctionsContext
+            || functions instanceof VtlParser.SetFunctionsContext
+            || functions instanceof VtlParser.ValidationFunctionsContext
+            || functions instanceof VtlParser.HierarchyFunctionsContext
+            || functions instanceof VtlParser.AggregateFunctionsContext
+            || functions instanceof VtlParser.DistanceFunctionsContext) {
+          throw unsupported("calc");
+        }
+        if (functions instanceof VtlParser.TimeFunctionsContext time) {
+          VtlParser.TimeOperatorsContext op = time.timeOperators();
+          if (op instanceof VtlParser.FillTimeAtomContext
+              || op instanceof VtlParser.FlowAtomContext
+              || op instanceof VtlParser.TimeShiftAtomContext
+              || op instanceof VtlParser.TimeAggAtomContext) {
+            throw unsupported("calc");
+          }
+          return visitChildren(ctx);
+        }
+        if (functions instanceof VtlParser.ComparisonFunctionsContext comparison) {
+          if (comparison.comparisonOperators() instanceof VtlParser.ExistInAtomContext) {
+            throw unsupported("calc");
+          }
+          return visitChildren(ctx);
+        }
+        if (functions instanceof VtlParser.GenericFunctionsContext generic) {
+          VtlParser.GenericOperatorsContext op = generic.genericOperators();
+          if (op instanceof VtlParser.EvalAtomContext) {
+            throw unsupported("calc");
+          }
+          if (op instanceof VtlParser.CallDatasetContext call) {
+            requireKnownUdoCall(call);
+            return null;
+          }
+          // castExprDataset and other generic scalars
+          return visitChildren(ctx);
+        }
+        // string / numeric / conditional / analytic
+        return visitChildren(ctx);
+      }
+    }.visit(expr);
   }
 
   /** Scalar UDO call in calc: known operator, args are varId or constant only. */
@@ -320,16 +361,6 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
         throw unsupported("calc");
       }
     }
-  }
-
-  /** Filter predicates may use functions/comparisons; reject nested dataset clauses only. */
-  private void requireScalarPredicate(VtlParser.ExprContext expr) {
-    new VtlBaseVisitor<Void>() {
-      @Override
-      public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
-        throw unsupported("clause");
-      }
-    }.visit(expr);
   }
 
   static VtlParser.ExprContext unwrap(VtlParser.ExprContext expr) {

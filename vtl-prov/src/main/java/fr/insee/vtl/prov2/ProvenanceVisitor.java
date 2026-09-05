@@ -284,7 +284,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       Set<String> conditionRefs = analyticConditionRefs(rhs);
       addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs, udoOp);
       calcExprs.put(component, exprId);
-      calcTypes.put(component, inferCalcType(src, valueRefs));
+      calcTypes.put(component, inferCalcType(rhs, src, valueRefs));
     }
     pending = new Calc(srcId, Map.copyOf(calcExprs), Map.copyOf(calcTypes));
     return null;
@@ -347,7 +347,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
       addExpression(exprId, text(op), srcId, refs, Set.of(), null);
       aggrExprs.put(component, exprId);
-      aggrTypes.put(component, inferCalcType(src, refs));
+      aggrTypes.put(component, inferCalcType(null, src, refs));
     }
     pending =
         new Aggr(
@@ -443,7 +443,14 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return deriver.derive(pending);
   }
 
-  private static Class<?> inferCalcType(DataStructure src, Set<String> refs) {
+  private static Class<?> inferCalcType(
+      VtlParser.ExprContext rhs, DataStructure src, Set<String> refs) {
+    if (rhs != null) {
+      Class<?> fromAst = inferTypeFromAst(unwrap(rhs));
+      if (fromAst != null) {
+        return fromAst;
+      }
+    }
     Class<?> result = null;
     for (String ref : refs) {
       Component component = src.get(ref);
@@ -459,6 +466,57 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
     }
     return result != null ? result : Long.class;
+  }
+
+  /**
+   * Best-effort Java type from scalar AST when the structure oracle cannot eval (engine gap). Used
+   * only on the pure-derive path.
+   */
+  private static Class<?> inferTypeFromAst(VtlParser.ExprContext expr) {
+    if (expr instanceof VtlParser.ComparisonExprContext
+        || expr instanceof VtlParser.BooleanExprContext
+        || expr instanceof VtlParser.InNotInExprContext) {
+      return Boolean.class;
+    }
+    if (expr instanceof VtlParser.FunctionsExpressionContext functions) {
+      if (functions.functions() instanceof VtlParser.ComparisonFunctionsContext) {
+        return Boolean.class;
+      }
+      if (functions.functions() instanceof VtlParser.TimeFunctionsContext time) {
+        VtlParser.TimeOperatorsContext op = time.timeOperators();
+        if (op instanceof VtlParser.YearAtomContext
+            || op instanceof VtlParser.MonthAtomContext
+            || op instanceof VtlParser.DayOfMonthAtomContext
+            || op instanceof VtlParser.DayOfYearAtomContext) {
+          return Long.class;
+        }
+        if (op instanceof VtlParser.CurrentDateAtomContext) {
+          return java.time.Instant.class;
+        }
+      }
+      if (functions.functions() instanceof VtlParser.GenericFunctionsContext generic
+          && generic.genericOperators() instanceof VtlParser.CastExprDatasetContext cast) {
+        if (cast.basicScalarType() != null) {
+          String t = cast.basicScalarType().getText().toUpperCase();
+          return switch (t) {
+            case "STRING" -> String.class;
+            case "INTEGER", "INT" -> Long.class;
+            case "NUMBER", "FLOAT" -> Double.class;
+            case "BOOLEAN", "BOOL" -> Boolean.class;
+            case "DATE" -> java.time.Instant.class;
+            default -> null;
+          };
+        }
+      }
+    }
+    if (expr instanceof VtlParser.IfExprContext ifExpr) {
+      Class<?> thenType = inferTypeFromAst(unwrap(ifExpr.thenExpr));
+      if (thenType != null) {
+        return thenType;
+      }
+      return inferTypeFromAst(unwrap(ifExpr.elseExpr));
+    }
+    return null;
   }
 
   private void addExpression(
