@@ -9,10 +9,9 @@ import java.util.List;
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
- * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
- * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
- * rename} / {@code aggr}; empty-body joins; set ops; analytic windows inside {@code calc}. Other
- * ops stay unsupported.
+ * <p>Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for harness / ops):
+ * {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc}, {@code aggr},
+ * {@code join}, {@code set}, {@code functions} (catch-all for other function families).
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -117,9 +116,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     requireEmptyJoinBody(ctx.joinBody());
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
       if (item.AS() != null) {
-        throw unsupported("functions");
+        throw unsupported("join");
       }
-      requireDatasetVarId(item.expr());
+      requireDatasetVarId(item.expr(), "join");
     }
     return null;
   }
@@ -131,20 +130,20 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitUnionAtom(VtlParser.UnionAtomContext ctx) {
-    ctx.expr().forEach(this::requireDatasetVarId);
+    ctx.expr().forEach(e -> requireDatasetVarId(e, "set"));
     return null;
   }
 
   @Override
   public Void visitIntersectAtom(VtlParser.IntersectAtomContext ctx) {
-    ctx.expr().forEach(this::requireDatasetVarId);
+    ctx.expr().forEach(e -> requireDatasetVarId(e, "set"));
     return null;
   }
 
   @Override
   public Void visitSetOrSYmDiffAtom(VtlParser.SetOrSYmDiffAtomContext ctx) {
-    requireDatasetVarId(ctx.left);
-    requireDatasetVarId(ctx.right);
+    requireDatasetVarId(ctx.left, "set");
+    requireDatasetVarId(ctx.right, "set");
     return null;
   }
 
@@ -154,9 +153,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   }
 
   /** Dataset name only (no nested clause / expression operands yet). */
-  private void requireDatasetVarId(VtlParser.ExprContext expr) {
+  private void requireDatasetVarId(VtlParser.ExprContext expr, String what) {
     if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
-      throw unsupported("functions");
+      throw unsupported(what);
     }
   }
 
@@ -177,7 +176,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
         || body.aggrClause() != null
         || body.keepOrDropClause() != null
         || body.renameClause() != null) {
-      throw unsupported("functions");
+      throw unsupported("join");
     }
   }
 
@@ -225,7 +224,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
         && functions.functions() instanceof VtlParser.AnalyticFunctionsContext) {
       return;
     }
-    throw unsupported("clause");
+    throw unsupported("calc");
   }
 
   /** Filter predicates may use functions/comparisons; reject nested dataset clauses only. */
