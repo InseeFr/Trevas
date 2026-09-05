@@ -243,7 +243,7 @@ defaults to this principle.
 | 13 | dataset-level scalar/unary fn (`abs(ds)`, `ds1 and ds2`, comparisons) | like calc over all measures: `out.m ← in.m` (and other operand's `m`); scalar literals not nodes. |
 | 14 | `sub` clause (`ds[sub id = "x"]`) | filters on an identifier value **and** drops it: surviving components pass through; the sub condition is an expression node (`role=condition`); the sub'd identifier absent from output. |
 | 15 | `pivot`/`unpivot` | data-dependent output columns; `out.<value> ← pivoted measure + identifier`. Tiny fixed inputs + canonical sort. Lands last. |
-| 16 | `check_*` + `define … ruleset` | validation columns (`bool_var`/`errorcode`/`errorlevel`) derive from validated vars; ruleset recorded as an edge annotation (`ruleset=<name>`) or a node, TBD. |
+| 16 | `check_datapoint` + `define datapoint ruleset` | Trevas `all` output: operand ids/measures pass through; `bool_var` / `errorcode` / `errorlevel` ← ruleset variables; `ruleid` has no variable dep; edge annotation `ruleset=<name>` (no ruleset node). |
 | 17 | UDF `define operator` + call | black-box: output vars derive from the declared input vars (annotate `op=<operatorName>`). Inlining the body's internal lineage is a later enhancement (flag it). |
 
 ### 5.4 Filter/where — resolved by expression nodes

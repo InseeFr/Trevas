@@ -21,7 +21,7 @@ progress paragraph.
 | [x] | 9 | Join | 08 |
 | [x] | 10 | Set ops | 09, 10, 11 |
 | [x] | 11 | Analytic | 12 |
-| [ ] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
+| [x] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
 | [ ] | 13 | User-defined operators | 17 |
 | [ ] | 14 | Pivot + table-form `$input` parsing | 15 |
 | [ ] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
@@ -77,6 +77,7 @@ arithmetic (`02`, `13`). **PR-4** adds single-clause `calc` + expression nodes
 **PR-6** adds `keep`/`drop` / `rename` (`05`, `06`). **PR-7** adds clause
 chaining with anonymous intermediates (`chain-filter-calc`). **PR-8** adds
 `aggr` (`07`). **PR-9** adds empty-body joins (`08`). **PR-10** adds set ops (`09`, `10`, `11`). **PR-11** adds analytic windows inside `calc` (`12`).
+**PR-12** adds `define datapoint ruleset` + `check_datapoint` (`16`).
 Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)
@@ -98,7 +99,7 @@ Later PRs add more `visit*` methods.
   intermediates are the fiddly part and deserve isolated review.
 - **Unsupported syntax throws** from day one (principle 2). Stable message stems:
   `define`, `scalar`, `arithmetic`, `clause`, `calc`, `aggr`, `join`, `set`,
-  `functions`.
+  `check`, `functions`.
 
 ## Open questions
 
