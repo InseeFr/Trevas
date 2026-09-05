@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import fr.insee.vtl.prov2.InputDataset;
+import fr.insee.vtl.prov2.InputDirectives;
 import fr.insee.vtl.prov2.ProvenanceExtractor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.regex.Matcher;
@@ -40,9 +40,6 @@ public class ProvenanceTests {
   private static final Set<String> KINDS = Set.of("dataset", "variable", "expression");
   private static final Set<String> ROLES = Set.of("IDENTIFIER", "MEASURE", "ATTRIBUTE");
 
-  private static final Pattern INPUT_ONE_LINER =
-      Pattern.compile("^\\s*//\\s*\\$input\\s+(\\S+)\\s*:\\s*(.+?)\\s*$");
-  private static final Pattern INPUT_ANY = Pattern.compile("\\$input\\s+(\\S+)");
   private static final Pattern STMT_INDEX = Pattern.compile("(?:@|^e|^#s)(\\d+)");
 
   @TestFactory
@@ -131,8 +128,6 @@ public class ProvenanceTests {
   /** $input directives vs the binding datasets ("...@0") the golden declares. */
   private void checkDirectives(String script, Graph golden, List<String> problems) {
     List<InputDataset> inputs = parseInputs(script);
-    boolean hasTableForm =
-        INPUT_ANY.matcher(stripLineComments(script)).find(); // $input inside /* */ block
     Set<String> declared = new java.util.HashSet<>();
     inputs.forEach(i -> declared.add(i.name()));
 
@@ -142,7 +137,7 @@ public class ProvenanceTests {
             (id, attrs) -> {
               if ("dataset".equals(attrs.get("kind")) && id.endsWith("@0")) {
                 String name = id.substring(0, id.length() - 2);
-                if (!declared.contains(name) && !hasTableForm) {
+                if (!declared.contains(name)) {
                   problems.add(id + ": binding dataset has no $input directive");
                 }
               }
@@ -211,31 +206,10 @@ public class ProvenanceTests {
     return max;
   }
 
-  // --- $input parsing (one-liner form only; table form arrives with the pivot PR) ------------
+  // --- $input parsing (one-liner + table form) -----------------------------------------------
 
   static List<InputDataset> parseInputs(String script) {
-    List<InputDataset> inputs = new ArrayList<>();
-    for (String line : script.lines().toList()) {
-      Matcher m = INPUT_ONE_LINER.matcher(line);
-      if (!m.matches()) {
-        continue;
-      }
-      List<InputDataset.Column> columns = new ArrayList<>();
-      for (String part : m.group(2).split(",")) {
-        String[] tokens = part.strip().split("\\s+");
-        if (tokens.length < 3) {
-          throw new IllegalArgumentException("malformed $input column: '" + part.strip() + "'");
-        }
-        Map<String, String> attrs = new java.util.LinkedHashMap<>();
-        for (int i = 3; i < tokens.length; i++) {
-          String[] kv = tokens[i].split("=", 2);
-          attrs.put(kv[0], kv.length > 1 ? kv[1] : "");
-        }
-        columns.add(new InputDataset.Column(tokens[0], tokens[1], tokens[2], attrs));
-      }
-      inputs.add(new InputDataset(m.group(1), columns));
-    }
-    return inputs;
+    return InputDirectives.parse(script);
   }
 
   private static String stripComments(String script) {

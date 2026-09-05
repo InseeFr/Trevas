@@ -3,6 +3,7 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured.DataStructure;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +81,29 @@ final class StructureOracle {
       types.put(column.name(), javaType(column.type()));
       roles.put(column.name(), Dataset.Role.valueOf(column.role()));
     }
-    return new InMemoryDataset(List.of(), types, roles);
+    if (input.rows().isEmpty()) {
+      return new InMemoryDataset(List.of(), types, roles);
+    }
+    DataStructure structure = new DataStructure(types, roles);
+    List<List<Object>> data = new ArrayList<>();
+    for (List<String> row : input.rows()) {
+      List<Object> values = new ArrayList<>(row.size());
+      for (int i = 0; i < row.size(); i++) {
+        values.add(cellValue(row.get(i), input.columns().get(i).type()));
+      }
+      data.add(values);
+    }
+    return new InMemoryDataset(data, structure);
+  }
+
+  private static Object cellValue(String raw, String vtlType) {
+    return switch (vtlType) {
+      case "STRING" -> raw;
+      case "INTEGER" -> Long.parseLong(raw);
+      case "NUMBER" -> Double.parseDouble(raw);
+      case "BOOLEAN" -> Boolean.parseBoolean(raw);
+      default -> throw new UnsupportedOperationException("unsupported: type " + vtlType);
+    };
   }
 
   private static Class<?> javaType(String vtlType) {
