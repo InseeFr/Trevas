@@ -52,9 +52,9 @@ progress paragraph.
   that mutates one shared `ProvGraph`. Entry: parse → **support check** (same
   grammar visitor, throws `unsupported: …` before eval) → structure oracle →
   `ProvenanceVisitor.visit(start)`. Unhandled rules throw (strict
-  `visitChildren`). Run state (`versions`, stmt index, oracle, `lastResultId`)
-  lives on the visitor — not in `T`. `T = Void` on purpose: the graph is the
-  artifact; parse `ctx` holds local syntax.
+  `visitChildren`). Per-expression state is a sealed **`PendingOp`**; statement
+  counters and the version map live on the visitor — not in `T`. `T = Void` on
+  purpose: the graph is the artifact; parse `ctx` holds local syntax.
 - **Golden self-check.** The harness also lints the corpus itself, with no
   extraction involved: every `expected.dot` imports; every node has `kind`;
   variable `dataset` attrs match id prefixes; edge endpoints are declared nodes;
@@ -85,12 +85,20 @@ Later PRs add more `visit*` methods.
   non-negotiable. Side effects on one graph beat `T = ProvGraph` (no focus/merge)
   and beat a manual `instanceof` walk. Optional later: a nested expr visitor with
   `T = String` (result id) if needed — not the default.
+- **Pending expression state is a sealed `PendingOp`.** One object after each
+  expression visit (identity, calc, join, set, …) carries the payload for
+  structure derivation and edge linking — not a stringly `lastOp` plus satellite
+  maps. Exhaustiveness stays local to `deriveStructure` / `linkPending`.
 - **Oracle in PR-2:** run-once-and-read-bindings (least invasive); a minimal
   engine hook can replace it later without touching the graph layer
-  (spec 20260728_01 §structure-oracle).
+  (spec 20260728_01 §structure-oracle). Eval may fail for ops the engine lacks;
+  then derive the whole LHS structure from `PendingOp` (do not mix with a partial
+  engine binding).
 - **Clause chaining is its own PR (7),** after single clauses — anonymous
   intermediates are the fiddly part and deserve isolated review.
-- **Unsupported syntax throws** from day one (principle 2).
+- **Unsupported syntax throws** from day one (principle 2). Stable message stems:
+  `define`, `scalar`, `arithmetic`, `clause`, `calc`, `aggr`, `join`, `set`,
+  `functions`.
 
 ## Open questions
 

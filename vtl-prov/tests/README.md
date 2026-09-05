@@ -90,3 +90,16 @@ expression (assignment, arithmetic, set ops, join) link instances **directly**.
 
 Ordering is irrelevant — fixtures are imported and compared as sets, and `//`
 comments are ignored, so keep section comments for readability.
+
+## Trevas syntax quirks (fixture authors)
+
+The corpus must parse under Trevas, not only under abstract VTL-as-spec:
+
+- Aggregation clause keyword is `aggr`, not `aggregate`.
+- Analytic `OVER` sits *inside* the call parentheses:
+  `sum(m1 over (partition by id order by t))`, not `sum(m1) over (…)`.
+- Some identifiers are reserved (`total`, …) — rename in the fixture if the lexer
+  rejects them (see `07-aggr`).
+- Structure types in goldens follow the engine when eval succeeds, and the
+  visitor’s derivation when it does not (e.g. analytic windows today). Do not
+  mix sources for one dataset.
