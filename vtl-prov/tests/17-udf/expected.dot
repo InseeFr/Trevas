@@ -1,0 +1,27 @@
+digraph {
+  // Black-box UDF (spec 02 §5.17): the output variable derives from the declared
+  // input variable(s); inlining the operator body is a later enhancement.
+  // stmt 1 = `define operator addone ...` (definition, no dataset)
+  // stmt 2 = `ds2 := ds1[calc m2 := addone(m1)]`  -> expression node e2.1
+
+  // input binding: ds1
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // stmt 2: ds2 := ds1[calc m2 := addone(m1)]
+  "ds2@2"    [kind=dataset, src="ds1[calc m2 := addone(m1)]"];
+  "ds2@2.id" [kind=variable, dataset="ds2@2", role=IDENTIFIER, type=STRING];
+  "ds2@2.m1" [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
+  "ds2@2.m2" [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
+
+  // calc RHS is a written expression -> its own node; the UDF call annotates op
+  "e2.1"     [kind=expression, src="addone(m1)"];
+  "e2.1" -> "ds1@0.m1" [op=addone];
+
+  // m2 from its defining expression; other columns pass through
+  "ds2@2"    -> "ds1@0"    [op=calc];
+  "ds2@2.m2" -> "e2.1"     [op=calc];
+  "ds2@2.id" -> "ds1@0.id" [op=calc];
+  "ds2@2.m1" -> "ds1@0.m1" [op=calc];
+}

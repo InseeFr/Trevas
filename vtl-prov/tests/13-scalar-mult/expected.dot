@@ -1,0 +1,19 @@
+digraph {
+  // input binding: ds1
+  "ds1@0"      [kind=dataset];
+  "ds1@0.id"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.var1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.var2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds2 := ds1 * 3   (dataset-level scalar op; literal 3 is not a node)
+  "ds2@1"      [kind=dataset, src="ds1 * 3"];
+  "ds2@1.id"   [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.var1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  "ds2@1.var2" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  // each measure derives from the same input measure; identifier passes through
+  "ds2@1"      -> "ds1@0"      [op="*"];
+  "ds2@1.id"   -> "ds1@0.id"   [op="*"];
+  "ds2@1.var1" -> "ds1@0.var1" [op="*"];
+  "ds2@1.var2" -> "ds1@0.var2" [op="*"];
+}

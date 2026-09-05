@@ -1,0 +1,2 @@
+// $input ds_mul: id STRING IDENTIFIER, var1 INTEGER MEASURE, var2 INTEGER MEASURE
+ds_res := ds_mul[filter mod(var1, 2) = 0][calc var_sum := var1 + var2];

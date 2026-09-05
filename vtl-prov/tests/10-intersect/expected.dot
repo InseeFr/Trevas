@@ -1,0 +1,26 @@
+digraph {
+  // intersect: both operands contribute the surviving rows' values (both value
+  // inputs). `symdiff` mirrors this exactly (op=symdiff).
+
+  // input binding: ds1
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // input binding: ds2 (same structure)
+  "ds2@0"    [kind=dataset];
+  "ds2@0.id" [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.m1" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds_i := intersect(ds1, ds2)
+  "ds_i@1"    [kind=dataset, src="intersect(ds1, ds2)"];
+  "ds_i@1.id" [kind=variable, dataset="ds_i@1", role=IDENTIFIER, type=STRING];
+  "ds_i@1.m1" [kind=variable, dataset="ds_i@1", role=MEASURE, type=INTEGER];
+
+  "ds_i@1"    -> "ds1@0"    [op=intersect];
+  "ds_i@1"    -> "ds2@0"    [op=intersect];
+  "ds_i@1.id" -> "ds1@0.id" [op=intersect];
+  "ds_i@1.id" -> "ds2@0.id" [op=intersect];
+  "ds_i@1.m1" -> "ds1@0.m1" [op=intersect];
+  "ds_i@1.m1" -> "ds2@0.m1" [op=intersect];
+}

@@ -1,0 +1,29 @@
+digraph {
+  // pivot output columns (Q1, Q2) are DATA-DEPENDENT: they are the distinct
+  // values of identifier `q`. That is why $input declares data rows — the graph
+  // cannot be known from structure alone. `unpivot` is the inverse (op=unpivot):
+  // measures collapse back into an identifier + a single measure column.
+
+  // input binding: ds1
+  "ds1@0"     [kind=dataset];
+  "ds1@0.id"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.q"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.val" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds2 := ds1[pivot q, val]
+  "ds2@1"     [kind=dataset, src="ds1[pivot q, val]"];
+  "ds2@1.id"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.Q1"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  "ds2@1.Q2"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  // remaining identifier passes through
+  "ds2@1"    -> "ds1@0"    [op=pivot];
+  "ds2@1.id" -> "ds1@0.id" [op=pivot];
+
+  // each new column derives from the pivoted measure (value) and the pivoted
+  // identifier q (whose value selects the target column -> condition)
+  "ds2@1.Q1" -> "ds1@0.val" [op=pivot];
+  "ds2@1.Q1" -> "ds1@0.q"   [op=pivot, role=condition];
+  "ds2@1.Q2" -> "ds1@0.val" [op=pivot];
+  "ds2@1.Q2" -> "ds1@0.q"   [op=pivot, role=condition];
+}
