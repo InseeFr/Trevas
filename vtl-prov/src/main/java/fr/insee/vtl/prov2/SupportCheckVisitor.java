@@ -3,7 +3,9 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.antlr.runtime.tree.RuleNode;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
@@ -12,9 +14,12 @@ import java.util.List;
  * <p>Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for harness / ops):
  * {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc}, {@code aggr},
  * {@code join}, {@code set}, {@code functions} (catch-all for other function families),
- * {@code check}.
+ * {@code check}, {@code define} (hierarchical ruleset still unsupported).
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
+
+  /** Names registered by {@code define operator} in this script (calc UDO calls). */
+  protected final Set<String> userOperators = new LinkedHashSet<>();
 
   @Override
   public Void visitChildren(RuleNode node) {
@@ -59,7 +64,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
-    throw unsupported("define");
+    // Black-box: register the name; do not walk the body.
+    userOperators.add(ctx.operatorID().getText());
+    return null;
   }
 
   @Override
@@ -275,7 +282,25 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
         && functions.functions() instanceof VtlParser.AnalyticFunctionsContext) {
       return;
     }
+    if (current instanceof VtlParser.FunctionsExpressionContext functions
+        && functions.functions() instanceof VtlParser.GenericFunctionsContext generic
+        && generic.genericOperators() instanceof VtlParser.CallDatasetContext call) {
+      requireKnownUdoCall(call);
+      return;
+    }
     throw unsupported("calc");
+  }
+
+  /** Scalar UDO call in calc: known operator, args are varId or constant only. */
+  private void requireKnownUdoCall(VtlParser.CallDatasetContext call) {
+    if (!userOperators.contains(call.operatorID().getText())) {
+      throw unsupported("calc");
+    }
+    for (VtlParser.ParameterContext parameter : call.parameter()) {
+      if (parameter.OPTIONAL() != null) {
+        throw unsupported("calc");
+      }
+    }
   }
 
   /** Filter predicates may use functions/comparisons; reject nested dataset clauses only. */

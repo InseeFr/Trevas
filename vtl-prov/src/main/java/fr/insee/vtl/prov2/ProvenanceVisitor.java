@@ -99,6 +99,13 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return null;
   }
 
+  @Override
+  public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
+    // Definition statement: consume an index; SupportCheck already registered the name.
+    stmtIndex++;
+    userOperators.add(ctx.operatorID().getText());
+    return null;
+  }
 
   @Override
   public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
@@ -231,9 +238,10 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       String component = item.componentID().getText();
       VtlParser.ExprContext rhs = item.expr();
       String exprId = nextExprId();
-      Set<String> valueRefs = componentRefs(rhs);
+      String udoOp = udoCallOperator(rhs);
+      Set<String> valueRefs = udoOp != null ? udoParamRefs(rhs) : componentRefs(rhs);
       Set<String> conditionRefs = analyticConditionRefs(rhs);
-      addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs);
+      addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs, udoOp);
       calcExprs.put(component, exprId);
       calcTypes.put(component, inferCalcType(src, valueRefs));
     }
@@ -244,7 +252,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private Void applyFilter(String srcId, VtlParser.FilterClauseContext filter) {
     VtlParser.ExprContext predicate = filter.expr();
     String exprId = nextExprId();
-    addExpression(exprId, text(predicate), srcId, componentRefs(predicate), Set.of());
+    addExpression(exprId, text(predicate), srcId, componentRefs(predicate), Set.of(), null);
     pending = new Filter(srcId, List.of(exprId));
     return null;
   }
@@ -253,7 +261,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     List<String> conditionIds = new ArrayList<>();
     for (VtlParser.SubspaceClauseItemContext item : sub.subspaceClauseItem()) {
       String exprId = nextExprId();
-      addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of());
+      addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of(), null);
       conditionIds.add(exprId);
     }
     pending = new Sub(srcId, List.copyOf(conditionIds));
@@ -296,7 +304,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       } else {
         throw unsupported("aggr");
       }
-      addExpression(exprId, text(op), srcId, refs, Set.of());
+      addExpression(exprId, text(op), srcId, refs, Set.of(), null);
       aggrExprs.put(component, exprId);
       aggrTypes.put(component, inferCalcType(src, refs));
     }
@@ -737,18 +745,60 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       String src,
       String datasetId,
       Set<String> valueRefs,
-      Set<String> conditionRefs) {
+      Set<String> conditionRefs,
+      String valueEdgeOp) {
     Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("kind", "expression");
     attrs.put("src", src);
     graph.addVertex(exprId, attrs);
+    Map<String, String> valueEdge =
+        valueEdgeOp == null ? Map.of() : Map.of("op", valueEdgeOp);
     for (String ref : valueRefs) {
-      graph.addEdge(exprId, datasetId + "." + ref, Map.of());
+      graph.addEdge(exprId, datasetId + "." + ref, valueEdge);
     }
     Map<String, String> condition = Map.of("role", "condition");
     for (String ref : conditionRefs) {
       graph.addEdge(exprId, datasetId + "." + ref, condition);
     }
+  }
+
+  /**
+   * Black-box UDO call operator name when {@code rhs} is a registered {@code operatorID(…)} call;
+   * otherwise {@code null}.
+   */
+  private String udoCallOperator(VtlParser.ExprContext expr) {
+    VtlParser.CallDatasetContext call = asUdoCall(expr);
+    return call == null ? null : call.operatorID().getText();
+  }
+
+  private VtlParser.CallDatasetContext asUdoCall(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (!(current instanceof VtlParser.FunctionsExpressionContext functions)) {
+      return null;
+    }
+    if (!(functions.functions() instanceof VtlParser.GenericFunctionsContext generic)) {
+      return null;
+    }
+    if (!(generic.genericOperators() instanceof VtlParser.CallDatasetContext call)) {
+      return null;
+    }
+    return userOperators.contains(call.operatorID().getText()) ? call : null;
+  }
+
+  /** Component names passed as UDO arguments ({@code varID} parameters only). */
+  private static Set<String> udoParamRefs(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    VtlParser.FunctionsExpressionContext functions = (VtlParser.FunctionsExpressionContext) current;
+    VtlParser.GenericFunctionsContext generic =
+        (VtlParser.GenericFunctionsContext) functions.functions();
+    VtlParser.CallDatasetContext call = (VtlParser.CallDatasetContext) generic.genericOperators();
+    Set<String> refs = new LinkedHashSet<>();
+    for (VtlParser.ParameterContext parameter : call.parameter()) {
+      if (parameter.varID() != null) {
+        refs.add(parameter.varID().getText());
+      }
+    }
+    return refs;
   }
 
   /** Partition / order-by keys of analytic windows — condition inputs, not value operands. */
