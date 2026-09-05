@@ -9,8 +9,8 @@ import fr.insee.vtl.parser.VtlParser;
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
- * operands); single {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} /
- * {@code rename} on a dataset varId. Nested clauses and other ops stay unsupported.
+ * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
+ * rename} on a dataset varId or a nested clause chain. Other ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -73,7 +73,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
-    requireDatasetVarId(ctx.expr());
+    requireDatasetOrClause(ctx.expr());
     VtlParser.DatasetClauseContext clause = ctx.datasetClause();
     if (clause.calcClause() != null) {
       clause.calcClause().calcClauseItem().forEach(item -> calcRhs(item.expr()));
@@ -111,10 +111,17 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("arithmetic");
   }
 
-  private void requireDatasetVarId(VtlParser.ExprContext expr) {
-    if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
-      throw unsupported("clause");
+  /** Dataset name, or a nested clause chain ({@code ds[…][…]}). */
+  private void requireDatasetOrClause(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.VarIdExprContext) {
+      return;
     }
+    if (current instanceof VtlParser.ClauseExprContext clause) {
+      visit(clause);
+      return;
+    }
+    throw unsupported("clause");
   }
 
   /** Component-level calc RHS (not dataset-level arithmetic). */

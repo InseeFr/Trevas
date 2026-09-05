@@ -13,7 +13,7 @@ import javax.script.ScriptException;
 
 /**
  * Run-once structure oracle (spec 20260728_01): eval the script, then read {@link DataStructure}
- * from named bindings. Anonymous intermediates are out of scope until a later PR.
+ * from named bindings. Anonymous intermediate structures are derived by {@link ProvenanceVisitor}.
  */
 final class StructureOracle {
 

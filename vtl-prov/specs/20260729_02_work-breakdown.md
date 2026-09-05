@@ -16,7 +16,7 @@ progress paragraph.
 | [x] | 4 | Expression nodes (calc) | 03 |
 | [x] | 5 | Condition edges (filter, sub) | 04, 14 |
 | [x] | 6 | Projection & rename | 05, 06 |
-| [ ] | 7 | Clause chaining + anonymous intermediates | chain-filter-calc |
+| [x] | 7 | Clause chaining + anonymous intermediates | chain-filter-calc |
 | [ ] | 8 | Aggr | 07 |
 | [ ] | 9 | Join | 08 |
 | [ ] | 10 | Set ops | 09, 10, 11 |
@@ -74,7 +74,8 @@ Richer RDF than today's triples is a later view, not PR-15.
 `ProvenanceVisitor` (identity `:=` / `<-`). **PR-3** adds component-wise dataset
 arithmetic (`02`, `13`). **PR-4** adds single-clause `calc` + expression nodes
 (`03`). **PR-5** adds `filter` / `sub` with `role=condition` (`04`, `14`).
-**PR-6** adds `keep`/`drop` / `rename` (`05`, `06`). Later PRs add more
+**PR-6** adds `keep`/`drop` / `rename` (`05`, `06`). **PR-7** adds clause
+chaining with anonymous intermediates (`chain-filter-calc`). Later PRs add more
 `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)
