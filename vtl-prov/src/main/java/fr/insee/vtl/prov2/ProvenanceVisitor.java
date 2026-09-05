@@ -26,8 +26,9 @@ import java.util.stream.Collectors;
  * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, run state describes
  * what the enclosing assignment materializes: identity ({@code lastOp == null}), component-wise ops
  * ({@code +}, {@code *}, {@code keep}, …), or clause ops ({@code calc}, {@code filter}, {@code
- * sub}, {@code rename}, {@code aggr}), or join ops ({@code inner_join}, …). Nested clauses
- * materialize anonymous intermediates ({@code #s{stmt}.{seq}}) before the next clause applies.
+ * sub}, {@code rename}, {@code aggr}), join ops ({@code inner_join}, …), or set ops ({@code union},
+ * {@code intersect}, {@code setdiff}, {@code symdiff}). Nested clauses materialize anonymous
+ * intermediates ({@code #s{stmt}.{seq}}) before the next clause applies.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
@@ -110,6 +111,39 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     clearExprState();
     lastOp = ctx.joinKeyword.getText();
+    lastOperandIds = List.copyOf(operands);
+    return null;
+  }
+
+  @Override
+  public Void visitUnionAtom(VtlParser.UnionAtomContext ctx) {
+    return multiDatasetOp("union", ctx.expr());
+  }
+
+  @Override
+  public Void visitIntersectAtom(VtlParser.IntersectAtomContext ctx) {
+    return multiDatasetOp("intersect", ctx.expr());
+  }
+
+  @Override
+  public Void visitSetOrSYmDiffAtom(VtlParser.SetOrSYmDiffAtomContext ctx) {
+    return multiDatasetOp(ctx.op.getText(), List.of(ctx.left, ctx.right));
+  }
+
+  private Void multiDatasetOp(String op, List<? extends VtlParser.ExprContext> exprs) {
+    List<String> operands = new ArrayList<>(exprs.size());
+    for (VtlParser.ExprContext expr : exprs) {
+      String operandId = datasetOperand(expr);
+      if (operandId == null) {
+        throw unsupported("functions");
+      }
+      operands.add(operandId);
+    }
+    if (operands.size() < 2) {
+      throw unsupported("functions");
+    }
+    clearExprState();
+    lastOp = op;
     lastOperandIds = List.copyOf(operands);
     return null;
   }
@@ -293,7 +327,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     anonSeq = 0;
     visit(expr);
     String outId = out + "@" + stmtIndex;
-    DataStructure outStructure = oracle.requireDataset(out);
+    DataStructure outStructure =
+        oracle.hasDataset(out) ? oracle.requireDataset(out) : structureForPendingOp();
     addDataset(outId, outStructure, text(expr), false);
     linkAssignment(outId, outStructure);
     versions.put(out, outId);
@@ -329,6 +364,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       case "rename" -> deriveRenameStructure(requireStructure(lastResultId), lastRenameFrom);
       case "inner_join", "left_join", "full_join", "cross_join" ->
           deriveJoinStructure(lastOperandIds);
+      case "union", "intersect", "setdiff", "symdiff" ->
+          new DataStructure(requireStructure(lastOperandIds.get(0)));
       default -> throw unsupported("clause");
     };
   }
@@ -455,8 +492,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       case "rename" -> linkRename(outId, outStructure, lastResultId, lastRenameFrom);
       case "inner_join", "left_join", "full_join", "cross_join" ->
           linkJoin(outId, outStructure, lastOperandIds, lastOp);
+      case "setdiff" ->
+          linkSetDiff(outId, outStructure, lastOperandIds.get(0), lastOperandIds.get(1));
       default -> linkComponentWise(outId, outStructure, lastOperandIds, lastOp);
     }
+  }
+
+  private void linkSetDiff(
+      String outId, DataStructure outStructure, String leftId, String rightId) {
+    Map<String, String> edge = opEdge("setdiff");
+    Map<String, String> condition = new LinkedHashMap<>(edge);
+    condition.put("role", "condition");
+    graph.addEdge(outId, leftId, edge);
+    graph.addEdge(outId, rightId, condition);
+    linkPassThrough(outId, outStructure, leftId, edge);
   }
 
   private void linkJoin(

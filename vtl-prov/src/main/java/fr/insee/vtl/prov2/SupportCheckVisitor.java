@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
  * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
- * rename} / {@code aggr}; empty-body joins. Other ops stay unsupported.
+ * rename} / {@code aggr}; empty-body joins; set ops. Other ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -100,6 +100,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.functions() instanceof VtlParser.JoinFunctionsContext join) {
       return visit(join);
     }
+    if (ctx.functions() instanceof VtlParser.SetFunctionsContext set) {
+      return visit(set);
+    }
     throw unsupported("functions");
   }
 
@@ -117,6 +120,30 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       }
       requireDatasetVarId(item.expr());
     }
+    return null;
+  }
+
+  @Override
+  public Void visitSetFunctions(VtlParser.SetFunctionsContext ctx) {
+    return visit(ctx.setOperators());
+  }
+
+  @Override
+  public Void visitUnionAtom(VtlParser.UnionAtomContext ctx) {
+    ctx.expr().forEach(this::requireDatasetVarId);
+    return null;
+  }
+
+  @Override
+  public Void visitIntersectAtom(VtlParser.IntersectAtomContext ctx) {
+    ctx.expr().forEach(this::requireDatasetVarId);
+    return null;
+  }
+
+  @Override
+  public Void visitSetOrSYmDiffAtom(VtlParser.SetOrSYmDiffAtomContext ctx) {
+    requireDatasetVarId(ctx.left);
+    requireDatasetVarId(ctx.right);
     return null;
   }
 
