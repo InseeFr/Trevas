@@ -11,7 +11,8 @@ import java.util.List;
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for harness / ops):
  * {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc}, {@code aggr},
- * {@code join}, {@code set}, {@code functions} (catch-all for other function families).
+ * {@code join}, {@code set}, {@code functions} (catch-all for other function families),
+ * {@code check}.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -40,6 +41,29 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitDefineExpression(VtlParser.DefineExpressionContext ctx) {
+    return visit(ctx.defOperators());
+  }
+
+  @Override
+  public Void visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
+    if (ctx.rulesetSignature().VARIABLE() == null) {
+      throw unsupported("define");
+    }
+    for (VtlParser.SignatureContext signature : ctx.rulesetSignature().signature()) {
+      if (signature.alias() != null) {
+        throw unsupported("define");
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
+    throw unsupported("define");
+  }
+
+  @Override
+  public Void visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
     throw unsupported("define");
   }
 
@@ -103,7 +127,34 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.functions() instanceof VtlParser.SetFunctionsContext set) {
       return visit(set);
     }
+    if (ctx.functions() instanceof VtlParser.ValidationFunctionsContext validation) {
+      return visit(validation);
+    }
     throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitValidationFunctions(VtlParser.ValidationFunctionsContext ctx) {
+    return visit(ctx.validationOperators());
+  }
+
+  @Override
+  public Void visitValidateDPruleset(VtlParser.ValidateDPrulesetContext ctx) {
+    if (ctx.componentID() != null && !ctx.componentID().isEmpty()) {
+      throw unsupported("check");
+    }
+    requireDatasetVarId(ctx.op, "check");
+    return null;
+  }
+
+  @Override
+  public Void visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
+    throw unsupported("check");
+  }
+
+  @Override
+  public Void visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
+    throw unsupported("check");
   }
 
   @Override

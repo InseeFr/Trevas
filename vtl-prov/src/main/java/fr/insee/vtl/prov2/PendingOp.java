@@ -109,4 +109,17 @@ sealed interface PendingOp {
       return operandIds.get(0);
     }
   }
+
+
+  /**
+   * {@code check_datapoint(ds, ruleset …)}. {@code validatedVars} come from the datapoint ruleset
+   * signature ({@code variable …}).
+   */
+  record CheckDatapoint(String srcId, String ruleset, List<String> validatedVars)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
 }

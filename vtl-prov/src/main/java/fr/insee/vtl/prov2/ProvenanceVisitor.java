@@ -13,6 +13,7 @@ import fr.insee.vtl.prov.utils.VTLTypes;
 import fr.insee.vtl.prov2.PendingOp.Aggr;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
+import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov2.PendingOp.Drop;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
@@ -46,6 +47,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private final StructureOracle oracle;
   private final Map<String, String> versions = new LinkedHashMap<>();
   private final Map<String, DataStructure> structures = new LinkedHashMap<>();
+  /** Datapoint ruleset name → signature variable names. */
+  private final Map<String, List<String>> datapointRulesets = new LinkedHashMap<>();
   private int stmtIndex;
   private int exprSeq;
   private int anonSeq;
@@ -72,6 +75,30 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   public Void visitPersistAssignment(VtlParser.PersistAssignmentContext ctx) {
     return assign(ctx.varID().getText(), ctx.expr());
   }
+
+  @Override
+  public Void visitDefineExpression(VtlParser.DefineExpressionContext ctx) {
+    return visit(ctx.defOperators());
+  }
+
+  @Override
+  public Void visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
+    // Definition statement: consume an index, register signature vars, emit no dataset nodes.
+    stmtIndex++;
+    if (ctx.rulesetSignature().VARIABLE() == null) {
+      throw unsupported("define");
+    }
+    List<String> variables = new ArrayList<>();
+    for (VtlParser.SignatureContext signature : ctx.rulesetSignature().signature()) {
+      if (signature.alias() != null) {
+        throw unsupported("define");
+      }
+      variables.add(signature.varID().getText());
+    }
+    datapointRulesets.put(ctx.rulesetID().getText(), List.copyOf(variables));
+    return null;
+  }
+
 
   @Override
   public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
@@ -130,6 +157,24 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return multiDatasetOp(ctx.op.getText(), List.of(ctx.left, ctx.right));
   }
 
+  @Override
+  public Void visitValidateDPruleset(VtlParser.ValidateDPrulesetContext ctx) {
+    if (ctx.componentID() != null && !ctx.componentID().isEmpty()) {
+      throw unsupported("check");
+    }
+    String srcId = datasetOperand(ctx.op);
+    if (srcId == null) {
+      throw unsupported("check");
+    }
+    String ruleset = ctx.dpName.getText();
+    List<String> validated = datapointRulesets.get(ruleset);
+    if (validated == null) {
+      throw new IllegalStateException("unknown datapoint ruleset " + ruleset);
+    }
+    pending = new CheckDatapoint(srcId, ruleset, validated);
+    return null;
+  }
+
   private Void multiDatasetOp(String op, List<? extends VtlParser.ExprContext> exprs) {
     List<String> operands = new ArrayList<>(exprs.size());
     for (VtlParser.ExprContext expr : exprs) {
@@ -176,6 +221,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     throw unsupported("clause");
   }
+
 
   private Void applyCalc(String srcId, VtlParser.CalcClauseContext calc) {
     DataStructure src = requireStructure(srcId);
@@ -382,7 +428,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (op instanceof SetOp setOp) {
       return new DataStructure(requireStructure(setOp.operandIds().get(0)));
     }
+    if (op instanceof CheckDatapoint check) {
+      return deriveCheckDatapointStructure(requireStructure(check.srcId()));
+    }
     throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
+  }
+
+  /** Fallback when the engine did not bind the LHS — mirrors Trevas {@code all} output. */
+  private static DataStructure deriveCheckDatapointStructure(DataStructure src) {
+    List<Component> components = new ArrayList<>(src.componentsInOrder());
+    components.add(new Component("ruleid", String.class, Dataset.Role.IDENTIFIER));
+    components.add(new Component("bool_var", Boolean.class, Dataset.Role.MEASURE));
+    components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
+    components.add(new Component("errorlevel", Long.class, Dataset.Role.MEASURE));
+    return new DataStructure(components);
   }
 
   private DataStructure deriveJoinStructure(List<String> operandIds) {
@@ -542,7 +601,35 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
       return;
     }
+    if (pending instanceof CheckDatapoint check) {
+      linkCheckDatapoint(outId, outStructure, check);
+      return;
+    }
     throw new IllegalStateException("unhandled pending op " + pending.getClass().getName());
+  }
+
+  private void linkCheckDatapoint(
+      String outId, DataStructure outStructure, CheckDatapoint check) {
+    Map<String, String> edge = new LinkedHashMap<>();
+    edge.put("op", "check_datapoint");
+    edge.put("ruleset", check.ruleset());
+    Map<String, String> pass = Map.of("op", "check_datapoint");
+    graph.addEdge(outId, check.srcId(), edge);
+    Set<String> validationCols = Set.of("bool_var", "errorcode", "errorlevel");
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      if ("ruleid".equals(name)) {
+        continue;
+      }
+      String outVar = outId + "." + name;
+      if (validationCols.contains(name)) {
+        for (String validated : check.validatedVars()) {
+          graph.addEdge(outVar, check.srcId() + "." + validated, edge);
+        }
+      } else if (requireStructure(check.srcId()).containsKey(name)) {
+        graph.addEdge(outVar, check.srcId() + "." + name, pass);
+      }
+    }
   }
 
   private void linkPassThroughAll(
