@@ -23,7 +23,7 @@ progress paragraph.
 | [x] | 11 | Analytic | 12 |
 | [x] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
 | [x] | 13 | User-defined operators | 17 |
-| [ ] | 14 | Pivot + table-form `$input` parsing | 15 |
+| [x] | 14 | Pivot + table-form `$input` parsing | 15 |
 | [ ] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
 | [ ] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
 
@@ -66,8 +66,8 @@ progress paragraph.
 
 **PR-1** lives in `vtl-prov/src/test` under **`fr.insee.vtl.prov2.tests`**
 (`ProvenanceTests`, `Graph`, `GraphAssert`) so legacy `fr.insee.vtl.prov` stays
-untouched until PR-16. One-liner `$input` only (table form = PR-14). The
-directive parser later migrates to `vtl-test-utils` (spec 20260729_01 §6/§8).
+untouched until PR-16. `$input` parsing (one-liner + table) is
+`InputDirectives` in `prov2` (later → `vtl-test-utils`, spec 20260729_01 §6/§8).
 Richer RDF than today's triples is a later view, not PR-15.
 
 **PR-2** ships `ProvenanceExtractor` → `SupportCheckVisitor` /
@@ -79,6 +79,9 @@ chaining with anonymous intermediates (`chain-filter-calc`). **PR-8** adds
 `aggr` (`07`). **PR-9** adds empty-body joins (`08`). **PR-10** adds set ops (`09`, `10`, `11`). **PR-11** adds analytic windows inside `calc` (`12`).
 **PR-12** adds `define datapoint ruleset` + `check_datapoint` (`16`).
 **PR-13** adds black-box `define operator` + UDO calls in `calc` (`17`).
+**PR-14** adds table-form `$input` + `pivot` (`15`; structure derived from input
+rows — in-memory engine has no pivot). `unpivot` stays unsupported until a
+corpus case exists.
 Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)
