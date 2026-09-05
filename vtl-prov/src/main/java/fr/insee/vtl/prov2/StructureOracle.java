@@ -19,7 +19,8 @@ import javax.script.ScriptException;
  * <p>Eval may fail when the engine lacks an operator that provenance already covers ({@code
  * intersect}, analytic windows, …). In that case {@link #evalSucceeded()} is {@code false}, input
  * bindings remain available, and {@link ProvenanceVisitor} derives missing output structures from
- * {@link PendingOp}. Anonymous intermediates are always derived (never engine-bound).
+ * {@link PendingOp} via {@link StructureDeriver}. Anonymous intermediates are always derived
+ * (never engine-bound).
  *
  * <p>Structure rule for a named assignment LHS: if {@link #hasDataset(String)} then use the
  * engine binding; otherwise derive from the pending op. Do not mix column types from both sources
@@ -78,7 +79,7 @@ final class StructureOracle {
     Map<String, Class<?>> types = new LinkedHashMap<>();
     Map<String, Dataset.Role> roles = new LinkedHashMap<>();
     for (InputDataset.Column column : input.columns()) {
-      types.put(column.name(), javaType(column.type()));
+      types.put(column.name(), VtlJavaTypes.javaType(column.type()));
       roles.put(column.name(), Dataset.Role.valueOf(column.role()));
     }
     if (input.rows().isEmpty()) {
@@ -89,30 +90,10 @@ final class StructureOracle {
     for (List<String> row : input.rows()) {
       List<Object> values = new ArrayList<>(row.size());
       for (int i = 0; i < row.size(); i++) {
-        values.add(cellValue(row.get(i), input.columns().get(i).type()));
+        values.add(VtlJavaTypes.cellValue(row.get(i), input.columns().get(i).type()));
       }
       data.add(values);
     }
     return new InMemoryDataset(data, structure);
-  }
-
-  private static Object cellValue(String raw, String vtlType) {
-    return switch (vtlType) {
-      case "STRING" -> raw;
-      case "INTEGER" -> Long.parseLong(raw);
-      case "NUMBER" -> Double.parseDouble(raw);
-      case "BOOLEAN" -> Boolean.parseBoolean(raw);
-      default -> throw new UnsupportedOperationException("unsupported: type " + vtlType);
-    };
-  }
-
-  private static Class<?> javaType(String vtlType) {
-    return switch (vtlType) {
-      case "STRING" -> String.class;
-      case "INTEGER" -> Long.class;
-      case "NUMBER" -> Double.class;
-      case "BOOLEAN" -> Boolean.class;
-      default -> throw new UnsupportedOperationException("unsupported: type " + vtlType);
-    };
   }
 }

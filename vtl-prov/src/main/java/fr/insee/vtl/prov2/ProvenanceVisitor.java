@@ -4,7 +4,6 @@ import fr.insee.vtl.antlr.runtime.CharStream;
 import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.misc.Interval;
-import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -37,20 +36,22 @@ import java.util.stream.Collectors;
  * ProvGraph}.
  *
  * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, {@link #pending}
- * holds a {@link PendingOp} describing what the enclosing assignment (or anonymous materialization)
- * will emit: {@link Identity} for a bare dataset ref, or a typed operator carrying its operands and
- * clause payload. Nested clauses materialize anonymous intermediates ({@code #s{stmt}.{seq}}) when
- * the left expression is already a non-identity op.
+ * holds a {@link PendingOp}. Nested clauses materialize anonymous intermediates
+ * ({@code #s{stmt}.{seq}}) when the left expression is already a non-identity op. Structure and
+ * edges are delegated to {@link StructureDeriver} / {@link EdgeLinker}; defines are registered
+ * once in {@link ScriptSymbols} during support-check.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
   private final ProvGraph graph;
   private final StructureOracle oracle;
-  private final Map<String, InputDataset> inputsByName = new LinkedHashMap<>();
+  private final ScriptSymbols symbols;
+  private final StructureDeriver deriver;
+  private final EdgeLinker linker;
+  /** Versioned dataset id → binding rows (for data-dependent ops such as pivot). */
+  private final Map<String, InputDataset> bindingsWithRows = new LinkedHashMap<>();
   private final Map<String, String> versions = new LinkedHashMap<>();
   private final Map<String, DataStructure> structures = new LinkedHashMap<>();
-  /** Datapoint ruleset name → signature variable names. */
-  private final Map<String, List<String>> datapointRulesets = new LinkedHashMap<>();
   private int stmtIndex;
   private int exprSeq;
   private int anonSeq;
@@ -58,13 +59,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /** Outcome of the last visited expression; never null after a successful expr visit. */
   private PendingOp pending;
 
-  ProvenanceVisitor(ProvGraph graph, StructureOracle oracle, List<InputDataset> inputs) {
+  ProvenanceVisitor(
+      ProvGraph graph, StructureOracle oracle, List<InputDataset> inputs, ScriptSymbols symbols) {
+    super(symbols);
     this.graph = graph;
     this.oracle = oracle;
+    this.symbols = symbols;
+    this.deriver = new StructureDeriver(structures::get);
+    this.linker = new EdgeLinker(graph, structures::get);
     for (InputDataset input : inputs) {
-      inputsByName.put(input.name(), input);
       String id = input.name() + "@0";
       versions.put(input.name(), id);
+      if (!input.rows().isEmpty()) {
+        bindingsWithRows.put(id, input);
+      }
       addDataset(id, oracle.requireDataset(input.name()), null, false);
     }
   }
@@ -86,27 +94,15 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   @Override
   public Void visitDefDatapointRuleset(VtlParser.DefDatapointRulesetContext ctx) {
-    // Definition statement: consume an index, register signature vars, emit no dataset nodes.
+    // Support-check already validated and registered the signature in ScriptSymbols.
     stmtIndex++;
-    if (ctx.rulesetSignature().VARIABLE() == null) {
-      throw unsupported("define");
-    }
-    List<String> variables = new ArrayList<>();
-    for (VtlParser.SignatureContext signature : ctx.rulesetSignature().signature()) {
-      if (signature.alias() != null) {
-        throw unsupported("define");
-      }
-      variables.add(signature.varID().getText());
-    }
-    datapointRulesets.put(ctx.rulesetID().getText(), List.copyOf(variables));
     return null;
   }
 
   @Override
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
-    // Definition statement: consume an index; SupportCheck already registered the name.
+    // Support-check already registered the operator name in ScriptSymbols.
     stmtIndex++;
-    userOperators.add(ctx.operatorID().getText());
     return null;
   }
 
@@ -177,7 +173,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       throw unsupported("check");
     }
     String ruleset = ctx.dpName.getText();
-    List<String> validated = datapointRulesets.get(ruleset);
+    List<String> validated = symbols.datapointVariables(ruleset);
     if (validated == null) {
       throw new IllegalStateException("unknown datapoint ruleset " + ruleset);
     }
@@ -254,10 +250,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
    * the binding that produced {@code srcId} (engine pivot is unimplemented in-memory).
    */
   private List<String> distinctPivotValues(String srcId, String idComponent) {
-    int at = srcId.lastIndexOf('@');
-    String bindingName = at > 0 ? srcId.substring(0, at) : srcId;
-    InputDataset input = inputsByName.get(bindingName);
-    if (input == null || input.rows().isEmpty()) {
+    InputDataset input = bindingsWithRows.get(srcId);
+    if (input == null) {
       throw unsupported("clause");
     }
     int col = -1;
@@ -418,7 +412,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     String outId = out + "@" + stmtIndex;
     DataStructure outStructure = structureForAssignment(out);
     addDataset(outId, outStructure, text(expr), false);
-    linkPending(outId, outStructure);
+    linker.link(pending, outId, outStructure);
     versions.put(out, outId);
     pending = new Identity(outId);
     return null;
@@ -432,9 +426,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     requirePending();
     anonSeq++;
     String anonId = "#s" + stmtIndex + "." + anonSeq;
-    DataStructure structure = deriveStructure(pending);
+    DataStructure structure = deriver.derive(pending);
     addDataset(anonId, structure, null, true);
-    linkPending(anonId, structure);
+    linker.link(pending, anonId, structure);
     pending = new Identity(anonId);
   }
 
@@ -446,172 +440,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (oracle.hasDataset(out)) {
       return oracle.requireDataset(out);
     }
-    return deriveStructure(pending);
-  }
-
-  private DataStructure deriveStructure(PendingOp op) {
-    if (op instanceof Identity id) {
-      return new DataStructure(requireStructure(id.datasetId()));
-    }
-    if (op instanceof Arithmetic arithmetic) {
-      return new DataStructure(requireStructure(arithmetic.operandIds().get(0)));
-    }
-    if (op instanceof Calc calc) {
-      return deriveCalcStructure(requireStructure(calc.srcId()), calc.types());
-    }
-    if (op instanceof Aggr aggr) {
-      return deriveAggrStructure(requireStructure(aggr.srcId()), aggr.types(), aggr.groupBy());
-    }
-    if (op instanceof Filter filter) {
-      return new DataStructure(requireStructure(filter.srcId()));
-    }
-    if (op instanceof Sub sub) {
-      return new DataStructure(requireStructure(sub.srcId()));
-    }
-    if (op instanceof Keep keep) {
-      return deriveKeepStructure(requireStructure(keep.srcId()), keep.columns());
-    }
-    if (op instanceof Drop drop) {
-      return deriveDropStructure(requireStructure(drop.srcId()), drop.columns());
-    }
-    if (op instanceof Rename rename) {
-      return deriveRenameStructure(requireStructure(rename.srcId()), rename.renameFrom());
-    }
-    if (op instanceof Join join) {
-      return deriveJoinStructure(join.operandIds());
-    }
-    if (op instanceof SetOp setOp) {
-      return new DataStructure(requireStructure(setOp.operandIds().get(0)));
-    }
-    if (op instanceof CheckDatapoint check) {
-      return deriveCheckDatapointStructure(requireStructure(check.srcId()));
-    }
-    if (op instanceof Pivot pivot) {
-      return derivePivotStructure(
-          requireStructure(pivot.srcId()),
-          pivot.idComponent(),
-          pivot.measureComponent(),
-          pivot.pivotedColumns());
-    }
-    throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
-  }
-
-  private static DataStructure derivePivotStructure(
-      DataStructure src, String idComponent, String measureComponent, List<String> pivotedColumns) {
-    Component measure = src.get(measureComponent);
-    if (measure == null) {
-      throw new IllegalStateException("unknown pivot measure " + measureComponent);
-    }
-    List<Component> components = new ArrayList<>();
-    for (Component component : src.componentsInOrder()) {
-      String name = component.getName();
-      if (name.equals(idComponent) || name.equals(measureComponent)) {
-        continue;
-      }
-      components.add(new Component(component));
-    }
-    for (String pivoted : pivotedColumns) {
-      components.add(new Component(pivoted, measure.getType(), Dataset.Role.MEASURE));
-    }
-    return new DataStructure(components);
-  }
-
-  /** Fallback when the engine did not bind the LHS — mirrors Trevas {@code all} output. */
-  private static DataStructure deriveCheckDatapointStructure(DataStructure src) {
-    List<Component> components = new ArrayList<>(src.componentsInOrder());
-    components.add(new Component("ruleid", String.class, Dataset.Role.IDENTIFIER));
-    components.add(new Component("bool_var", Boolean.class, Dataset.Role.MEASURE));
-    components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
-    components.add(new Component("errorlevel", Long.class, Dataset.Role.MEASURE));
-    return new DataStructure(components);
-  }
-
-  private DataStructure deriveJoinStructure(List<String> operandIds) {
-    List<Component> components = new ArrayList<>();
-    Set<String> seen = new LinkedHashSet<>();
-    for (String operandId : operandIds) {
-      for (Component component : requireStructure(operandId).componentsInOrder()) {
-        if (seen.add(component.getName())) {
-          components.add(new Component(component));
-        }
-      }
-    }
-    return new DataStructure(components);
-  }
-
-  private static DataStructure deriveAggrStructure(
-      DataStructure src, Map<String, Class<?>> aggrTypes, List<String> groupBy) {
-    List<Component> components = new ArrayList<>();
-    for (String key : groupBy) {
-      Component component = src.get(key);
-      if (component == null) {
-        throw new IllegalStateException("unknown group-by component " + key);
-      }
-      components.add(
-          new Component(component.getName(), component.getType(), Dataset.Role.IDENTIFIER));
-    }
-    for (Map.Entry<String, Class<?>> entry : aggrTypes.entrySet()) {
-      components.add(new Component(entry.getKey(), entry.getValue(), Dataset.Role.MEASURE));
-    }
-    return new DataStructure(components);
-  }
-
-  private static DataStructure deriveCalcStructure(
-      DataStructure src, Map<String, Class<?>> calcTypes) {
-    List<Component> components = new ArrayList<>(src.componentsInOrder());
-    for (Map.Entry<String, Class<?>> entry : calcTypes.entrySet()) {
-      String name = entry.getKey();
-      Class<?> type = entry.getValue();
-      int existing = -1;
-      for (int i = 0; i < components.size(); i++) {
-        if (components.get(i).getName().equals(name)) {
-          existing = i;
-          break;
-        }
-      }
-      Component component = new Component(name, type, Dataset.Role.MEASURE);
-      if (existing >= 0) {
-        components.set(existing, component);
-      } else {
-        components.add(component);
-      }
-    }
-    return new DataStructure(components);
-  }
-
-  private static DataStructure deriveKeepStructure(DataStructure src, List<String> columns) {
-    List<Component> kept = new ArrayList<>();
-    for (Component component : src.componentsInOrder()) {
-      if (component.isIdentifier() || columns.contains(component.getName())) {
-        kept.add(component);
-      }
-    }
-    return new DataStructure(kept);
-  }
-
-  private static DataStructure deriveDropStructure(DataStructure src, List<String> columns) {
-    Set<String> dropped = new LinkedHashSet<>(columns);
-    List<Component> kept = new ArrayList<>();
-    for (Component component : src.componentsInOrder()) {
-      if (component.isIdentifier() || !dropped.contains(component.getName())) {
-        kept.add(component);
-      }
-    }
-    return new DataStructure(kept);
-  }
-
-  private static DataStructure deriveRenameStructure(
-      DataStructure src, Map<String, String> renameFrom) {
-    Map<String, String> fromTo = new LinkedHashMap<>();
-    for (Map.Entry<String, String> entry : renameFrom.entrySet()) {
-      fromTo.put(entry.getValue(), entry.getKey());
-    }
-    List<Component> renamed = new ArrayList<>();
-    for (Component component : src.componentsInOrder()) {
-      String name = fromTo.getOrDefault(component.getName(), component.getName());
-      renamed.add(new Component(name, component.getType(), component.getRole()));
-    }
-    return new DataStructure(renamed);
+    return deriver.derive(pending);
   }
 
   private static Class<?> inferCalcType(DataStructure src, Set<String> refs) {
@@ -630,211 +459,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
     }
     return result != null ? result : Long.class;
-  }
-
-  private void linkPending(String outId, DataStructure outStructure) {
-    requirePending();
-    if (pending instanceof Identity id) {
-      linkComponentWise(outId, outStructure, List.of(id.datasetId()), "assign");
-      return;
-    }
-    if (pending instanceof Arithmetic arithmetic) {
-      linkComponentWise(outId, outStructure, arithmetic.operandIds(), arithmetic.op());
-      return;
-    }
-    if (pending instanceof Calc calc) {
-      linkMappedExprs(outId, outStructure, calc.srcId(), calc.exprs(), "calc");
-      return;
-    }
-    if (pending instanceof Aggr aggr) {
-      linkMappedExprs(outId, outStructure, aggr.srcId(), aggr.exprs(), "aggr");
-      return;
-    }
-    if (pending instanceof Filter filter) {
-      linkConditionClause(
-          outId, outStructure, filter.srcId(), filter.conditionExprIds(), "filter");
-      return;
-    }
-    if (pending instanceof Sub sub) {
-      linkConditionClause(outId, outStructure, sub.srcId(), sub.conditionExprIds(), "sub");
-      return;
-    }
-    if (pending instanceof Keep keep) {
-      linkPassThroughAll(outId, outStructure, keep.srcId(), "keep");
-      return;
-    }
-    if (pending instanceof Drop drop) {
-      linkPassThroughAll(outId, outStructure, drop.srcId(), "drop");
-      return;
-    }
-    if (pending instanceof Rename rename) {
-      linkRename(outId, outStructure, rename.srcId(), rename.renameFrom());
-      return;
-    }
-    if (pending instanceof Join join) {
-      linkJoin(outId, outStructure, join.operandIds(), join.op());
-      return;
-    }
-    if (pending instanceof SetOp setOp) {
-      if ("setdiff".equals(setOp.op())) {
-        linkSetDiff(outId, outStructure, setOp.operandIds().get(0), setOp.operandIds().get(1));
-      } else {
-        linkComponentWise(outId, outStructure, setOp.operandIds(), setOp.op());
-      }
-      return;
-    }
-    if (pending instanceof CheckDatapoint check) {
-      linkCheckDatapoint(outId, outStructure, check);
-      return;
-    }
-    if (pending instanceof Pivot pivot) {
-      linkPivot(outId, outStructure, pivot);
-      return;
-    }
-    throw new IllegalStateException("unhandled pending op " + pending.getClass().getName());
-  }
-
-  private void linkPivot(String outId, DataStructure outStructure, Pivot pivot) {
-    Map<String, String> edge = opEdge("pivot");
-    Map<String, String> condition = new LinkedHashMap<>(edge);
-    condition.put("role", "condition");
-    graph.addEdge(outId, pivot.srcId(), edge);
-    DataStructure src = requireStructure(pivot.srcId());
-    Set<String> pivoted = new LinkedHashSet<>(pivot.pivotedColumns());
-    for (Component component : outStructure.values()) {
-      String name = component.getName();
-      String outVar = outId + "." + name;
-      if (pivoted.contains(name)) {
-        graph.addEdge(outVar, pivot.srcId() + "." + pivot.measureComponent(), edge);
-        graph.addEdge(outVar, pivot.srcId() + "." + pivot.idComponent(), condition);
-      } else if (src.containsKey(name)) {
-        graph.addEdge(outVar, pivot.srcId() + "." + name, edge);
-      }
-    }
-  }
-
-  private void linkCheckDatapoint(
-      String outId, DataStructure outStructure, CheckDatapoint check) {
-    Map<String, String> edge = new LinkedHashMap<>();
-    edge.put("op", "check_datapoint");
-    edge.put("ruleset", check.ruleset());
-    Map<String, String> pass = Map.of("op", "check_datapoint");
-    graph.addEdge(outId, check.srcId(), edge);
-    Set<String> validationCols = Set.of("bool_var", "errorcode", "errorlevel");
-    for (Component component : outStructure.values()) {
-      String name = component.getName();
-      if ("ruleid".equals(name)) {
-        continue;
-      }
-      String outVar = outId + "." + name;
-      if (validationCols.contains(name)) {
-        for (String validated : check.validatedVars()) {
-          graph.addEdge(outVar, check.srcId() + "." + validated, edge);
-        }
-      } else if (requireStructure(check.srcId()).containsKey(name)) {
-        graph.addEdge(outVar, check.srcId() + "." + name, pass);
-      }
-    }
-  }
-
-  private void linkPassThroughAll(
-      String outId, DataStructure outStructure, String srcId, String op) {
-    Map<String, String> edge = opEdge(op);
-    graph.addEdge(outId, srcId, edge);
-    linkPassThrough(outId, outStructure, srcId, edge);
-  }
-
-  private void linkSetDiff(
-      String outId, DataStructure outStructure, String leftId, String rightId) {
-    Map<String, String> edge = opEdge("setdiff");
-    Map<String, String> condition = new LinkedHashMap<>(edge);
-    condition.put("role", "condition");
-    graph.addEdge(outId, leftId, edge);
-    graph.addEdge(outId, rightId, condition);
-    linkPassThrough(outId, outStructure, leftId, edge);
-  }
-
-  private void linkJoin(
-      String outId, DataStructure outStructure, List<String> operandIds, String op) {
-    Map<String, String> edge = opEdge(op);
-    for (String operandId : operandIds) {
-      graph.addEdge(outId, operandId, edge);
-    }
-    for (Component component : outStructure.values()) {
-      String name = component.getName();
-      String outVar = outId + "." + name;
-      for (String operandId : operandIds) {
-        if (requireStructure(operandId).containsKey(name)) {
-          graph.addEdge(outVar, operandId + "." + name, edge);
-        }
-      }
-    }
-  }
-
-  private void linkMappedExprs(
-      String outId,
-      DataStructure outStructure,
-      String srcId,
-      Map<String, String> mappedExprs,
-      String op) {
-    Map<String, String> edge = opEdge(op);
-    graph.addEdge(outId, srcId, edge);
-    for (Component component : outStructure.values()) {
-      String outVar = outId + "." + component.getName();
-      String exprId = mappedExprs.get(component.getName());
-      if (exprId != null) {
-        graph.addEdge(outVar, exprId, edge);
-      } else {
-        graph.addEdge(outVar, srcId + "." + component.getName(), edge);
-      }
-    }
-  }
-
-  private void linkConditionClause(
-      String outId,
-      DataStructure outStructure,
-      String srcId,
-      List<String> conditionExprIds,
-      String op) {
-    Map<String, String> edge = opEdge(op);
-    Map<String, String> condition = new LinkedHashMap<>(edge);
-    condition.put("role", "condition");
-    graph.addEdge(outId, srcId, edge);
-    for (String exprId : conditionExprIds) {
-      graph.addEdge(outId, exprId, condition);
-    }
-    linkPassThrough(outId, outStructure, srcId, edge);
-  }
-
-  private void linkRename(
-      String outId, DataStructure outStructure, String srcId, Map<String, String> renameFrom) {
-    Map<String, String> edge = opEdge("rename");
-    graph.addEdge(outId, srcId, edge);
-    for (Component component : outStructure.values()) {
-      String srcComponent = renameFrom.getOrDefault(component.getName(), component.getName());
-      graph.addEdge(outId + "." + component.getName(), srcId + "." + srcComponent, edge);
-    }
-  }
-
-  private void linkComponentWise(
-      String outId, DataStructure outStructure, List<String> operandIds, String op) {
-    Map<String, String> edge = opEdge(op);
-    for (String operandId : operandIds) {
-      graph.addEdge(outId, operandId, edge);
-    }
-    for (Component component : outStructure.values()) {
-      String outVar = outId + "." + component.getName();
-      for (String operandId : operandIds) {
-        graph.addEdge(outVar, operandId + "." + component.getName(), edge);
-      }
-    }
-  }
-
-  private void linkPassThrough(
-      String outId, DataStructure outStructure, String srcId, Map<String, String> edge) {
-    for (Component component : outStructure.values()) {
-      graph.addEdge(outId + "." + component.getName(), srcId + "." + component.getName(), edge);
-    }
   }
 
   private void addExpression(
@@ -879,7 +503,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (!(generic.genericOperators() instanceof VtlParser.CallDatasetContext call)) {
       return null;
     }
-    return userOperators.contains(call.operatorID().getText()) ? call : null;
+    return symbols.isUserOperator(call.operatorID().getText()) ? call : null;
   }
 
   /** Component names passed as UDO arguments ({@code varID} parameters only). */
@@ -988,9 +612,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return "e" + stmtIndex + "." + exprSeq;
   }
 
-  private static Map<String, String> opEdge(String op) {
-    return Map.of("op", op);
-  }
 
   /** Component names referenced in a scalar expression (not dataset bindings). */
   private static Set<String> componentRefs(VtlParser.ExprContext expr) {

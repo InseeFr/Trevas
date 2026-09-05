@@ -9,7 +9,8 @@ import java.util.List;
 /**
  * Provenance entry point: parse → grammar support check ({@link SupportCheckVisitor}) → structure
  * oracle → {@link ProvenanceVisitor} ({@code VtlBaseVisitor<Void>}) mutating a shared {@link
- * ProvGraph}. The visitor’s per-expression state is a sealed {@link PendingOp}.
+ * ProvGraph}. The visitor’s per-expression state is a sealed {@link PendingOp}; structure
+ * derivation and edge linking live in {@link StructureDeriver} / {@link EdgeLinker}.
  *
  * <p>Must throw {@link UnsupportedOperationException} with an {@code unsupported: …} message on
  * syntax not yet handled — never a plausible-but-wrong graph.
@@ -18,10 +19,11 @@ public final class ProvenanceExtractor {
 
   public ProvGraph extract(String script, List<InputDataset> inputs) {
     VtlParser.StartContext start = parse(script);
-    new SupportCheckVisitor().visit(start);
+    ScriptSymbols symbols = new ScriptSymbols();
+    new SupportCheckVisitor(symbols).visit(start);
     StructureOracle oracle = StructureOracle.run(script, inputs);
     ProvGraph graph = new ProvGraph();
-    new ProvenanceVisitor(graph, oracle, inputs).visit(start);
+    new ProvenanceVisitor(graph, oracle, inputs, symbols).visit(start);
     return graph;
   }
 

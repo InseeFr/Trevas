@@ -3,23 +3,26 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.antlr.runtime.tree.RuleNode;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
  * corpus backlog stays explicit even when the engine cannot eval the script.
  *
- * <p>Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for harness / ops):
- * {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc}, {@code aggr},
- * {@code join}, {@code set}, {@code functions} (catch-all for other function families),
- * {@code check}, {@code define} (hierarchical ruleset still unsupported).
+ * <p>Registers {@code define operator} / datapoint ruleset names into the shared {@link
+ * ScriptSymbols}. Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for
+ * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code
+ * calc}, {@code aggr}, {@code join}, {@code set}, {@code functions} (catch-all for other function
+ * families), {@code check}.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
-  /** Names registered by {@code define operator} in this script (calc UDO calls). */
-  protected final Set<String> userOperators = new LinkedHashSet<>();
+  protected final ScriptSymbols symbols;
+
+  SupportCheckVisitor(ScriptSymbols symbols) {
+    this.symbols = symbols;
+  }
 
   @Override
   public Void visitChildren(RuleNode node) {
@@ -54,18 +57,21 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.rulesetSignature().VARIABLE() == null) {
       throw unsupported("define");
     }
+    List<String> variables = new ArrayList<>();
     for (VtlParser.SignatureContext signature : ctx.rulesetSignature().signature()) {
       if (signature.alias() != null) {
         throw unsupported("define");
       }
+      variables.add(signature.varID().getText());
     }
+    symbols.putDatapointRuleset(ctx.rulesetID().getText(), variables);
     return null;
   }
 
   @Override
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
     // Black-box: register the name; do not walk the body.
-    userOperators.add(ctx.operatorID().getText());
+    symbols.addUserOperator(ctx.operatorID().getText());
     return null;
   }
 
@@ -299,7 +305,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   /** Scalar UDO call in calc: known operator, args are varId or constant only. */
   private void requireKnownUdoCall(VtlParser.CallDatasetContext call) {
-    if (!userOperators.contains(call.operatorID().getText())) {
+    if (!symbols.isUserOperator(call.operatorID().getText())) {
       throw unsupported("calc");
     }
     for (VtlParser.ParameterContext parameter : call.parameter()) {

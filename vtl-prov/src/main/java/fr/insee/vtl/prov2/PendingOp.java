@@ -7,8 +7,9 @@ import java.util.Map;
  * Result of visiting a VTL expression before assignment (or anonymous materialization) emits a
  * versioned dataset node.
  *
- * <p>Replaces the previous bag of {@code lastOp} / {@code lastCalcExprs} / … fields: each variant
- * carries exactly the data needed to derive its structure and link provenance edges.
+ * <p>Each variant carries the payload for {@link StructureDeriver} and {@link EdgeLinker} — not a
+ * stringly {@code lastOp} plus satellite maps. Exhaustiveness of derive/link stays in those two
+ * classes.
  */
 sealed interface PendingOp {
 
