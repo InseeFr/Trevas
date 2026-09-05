@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, run state describes
  * what the enclosing assignment materializes: identity ({@code lastOp == null}), component-wise ops
  * ({@code +}, {@code *}, {@code keep}, …), or clause ops ({@code calc}, {@code filter}, {@code
- * sub}, {@code rename}). Nested clauses materialize anonymous intermediates ({@code
+ * sub}, {@code rename}, {@code aggr}). Nested clauses materialize anonymous intermediates ({@code
  * #s{stmt}.{seq}}) before the next clause applies.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
@@ -118,6 +118,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (clause.renameClause() != null) {
       return applyRename(srcId, clause.renameClause());
     }
+    if (clause.aggrClause() != null) {
+      return applyAggr(srcId, clause.aggrClause());
+    }
     throw unsupported("clause");
   }
 
@@ -182,6 +185,51 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     return finishUnaryOp(
         "rename", srcId, Map.of(), Map.of(), Map.copyOf(renames), List.of(), List.of());
+  }
+
+  private Void applyAggr(String srcId, VtlParser.AggrClauseContext aggr) {
+    DataStructure src = requireStructure(srcId);
+    Map<String, String> aggrExprs = new LinkedHashMap<>();
+    Map<String, Class<?>> aggrTypes = new LinkedHashMap<>();
+    for (VtlParser.AggrFunctionClauseContext item : aggr.aggregateClause().aggrFunctionClause()) {
+      String component = item.componentID().getText();
+      VtlParser.AggrOperatorsGroupingContext op = item.aggrOperatorsGrouping();
+      String exprId = nextExprId();
+      Set<String> refs;
+      if (op instanceof VtlParser.AggrDatasetContext datasetAggr) {
+        refs = componentRefs(datasetAggr.expr());
+      } else if (op instanceof VtlParser.CountAggrContext) {
+        refs = Set.of();
+      } else {
+        throw unsupported("clause");
+      }
+      addExpression(exprId, text(op), srcId, refs);
+      aggrExprs.put(component, exprId);
+      aggrTypes.put(component, inferCalcType(src, refs));
+    }
+    return finishUnaryOp(
+        "aggr",
+        srcId,
+        Map.copyOf(aggrExprs),
+        Map.copyOf(aggrTypes),
+        Map.of(),
+        groupByColumns(aggr.groupingClause()),
+        List.of());
+  }
+
+  private List<String> groupByColumns(VtlParser.GroupingClauseContext grouping) {
+    if (grouping == null) {
+      return List.of();
+    }
+    if (grouping instanceof VtlParser.GroupByOrExceptContext groupByOrExcept) {
+      if (groupByOrExcept.op.getType() != VtlParser.BY) {
+        throw unsupported("clause");
+      }
+      return groupByOrExcept.componentID().stream()
+          .map(c -> c.getText())
+          .collect(Collectors.toList());
+    }
+    throw unsupported("clause");
   }
 
   private Void binaryArithmetic(VtlParser.ExprContext left, VtlParser.ExprContext right, Token op) {
@@ -252,11 +300,29 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return switch (lastOp) {
       case "filter", "sub" -> new DataStructure(src);
       case "calc" -> deriveCalcStructure(src, lastCalcTypes);
+      case "aggr" -> deriveAggrStructure(src, lastCalcTypes, lastKeepDropColumns);
       case "keep" -> deriveKeepStructure(src, lastKeepDropColumns);
       case "drop" -> deriveDropStructure(src, lastKeepDropColumns);
       case "rename" -> deriveRenameStructure(src, lastRenameFrom);
       default -> throw unsupported("clause");
     };
+  }
+
+  private static DataStructure deriveAggrStructure(
+      DataStructure src, Map<String, Class<?>> aggrTypes, List<String> groupBy) {
+    List<Component> components = new ArrayList<>();
+    for (String key : groupBy) {
+      Component component = src.get(key);
+      if (component == null) {
+        throw new IllegalStateException("unknown group-by component " + key);
+      }
+      components.add(
+          new Component(component.getName(), component.getType(), Dataset.Role.IDENTIFIER));
+    }
+    for (Map.Entry<String, Class<?>> entry : aggrTypes.entrySet()) {
+      components.add(new Component(entry.getKey(), entry.getValue(), Dataset.Role.MEASURE));
+    }
+    return new DataStructure(components);
   }
 
   private static DataStructure deriveCalcStructure(
@@ -344,7 +410,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       return;
     }
     switch (lastOp) {
-      case "calc" -> linkCalc(outId, outStructure, lastResultId, lastCalcExprs);
+      case "calc", "aggr" ->
+          linkMappedExprs(outId, outStructure, lastResultId, lastCalcExprs, lastOp);
       case "filter", "sub" ->
           linkConditionClause(outId, outStructure, lastResultId, lastConditionExprIds, lastOp);
       case "rename" -> linkRename(outId, outStructure, lastResultId, lastRenameFrom);
@@ -352,13 +419,17 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
   }
 
-  private void linkCalc(
-      String outId, DataStructure outStructure, String srcId, Map<String, String> calcExprs) {
-    Map<String, String> edge = opEdge("calc");
+  private void linkMappedExprs(
+      String outId,
+      DataStructure outStructure,
+      String srcId,
+      Map<String, String> mappedExprs,
+      String op) {
+    Map<String, String> edge = opEdge(op);
     graph.addEdge(outId, srcId, edge);
     for (Component component : outStructure.values()) {
       String outVar = outId + "." + component.getName();
-      String exprId = calcExprs.get(component.getName());
+      String exprId = mappedExprs.get(component.getName());
       if (exprId != null) {
         graph.addEdge(outVar, exprId, edge);
       } else {

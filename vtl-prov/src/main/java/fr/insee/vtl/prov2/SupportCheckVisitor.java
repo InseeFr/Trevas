@@ -10,7 +10,7 @@ import fr.insee.vtl.parser.VtlParser;
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
  * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
- * rename} on a dataset varId or a nested clause chain. Other ops stay unsupported.
+ * rename} / {@code aggr} on a dataset varId or a nested clause chain. Other ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -81,6 +81,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     }
     if (clause.filterClause() != null) {
       requireScalarPredicate(clause.filterClause().expr());
+      return null;
+    }
+    if (clause.aggrClause() != null) {
       return null;
     }
     if (clause.subspaceClause() != null
