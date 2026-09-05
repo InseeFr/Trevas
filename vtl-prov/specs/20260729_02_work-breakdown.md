@@ -49,12 +49,13 @@ progress paragraph.
   compare graphs in DOT shape (vertex→attrs, edge→attrs, as sets) via `jgrapht-io`.
   Lives in `fr.insee.vtl.prov2`; tests adapt via `Graph.from(ProvGraph)`.
 - **Grammar walk.** Extraction is a **`VtlBaseVisitor<Void>`** (`ProvenanceVisitor`)
-  that mutates one shared `ProvGraph`. Entry: parse → **support check** (same
-  grammar visitor, throws `unsupported: …` before eval) → structure oracle →
+  that mutates one shared `ProvGraph`. Entry: parse → **support check** (fills
+  `ScriptSymbols`, throws `unsupported: …` before eval) → structure oracle →
   `ProvenanceVisitor.visit(start)`. Unhandled rules throw (strict
   `visitChildren`). Per-expression state is a sealed **`PendingOp`**; statement
-  counters and the version map live on the visitor — not in `T`. `T = Void` on
-  purpose: the graph is the artifact; parse `ctx` holds local syntax.
+  counters and the version map live on the visitor — not in `T`. Derive/link are
+  **`StructureDeriver`** / **`EdgeLinker`**. `T = Void` on purpose: the graph is
+  the artifact; parse `ctx` holds local syntax.
 - **Golden self-check.** The harness also lints the corpus itself, with no
   extraction involved: every `expected.dot` imports; every node has `kind`;
   variable `dataset` attrs match id prefixes; edge endpoints are declared nodes;
@@ -93,7 +94,11 @@ Later PRs add more `visit*` methods.
 - **Pending expression state is a sealed `PendingOp`.** One object after each
   expression visit (identity, calc, join, set, …) carries the payload for
   structure derivation and edge linking — not a stringly `lastOp` plus satellite
-  maps. Exhaustiveness stays local to `deriveStructure` / `linkPending`.
+  maps. Exhaustiveness lives in **`StructureDeriver`** / **`EdgeLinker`** (visitor
+  stays grammar-only).
+- **`ScriptSymbols`** — filled once by the support-check pass (UDO names, datapoint
+  ruleset signatures), reused by `ProvenanceVisitor` so defines are not registered
+  twice on separate visitor instances.
 - **Oracle in PR-2:** run-once-and-read-bindings (least invasive); a minimal
   engine hook can replace it later without touching the graph layer
   (spec 20260728_01 §structure-oracle). Eval may fail for ops the engine lacks;
