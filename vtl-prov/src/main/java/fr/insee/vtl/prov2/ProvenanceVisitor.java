@@ -10,6 +10,17 @@ import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import fr.insee.vtl.prov.utils.VTLTypes;
+import fr.insee.vtl.prov2.PendingOp.Aggr;
+import fr.insee.vtl.prov2.PendingOp.Arithmetic;
+import fr.insee.vtl.prov2.PendingOp.Calc;
+import fr.insee.vtl.prov2.PendingOp.Drop;
+import fr.insee.vtl.prov2.PendingOp.Filter;
+import fr.insee.vtl.prov2.PendingOp.Identity;
+import fr.insee.vtl.prov2.PendingOp.Join;
+import fr.insee.vtl.prov2.PendingOp.Keep;
+import fr.insee.vtl.prov2.PendingOp.Rename;
+import fr.insee.vtl.prov2.PendingOp.SetOp;
+import fr.insee.vtl.prov2.PendingOp.Sub;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -23,12 +34,11 @@ import java.util.stream.Collectors;
  * SupportCheckVisitor} for the shared {@code unsupported: …} surface; mutates a shared {@link
  * ProvGraph}.
  *
- * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, run state describes
- * what the enclosing assignment materializes: identity ({@code lastOp == null}), component-wise ops
- * ({@code +}, {@code *}, {@code keep}, …), or clause ops ({@code calc}, {@code filter}, {@code
- * sub}, {@code rename}, {@code aggr}), join ops ({@code inner_join}, …), or set ops ({@code union},
- * {@code intersect}, {@code setdiff}, {@code symdiff}). Nested clauses materialize anonymous
- * intermediates ({@code #s{stmt}.{seq}}) before the next clause applies.
+ * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, {@link #pending}
+ * holds a {@link PendingOp} describing what the enclosing assignment (or anonymous materialization)
+ * will emit: {@link Identity} for a bare dataset ref, or a typed operator carrying its operands and
+ * clause payload. Nested clauses materialize anonymous intermediates ({@code #s{stmt}.{seq}}) when
+ * the left expression is already a non-identity op.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
@@ -40,14 +50,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private int exprSeq;
   private int anonSeq;
 
-  private String lastResultId;
-  private String lastOp;
-  private List<String> lastOperandIds = List.of();
-  private Map<String, String> lastCalcExprs = Map.of();
-  private Map<String, Class<?>> lastCalcTypes = Map.of();
-  private Map<String, String> lastRenameFrom = Map.of();
-  private List<String> lastKeepDropColumns = List.of();
-  private List<String> lastConditionExprIds = List.of();
+  /** Outcome of the last visited expression; never null after a successful expr visit. */
+  private PendingOp pending;
 
   ProvenanceVisitor(ProvGraph graph, StructureOracle oracle, List<InputDataset> inputs) {
     this.graph = graph;
@@ -76,9 +80,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (id == null) {
       throw new IllegalStateException("unknown dataset " + name);
     }
-    clearExprState();
-    lastResultId = id;
-    lastOperandIds = List.of(id);
+    pending = new Identity(id);
     return null;
   }
 
@@ -98,20 +100,18 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     List<String> operands = new ArrayList<>();
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
       if (item.AS() != null) {
-        throw unsupported("functions");
+        throw unsupported("join");
       }
       String operandId = datasetOperand(item.expr());
       if (operandId == null) {
-        throw unsupported("functions");
+        throw unsupported("join");
       }
       operands.add(operandId);
     }
     if (operands.size() < 2) {
-      throw unsupported("functions");
+      throw unsupported("join");
     }
-    clearExprState();
-    lastOp = ctx.joinKeyword.getText();
-    lastOperandIds = List.copyOf(operands);
+    pending = new Join(ctx.joinKeyword.getText(), List.copyOf(operands));
     return null;
   }
 
@@ -135,30 +135,26 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     for (VtlParser.ExprContext expr : exprs) {
       String operandId = datasetOperand(expr);
       if (operandId == null) {
-        throw unsupported("functions");
+        throw unsupported("set");
       }
       operands.add(operandId);
     }
     if (operands.size() < 2) {
-      throw unsupported("functions");
+      throw unsupported("set");
     }
-    clearExprState();
-    lastOp = op;
-    lastOperandIds = List.copyOf(operands);
+    pending = new SetOp(op, List.copyOf(operands));
     return null;
   }
 
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
     visit(ctx.expr());
-    if (lastResultId == null) {
-      throw unsupported("clause");
-    }
-    // Left was itself a clause: emit anonymous intermediate before this clause.
-    if (lastOp != null) {
+    requirePending();
+    // Left was itself a clause/op: emit anonymous intermediate before this clause.
+    if (!(pending instanceof Identity)) {
       materializeAnonymous();
     }
-    String srcId = lastResultId;
+    String srcId = pending.focusId();
     VtlParser.DatasetClauseContext clause = ctx.datasetClause();
     if (clause.calcClause() != null) {
       return applyCalc(srcId, clause.calcClause());
@@ -195,21 +191,16 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       calcExprs.put(component, exprId);
       calcTypes.put(component, inferCalcType(src, valueRefs));
     }
-    return finishUnaryOp(
-        "calc",
-        srcId,
-        Map.copyOf(calcExprs),
-        Map.copyOf(calcTypes),
-        Map.of(),
-        List.of(),
-        List.of());
+    pending = new Calc(srcId, Map.copyOf(calcExprs), Map.copyOf(calcTypes));
+    return null;
   }
 
   private Void applyFilter(String srcId, VtlParser.FilterClauseContext filter) {
     VtlParser.ExprContext predicate = filter.expr();
     String exprId = nextExprId();
     addExpression(exprId, text(predicate), srcId, componentRefs(predicate), Set.of());
-    return finishUnaryOp("filter", srcId, Map.of(), Map.of(), Map.of(), List.of(), List.of(exprId));
+    pending = new Filter(srcId, List.of(exprId));
+    return null;
   }
 
   private Void applySub(String srcId, VtlParser.SubspaceClauseContext sub) {
@@ -219,21 +210,19 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of());
       conditionIds.add(exprId);
     }
-    return finishUnaryOp(
-        "sub", srcId, Map.of(), Map.of(), Map.of(), List.of(), List.copyOf(conditionIds));
+    pending = new Sub(srcId, List.copyOf(conditionIds));
+    return null;
   }
 
   private Void applyKeepOrDrop(String srcId, VtlParser.KeepOrDropClauseContext keepOrDrop) {
     List<String> columns =
         keepOrDrop.componentID().stream().map(c -> c.getText()).collect(Collectors.toList());
-    return finishUnaryOp(
-        keepOrDrop.op.getText(),
-        srcId,
-        Map.of(),
-        Map.of(),
-        Map.of(),
-        List.copyOf(columns),
-        List.of());
+    if (keepOrDrop.op.getType() == VtlParser.KEEP) {
+      pending = new Keep(srcId, List.copyOf(columns));
+    } else {
+      pending = new Drop(srcId, List.copyOf(columns));
+    }
+    return null;
   }
 
   private Void applyRename(String srcId, VtlParser.RenameClauseContext rename) {
@@ -241,8 +230,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     for (VtlParser.RenameClauseItemContext item : rename.renameClauseItem()) {
       renames.put(item.toName.getText(), item.fromName.getText());
     }
-    return finishUnaryOp(
-        "rename", srcId, Map.of(), Map.of(), Map.copyOf(renames), List.of(), List.of());
+    pending = new Rename(srcId, Map.copyOf(renames));
+    return null;
   }
 
   private Void applyAggr(String srcId, VtlParser.AggrClauseContext aggr) {
@@ -259,20 +248,19 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       } else if (op instanceof VtlParser.CountAggrContext) {
         refs = Set.of();
       } else {
-        throw unsupported("clause");
+        throw unsupported("aggr");
       }
       addExpression(exprId, text(op), srcId, refs, Set.of());
       aggrExprs.put(component, exprId);
       aggrTypes.put(component, inferCalcType(src, refs));
     }
-    return finishUnaryOp(
-        "aggr",
-        srcId,
-        Map.copyOf(aggrExprs),
-        Map.copyOf(aggrTypes),
-        Map.of(),
-        groupByColumns(aggr.groupingClause()),
-        List.of());
+    pending =
+        new Aggr(
+            srcId,
+            Map.copyOf(aggrExprs),
+            Map.copyOf(aggrTypes),
+            groupByColumns(aggr.groupingClause()));
+    return null;
   }
 
   private List<String> groupByColumns(VtlParser.GroupingClauseContext grouping) {
@@ -281,13 +269,13 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     if (grouping instanceof VtlParser.GroupByOrExceptContext groupByOrExcept) {
       if (groupByOrExcept.op.getType() != VtlParser.BY) {
-        throw unsupported("clause");
+        throw unsupported("aggr");
       }
       return groupByOrExcept.componentID().stream()
           .map(c -> c.getText())
           .collect(Collectors.toList());
     }
-    throw unsupported("clause");
+    throw unsupported("aggr");
   }
 
   private Void binaryArithmetic(VtlParser.ExprContext left, VtlParser.ExprContext right, Token op) {
@@ -303,9 +291,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operands.isEmpty()) {
       throw unsupported("scalar");
     }
-    clearExprState();
-    lastOp = op.getText();
-    lastOperandIds = List.copyOf(operands);
+    pending = new Arithmetic(op.getText(), List.copyOf(operands));
     return null;
   }
 
@@ -314,7 +300,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     VtlParser.ExprContext current = unwrap(expr);
     if (current instanceof VtlParser.VarIdExprContext) {
       visit(current);
-      return lastResultId;
+      return ((Identity) pending).datasetId();
     }
     if (current instanceof VtlParser.ConstantExprContext) {
       return null;
@@ -327,15 +313,13 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     exprSeq = 0;
     anonSeq = 0;
     visit(expr);
+    requirePending();
     String outId = out + "@" + stmtIndex;
-    DataStructure outStructure =
-        oracle.hasDataset(out) ? oracle.requireDataset(out) : structureForPendingOp();
+    DataStructure outStructure = structureForAssignment(out);
     addDataset(outId, outStructure, text(expr), false);
-    linkAssignment(outId, outStructure);
+    linkPending(outId, outStructure);
     versions.put(out, outId);
-    clearExprState();
-    lastResultId = outId;
-    lastOperandIds = List.of(outId);
+    pending = new Identity(outId);
     return null;
   }
 
@@ -344,31 +328,61 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
    * clause in the chain uses it as source.
    */
   private void materializeAnonymous() {
+    requirePending();
     anonSeq++;
     String anonId = "#s" + stmtIndex + "." + anonSeq;
-    DataStructure structure = structureForPendingOp();
+    DataStructure structure = deriveStructure(pending);
     addDataset(anonId, structure, null, true);
-    linkAssignment(anonId, structure);
-    clearExprState();
-    lastResultId = anonId;
-    lastOperandIds = List.of(anonId);
+    linkPending(anonId, structure);
+    pending = new Identity(anonId);
   }
 
-  private DataStructure structureForPendingOp() {
-    return switch (lastOp) {
-      case "filter", "sub" -> new DataStructure(requireStructure(lastResultId));
-      case "calc" -> deriveCalcStructure(requireStructure(lastResultId), lastCalcTypes);
-      case "aggr" ->
-          deriveAggrStructure(requireStructure(lastResultId), lastCalcTypes, lastKeepDropColumns);
-      case "keep" -> deriveKeepStructure(requireStructure(lastResultId), lastKeepDropColumns);
-      case "drop" -> deriveDropStructure(requireStructure(lastResultId), lastKeepDropColumns);
-      case "rename" -> deriveRenameStructure(requireStructure(lastResultId), lastRenameFrom);
-      case "inner_join", "left_join", "full_join", "cross_join" ->
-          deriveJoinStructure(lastOperandIds);
-      case "union", "intersect", "setdiff", "symdiff" ->
-          new DataStructure(requireStructure(lastOperandIds.get(0)));
-      default -> throw unsupported("clause");
-    };
+  /**
+   * Named LHS: engine binding if present, else derive from {@link #pending}. Never mix both for one
+   * dataset (stable goldens when the engine later implements an op).
+   */
+  private DataStructure structureForAssignment(String out) {
+    if (oracle.hasDataset(out)) {
+      return oracle.requireDataset(out);
+    }
+    return deriveStructure(pending);
+  }
+
+  private DataStructure deriveStructure(PendingOp op) {
+    if (op instanceof Identity id) {
+      return new DataStructure(requireStructure(id.datasetId()));
+    }
+    if (op instanceof Arithmetic arithmetic) {
+      return new DataStructure(requireStructure(arithmetic.operandIds().get(0)));
+    }
+    if (op instanceof Calc calc) {
+      return deriveCalcStructure(requireStructure(calc.srcId()), calc.types());
+    }
+    if (op instanceof Aggr aggr) {
+      return deriveAggrStructure(requireStructure(aggr.srcId()), aggr.types(), aggr.groupBy());
+    }
+    if (op instanceof Filter filter) {
+      return new DataStructure(requireStructure(filter.srcId()));
+    }
+    if (op instanceof Sub sub) {
+      return new DataStructure(requireStructure(sub.srcId()));
+    }
+    if (op instanceof Keep keep) {
+      return deriveKeepStructure(requireStructure(keep.srcId()), keep.columns());
+    }
+    if (op instanceof Drop drop) {
+      return deriveDropStructure(requireStructure(drop.srcId()), drop.columns());
+    }
+    if (op instanceof Rename rename) {
+      return deriveRenameStructure(requireStructure(rename.srcId()), rename.renameFrom());
+    }
+    if (op instanceof Join join) {
+      return deriveJoinStructure(join.operandIds());
+    }
+    if (op instanceof SetOp setOp) {
+      return new DataStructure(requireStructure(setOp.operandIds().get(0)));
+    }
+    throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
   }
 
   private DataStructure deriveJoinStructure(List<String> operandIds) {
@@ -477,26 +491,65 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return result != null ? result : Long.class;
   }
 
-  private void linkAssignment(String outId, DataStructure outStructure) {
-    if (lastOp == null) {
-      if (lastResultId == null) {
-        throw unsupported("scalar");
-      }
-      linkComponentWise(outId, outStructure, List.of(lastResultId), "assign");
+  private void linkPending(String outId, DataStructure outStructure) {
+    requirePending();
+    if (pending instanceof Identity id) {
+      linkComponentWise(outId, outStructure, List.of(id.datasetId()), "assign");
       return;
     }
-    switch (lastOp) {
-      case "calc", "aggr" ->
-          linkMappedExprs(outId, outStructure, lastResultId, lastCalcExprs, lastOp);
-      case "filter", "sub" ->
-          linkConditionClause(outId, outStructure, lastResultId, lastConditionExprIds, lastOp);
-      case "rename" -> linkRename(outId, outStructure, lastResultId, lastRenameFrom);
-      case "inner_join", "left_join", "full_join", "cross_join" ->
-          linkJoin(outId, outStructure, lastOperandIds, lastOp);
-      case "setdiff" ->
-          linkSetDiff(outId, outStructure, lastOperandIds.get(0), lastOperandIds.get(1));
-      default -> linkComponentWise(outId, outStructure, lastOperandIds, lastOp);
+    if (pending instanceof Arithmetic arithmetic) {
+      linkComponentWise(outId, outStructure, arithmetic.operandIds(), arithmetic.op());
+      return;
     }
+    if (pending instanceof Calc calc) {
+      linkMappedExprs(outId, outStructure, calc.srcId(), calc.exprs(), "calc");
+      return;
+    }
+    if (pending instanceof Aggr aggr) {
+      linkMappedExprs(outId, outStructure, aggr.srcId(), aggr.exprs(), "aggr");
+      return;
+    }
+    if (pending instanceof Filter filter) {
+      linkConditionClause(
+          outId, outStructure, filter.srcId(), filter.conditionExprIds(), "filter");
+      return;
+    }
+    if (pending instanceof Sub sub) {
+      linkConditionClause(outId, outStructure, sub.srcId(), sub.conditionExprIds(), "sub");
+      return;
+    }
+    if (pending instanceof Keep keep) {
+      linkPassThroughAll(outId, outStructure, keep.srcId(), "keep");
+      return;
+    }
+    if (pending instanceof Drop drop) {
+      linkPassThroughAll(outId, outStructure, drop.srcId(), "drop");
+      return;
+    }
+    if (pending instanceof Rename rename) {
+      linkRename(outId, outStructure, rename.srcId(), rename.renameFrom());
+      return;
+    }
+    if (pending instanceof Join join) {
+      linkJoin(outId, outStructure, join.operandIds(), join.op());
+      return;
+    }
+    if (pending instanceof SetOp setOp) {
+      if ("setdiff".equals(setOp.op())) {
+        linkSetDiff(outId, outStructure, setOp.operandIds().get(0), setOp.operandIds().get(1));
+      } else {
+        linkComponentWise(outId, outStructure, setOp.operandIds(), setOp.op());
+      }
+      return;
+    }
+    throw new IllegalStateException("unhandled pending op " + pending.getClass().getName());
+  }
+
+  private void linkPassThroughAll(
+      String outId, DataStructure outStructure, String srcId, String op) {
+    Map<String, String> edge = opEdge(op);
+    graph.addEdge(outId, srcId, edge);
+    linkPassThrough(outId, outStructure, srcId, edge);
   }
 
   private void linkSetDiff(
@@ -690,32 +743,10 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return structure;
   }
 
-  private Void finishUnaryOp(
-      String op,
-      String srcId,
-      Map<String, String> calcExprs,
-      Map<String, Class<?>> calcTypes,
-      Map<String, String> renameFrom,
-      List<String> keepDropColumns,
-      List<String> conditionExprIds) {
-    lastOp = op;
-    lastResultId = srcId;
-    lastOperandIds = List.of(srcId);
-    lastCalcExprs = calcExprs;
-    lastCalcTypes = calcTypes;
-    lastRenameFrom = renameFrom;
-    lastKeepDropColumns = keepDropColumns;
-    lastConditionExprIds = conditionExprIds;
-    return null;
-  }
-
-  private void clearExprState() {
-    lastOp = null;
-    lastCalcExprs = Map.of();
-    lastCalcTypes = Map.of();
-    lastRenameFrom = Map.of();
-    lastKeepDropColumns = List.of();
-    lastConditionExprIds = List.of();
+  private void requirePending() {
+    if (pending == null) {
+      throw new IllegalStateException("no pending expression result");
+    }
   }
 
   private String nextExprId() {

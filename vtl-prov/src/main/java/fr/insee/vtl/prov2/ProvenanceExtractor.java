@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Provenance entry point: parse → grammar support check ({@link SupportCheckVisitor}) → structure
  * oracle → {@link ProvenanceVisitor} ({@code VtlBaseVisitor<Void>}) mutating a shared {@link
- * ProvGraph}.
+ * ProvGraph}. The visitor’s per-expression state is a sealed {@link PendingOp}.
  *
  * <p>Must throw {@link UnsupportedOperationException} with an {@code unsupported: …} message on
  * syntax not yet handled — never a plausible-but-wrong graph.
