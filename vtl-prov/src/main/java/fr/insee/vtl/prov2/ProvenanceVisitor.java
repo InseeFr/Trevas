@@ -19,6 +19,7 @@ import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
+import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
@@ -45,6 +46,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   private final ProvGraph graph;
   private final StructureOracle oracle;
+  private final Map<String, InputDataset> inputsByName = new LinkedHashMap<>();
   private final Map<String, String> versions = new LinkedHashMap<>();
   private final Map<String, DataStructure> structures = new LinkedHashMap<>();
   /** Datapoint ruleset name → signature variable names. */
@@ -60,6 +62,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     this.graph = graph;
     this.oracle = oracle;
     for (InputDataset input : inputs) {
+      inputsByName.put(input.name(), input);
       String id = input.name() + "@0";
       versions.put(input.name(), id);
       addDataset(id, oracle.requireDataset(input.name()), null, false);
@@ -226,9 +229,53 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (clause.aggrClause() != null) {
       return applyAggr(srcId, clause.aggrClause());
     }
+    if (clause.pivotOrUnpivotClause() != null) {
+      return applyPivot(srcId, clause.pivotOrUnpivotClause());
+    }
     throw unsupported("clause");
   }
 
+  private Void applyPivot(String srcId, VtlParser.PivotOrUnpivotClauseContext pivot) {
+    if (pivot.op.getType() == VtlParser.UNPIVOT) {
+      throw unsupported("clause");
+    }
+    String idComponent = pivot.id_.getText();
+    String measureComponent = pivot.mea.getText();
+    List<String> pivoted = distinctPivotValues(srcId, idComponent);
+    if (pivoted.isEmpty()) {
+      throw unsupported("clause");
+    }
+    pending = new Pivot(srcId, idComponent, measureComponent, pivoted);
+    return null;
+  }
+
+  /**
+   * Distinct values of the pivot identifier, in first-seen order. Requires {@code $input} rows on
+   * the binding that produced {@code srcId} (engine pivot is unimplemented in-memory).
+   */
+  private List<String> distinctPivotValues(String srcId, String idComponent) {
+    int at = srcId.lastIndexOf('@');
+    String bindingName = at > 0 ? srcId.substring(0, at) : srcId;
+    InputDataset input = inputsByName.get(bindingName);
+    if (input == null || input.rows().isEmpty()) {
+      throw unsupported("clause");
+    }
+    int col = -1;
+    for (int i = 0; i < input.columns().size(); i++) {
+      if (input.columns().get(i).name().equals(idComponent)) {
+        col = i;
+        break;
+      }
+    }
+    if (col < 0) {
+      throw unsupported("clause");
+    }
+    LinkedHashSet<String> values = new LinkedHashSet<>();
+    for (List<String> row : input.rows()) {
+      values.add(row.get(col));
+    }
+    return List.copyOf(values);
+  }
 
   private Void applyCalc(String srcId, VtlParser.CalcClauseContext calc) {
     DataStructure src = requireStructure(srcId);
@@ -439,7 +486,34 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (op instanceof CheckDatapoint check) {
       return deriveCheckDatapointStructure(requireStructure(check.srcId()));
     }
+    if (op instanceof Pivot pivot) {
+      return derivePivotStructure(
+          requireStructure(pivot.srcId()),
+          pivot.idComponent(),
+          pivot.measureComponent(),
+          pivot.pivotedColumns());
+    }
     throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
+  }
+
+  private static DataStructure derivePivotStructure(
+      DataStructure src, String idComponent, String measureComponent, List<String> pivotedColumns) {
+    Component measure = src.get(measureComponent);
+    if (measure == null) {
+      throw new IllegalStateException("unknown pivot measure " + measureComponent);
+    }
+    List<Component> components = new ArrayList<>();
+    for (Component component : src.componentsInOrder()) {
+      String name = component.getName();
+      if (name.equals(idComponent) || name.equals(measureComponent)) {
+        continue;
+      }
+      components.add(new Component(component));
+    }
+    for (String pivoted : pivotedColumns) {
+      components.add(new Component(pivoted, measure.getType(), Dataset.Role.MEASURE));
+    }
+    return new DataStructure(components);
   }
 
   /** Fallback when the engine did not bind the LHS — mirrors Trevas {@code all} output. */
@@ -613,7 +687,30 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       linkCheckDatapoint(outId, outStructure, check);
       return;
     }
+    if (pending instanceof Pivot pivot) {
+      linkPivot(outId, outStructure, pivot);
+      return;
+    }
     throw new IllegalStateException("unhandled pending op " + pending.getClass().getName());
+  }
+
+  private void linkPivot(String outId, DataStructure outStructure, Pivot pivot) {
+    Map<String, String> edge = opEdge("pivot");
+    Map<String, String> condition = new LinkedHashMap<>(edge);
+    condition.put("role", "condition");
+    graph.addEdge(outId, pivot.srcId(), edge);
+    DataStructure src = requireStructure(pivot.srcId());
+    Set<String> pivoted = new LinkedHashSet<>(pivot.pivotedColumns());
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      String outVar = outId + "." + name;
+      if (pivoted.contains(name)) {
+        graph.addEdge(outVar, pivot.srcId() + "." + pivot.measureComponent(), edge);
+        graph.addEdge(outVar, pivot.srcId() + "." + pivot.idComponent(), condition);
+      } else if (src.containsKey(name)) {
+        graph.addEdge(outVar, pivot.srcId() + "." + name, edge);
+      }
+    }
   }
 
   private void linkCheckDatapoint(

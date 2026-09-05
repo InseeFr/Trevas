@@ -110,12 +110,24 @@ sealed interface PendingOp {
     }
   }
 
-
   /**
    * {@code check_datapoint(ds, ruleset …)}. {@code validatedVars} come from the datapoint ruleset
    * signature ({@code variable …}).
    */
   record CheckDatapoint(String srcId, String ruleset, List<String> validatedVars)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * {@code ds[pivot id, measure]}. {@code pivotedColumns} are the distinct values of {@code
+   * idComponent} in encounter order (data-dependent; from {@code $input} rows).
+   */
+  record Pivot(
+      String srcId, String idComponent, String measureComponent, List<String> pivotedColumns)
       implements PendingOp {
     @Override
     public String focusId() {

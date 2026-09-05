@@ -123,6 +123,12 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
         || clause.renameClause() != null) {
       return null;
     }
+    if (clause.pivotOrUnpivotClause() != null) {
+      if (clause.pivotOrUnpivotClause().op.getType() == VtlParser.UNPIVOT) {
+        throw unsupported("clause");
+      }
+      return null;
+    }
     throw unsupported("clause");
   }
 
