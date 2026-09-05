@@ -11,7 +11,8 @@ import java.util.List;
  *
  * <p>Mirrors {@link ProvenanceVisitor} coverage: identity assign; binary dataset arithmetic (leaf
  * operands); {@code calc} / {@code filter} / {@code sub} / {@code keep}|{@code drop} / {@code
- * rename} / {@code aggr}; empty-body joins; set ops. Other ops stay unsupported.
+ * rename} / {@code aggr}; empty-body joins; set ops; analytic windows inside {@code calc}. Other
+ * ops stay unsupported.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -218,6 +219,10 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (current instanceof VtlParser.ArithmeticExprOrConcatContext arithmetic) {
       calcRhs(arithmetic.left);
       calcRhs(arithmetic.right);
+      return;
+    }
+    if (current instanceof VtlParser.FunctionsExpressionContext functions
+        && functions.functions() instanceof VtlParser.AnalyticFunctionsContext) {
       return;
     }
     throw unsupported("clause");

@@ -189,10 +189,11 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       String component = item.componentID().getText();
       VtlParser.ExprContext rhs = item.expr();
       String exprId = nextExprId();
-      Set<String> refs = componentRefs(rhs);
-      addExpression(exprId, text(rhs), srcId, refs);
+      Set<String> valueRefs = componentRefs(rhs);
+      Set<String> conditionRefs = analyticConditionRefs(rhs);
+      addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs);
       calcExprs.put(component, exprId);
-      calcTypes.put(component, inferCalcType(src, refs));
+      calcTypes.put(component, inferCalcType(src, valueRefs));
     }
     return finishUnaryOp(
         "calc",
@@ -207,7 +208,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private Void applyFilter(String srcId, VtlParser.FilterClauseContext filter) {
     VtlParser.ExprContext predicate = filter.expr();
     String exprId = nextExprId();
-    addExpression(exprId, text(predicate), srcId, componentRefs(predicate));
+    addExpression(exprId, text(predicate), srcId, componentRefs(predicate), Set.of());
     return finishUnaryOp("filter", srcId, Map.of(), Map.of(), Map.of(), List.of(), List.of(exprId));
   }
 
@@ -215,7 +216,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     List<String> conditionIds = new ArrayList<>();
     for (VtlParser.SubspaceClauseItemContext item : sub.subspaceClauseItem()) {
       String exprId = nextExprId();
-      addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()));
+      addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of());
       conditionIds.add(exprId);
     }
     return finishUnaryOp(
@@ -260,7 +261,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       } else {
         throw unsupported("clause");
       }
-      addExpression(exprId, text(op), srcId, refs);
+      addExpression(exprId, text(op), srcId, refs, Set.of());
       aggrExprs.put(component, exprId);
       aggrTypes.put(component, inferCalcType(src, refs));
     }
@@ -591,13 +592,69 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
   }
 
-  private void addExpression(String exprId, String src, String datasetId, Set<String> refs) {
+  private void addExpression(
+      String exprId,
+      String src,
+      String datasetId,
+      Set<String> valueRefs,
+      Set<String> conditionRefs) {
     Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("kind", "expression");
     attrs.put("src", src);
     graph.addVertex(exprId, attrs);
-    for (String ref : refs) {
+    for (String ref : valueRefs) {
       graph.addEdge(exprId, datasetId + "." + ref, Map.of());
+    }
+    Map<String, String> condition = Map.of("role", "condition");
+    for (String ref : conditionRefs) {
+      graph.addEdge(exprId, datasetId + "." + ref, condition);
+    }
+  }
+
+  /** Partition / order-by keys of analytic windows — condition inputs, not value operands. */
+  private static Set<String> analyticConditionRefs(VtlParser.ExprContext expr) {
+    Set<String> refs = new LinkedHashSet<>();
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
+        addPartitionOrder(ctx.partition, ctx.orderBy, refs);
+        return visit(ctx.expr());
+      }
+
+      @Override
+      public Void visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
+        addPartitionOrder(ctx.partition, ctx.orderBy, refs);
+        return visit(ctx.expr());
+      }
+
+      @Override
+      public Void visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
+        addPartitionOrder(ctx.partition, null, refs);
+        return visit(ctx.expr());
+      }
+
+      @Override
+      public Void visitRankAn(VtlParser.RankAnContext ctx) {
+        addPartitionOrder(ctx.partition, ctx.orderBy, refs);
+        return null;
+      }
+    }.visit(expr);
+    return refs;
+  }
+
+  private static void addPartitionOrder(
+      VtlParser.PartitionByClauseContext partition,
+      VtlParser.OrderByClauseContext orderBy,
+      Set<String> refs) {
+    if (partition != null) {
+      for (VtlParser.ComponentIDContext component : partition.componentID()) {
+        refs.add(component.getText());
+      }
+    }
+    if (orderBy != null) {
+      for (VtlParser.OrderByItemContext item : orderBy.orderByItem()) {
+        refs.add(item.componentID().getText());
+      }
     }
   }
 
