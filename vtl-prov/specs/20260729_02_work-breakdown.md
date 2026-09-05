@@ -25,7 +25,7 @@ progress paragraph.
 | [x] | 13 | User-defined operators | 17 |
 | [x] | 14 | Pivot + table-form `$input` parsing | 15 |
 | [x] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
-| [ ] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
+| [x] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
 
 ## Principles
 
@@ -66,8 +66,7 @@ progress paragraph.
 ## Notes
 
 **PR-1** lives in `vtl-prov/src/test` under **`fr.insee.vtl.prov2.tests`**
-(`ProvenanceTests`, `Graph`, `GraphAssert`) so legacy `fr.insee.vtl.prov` stays
-untouched until PR-16. `$input` parsing (one-liner + table) is
+(`ProvenanceTests`, `Graph`, `GraphAssert`). `$input` parsing (one-liner + table) is
 `InputDirectives` in `prov2` (later → `vtl-test-utils`, spec 20260729_01 §6/§8).
 Richer RDF than today's triples is a later view, not PR-15.
 
@@ -85,6 +84,8 @@ rows — in-memory engine has no pivot). `unpivot` stays unsupported until a
 corpus case exists.
 **PR-15** adds `SdthProgramView` (ProvGraph → legacy `Program` → unchanged
 `RDFUtils`); see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md).
+**PR-16** deletes `ProvenanceListener` / `VariableGraphListener`; public entry is
+`fr.insee.vtl.prov.Provenance.run(engine, script, id, label)`.
 Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)

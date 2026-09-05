@@ -7,10 +7,13 @@
 
 ```
 VTL script
-  → ProvenanceListener → Program (+ ProgramStep, DataframeInstance, VariableInstance)
+  → ProvenanceExtractor → ProvGraph
+  → SdthProgramView.toProgram(graph, meta)
   → RDFUtils.buildModel(program)
   → Jena Model (JSON-LD / Turtle / …)
 ```
+
+(Historical path used `ProvenanceListener`; removed in PR-16.)
 
 `RDFUtils` is the **only** RDF serializer in production path today. It maps:
 
@@ -90,4 +93,6 @@ The IR is finer (expression nodes, anonymous intermediates, `role=condition`). L
 
 `fr.insee.vtl.prov2.SdthProgramView.toProgram(graph, id, label, sourceCode)` plus
 `SdthProgramViewTest` (assignment / calc / filter / chain / arithmetic + RDF type smoke).
-Legacy `ProvenanceListener.run` remains until PR-16.
+
+Public entry (PR-16): `fr.insee.vtl.prov.Provenance.run(engine, script, id, label)` —
+eval on the caller engine, extract IR, project to `Program`. Legacy listeners are gone.
