@@ -24,7 +24,7 @@ progress paragraph.
 | [x] | 12 | Check/ruleset (resolve provisional schema of 16) | 16 |
 | [x] | 13 | User-defined operators | 17 |
 | [x] | 14 | Pivot + table-form `$input` parsing | 15 |
-| [ ] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
+| [x] | 15 | RDF view: IR → `Program` → `RDFUtils` (same triples; see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md)) | own tests |
 | [ ] | 16 | Delete `ProvenanceListener` / `VariableGraphListener`, migrate `run()` | — |
 
 ## Principles
@@ -83,6 +83,8 @@ chaining with anonymous intermediates (`chain-filter-calc`). **PR-8** adds
 **PR-14** adds table-form `$input` + `pivot` (`15`; structure derived from input
 rows — in-memory engine has no pivot). `unpivot` stays unsupported until a
 corpus case exists.
+**PR-15** adds `SdthProgramView` (ProvGraph → legacy `Program` → unchanged
+`RDFUtils`); see [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md).
 Later PRs add more `visit*` methods.
 
 ## Embedded decisions (flag if you disagree)

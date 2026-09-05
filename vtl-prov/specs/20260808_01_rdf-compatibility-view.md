@@ -82,6 +82,12 @@ The IR is finer (expression nodes, anonymous intermediates, `role=condition`). L
 
 ## 6. Open points (short)
 
-- Exact rule for multi-clause statements (`filter`+`calc`) → one step vs several (today: one assignment = one step).
-- Whether rulesets stay as `ProgramStep.rulesets` only (not in `RDFUtils` today) or start appearing in RDF.
-- Id policy: deterministic IR ids in `http://trevas/...` vs legacy random UUIDs.
+- Exact rule for multi-clause statements (`filter`+`calc`) → one step vs several (today: one assignment = one step). **Resolved in `SdthProgramView`:** one assignment = one step; anonymous intermediates are folded.
+- Whether rulesets stay as `ProgramStep.rulesets` only (not in `RDFUtils` today) or start appearing in RDF. **Current view:** populate `rulesets` from IR edge annotations; still not serialized by `RDFUtils`.
+- Id policy: deterministic IR ids in `http://trevas/...` vs legacy random UUIDs. **Current view:** uses IR ids (`ds2@1`, `ds2@1.var1`, `step-ds2@1`).
+
+## 7. Landed
+
+`fr.insee.vtl.prov2.SdthProgramView.toProgram(graph, id, label, sourceCode)` plus
+`SdthProgramViewTest` (assignment / calc / filter / chain / arithmetic + RDF type smoke).
+Legacy `ProvenanceListener.run` remains until PR-16.
