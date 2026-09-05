@@ -13,7 +13,9 @@ import javax.script.ScriptException;
 
 /**
  * Run-once structure oracle (spec 20260728_01): eval the script, then read {@link DataStructure}
- * from named bindings. Anonymous intermediate structures are derived by {@link ProvenanceVisitor}.
+ * from named bindings. Eval may fail when the engine lacks an operator that provenance already
+ * covers (e.g. {@code intersect}); input bindings remain available and the visitor derives missing
+ * output structures. Anonymous intermediates are always derived by {@link ProvenanceVisitor}.
  */
 final class StructureOracle {
 
@@ -34,10 +36,15 @@ final class StructureOracle {
     }
     try {
       engine.eval(script);
-    } catch (ScriptException e) {
-      throw new IllegalStateException("structure oracle failed to eval script", e);
+    } catch (ScriptException | RuntimeException ignored) {
+      // Inputs stay bound; ProvenanceVisitor derives structures the engine did not materialize.
+      // Analytic / set ops may throw bare RuntimeException from the in-memory engine (not wrapped).
     }
     return new StructureOracle(context);
+  }
+
+  boolean hasDataset(String name) {
+    return context.getAttribute(name) instanceof Dataset;
   }
 
   DataStructure requireDataset(String name) {
