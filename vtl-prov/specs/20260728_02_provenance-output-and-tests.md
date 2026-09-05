@@ -234,7 +234,7 @@ defaults to this principle.
 | 04 | `filter`/`where` | all pass through `out.w ← in.w`; predicate is an expression node, `out dependsOn predicate role=condition` (§5.0, §5.4). |
 | 05 | `keep`/`drop`/`ds#comp` (projection) | VTL has no `project` keyword — projection *is* keep/drop (kept pass through, dropped absent). Component membership `ds#comp` projects one component into a dataset: `out.comp ← ds.comp`. |
 | 06 | `rename sex to sex_old` | `out.sex_old ← in.sex`; others pass through. |
-| 07 | `aggr m := sum(x) group by id` | `out.id ← in.id`; `out.m ← in.x`; group-by keys are value inputs (they define the surviving identifiers); non-grouped/non-aggregated measures dropped. |
+| 07 | `aggr m := sum(x) group by id` | `out.id ← in.id`; `out.m ← in.x`; group-by keys are value inputs (they define the surviving identifiers); non-grouped/non-aggregated measures dropped. Avoid reserved ids (`total`). |
 | 08 | `join` (`inner_join`, `left_join`, `using`) | keys: `out.id ← ds1.id, ds2.id`; each carried measure from its origin operand; collisions per VTL rename rules. |
 | 09 | `union` | same structure required; rows concatenated + dedup on identifiers. Every component: `out.v ← ds1.v, ds2.v, …` (all operands are value inputs). Dataset: `out ← each operand`. |
 | 10 | `intersect` / `symdiff` | same structure; both operands contribute the surviving rows' values → `out.v ← ds1.v, ds2.v` ∀v (both value inputs). |
