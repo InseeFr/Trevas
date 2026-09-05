@@ -5,18 +5,19 @@ digraph {
   "ds1@0.var1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
   "ds1@0.var2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
 
-  // stmt 1: ds2 := ds1[aggr total := sum(var1) group by id]
+  // stmt 1: ds2 := ds1[aggr mea_sum := sum(var1) group by id]
   // var2 is neither grouped nor aggregated -> dropped from the result
-  "ds2@1"       [kind=dataset, src="ds1[aggr total := sum(var1) group by id]"];
-  "ds2@1.id"    [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
-  "ds2@1.total" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  // (mea_sum: "total" is a reserved token in Trevas)
+  "ds2@1"         [kind=dataset, src="ds1[aggr mea_sum := sum(var1) group by id]"];
+  "ds2@1.id"      [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.mea_sum" [kind=variable, dataset="ds2@1", role=MEASURE, type=NUMBER];
 
   // aggregation function is a written expression -> its own node
-  "e1.1"        [kind=expression, src="sum(var1)"];
+  "e1.1"          [kind=expression, src="sum(var1)"];
   "e1.1" -> "ds1@0.var1";
 
-  // group-by key passes through (value input); total from sum(var1)
-  "ds2@1"       -> "ds1@0"    [op=aggr];
-  "ds2@1.id"    -> "ds1@0.id" [op=aggr];
-  "ds2@1.total" -> "e1.1"     [op=aggr];
+  // group-by key passes through (value input); mea_sum from sum(var1)
+  "ds2@1"         -> "ds1@0"    [op=aggr];
+  "ds2@1.id"      -> "ds1@0.id" [op=aggr];
+  "ds2@1.mea_sum" -> "e1.1"     [op=aggr];
 }
