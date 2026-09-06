@@ -6,16 +6,14 @@ module.exports = {
 	url: 'https://trevas.info',
 	baseUrl: '/Trevas',
 	onBrokenLinks: 'throw',
-	onBrokenMarkdownLinks: 'warn',
 	favicon: 'img/favicon.ico',
 	organizationName: 'inseefr', // Usually your GitHub org/user name.
 	projectName: 'trevas', // Usually your repo name.
 	// Even if you don't use internalization, you can use this field to set useful
-	// metadata like html lang. For example, if your site is Chinese, you may want
-	// to replace "en" with "zh-Hans".
+	// metadata like html lang.
 	i18n: {
 		defaultLocale: 'en',
-		locales: ['en', 'fr', 'zh-CN', 'no'],
+		locales: ['en', 'fr'],
 	},
 	customFields: {
 		authors: {
@@ -35,6 +33,9 @@ module.exports = {
 	},
 	markdown: {
 		mermaid: true,
+		hooks: {
+			onBrokenMarkdownLinks: 'warn',
+		},
 	},
 	themes: ['@docusaurus/theme-mermaid'],
 	themeConfig:
@@ -158,7 +159,7 @@ module.exports = {
 			require.resolve('docusaurus-lunr-search'),
 			{
 				indexBaseUrl: true,
-				languages: ['en', 'fr', 'no'],
+				languages: ['en', 'fr'],
 			},
 		],
 		'docusaurus-node-polyfills',

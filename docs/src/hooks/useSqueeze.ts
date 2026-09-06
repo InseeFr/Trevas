@@ -36,6 +36,8 @@ export default function useSqueeze({ skip = false }: SqueezeOptions) {
 				ev.preventDefault();
 				ev.stopPropagation();
 			});
-		} catch (e) {}
+		} catch {
+			/* ignore squeeze failures */
+		}
 	}, [skip, isBrowser]);
 }

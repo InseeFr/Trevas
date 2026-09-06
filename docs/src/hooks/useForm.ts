@@ -39,7 +39,9 @@ export default function useForm({ skip = false }: FormOptions) {
 							};
 						}
 					}
-				} catch (e) {}
+				} catch {
+					/* ignore prefill failures */
+				}
 
 				MktoForms2.loadForm(
 					'https://lp.redis.com',

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/ban-ts-comment */
 import useIsBrowser from '@docusaurus/useIsBrowser';
 import { useMemo } from 'react';
 
