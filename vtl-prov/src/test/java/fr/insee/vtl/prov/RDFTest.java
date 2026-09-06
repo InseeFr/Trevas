@@ -132,8 +132,6 @@ public class RDFTest {
   }
 
   @Test
-  @org.junit.jupiter.api.Disabled(
-      "BPE script uses operators not yet covered by ProvenanceExtractor (cast, substr, …)")
   public void bpeTest() throws IOException, ScriptException {
 
     String bpeScript =
