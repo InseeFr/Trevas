@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.insee.trevas</groupId>
+        <artifactId>trevas-parent</artifactId>
+        <version>2.7.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vtl-test-utils</artifactId>
+    <name>VTL Test Utils</name>
+    <description>Shared VTL fixture helpers ($input directives and related)</description>
+    <version>2.7.0-SNAPSHOT</version>
+
+    <properties>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/../coverage/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
+</project>
