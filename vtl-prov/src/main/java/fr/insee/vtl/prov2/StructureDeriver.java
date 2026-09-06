@@ -7,10 +7,13 @@ import fr.insee.vtl.prov2.PendingOp.Aggr;
 import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
+import fr.insee.vtl.prov2.PendingOp.Check;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov2.PendingOp.Drop;
+import fr.insee.vtl.prov2.PendingOp.ExistsIn;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
+import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
 import fr.insee.vtl.prov2.PendingOp.Membership;
@@ -75,6 +78,17 @@ final class StructureDeriver {
     }
     if (op instanceof CheckDatapoint check) {
       return deriveCheckDatapoint(require(check.srcId()));
+    }
+    if (op instanceof Check check) {
+      return deriveCheck(
+          require(check.srcId()),
+          check.imbalanceId() == null ? null : require(check.imbalanceId()));
+    }
+    if (op instanceof PassThrough pass) {
+      return new DataStructure(require(pass.srcId()));
+    }
+    if (op instanceof ExistsIn existsIn) {
+      return deriveExistsIn(require(existsIn.leftId()));
     }
     if (op instanceof Pivot pivot) {
       return derivePivot(
@@ -192,6 +206,34 @@ final class StructureDeriver {
     components.add(new Component("bool_var", Boolean.class, Dataset.Role.MEASURE));
     components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
     components.add(new Component("errorlevel", Long.class, Dataset.Role.MEASURE));
+    return new DataStructure(components);
+  }
+
+  /** Left identifiers + boolean measure (engine unsupported → pure derive). */
+  private static DataStructure deriveExistsIn(DataStructure left) {
+    List<Component> components = new ArrayList<>(left.getIdentifiers());
+    components.add(new Component("bool_var", Boolean.class, Dataset.Role.MEASURE));
+    return new DataStructure(components);
+  }
+
+  /**
+   * Trevas simple {@code check}: keep operand structure, rename imbalance measure to {@code
+   * imbalance} when present, append {@code errorcode}/{@code errorlevel} (String when no literals).
+   */
+  private static DataStructure deriveCheck(DataStructure src, DataStructure imbalance) {
+    List<Component> components = new ArrayList<>(src.componentsInOrder());
+    if (imbalance != null) {
+      Class<?> imbType = Long.class;
+      for (Component component : imbalance.values()) {
+        if (component.isMeasure()) {
+          imbType = component.getType();
+          break;
+        }
+      }
+      components.add(new Component("imbalance", imbType, Dataset.Role.MEASURE));
+    }
+    components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
+    components.add(new Component("errorlevel", String.class, Dataset.Role.MEASURE));
     return new DataStructure(components);
   }
 

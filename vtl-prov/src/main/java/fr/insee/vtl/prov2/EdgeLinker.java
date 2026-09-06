@@ -6,10 +6,13 @@ import fr.insee.vtl.prov2.PendingOp.Aggr;
 import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
+import fr.insee.vtl.prov2.PendingOp.Check;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov2.PendingOp.Drop;
+import fr.insee.vtl.prov2.PendingOp.ExistsIn;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
+import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
 import fr.insee.vtl.prov2.PendingOp.Membership;
@@ -95,6 +98,18 @@ final class EdgeLinker {
     }
     if (op instanceof CheckDatapoint check) {
       linkCheckDatapoint(outId, outStructure, check);
+      return;
+    }
+    if (op instanceof Check check) {
+      linkCheck(outId, outStructure, check);
+      return;
+    }
+    if (op instanceof PassThrough pass) {
+      linkPassThroughProducer(outId, outStructure, pass);
+      return;
+    }
+    if (op instanceof ExistsIn existsIn) {
+      linkExistsIn(outId, outStructure, existsIn);
       return;
     }
     if (op instanceof Pivot pivot) {
@@ -186,10 +201,8 @@ final class EdgeLinker {
   }
 
   private void linkCheckDatapoint(String outId, DataStructure outStructure, CheckDatapoint check) {
-    Map<String, String> edge = new LinkedHashMap<>();
-    edge.put("op", "check_datapoint");
-    edge.put("ruleset", check.ruleset());
-    Map<String, String> pass = Map.of("op", "check_datapoint");
+    Map<String, String> edge = opEdge("check_datapoint", "ruleset", check.ruleset());
+    Map<String, String> pass = opEdge("check_datapoint");
     graph.addEdge(outId, check.srcId(), edge);
     Set<String> validationCols = Set.of("bool_var", "errorcode", "errorlevel");
     for (Component component : outStructure.values()) {
@@ -208,6 +221,55 @@ final class EdgeLinker {
     }
   }
 
+  private void linkCheck(String outId, DataStructure outStructure, Check check) {
+    Map<String, String> edge = opEdge("check");
+    graph.addEdge(outId, check.srcId(), edge);
+    if (check.imbalanceId() != null) {
+      graph.addEdge(outId, check.imbalanceId(), edge);
+    }
+    DataStructure src = require(check.srcId());
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      String outVar = outId + "." + name;
+      if ("imbalance".equals(name) && check.imbalanceId() != null) {
+        DataStructure imbalance = require(check.imbalanceId());
+        for (Component imb : imbalance.values()) {
+          if (imb.isMeasure()) {
+            graph.addEdge(outVar, check.imbalanceId() + "." + imb.getName(), edge);
+            break;
+          }
+        }
+      } else if (src.containsKey(name)) {
+        graph.addEdge(outVar, check.srcId() + "." + name, edge);
+      }
+      // errorcode / errorlevel: no variable deps when literals omitted
+    }
+  }
+
+  /**
+   * Unary pass-through: optional ruleset on the dataset edge and on measures (hierarchy); plain
+   * {@code op} when no ruleset (time-series, eval).
+   */
+  private void linkPassThroughProducer(
+      String outId, DataStructure outStructure, PassThrough pass) {
+    if (pass.ruleset() == null) {
+      linkPassThroughAll(outId, outStructure, pass.srcId(), pass.op());
+      return;
+    }
+    Map<String, String> annotated = opEdge(pass.op(), "ruleset", pass.ruleset());
+    Map<String, String> plain = opEdge(pass.op());
+    graph.addEdge(outId, pass.srcId(), annotated);
+    DataStructure src = require(pass.srcId());
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      if (!src.containsKey(name)) {
+        continue;
+      }
+      Map<String, String> edge = component.isMeasure() ? annotated : plain;
+      graph.addEdge(outId + "." + name, pass.srcId() + "." + name, edge);
+    }
+  }
+
   private void linkPassThroughAll(
       String outId, DataStructure outStructure, String srcId, String op) {
     Map<String, String> edge = opEdge(op);
@@ -223,6 +285,30 @@ final class EdgeLinker {
     graph.addEdge(outId, leftId, edge);
     graph.addEdge(outId, rightId, condition);
     linkPassThrough(outId, outStructure, leftId, edge);
+  }
+
+  private void linkExistsIn(String outId, DataStructure outStructure, ExistsIn existsIn) {
+    Map<String, String> edge = opEdge("exists_in");
+    Map<String, String> condition = new LinkedHashMap<>(edge);
+    condition.put("role", "condition");
+    graph.addEdge(outId, existsIn.leftId(), edge);
+    graph.addEdge(outId, existsIn.rightId(), condition);
+    DataStructure left = require(existsIn.leftId());
+    DataStructure right = require(existsIn.rightId());
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      String outVar = outId + "." + name;
+      if ("bool_var".equals(name)) {
+        for (Component id : left.getIdentifiers()) {
+          graph.addEdge(outVar, existsIn.leftId() + "." + id.getName(), edge);
+        }
+        for (Component id : right.getIdentifiers()) {
+          graph.addEdge(outVar, existsIn.rightId() + "." + id.getName(), condition);
+        }
+      } else if (left.containsKey(name)) {
+        graph.addEdge(outVar, existsIn.leftId() + "." + name, edge);
+      }
+    }
   }
 
   private void linkJoin(
@@ -310,5 +396,12 @@ final class EdgeLinker {
 
   private static Map<String, String> opEdge(String op) {
     return Map.of("op", op);
+  }
+
+  private static Map<String, String> opEdge(String op, String key, String value) {
+    Map<String, String> edge = new LinkedHashMap<>();
+    edge.put("op", op);
+    edge.put(key, value);
+    return edge;
   }
 }

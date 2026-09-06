@@ -14,7 +14,7 @@ digraph {
   "ds_c@1.bool_var"   [kind=variable, dataset="ds_c@1", role=MEASURE, type=BOOLEAN];
   "ds_c@1.imbalance"  [kind=variable, dataset="ds_c@1", role=MEASURE, type=INTEGER];
   "ds_c@1.errorcode"  [kind=variable, dataset="ds_c@1", role=MEASURE, type=STRING];
-  "ds_c@1.errorlevel" [kind=variable, dataset="ds_c@1", role=MEASURE, type=INTEGER];
+  "ds_c@1.errorlevel" [kind=variable, dataset="ds_c@1", role=MEASURE, type=STRING];
 
   "ds_c@1"           -> "ds1@0"          [op=check];
   "ds_c@1"           -> "ds_imb@0"       [op=check];

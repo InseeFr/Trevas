@@ -125,6 +125,45 @@ sealed interface PendingOp {
   }
 
   /**
+   * {@code check(ds … [imbalance imb] …)}. {@code imbalanceId} is null when the clause is omitted.
+   * Structure mirrors Trevas: operand ids + boolean measure, optional renamed {@code imbalance},
+   * plus {@code errorcode}/{@code errorlevel}.
+   */
+  record Check(String srcId, String imbalanceId) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * Unary dataset producer that keeps the operand structure: {@code hierarchy}, time-series
+   * ({@code flow_to_stock}, …). Optional {@code ruleset} annotates the dataset edge and measure
+   * edges (identifiers stay {@code op}-only).
+   */
+  record PassThrough(String srcId, String op, String ruleset) implements PendingOp {
+    PassThrough(String srcId, String op) {
+      this(srcId, op, null);
+    }
+
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * {@code exists_in(left, right)}: left identifiers + {@code bool_var}; right is membership
+   * {@code role=condition}.
+   */
+  record ExistsIn(String leftId, String rightId) implements PendingOp {
+    @Override
+    public String focusId() {
+      return leftId;
+    }
+  }
+
+  /**
    * {@code ds[pivot id, measure]} or {@code ds[customPivot id, measure IN …]}. {@code op} is {@code
    * pivot} or {@code customPivot}. {@code pivotedColumns} are distinct id values (data or IN list).
    */
