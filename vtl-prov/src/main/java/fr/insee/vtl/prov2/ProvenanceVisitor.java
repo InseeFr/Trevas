@@ -29,6 +29,7 @@ import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
 import fr.insee.vtl.prov2.PendingOp.Unpivot;
 import fr.insee.vtl.engine.utils.DefaultMeasureNames;
+import fr.insee.vtl.testutils.InputDataset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

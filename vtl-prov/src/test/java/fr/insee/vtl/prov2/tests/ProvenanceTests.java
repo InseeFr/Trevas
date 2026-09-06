@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
-import fr.insee.vtl.prov2.InputDataset;
-import fr.insee.vtl.prov2.InputDirectives;
 import fr.insee.vtl.prov2.ProvenanceExtractor;
+import fr.insee.vtl.testutils.InputDataset;
+import fr.insee.vtl.testutils.InputDirectives;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -3,6 +3,7 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured.DataStructure;
+import fr.insee.vtl.testutils.InputDataset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

@@ -53,6 +53,10 @@
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-test-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-sdmx</artifactId>
             <scope>test</scope>
         </dependency>
