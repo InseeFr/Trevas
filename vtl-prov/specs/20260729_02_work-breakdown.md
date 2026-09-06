@@ -98,7 +98,7 @@ SupportCheck + RHS walk (allow the AST; still forbid nested dataset clauses).
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [ ] | 37 | Re-enable `RDFTest.bpeTest` (BPE end-to-end via `Provenance.run`) | bpe RDF |
+| [x] | 37 | Re-enable `RDFTest.bpeTest` (BPE end-to-end via `Provenance.run`) | bpe RDF |
 | [ ] | 38 | Richer RDF view (`wasDerivedFrom` / expression nodes; extend beyond minimal SDTH) | own tests |
 | [ ] | 39 | UDO body inlining (walk body; replace black-box §5.17) | own tests + 17-udf |
 | [ ] | 40 | Migrate `InputDirectives` → `vtl-test-utils` | harness still green |
