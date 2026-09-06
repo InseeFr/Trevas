@@ -20,12 +20,12 @@ import javax.script.ScriptException;
  * <p>Eval may fail when the engine lacks an operator that provenance already covers ({@code
  * intersect}, analytic windows, …). In that case {@link #evalSucceeded()} is {@code false}, input
  * bindings remain available, and {@link ProvenanceVisitor} derives missing output structures from
- * {@link PendingOp} via {@link StructureDeriver}. Anonymous intermediates are always derived
- * (never engine-bound).
+ * {@link PendingOp} via {@link StructureDeriver}. Anonymous intermediates are always derived (never
+ * engine-bound).
  *
- * <p>Structure rule for a named assignment LHS: if {@link #hasDataset(String)} then use the
- * engine binding; otherwise derive from the pending op. Do not mix column types from both sources
- * for one dataset.
+ * <p>Structure rule for a named assignment LHS: if {@link #hasDataset(String)} then use the engine
+ * binding; otherwise derive from the pending op. Do not mix column types from both sources for one
+ * dataset.
  */
 final class StructureOracle {
 

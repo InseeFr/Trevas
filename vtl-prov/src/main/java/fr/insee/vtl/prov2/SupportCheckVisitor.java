@@ -12,8 +12,8 @@ import java.util.List;
  *
  * <p>Registers {@code define operator} / datapoint ruleset names into the shared {@link
  * ScriptSymbols}. Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for
- * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code
- * calc}, {@code aggr}, {@code join}, {@code set}, {@code functions} (catch-all for other function
+ * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc},
+ * {@code aggr}, {@code join}, {@code set}, {@code functions} (catch-all for other function
  * families), {@code check}.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
@@ -419,8 +419,8 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   /**
    * Scalar expression allow-list for calc / filter / sub / aggr args (Wave A). Rejects nested
-   * dataset clauses and dataset-level producers; walks everything else so {@code cast}, {@code
-   * if}, string/numeric/time scalars, comparisons, etc. are covered without per-op PendingOps.
+   * dataset clauses and dataset-level producers; walks everything else so {@code cast}, {@code if},
+   * string/numeric/time scalars, comparisons, etc. are covered without per-op PendingOps.
    */
   private void calcRhs(VtlParser.ExprContext expr) {
     requireScalarExpr(expr);

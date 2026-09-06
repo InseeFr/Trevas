@@ -56,8 +56,7 @@ public final class SdthProgramView {
       }
     }
     producedIds.sort(
-        Comparator.comparingInt((String id) -> statementIndex(id))
-            .thenComparing(id -> id));
+        Comparator.comparingInt((String id) -> statementIndex(id)).thenComparing(id -> id));
 
     Map<String, DataframeInstance> dataframes = new LinkedHashMap<>();
     int stepIndex = 1;
@@ -81,8 +80,7 @@ public final class SdthProgramView {
         if (edge.attrs().get("ruleset") != null) {
           rulesets.add(edge.attrs().get("ruleset"));
         }
-        collectFromNode(
-            edge.to(), vertices, outEdges, consumedIds, usedVarIds, rulesets, seen);
+        collectFromNode(edge.to(), vertices, outEdges, consumedIds, usedVarIds, rulesets, seen);
       }
       for (String varId : variablesOf(outId, vertices)) {
         for (ProvGraph.Edge edge : outEdges.getOrDefault(varId, List.of())) {
@@ -157,8 +155,7 @@ public final class SdthProgramView {
           if (edge.attrs().get("ruleset") != null) {
             rulesets.add(edge.attrs().get("ruleset"));
           }
-          collectFromNode(
-              edge.to(), vertices, outEdges, consumedIds, usedVarIds, rulesets, seen);
+          collectFromNode(edge.to(), vertices, outEdges, consumedIds, usedVarIds, rulesets, seen);
         }
         return;
       }

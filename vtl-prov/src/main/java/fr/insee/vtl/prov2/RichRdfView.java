@@ -26,8 +26,10 @@ public final class RichRdfView {
 
   private static final String TREVAS = "http://trevas/";
   private static final String SDTH = "http://rdf-vocabulary.ddialliance.org/sdth#";
+
   /** Local type for IR expression nodes (not in SDTH). */
   private static final String EXPRESSION_TYPE = TREVAS + "Expression";
+
   /** Local type for IR scalar assignments (not in SDTH). */
   private static final String SCALAR_TYPE = TREVAS + "Scalar";
 

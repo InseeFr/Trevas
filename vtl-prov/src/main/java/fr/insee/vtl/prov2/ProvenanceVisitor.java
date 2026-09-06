@@ -4,6 +4,7 @@ import fr.insee.vtl.antlr.runtime.CharStream;
 import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.antlr.runtime.Token;
 import fr.insee.vtl.antlr.runtime.misc.Interval;
+import fr.insee.vtl.engine.utils.DefaultMeasureNames;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -16,19 +17,18 @@ import fr.insee.vtl.prov2.PendingOp.Calc;
 import fr.insee.vtl.prov2.PendingOp.Check;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov2.PendingOp.Drop;
+import fr.insee.vtl.prov2.PendingOp.ExistsIn;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
-import fr.insee.vtl.prov2.PendingOp.ExistsIn;
-import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
 import fr.insee.vtl.prov2.PendingOp.Membership;
+import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
 import fr.insee.vtl.prov2.PendingOp.Unpivot;
-import fr.insee.vtl.engine.utils.DefaultMeasureNames;
 import fr.insee.vtl.testutils.InputDataset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,10 +44,10 @@ import java.util.stream.Collectors;
  * ProvGraph}.
  *
  * <p>{@code T = Void}: the graph is the artifact. After visiting an expression, {@link #pending}
- * holds a {@link PendingOp}. Nested clauses materialize anonymous intermediates
- * ({@code #s{stmt}.{seq}}) when the left expression is already a non-identity op. Structure and
- * edges are delegated to {@link StructureDeriver} / {@link EdgeLinker}; defines are registered
- * once in {@link ScriptSymbols} during support-check.
+ * holds a {@link PendingOp}. Nested clauses materialize anonymous intermediates ({@code
+ * #s{stmt}.{seq}}) when the left expression is already a non-identity op. Structure and edges are
+ * delegated to {@link StructureDeriver} / {@link EdgeLinker}; defines are registered once in {@link
+ * ScriptSymbols} during support-check.
  */
 final class ProvenanceVisitor extends SupportCheckVisitor {
 
@@ -56,15 +56,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private final ScriptSymbols symbols;
   private final StructureDeriver deriver;
   private final EdgeLinker linker;
+
   /** Versioned dataset id → binding rows (for data-dependent ops such as pivot). */
   private final Map<String, InputDataset> bindingsWithRows = new LinkedHashMap<>();
+
   private final Map<String, String> versions = new LinkedHashMap<>();
+
   /** Scalar name → versioned id ({@code x@1}); separate from dataset {@link #versions}. */
   private final Map<String, String> scalarVersions = new LinkedHashMap<>();
+
   private final Map<String, DataStructure> structures = new LinkedHashMap<>();
   private int stmtIndex;
   private int exprSeq;
   private int anonSeq;
+
   /** When true, assignment structure comes from {@link StructureDeriver} only (join apply, …). */
   private boolean forceDerive;
 
@@ -540,7 +545,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     List<String> conditionIds = new ArrayList<>();
     for (VtlParser.SubspaceClauseItemContext item : sub.subspaceClauseItem()) {
       String exprId = nextExprId();
-      addExpression(exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of(), null);
+      addExpression(
+          exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of(), null);
       conditionIds.add(exprId);
     }
     pending = new Sub(srcId, List.copyOf(conditionIds));
@@ -896,8 +902,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     attrs.put("kind", "expression");
     attrs.put("src", src);
     graph.addVertex(exprId, attrs);
-    Map<String, String> valueEdge =
-        valueEdgeOp == null ? Map.of() : Map.of("op", valueEdgeOp);
+    Map<String, String> valueEdge = valueEdgeOp == null ? Map.of() : Map.of("op", valueEdgeOp);
     for (String ref : valueRefs) {
       graph.addEdge(exprId, datasetId + "." + ref, valueEdge);
     }
@@ -908,9 +913,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   /**
-   * Component names feeding a scalar expression. Pure UDO calls are inlined: walk the operator
-   * body and map formal parameters to call-site {@code varID} arguments (PR-39). Otherwise collect
-   * every {@code VarId} under the AST (reference-level).
+   * Component names feeding a scalar expression. Pure UDO calls are inlined: walk the operator body
+   * and map formal parameters to call-site {@code varID} arguments (PR-39). Otherwise collect every
+   * {@code VarId} under the AST (reference-level).
    */
   private Set<String> expressionValueRefs(VtlParser.ExprContext expr) {
     VtlParser.CallDatasetContext call = asUdoCall(expr);
@@ -1050,7 +1055,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     exprSeq++;
     return "e" + stmtIndex + "." + exprSeq;
   }
-
 
   /** Component names referenced in a scalar expression (not dataset bindings). */
   private static Set<String> componentRefs(VtlParser.ExprContext expr) {

@@ -15,9 +15,8 @@ sealed interface PendingOp {
 
   /**
    * Dataset id used as the left/focus operand when chaining clauses ({@code ds[…][…]}): for an
-   * identity this is the dataset itself; for a unary clause it is the source; for multi-operand
-   * ops it is unused (chaining requires materialization first, which only applies to unary
-   * clauses).
+   * identity this is the dataset itself; for a unary clause it is the source; for multi-operand ops
+   * it is unused (chaining requires materialization first, which only applies to unary clauses).
    */
   String focusId();
 
@@ -137,9 +136,9 @@ sealed interface PendingOp {
   }
 
   /**
-   * Unary dataset producer that keeps the operand structure: {@code hierarchy}, time-series
-   * ({@code flow_to_stock}, …). Optional {@code ruleset} annotates the dataset edge and measure
-   * edges (identifiers stay {@code op}-only).
+   * Unary dataset producer that keeps the operand structure: {@code hierarchy}, time-series ({@code
+   * flow_to_stock}, …). Optional {@code ruleset} annotates the dataset edge and measure edges
+   * (identifiers stay {@code op}-only).
    */
   record PassThrough(String srcId, String op, String ruleset) implements PendingOp {
     PassThrough(String srcId, String op) {
@@ -153,8 +152,8 @@ sealed interface PendingOp {
   }
 
   /**
-   * {@code exists_in(left, right)}: left identifiers + {@code bool_var}; right is membership
-   * {@code role=condition}.
+   * {@code exists_in(left, right)}: left identifiers + {@code bool_var}; right is membership {@code
+   * role=condition}.
    */
   record ExistsIn(String leftId, String rightId) implements PendingOp {
     @Override

@@ -12,10 +12,10 @@ import fr.insee.vtl.prov2.PendingOp.Drop;
 import fr.insee.vtl.prov2.PendingOp.ExistsIn;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
-import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
 import fr.insee.vtl.prov2.PendingOp.Membership;
+import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
@@ -64,8 +64,7 @@ final class EdgeLinker {
       return;
     }
     if (op instanceof Filter filter) {
-      linkConditionClause(
-          outId, outStructure, filter.srcId(), filter.conditionExprIds(), "filter");
+      linkConditionClause(outId, outStructure, filter.srcId(), filter.conditionExprIds(), "filter");
       return;
     }
     if (op instanceof Sub sub) {
@@ -250,8 +249,7 @@ final class EdgeLinker {
    * Unary pass-through: optional ruleset on the dataset edge and on measures (hierarchy); plain
    * {@code op} when no ruleset (time-series, eval).
    */
-  private void linkPassThroughProducer(
-      String outId, DataStructure outStructure, PassThrough pass) {
+  private void linkPassThroughProducer(String outId, DataStructure outStructure, PassThrough pass) {
     if (pass.ruleset() == null) {
       linkPassThroughAll(outId, outStructure, pass.srcId(), pass.op());
       return;
