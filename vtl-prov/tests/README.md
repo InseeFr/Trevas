@@ -13,7 +13,8 @@ Each case is a folder with:
 ## Inline dataset directives
 
 > Canonical definition: [`../specs/20260729_01_vtl-fixture-directives.md`](../specs/20260729_01_vtl-fixture-directives.md)
-> (external sources, `vtl-test-utils` module, TCK vision). This is a quick reference.
+> (external sources, TCK vision). Parser: `fr.insee.vtl.testutils.InputDirectives`
+> in module `vtl-test-utils`. This is a quick reference.
 
 Input (and optionally expected-output) structures are declared in VTL comments, so
 each fixture is a single self-contained `.vtl`. A directive is `$<keyword> <target>`

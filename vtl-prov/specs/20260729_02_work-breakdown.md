@@ -101,7 +101,7 @@ SupportCheck + RHS walk (allow the AST; still forbid nested dataset clauses).
 | [x] | 37 | Re-enable `RDFTest.bpeTest` (BPE end-to-end via `Provenance.run`) | bpe RDF |
 | [x] | 38 | Richer RDF view (`wasDerivedFrom` / expression nodes; extend beyond minimal SDTH) | own tests |
 | [x] | 39 | UDO body inlining (walk body; replace black-box §5.17) | own tests + 17-udf |
-| [ ] | 40 | Migrate `InputDirectives` → `vtl-test-utils` | harness still green |
+| [x] | 40 | Migrate `InputDirectives` → `vtl-test-utils` | harness still green |
 
 **Done when:** SupportCheck has no intentional gaps against `Vtl.g4` statement /
 expression / function alternatives in the catalogue; every §6 producer/scalar
@@ -150,8 +150,8 @@ unsupported-ops are not an excuse to leave provenance red.
 ## Notes (phase 1)
 
 **PR-1…16** as above. Entry point: `fr.insee.vtl.prov.Provenance.run`. IR package:
-`fr.insee.vtl.prov2`. `$input` parsing: `InputDirectives` (→ `vtl-test-utils` in
-PR-40).
+`fr.insee.vtl.prov2`. `$input` parsing: `fr.insee.vtl.testutils.InputDirectives`
+(`vtl-test-utils`, PR-40).
 
 ## Embedded decisions (flag if you disagree)
 

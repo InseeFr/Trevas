@@ -136,10 +136,14 @@ always an inline structure.
 Determinism: directive order does not matter; a fixture with N `$input`s yields a
 name→dataset map.
 
-## 6. `vtl-test-utils` module (sketch)
+## 6. `vtl-test-utils` module
+
+Module `vtl-test-utils` (`fr.insee.vtl.testutils`) currently ships
+`InputDirectives` / `InputDataset` — the `$input` parser used by the provenance
+harness. Broader fixture API (loaders, `$output` assert) remains a sketch:
 
 A small, dependency-light module that turns a fixture file into runnable inputs
-and assertions. Illustrative API:
+and assertions. Illustrative target API:
 
 ```java
 VtlFixture fixture = VtlFixture.parse(Path.of("03-calc/input.vtl"));
@@ -183,8 +187,8 @@ The directive format is the shared substrate; assertions layer on top:
 - provenance → `expected.dot` (the `dependsOn` graph);
 - conformance → `$output` (result data/structure).
 
-`vtl-prov/tests/` is the first corpus. When `vtl-test-utils` exists, the parser
-and loaders move there and the provenance tests depend on it.
+`vtl-prov/tests/` is the first corpus. `$input` parsing lives in `vtl-test-utils`;
+provenance tests depend on it. Loaders / `$output` assert still to come.
 
 ## 9. Open questions
 
@@ -196,8 +200,7 @@ and loaders move there and the provenance tests depend on it.
   identifier-keyed comparison.
 - **Multiple statements / intermediate outputs** — may a fixture assert on a
   transient dataset, or only persistent/final ones?
-- **Module home** — new `vtl-test-utils` module vs. a test-scoped package first,
-  promoted once stable.
+- **Module home** — settled: `vtl-test-utils` (PR-40).
 - **Directive vs. VTL-DL** — should `$input` structures ever be expressed with
   real VTL `define structure` instead of a comment DSL? (Comment DSL keeps
   fixtures engine-agnostic and lets us carry data; VTL-DL cannot carry data.)
