@@ -49,7 +49,8 @@ sealed interface PendingOp {
       String srcId,
       Map<String, String> exprs,
       Map<String, Class<?>> types,
-      List<String> groupBy)
+      List<String> groupBy,
+      List<String> havingExprIds)
       implements PendingOp {
     @Override
     public String focusId() {
@@ -124,11 +125,43 @@ sealed interface PendingOp {
   }
 
   /**
-   * {@code ds[pivot id, measure]}. {@code pivotedColumns} are the distinct values of {@code
-   * idComponent} in encounter order (data-dependent; from {@code $input} rows).
+   * {@code ds[pivot id, measure]} or {@code ds[customPivot id, measure IN …]}. {@code op} is {@code
+   * pivot} or {@code customPivot}. {@code pivotedColumns} are distinct id values (data or IN list).
    */
   record Pivot(
-      String srcId, String idComponent, String measureComponent, List<String> pivotedColumns)
+      String srcId,
+      String idComponent,
+      String measureComponent,
+      List<String> pivotedColumns,
+      String op)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** {@code ds[unpivot id, measure]} — inverse of pivot. */
+  record Unpivot(String srcId, String idComponent, String measureComponent) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** {@code ds#component} — identifiers + selected component. */
+  record Membership(String srcId, String component) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * Join {@code apply} body: identifiers kept; measures replaced by a single default-named measure
+   * from the apply expression.
+   */
+  record Apply(String srcId, String exprId, String measureName, Class<?> measureType)
       implements PendingOp {
     @Override
     public String focusId() {

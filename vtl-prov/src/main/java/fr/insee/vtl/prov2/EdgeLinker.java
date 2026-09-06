@@ -3,6 +3,7 @@ package fr.insee.vtl.prov2;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov2.PendingOp.Aggr;
+import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
@@ -11,10 +12,12 @@ import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
+import fr.insee.vtl.prov2.PendingOp.Membership;
 import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
+import fr.insee.vtl.prov2.PendingOp.Unpivot;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +51,13 @@ final class EdgeLinker {
     }
     if (op instanceof Aggr aggr) {
       linkMappedExprs(outId, outStructure, aggr.srcId(), aggr.exprs(), "aggr");
+      if (!aggr.havingExprIds().isEmpty()) {
+        Map<String, String> condition = new LinkedHashMap<>(opEdge("aggr"));
+        condition.put("role", "condition");
+        for (String havingId : aggr.havingExprIds()) {
+          graph.addEdge(outId, havingId, condition);
+        }
+      }
       return;
     }
     if (op instanceof Filter filter) {
@@ -91,6 +101,18 @@ final class EdgeLinker {
       linkPivot(outId, outStructure, pivot);
       return;
     }
+    if (op instanceof Unpivot unpivot) {
+      linkUnpivot(outId, outStructure, unpivot);
+      return;
+    }
+    if (op instanceof Membership membership) {
+      linkMembership(outId, outStructure, membership);
+      return;
+    }
+    if (op instanceof Apply apply) {
+      linkApply(outId, outStructure, apply);
+      return;
+    }
     throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
   }
 
@@ -103,7 +125,7 @@ final class EdgeLinker {
   }
 
   private void linkPivot(String outId, DataStructure outStructure, Pivot pivot) {
-    Map<String, String> edge = opEdge("pivot");
+    Map<String, String> edge = opEdge(pivot.op());
     Map<String, String> condition = new LinkedHashMap<>(edge);
     condition.put("role", "condition");
     graph.addEdge(outId, pivot.srcId(), edge);
@@ -117,6 +139,48 @@ final class EdgeLinker {
         graph.addEdge(outVar, pivot.srcId() + "." + pivot.idComponent(), condition);
       } else if (src.containsKey(name)) {
         graph.addEdge(outVar, pivot.srcId() + "." + name, edge);
+      }
+    }
+  }
+
+  private void linkUnpivot(String outId, DataStructure outStructure, Unpivot unpivot) {
+    Map<String, String> edge = opEdge("unpivot");
+    graph.addEdge(outId, unpivot.srcId(), edge);
+    DataStructure src = require(unpivot.srcId());
+    for (Component component : outStructure.values()) {
+      String name = component.getName();
+      String outVar = outId + "." + name;
+      if (name.equals(unpivot.idComponent())) {
+        // identifier values come from measure *names* — no variable dep
+        continue;
+      }
+      if (name.equals(unpivot.measureComponent())) {
+        for (Component srcComp : src.values()) {
+          if (srcComp.isMeasure()) {
+            graph.addEdge(outVar, unpivot.srcId() + "." + srcComp.getName(), edge);
+          }
+        }
+      } else if (src.containsKey(name)) {
+        graph.addEdge(outVar, unpivot.srcId() + "." + name, edge);
+      }
+    }
+  }
+
+  private void linkMembership(String outId, DataStructure outStructure, Membership membership) {
+    Map<String, String> edge = opEdge("#");
+    graph.addEdge(outId, membership.srcId(), edge);
+    linkPassThrough(outId, outStructure, membership.srcId(), edge);
+  }
+
+  private void linkApply(String outId, DataStructure outStructure, Apply apply) {
+    Map<String, String> edge = opEdge("apply");
+    graph.addEdge(outId, apply.srcId(), edge);
+    for (Component component : outStructure.values()) {
+      String outVar = outId + "." + component.getName();
+      if (component.getName().equals(apply.measureName())) {
+        graph.addEdge(outVar, apply.exprId(), edge);
+      } else {
+        graph.addEdge(outVar, apply.srcId() + "." + component.getName(), edge);
       }
     }
   }

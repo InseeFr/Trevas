@@ -241,7 +241,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (pivoted.isEmpty()) {
       throw unsupported("clause");
     }
-    pending = new Pivot(srcId, idComponent, measureComponent, pivoted);
+    pending = new Pivot(srcId, idComponent, measureComponent, pivoted, "pivot");
     return null;
   }
 
@@ -354,7 +354,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
             srcId,
             Map.copyOf(aggrExprs),
             Map.copyOf(aggrTypes),
-            groupByColumns(aggr.groupingClause()));
+            groupByColumns(aggr.groupingClause()),
+            List.of());
     return null;
   }
 

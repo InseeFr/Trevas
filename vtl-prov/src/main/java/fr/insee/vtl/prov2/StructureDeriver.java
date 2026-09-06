@@ -4,6 +4,7 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov2.PendingOp.Aggr;
+import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
@@ -12,10 +13,12 @@ import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
+import fr.insee.vtl.prov2.PendingOp.Membership;
 import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
+import fr.insee.vtl.prov2.PendingOp.Unpivot;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -80,6 +83,16 @@ final class StructureDeriver {
           pivot.measureComponent(),
           pivot.pivotedColumns());
     }
+    if (op instanceof Unpivot unpivot) {
+      return deriveUnpivot(
+          require(unpivot.srcId()), unpivot.idComponent(), unpivot.measureComponent());
+    }
+    if (op instanceof Membership membership) {
+      return deriveMembership(require(membership.srcId()), membership.component());
+    }
+    if (op instanceof Apply apply) {
+      return deriveApply(require(apply.srcId()), apply.measureName(), apply.measureType());
+    }
     throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
   }
 
@@ -101,6 +114,54 @@ final class StructureDeriver {
         }
       }
     }
+    return new DataStructure(components);
+  }
+
+  private static DataStructure deriveApply(
+      DataStructure src, String measureName, Class<?> measureType) {
+    List<Component> components = copyIdentifiers(src);
+    components.add(new Component(measureName, measureType, Dataset.Role.MEASURE));
+    return new DataStructure(components);
+  }
+
+  private static DataStructure deriveMembership(DataStructure src, String componentName) {
+    Component selected = src.get(componentName);
+    if (selected == null) {
+      throw new IllegalStateException("unknown membership component " + componentName);
+    }
+    List<Component> components = copyIdentifiers(src);
+    components.add(new Component(selected));
+    return new DataStructure(components);
+  }
+
+  private static List<Component> copyIdentifiers(DataStructure src) {
+    List<Component> components = new ArrayList<>();
+    for (Component component : src.componentsInOrder()) {
+      if (component.isIdentifier()) {
+        components.add(new Component(component));
+      }
+    }
+    return components;
+  }
+
+  private static DataStructure deriveUnpivot(
+      DataStructure src, String idComponent, String measureComponent) {
+    Class<?> measureType = null;
+    List<Component> components = new ArrayList<>();
+    for (Component component : src.componentsInOrder()) {
+      if (component.isIdentifier()) {
+        components.add(new Component(component));
+      } else if (component.isMeasure()) {
+        if (measureType == null) {
+          measureType = component.getType();
+        }
+      }
+    }
+    if (measureType == null) {
+      measureType = Long.class;
+    }
+    components.add(new Component(idComponent, String.class, Dataset.Role.IDENTIFIER));
+    components.add(new Component(measureComponent, measureType, Dataset.Role.MEASURE));
     return new DataStructure(components);
   }
 
