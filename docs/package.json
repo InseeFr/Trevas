@@ -11,8 +11,6 @@
 		"docusaurus": "docusaurus",
 		"start": "docusaurus start",
 		"start-fr": "docusaurus start --locale fr",
-		"start-zh-CN": "docusaurus start --locale zh-CN",
-		"start-no": "docusaurus start --locale no",
 		"build": "docusaurus build",
 		"swizzle": "docusaurus swizzle",
 		"deploy": "docusaurus deploy",
@@ -26,11 +24,9 @@
 		"clear": "docusaurus clear",
 		"serve": "docusaurus serve",
 		"build-serve": "yarn build && yarn serve",
-		"write-translations": "yarn write-translations-en & yarn write-translations-fr & yarn write-translations-zh-CN & yarn write-translations-no & yarn format:docs & yarn format:i18n",
+		"write-translations": "yarn write-translations-en & yarn write-translations-fr & yarn format:docs & yarn format:i18n",
 		"write-translations-en": "docusaurus write-translations --locale en",
-		"write-translations-fr": "docusaurus write-translations --locale fr",
-		"write-translations-zh-CN": "docusaurus write-translations --locale zh-CN",
-		"write-translations-no": "docusaurus write-translations --locale no"
+		"write-translations-fr": "docusaurus write-translations --locale fr"
 	},
 	"dependencies": {
 		"@abrookins-redis/redis-sitesearch-frontend": "^1.0.2",
@@ -39,40 +35,40 @@
 		"@docusaurus/plugin-sitemap": "3.10.2",
 		"@docusaurus/preset-classic": "3.10.2",
 		"@docusaurus/theme-search-algolia": "3.10.2",
-		"@making-sense/antlr-editor": "^2.9.2",
-		"@making-sense/vtl-2-0-antlr-tools-ts": "^2.0.1",
+		"@making-sense/antlr-editor": "2.9.4",
+		"@making-sense/vtl-2-0-antlr-tools-ts": "^2.0.2",
 		"@mdx-js/react": "^3.1.1",
 		"@monaco-editor/react": "^4.7.0",
 		"antlr4ts": "^0.5.0-alpha.4",
 		"clsx": "^2.1.1",
 		"docusaurus-lunr-search": "^3.6.0",
-		"docusaurus-plugin-sass": "^0.2.6",
-		"monaco-editor": "^0.53.0",
+		"docusaurus-plugin-sass": "^0.2.7",
+		"monaco-editor": "0.56.0",
 		"prism-react-renderer": "^2.4.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
-		"react-player": "^2.16.0",
+		"react-player": "^3.4.0",
 		"react-scroll": "^1.9.3",
 		"react-slick": "^0.31.0",
-		"sass": "^1.102.0",
-		"typed.js": "^2.0.12"
+		"sass": "^1.104.0",
+		"typed.js": "^3.0.0"
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "3.10.2",
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@tsconfig/docusaurus": "^2.0.9",
 		"@types/react-slick": "^0.23.13",
-		"@typescript-eslint/eslint-plugin": "^8.66.0",
-		"@typescript-eslint/parser": "^8.66.0",
+		"@typescript-eslint/eslint-plugin": "^8.69.0",
+		"@typescript-eslint/parser": "^8.69.0",
 		"docusaurus-node-polyfills": "^1.0.0",
-		"eslint": "^10.8.0",
+		"eslint": "^10.10.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-import": "^2.32.0",
 		"eslint-plugin-prettier": "^5.5.6",
-		"eslint-plugin-simple-import-sort": "^12.1.1",
+		"eslint-plugin-simple-import-sort": "^14.0.0",
 		"prettier": "^3.9.6",
 		"prettier-linter-helpers": "^1.0.1",
-		"typescript": "^5.9.3"
+		"typescript": "^7.0.2"
 	},
 	"browserslist": {
 		"production": [
@@ -85,5 +81,8 @@
 			"last 1 firefox version",
 			"last 1 safari version"
 		]
+	},
+	"resolutions": {
+		"monaco-editor": "0.53.0"
 	}
 }

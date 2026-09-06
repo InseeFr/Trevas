@@ -10,8 +10,8 @@ Run `yarn`
 
 By default, `yarn start` script will display English content (defined [here](docs/)).
 
-The documentation is also currently available in Chinese (content defined [here](i18n/zh-CN/)), in French (content defined [here](i18n/fr/)) and Norwegian (content defined [here](i18n/no/)).
+The documentation is also available in French (content defined [here](i18n/fr/)).
 
-Run `yarn start-zh-CN`, `yarn start-fr` or `yarn start-no` to run locally the documentation is these languages.
+Run `yarn start-fr` to run the French documentation locally.
 
-You can also run locally the multi language documentation thanks to `yarn build-serve` (caution, hot reloading will not be provided in this mode).
+You can also run the multi-language documentation with `yarn build-serve` (hot reloading is not available in this mode).

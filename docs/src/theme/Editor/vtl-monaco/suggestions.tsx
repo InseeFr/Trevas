@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { IRange, languages } from 'monaco-editor';
 
 export const FUNCTION = languages.CompletionItemKind.Function;
