@@ -122,14 +122,14 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return null;
     }
     if (clause.aggrClause() != null) {
-      // having / group except|all: Phase 2 PR-27 — fail loud until covered.
+      // having: Wave B visitor commit wires PR-27 — fail loud until then.
       if (clause.aggrClause().havingClause() != null) {
         throw unsupported("aggr");
       }
       return null;
     }
     if (clause.customPivotClause() != null) {
-      throw unsupported("clause");
+      return null;
     }
     if (clause.subspaceClause() != null
         || clause.keepOrDropClause() != null
@@ -137,9 +137,6 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return null;
     }
     if (clause.pivotOrUnpivotClause() != null) {
-      if (clause.pivotOrUnpivotClause().op.getType() == VtlParser.UNPIVOT) {
-        throw unsupported("clause");
-      }
       return null;
     }
     throw unsupported("clause");
@@ -156,7 +153,38 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.functions() instanceof VtlParser.ValidationFunctionsContext validation) {
       return visit(validation);
     }
+    if (ctx.functions() instanceof VtlParser.NumericFunctionsContext numeric) {
+      return visit(numeric);
+    }
     throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitNumericFunctions(VtlParser.NumericFunctionsContext ctx) {
+    return visit(ctx.numericOperators());
+  }
+
+  @Override
+  public Void visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
+    requireDatasetVarId(ctx.expr(), "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
+    requireDatasetVarId(ctx.expr(), "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
+    throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+    requireDatasetOrClause(ctx.expr());
+    return null;
   }
 
   @Override
@@ -257,6 +285,24 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     }
   }
 
+  private void checkJoinBody(VtlParser.JoinBodyContext body) {
+    if (body == null) {
+      return;
+    }
+    if (body.filterClause() != null) {
+      requireScalarPredicate(body.filterClause().expr());
+    }
+    if (body.calcClause() != null) {
+      body.calcClause().calcClauseItem().forEach(item -> calcRhs(item.expr()));
+    }
+    if (body.joinApplyClause() != null) {
+      requireScalarPredicate(body.joinApplyClause().expr());
+    }
+    if (body.aggrClause() != null && body.aggrClause().havingClause() != null) {
+      requireScalarPredicate(body.aggrClause().havingClause().expr());
+    }
+  }
+
   /** Dataset name or scalar literal; nested ops deferred. */
   private void leafOperand(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
@@ -313,9 +359,12 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
             || functions instanceof VtlParser.SetFunctionsContext
             || functions instanceof VtlParser.ValidationFunctionsContext
             || functions instanceof VtlParser.HierarchyFunctionsContext
-            || functions instanceof VtlParser.AggregateFunctionsContext
             || functions instanceof VtlParser.DistanceFunctionsContext) {
           throw unsupported("calc");
+        }
+        // AggregateFunctions allowed in having / scalar contexts (e.g. sum(m1) > 0).
+        if (functions instanceof VtlParser.AggregateFunctionsContext) {
+          return visitChildren(ctx);
         }
         if (functions instanceof VtlParser.TimeFunctionsContext time) {
           VtlParser.TimeOperatorsContext op = time.timeOperators();
