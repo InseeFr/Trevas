@@ -66,8 +66,11 @@ source of truth:
 - **Pure value lineage:** drop `role=condition` edges.
 - **Dataset-level lineage:** roll variable/expression `dependsOn` up by `dataset`.
 - **Operator/statement view:** group edges by `op` / statement.
-- **SDTH/RDF:** value `dependsOn` → `prov:wasDerivedFrom`; condition `dependsOn`
-  → `prov:used`. Both predicates already exist. Tested separately.
+- **SDTH/RDF:** process view = program steps (`SdthProgramView` + `RDFUtils`).
+  Entity lineage (planned): value `dependsOn` → `sdth:wasDerivedFrom` (and
+  `sdth:elaborationOf` where identity/version applies); condition edges stay
+  folded into step `usesVariable` on the compatibility path, or `prov:used` in
+  `RichRdfView`. See [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md) §8.
 
 ### 1.4 The ultimate-goal query
 

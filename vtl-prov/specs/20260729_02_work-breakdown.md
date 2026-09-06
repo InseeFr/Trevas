@@ -109,6 +109,20 @@ has a green corpus (or structural no-op); BPE RDF green; rich RDF + UDO
 inlining landed; unknown syntax still throws (forward-compat). Engine
 unsupported-ops are not an excuse to leave provenance red.
 
+### Wave F — SDTH RDF model (entity lineage)
+
+Spec: [`20260808_01_rdf-compatibility-view.md`](./20260808_01_rdf-compatibility-view.md) §8.
+Improve the RDF export against the SDTH vocabulary (entity lineage + metadata),
+without changing the IR / DOT contract.
+
+| Done | PR | Capability | Turns green |
+|------|----|------------|-------------|
+| [ ] | 41 | `hasName` + `hasVarInstance` + `hasSourceCode` only on steps | RDF / JSON-LD tests |
+| [ ] | 42 | Dataframe `wasDerivedFrom` (step products → consumed DFs) | own tests |
+| [ ] | 43 | `FileInstance` + root dataframe `wasDerivedFrom` file | own tests |
+| [ ] | 44 | Variable `wasDerivedFrom` / `elaborationOf` | own tests |
+| [ ] | 45 | Wire entity lineage into `Provenance.run` path; NS / JSON-LD-safe ids | BPE + Desktop export still coherent |
+
 ## Why this cut
 
 - **Wave A first** — BPE (and most real scripts) fail on `cast` / `substr` / `if`
@@ -174,3 +188,6 @@ unsupported-ops are not an excuse to leave provenance red.
 3. **`customPivot`** → même famille que `unpivot` (PR-23).
 4. **Wave E entière obligatoire** — BPE + RDF riche + UDO inlining + migrate
    `$input` (PR 37–40). Pas de polish « optionnel » sur ce chemin.
+5. **Wave F** — améliorer l’export RDF (vocabulaire SDTH : lineage entités +
+   métadonnées). Spec [`20260808_01`](./20260808_01_rdf-compatibility-view.md) §8;
+   IR / DOT inchangés.
