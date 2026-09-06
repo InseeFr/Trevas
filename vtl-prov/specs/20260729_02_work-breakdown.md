@@ -80,18 +80,18 @@ SupportCheck + RHS walk (allow the AST; still forbid nested dataset clauses).
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
 | [x] | 28 | `check_datapoint` output modes `invalid` / `all_measures` (schema + edges) | 29-check-modes |
-| [ ] | 29 | Simple `check` (validation) | 30-check-simple |
-| [ ] | 30 | `define hierarchical ruleset` + `hierarchy` + `check_hierarchy` | 31-hierarchy |
+| [x] | 29 | Simple `check` (validation) | 30-check-simple |
+| [x] | 30 | `define hierarchical ruleset` + `hierarchy` + `check_hierarchy` | 31-hierarchy |
 | [x] | 31 | `define structure` — **skipped**: not in Trevas `Vtl.g4` (stay unsupported until parser) | — |
 
 ### Wave D — Time-series & misc producers
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [ ] | 32 | Time-series producers (`fill_time_series`, `flow_to_stock`, `stock_to_flow`, `timeshift`, `time_agg`) | 33-timeseries |
-| [ ] | 33 | `exists_in` (dataset-level producer) | 34-exists-in |
-| [ ] | 34 | `eval` (external routine, black-box like UDO) | 35-eval |
-| [ ] | 35 | Scalar assignment (`x := 1+1`) — IR `kind=scalar` + implement | 36-scalar-assign |
+| [x] | 32 | Time-series producers (`fill_time_series`, `flow_to_stock`, `stock_to_flow`, `timeshift`, `time_agg`) | 33-timeseries |
+| [x] | 33 | `exists_in` (dataset-level producer) | 34-exists-in |
+| [x] | 34 | `eval` (external routine, black-box like UDO) | 35-eval |
+| [x] | 35 | Scalar assignment (`x := 1+1`) — IR `kind=scalar` + implement | 36-scalar-assign |
 | [x] | 36 | Distance / leftover grammar ops after A–D (audit `Vtl.g4` vs SupportCheck); known gap `symdiff` | 37-symdiff |
 
 ### Wave E — Integration & complete surface
