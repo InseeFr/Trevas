@@ -13,10 +13,13 @@ import fr.insee.vtl.prov2.PendingOp.Aggr;
 import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
+import fr.insee.vtl.prov2.PendingOp.Check;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov2.PendingOp.Drop;
 import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
+import fr.insee.vtl.prov2.PendingOp.ExistsIn;
+import fr.insee.vtl.prov2.PendingOp.PassThrough;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
 import fr.insee.vtl.prov2.PendingOp.Membership;
@@ -55,6 +58,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /** Versioned dataset id → binding rows (for data-dependent ops such as pivot). */
   private final Map<String, InputDataset> bindingsWithRows = new LinkedHashMap<>();
   private final Map<String, String> versions = new LinkedHashMap<>();
+  /** Scalar name → versioned id ({@code x@1}); separate from dataset {@link #versions}. */
+  private final Map<String, String> scalarVersions = new LinkedHashMap<>();
   private final Map<String, DataStructure> structures = new LinkedHashMap<>();
   private int stmtIndex;
   private int exprSeq;
@@ -109,6 +114,91 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
     // Support-check already registered the operator name in ScriptSymbols.
     stmtIndex++;
+    return null;
+  }
+
+  @Override
+  public Void visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
+    // Support-check already registered the ruleset name in ScriptSymbols.
+    stmtIndex++;
+    return null;
+  }
+
+  @Override
+  public Void visitHierarchyOperators(VtlParser.HierarchyOperatorsContext ctx) {
+    String srcId = datasetOperand(ctx.op);
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    String ruleset = ctx.hrName.getText();
+    if (!symbols.isHierarchicalRuleset(ruleset)) {
+      throw new IllegalStateException("unknown hierarchical ruleset " + ruleset);
+    }
+    pending = new PassThrough(srcId, "hierarchy", ruleset);
+    return null;
+  }
+
+  @Override
+  public Void visitFlowAtom(VtlParser.FlowAtomContext ctx) {
+    return unaryPassThrough(ctx.expr(), ctx.op.getText());
+  }
+
+  @Override
+  public Void visitFillTimeAtom(VtlParser.FillTimeAtomContext ctx) {
+    return unaryPassThrough(ctx.expr(), "fill_time_series");
+  }
+
+  @Override
+  public Void visitTimeShiftAtom(VtlParser.TimeShiftAtomContext ctx) {
+    return unaryPassThrough(ctx.expr(), "timeshift");
+  }
+
+  @Override
+  public Void visitTimeAggAtom(VtlParser.TimeAggAtomContext ctx) {
+    if (ctx.op == null || ctx.op.expr() == null) {
+      throw unsupported("functions");
+    }
+    return unaryPassThrough(ctx.op.expr(), "time_agg");
+  }
+
+  private Void unaryPassThrough(VtlParser.ExprContext expr, String op) {
+    String srcId = datasetOperand(expr);
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    pending = new PassThrough(srcId, op);
+    return null;
+  }
+
+  @Override
+  public Void visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
+    String leftId = datasetOperand(ctx.left);
+    String rightId = datasetOperand(ctx.right);
+    if (leftId == null || rightId == null) {
+      throw unsupported("functions");
+    }
+    pending = new ExistsIn(leftId, rightId);
+    return null;
+  }
+
+  @Override
+  public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
+    List<String> operands = new ArrayList<>();
+    for (VtlParser.VarIDContext varId : ctx.varID()) {
+      String id = versions.get(varId.getText());
+      if (id == null || !structures.containsKey(id)) {
+        throw unsupported("functions");
+      }
+      operands.add(id);
+    }
+    if (operands.isEmpty()) {
+      throw unsupported("functions");
+    }
+    // Single operand: structure copy; several: component-wise like arithmetic.
+    pending =
+        operands.size() == 1
+            ? new PassThrough(operands.get(0), "eval")
+            : new Arithmetic("eval", List.copyOf(operands));
     return null;
   }
 
@@ -212,6 +302,23 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       throw new IllegalStateException("unknown datapoint ruleset " + ruleset);
     }
     pending = new CheckDatapoint(srcId, ruleset, validated);
+    return null;
+  }
+
+  @Override
+  public Void visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
+    String srcId = datasetOperand(ctx.expr());
+    if (srcId == null) {
+      throw unsupported("check");
+    }
+    String imbalanceId = null;
+    if (ctx.imbalanceExpr() != null) {
+      imbalanceId = datasetOperand(ctx.imbalanceExpr().expr());
+      if (imbalanceId == null) {
+        throw unsupported("check");
+      }
+    }
+    pending = new Check(srcId, imbalanceId);
     return null;
   }
 
@@ -547,6 +654,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     exprSeq = 0;
     anonSeq = 0;
     forceDerive = false;
+    if (isScalarAssignment(expr)) {
+      return assignScalar(out, expr);
+    }
     visit(expr);
     requirePending();
     String outId = out + "@" + stmtIndex;
@@ -556,6 +666,110 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     versions.put(out, outId);
     pending = new Identity(outId);
     return null;
+  }
+
+  /**
+   * RHS is a scalar expression (no dataset producer / dataset operand): emit {@code kind=scalar}
+   * plus a reference-level expression node (§5.36).
+   */
+  private Void assignScalar(String out, VtlParser.ExprContext expr) {
+    String exprId = nextExprId();
+    Map<String, String> exprAttrs = new LinkedHashMap<>();
+    exprAttrs.put("kind", "expression");
+    exprAttrs.put("src", text(expr));
+    graph.addVertex(exprId, exprAttrs);
+    for (String name : varIdNames(expr)) {
+      String scalarId = scalarVersions.get(name);
+      if (scalarId == null) {
+        throw new IllegalStateException("unknown scalar " + name);
+      }
+      graph.addEdge(exprId, scalarId, Map.of());
+    }
+    Class<?> type = inferTypeFromAst(unwrap(expr));
+    if (type == null) {
+      type = inferScalarTypeFromRefs(expr);
+    }
+    if (type == null) {
+      type = Long.class;
+    }
+    String outId = out + "@" + stmtIndex;
+    Map<String, String> attrs = new LinkedHashMap<>();
+    attrs.put("kind", "scalar");
+    attrs.put("type", VTLTypes.getVtlType(type));
+    graph.addVertex(outId, attrs);
+    graph.addEdge(outId, exprId, Map.of());
+    scalarVersions.put(out, outId);
+    pending = null;
+    return null;
+  }
+
+  /**
+   * Scalar when the RHS never touches a dataset: no {@code eval(…)} (varIDs, not {@code
+   * VarIdExpr}), and every {@code VarId} is either a literal-free reference to a prior scalar or
+   * absent. Dataset producers always name a dataset {@code VarId} (or {@code eval}).
+   */
+  private boolean isScalarAssignment(VtlParser.ExprContext expr) {
+    if (containsEval(expr)) {
+      return false;
+    }
+    for (String name : varIdNames(expr)) {
+      if (isDatasetName(name)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean containsEval(VtlParser.ExprContext expr) {
+    boolean[] found = {false};
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
+        found[0] = true;
+        return null;
+      }
+    }.visit(expr);
+    return found[0];
+  }
+
+  private boolean isDatasetName(String name) {
+    String id = versions.get(name);
+    return id != null && structures.containsKey(id);
+  }
+
+  private Class<?> inferScalarTypeFromRefs(VtlParser.ExprContext expr) {
+    Class<?> result = null;
+    for (String name : varIdNames(expr)) {
+      String id = scalarVersions.get(name);
+      if (id == null) {
+        continue;
+      }
+      Map<String, String> attrs = graph.vertices().get(id);
+      if (attrs == null || attrs.get("type") == null) {
+        continue;
+      }
+      Class<?> t = VtlJavaTypes.javaType(attrs.get("type"));
+      if (result == null) {
+        result = t;
+      } else if (!result.equals(t)
+          && Number.class.isAssignableFrom(result)
+          && Number.class.isAssignableFrom(t)) {
+        result = Double.class;
+      }
+    }
+    return result;
+  }
+
+  private static Set<String> varIdNames(VtlParser.ExprContext expr) {
+    Set<String> names = new LinkedHashSet<>();
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
+        names.add(ctx.varID().getText());
+        return null;
+      }
+    }.visit(expr);
+    return names;
   }
 
   /**
