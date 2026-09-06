@@ -77,7 +77,11 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitDefHierarchical(VtlParser.DefHierarchicalContext ctx) {
-    throw unsupported("define");
+    if (ctx.hierRuleSignature().VARIABLE() == null) {
+      throw unsupported("define");
+    }
+    symbols.addHierarchicalRuleset(ctx.rulesetID().getText());
+    return null;
   }
 
   @Override
@@ -155,7 +159,96 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.functions() instanceof VtlParser.NumericFunctionsContext numeric) {
       return visit(numeric);
     }
+    if (ctx.functions() instanceof VtlParser.HierarchyFunctionsContext hierarchy) {
+      return visit(hierarchy);
+    }
+    if (ctx.functions() instanceof VtlParser.TimeFunctionsContext time) {
+      return visit(time);
+    }
+    if (ctx.functions() instanceof VtlParser.ComparisonFunctionsContext comparison) {
+      if (comparison.comparisonOperators() instanceof VtlParser.ExistInAtomContext existIn) {
+        return visit(existIn);
+      }
+      throw unsupported("functions");
+    }
+    if (ctx.functions() instanceof VtlParser.GenericFunctionsContext generic) {
+      if (generic.genericOperators() instanceof VtlParser.EvalAtomContext eval) {
+        return visit(eval);
+      }
+      throw unsupported("functions");
+    }
     throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
+    requireDatasetVarId(ctx.left, "functions");
+    requireDatasetVarId(ctx.right, "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
+    // Black-box: at least one dataset varID argument (constants alone unsupported).
+    if (ctx.varID().isEmpty()) {
+      throw unsupported("functions");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitHierarchyFunctions(VtlParser.HierarchyFunctionsContext ctx) {
+    return visit(ctx.hierarchyOperators());
+  }
+
+  @Override
+  public Void visitHierarchyOperators(VtlParser.HierarchyOperatorsContext ctx) {
+    requireDatasetVarId(ctx.op, "functions");
+    if (!symbols.isHierarchicalRuleset(ctx.hrName.getText())) {
+      throw unsupported("functions");
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitTimeFunctions(VtlParser.TimeFunctionsContext ctx) {
+    VtlParser.TimeOperatorsContext op = ctx.timeOperators();
+    if (op instanceof VtlParser.FlowAtomContext
+        || op instanceof VtlParser.FillTimeAtomContext
+        || op instanceof VtlParser.TimeShiftAtomContext
+        || op instanceof VtlParser.TimeAggAtomContext) {
+      return visit(op);
+    }
+    // Scalar time ops (getyear, datediff, …) are calc-only, not dataset producers.
+    throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitFlowAtom(VtlParser.FlowAtomContext ctx) {
+    requireDatasetVarId(ctx.expr(), "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitFillTimeAtom(VtlParser.FillTimeAtomContext ctx) {
+    requireDatasetVarId(ctx.expr(), "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitTimeShiftAtom(VtlParser.TimeShiftAtomContext ctx) {
+    requireDatasetVarId(ctx.expr(), "functions");
+    return null;
+  }
+
+  @Override
+  public Void visitTimeAggAtom(VtlParser.TimeAggAtomContext ctx) {
+    // Dataset form uses optionalExpr as the operand when present.
+    if (ctx.op == null || ctx.op.expr() == null) {
+      throw unsupported("functions");
+    }
+    requireDatasetVarId(ctx.op.expr(), "functions");
+    return null;
   }
 
   @Override
@@ -207,7 +300,11 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
-    throw unsupported("check");
+    requireDatasetVarId(ctx.expr(), "check");
+    if (ctx.imbalanceExpr() != null) {
+      requireDatasetVarId(ctx.imbalanceExpr().expr(), "check");
+    }
+    return null;
   }
 
   @Override
