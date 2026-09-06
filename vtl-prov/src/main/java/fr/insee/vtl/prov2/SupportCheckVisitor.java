@@ -122,9 +122,8 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return null;
     }
     if (clause.aggrClause() != null) {
-      // having: Wave B visitor commit wires PR-27 — fail loud until then.
       if (clause.aggrClause().havingClause() != null) {
-        throw unsupported("aggr");
+        requireScalarPredicate(clause.aggrClause().havingClause().expr());
       }
       return null;
     }
@@ -218,13 +217,13 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
-    requireEmptyJoinBody(ctx.joinBody());
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
       if (item.AS() != null) {
         throw unsupported("join");
       }
       requireDatasetVarId(item.expr(), "join");
     }
+    checkJoinBody(ctx.joinBody());
     return null;
   }
 
@@ -269,20 +268,6 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return ctx.joinClause().joinClauseItem();
     }
     return ctx.joinClauseWithoutUsing().joinClauseItem();
-  }
-
-  static void requireEmptyJoinBody(VtlParser.JoinBodyContext body) {
-    if (body == null) {
-      return;
-    }
-    if (body.filterClause() != null
-        || body.calcClause() != null
-        || body.joinApplyClause() != null
-        || body.aggrClause() != null
-        || body.keepOrDropClause() != null
-        || body.renameClause() != null) {
-      throw unsupported("join");
-    }
   }
 
   private void checkJoinBody(VtlParser.JoinBodyContext body) {

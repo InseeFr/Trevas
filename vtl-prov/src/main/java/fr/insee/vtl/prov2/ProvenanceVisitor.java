@@ -10,6 +10,7 @@ import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import fr.insee.vtl.prov.utils.VTLTypes;
 import fr.insee.vtl.prov2.PendingOp.Aggr;
+import fr.insee.vtl.prov2.PendingOp.Apply;
 import fr.insee.vtl.prov2.PendingOp.Arithmetic;
 import fr.insee.vtl.prov2.PendingOp.Calc;
 import fr.insee.vtl.prov2.PendingOp.CheckDatapoint;
@@ -18,10 +19,13 @@ import fr.insee.vtl.prov2.PendingOp.Filter;
 import fr.insee.vtl.prov2.PendingOp.Identity;
 import fr.insee.vtl.prov2.PendingOp.Join;
 import fr.insee.vtl.prov2.PendingOp.Keep;
+import fr.insee.vtl.prov2.PendingOp.Membership;
 import fr.insee.vtl.prov2.PendingOp.Pivot;
 import fr.insee.vtl.prov2.PendingOp.Rename;
 import fr.insee.vtl.prov2.PendingOp.SetOp;
 import fr.insee.vtl.prov2.PendingOp.Sub;
+import fr.insee.vtl.prov2.PendingOp.Unpivot;
+import fr.insee.vtl.engine.utils.DefaultMeasureNames;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -55,6 +59,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private int stmtIndex;
   private int exprSeq;
   private int anonSeq;
+  /** When true, assignment structure comes from {@link StructureDeriver} only (join apply, …). */
+  private boolean forceDerive;
 
   /** Outcome of the last visited expression; never null after a successful expr visit. */
   private PendingOp pending;
@@ -129,7 +135,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   @Override
   public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
-    requireEmptyJoinBody(ctx.joinBody());
     List<String> operands = new ArrayList<>();
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
       if (item.AS() != null) {
@@ -145,6 +150,35 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       throw unsupported("join");
     }
     pending = new Join(ctx.joinKeyword.getText(), List.copyOf(operands));
+    applyJoinBody(ctx);
+    return null;
+  }
+
+  @Override
+  public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+    visit(ctx.expr());
+    ensureMaterialized();
+    pending = new Membership(pending.focusId(), ctx.simpleComponentId().getText());
+    return null;
+  }
+
+  @Override
+  public Void visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
+    String srcId = datasetOperand(ctx.expr());
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    pending = new Arithmetic(ctx.op.getText(), List.of(srcId));
+    return null;
+  }
+
+  @Override
+  public Void visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
+    String srcId = datasetOperand(ctx.expr());
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    pending = new Arithmetic(ctx.op.getText(), List.of(srcId));
     return null;
   }
 
@@ -200,11 +234,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
     visit(ctx.expr());
-    requirePending();
     // Left was itself a clause/op: emit anonymous intermediate before this clause.
-    if (!(pending instanceof Identity)) {
-      materializeAnonymous();
-    }
+    ensureMaterialized();
     String srcId = pending.focusId();
     VtlParser.DatasetClauseContext clause = ctx.datasetClause();
     if (clause.calcClause() != null) {
@@ -228,21 +259,121 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (clause.pivotOrUnpivotClause() != null) {
       return applyPivot(srcId, clause.pivotOrUnpivotClause());
     }
+    if (clause.customPivotClause() != null) {
+      return applyCustomPivot(srcId, clause.customPivotClause());
+    }
     throw unsupported("clause");
   }
 
-  private Void applyPivot(String srcId, VtlParser.PivotOrUnpivotClauseContext pivot) {
-    if (pivot.op.getType() == VtlParser.UNPIVOT) {
-      throw unsupported("clause");
+  private void applyJoinBody(VtlParser.JoinExprContext ctx) {
+    VtlParser.JoinBodyContext body = ctx.joinBody();
+    if (body == null
+        || (body.filterClause() == null
+            && body.calcClause() == null
+            && body.joinApplyClause() == null
+            && body.aggrClause() == null
+            && body.keepOrDropClause() == null
+            && body.renameClause() == null)) {
+      return;
     }
+    // Engine ignores join body — structure must come from PendingOp derive.
+    forceDerive = true;
+    String joinSrc = joinSourceFragment(ctx);
+    materializeAnonymous(joinSrc);
+    if (body.filterClause() != null) {
+      applyFilter(pending.focusId(), body.filterClause());
+    }
+    if (body.calcClause() != null) {
+      ensureMaterialized();
+      applyCalc(pending.focusId(), body.calcClause());
+    } else if (body.joinApplyClause() != null) {
+      ensureMaterialized();
+      applyJoinApply(pending.focusId(), body.joinApplyClause());
+    } else if (body.aggrClause() != null) {
+      ensureMaterialized();
+      applyAggr(pending.focusId(), body.aggrClause());
+    }
+    if (body.keepOrDropClause() != null) {
+      ensureMaterialized();
+      applyKeepOrDrop(pending.focusId(), body.keepOrDropClause());
+    }
+    if (body.renameClause() != null) {
+      ensureMaterialized();
+      applyRename(pending.focusId(), body.renameClause());
+    }
+  }
+
+  private String joinSourceFragment(VtlParser.JoinExprContext ctx) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(ctx.joinKeyword.getText()).append("(");
+    List<VtlParser.JoinClauseItemContext> items = joinItems(ctx);
+    for (int i = 0; i < items.size(); i++) {
+      if (i > 0) {
+        sb.append(", ");
+      }
+      sb.append(text(items.get(i).expr()));
+    }
+    if (ctx.joinClause() != null && ctx.joinClause().USING() != null) {
+      sb.append(" using ");
+      List<VtlParser.ComponentIDContext> keys = ctx.joinClause().componentID();
+      for (int i = 0; i < keys.size(); i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        sb.append(keys.get(i).getText());
+      }
+    }
+    sb.append(")");
+    return sb.toString();
+  }
+
+  private Void applyJoinApply(String srcId, VtlParser.JoinApplyClauseContext apply) {
+    VtlParser.ExprContext rhs = apply.expr();
+    String exprId = nextExprId();
+    Set<String> refs = componentRefs(rhs);
+    addExpression(exprId, text(rhs), srcId, refs, Set.of(), null);
+    Class<?> type = inferCalcType(rhs, requireStructure(srcId), refs);
+    String measureName = DefaultMeasureNames.forType(type);
+    pending = new Apply(srcId, exprId, measureName, type);
+    return null;
+  }
+
+  private Void applyPivot(String srcId, VtlParser.PivotOrUnpivotClauseContext pivot) {
     String idComponent = pivot.id_.getText();
     String measureComponent = pivot.mea.getText();
+    if (pivot.op.getType() == VtlParser.UNPIVOT) {
+      pending = new Unpivot(srcId, idComponent, measureComponent);
+      return null;
+    }
     List<String> pivoted = distinctPivotValues(srcId, idComponent);
     if (pivoted.isEmpty()) {
       throw unsupported("clause");
     }
     pending = new Pivot(srcId, idComponent, measureComponent, pivoted, "pivot");
     return null;
+  }
+
+  private Void applyCustomPivot(String srcId, VtlParser.CustomPivotClauseContext custom) {
+    String idComponent = custom.id_.getText();
+    String measureComponent = custom.mea.getText();
+    List<String> pivoted = new ArrayList<>();
+    for (VtlParser.ConstantContext constant : custom.constant()) {
+      pivoted.add(stripConstant(constant.getText()));
+    }
+    if (pivoted.isEmpty()) {
+      throw unsupported("clause");
+    }
+    pending = new Pivot(srcId, idComponent, measureComponent, pivoted, "customPivot");
+    return null;
+  }
+
+  private static String stripConstant(String raw) {
+    if (raw.length() >= 2
+        && ((raw.startsWith("\"") && raw.endsWith("\""))
+            || (raw.startsWith("'") && raw.endsWith("'")))) {
+      return raw.substring(1, raw.length() - 1);
+    }
+    return raw;
   }
 
   /**
@@ -349,13 +480,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       aggrExprs.put(component, exprId);
       aggrTypes.put(component, inferCalcType(null, src, refs));
     }
+    List<String> havingIds = new ArrayList<>();
+    if (aggr.havingClause() != null) {
+      VtlParser.ExprContext having = aggr.havingClause().expr();
+      String havingId = nextExprId();
+      addExpression(havingId, text(having), srcId, componentRefs(having), Set.of(), null);
+      havingIds.add(havingId);
+    }
     pending =
         new Aggr(
             srcId,
             Map.copyOf(aggrExprs),
             Map.copyOf(aggrTypes),
             groupByColumns(aggr.groupingClause()),
-            List.of());
+            List.copyOf(havingIds));
     return null;
   }
 
@@ -408,6 +546,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     stmtIndex++;
     exprSeq = 0;
     anonSeq = 0;
+    forceDerive = false;
     visit(expr);
     requirePending();
     String outId = out + "@" + stmtIndex;
@@ -423,22 +562,34 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
    * Emits {@code #s{stmt}.{seq}} for a pending clause that is not the assignment LHS — the next
    * clause in the chain uses it as source.
    */
+  private void ensureMaterialized() {
+    requirePending();
+    if (!(pending instanceof Identity)) {
+      materializeAnonymous();
+    }
+  }
+
   private void materializeAnonymous() {
+    materializeAnonymous(null);
+  }
+
+  private void materializeAnonymous(String src) {
     requirePending();
     anonSeq++;
     String anonId = "#s" + stmtIndex + "." + anonSeq;
     DataStructure structure = deriver.derive(pending);
-    addDataset(anonId, structure, null, true);
+    addDataset(anonId, structure, src, true);
     linker.link(pending, anonId, structure);
     pending = new Identity(anonId);
   }
 
   /**
    * Named LHS: engine binding if present, else derive from {@link #pending}. Never mix both for one
-   * dataset (stable goldens when the engine later implements an op).
+   * dataset (stable goldens when the engine later implements an op). Join bodies force derive
+   * because the engine ignores them.
    */
   private DataStructure structureForAssignment(String out) {
-    if (oracle.hasDataset(out)) {
+    if (!forceDerive && oracle.hasDataset(out)) {
       return oracle.requireDataset(out);
     }
     return deriver.derive(pending);
