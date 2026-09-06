@@ -46,10 +46,17 @@ VTL script
 Optional later:
 
 ```
-ProvGraph → RdfView (richer) → Model   // only after golden RDF tests exist for the new shape
+ProvGraph → RichRdfView → Model   // PR-38 — landed
 ```
 
+`fr.insee.vtl.prov2.RichRdfView.buildModel(graph)` emits IR nodes (dataset /
+variable / expression / scalar) and maps value `dependsOn` →
+`sdth:wasDerivedFrom`, condition `dependsOn` → `prov:used`. See
+`RichRdfViewTest`. Compatibility SDTH program steps stay on
+`SdthProgramView` + `RDFUtils`.
+
 ## 3. What `SdthProgramView` must rebuild
+
 
 The IR is finer (expression nodes, anonymous intermediates, `role=condition`). Legacy RDF is coarser (statement steps + dataset/variable instances). The view **rolls up**:
 
