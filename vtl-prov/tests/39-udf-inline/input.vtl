@@ -1,0 +1,6 @@
+// $input ds1: id STRING IDENTIFIER, m1 INTEGER MEASURE, m2 INTEGER MEASURE
+define operator pick (a integer, b integer)
+returns integer is a + 1
+end operator;
+
+ds_out := ds1[calc out := pick(m1, m2)];

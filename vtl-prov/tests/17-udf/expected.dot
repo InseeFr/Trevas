@@ -1,6 +1,5 @@
 digraph {
-  // Black-box UDF (spec 02 §5.17): the output variable derives from the declared
-  // input variable(s); inlining the operator body is a later enhancement.
+  // §5.17 / PR-39 — UDO inlined: walk body, map formals → call args (no op=addone).
   // stmt 1 = `define operator addone ...` (definition, no dataset)
   // stmt 2 = `ds2 := ds1[calc m2 := addone(m1)]`  -> expression node e2.1
 
@@ -15,9 +14,9 @@ digraph {
   "ds2@2.m1" [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
   "ds2@2.m2" [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
 
-  // calc RHS is a written expression -> its own node; the UDF call annotates op
+  // call-site expression; body is `x + 1` → only arg for x (m1)
   "e2.1"     [kind=expression, src="addone(m1)"];
-  "e2.1" -> "ds1@0.m1" [op=addone];
+  "e2.1" -> "ds1@0.m1";
 
   // m2 from its defining expression; other columns pass through
   "ds2@2"    -> "ds1@0"    [op=calc];
