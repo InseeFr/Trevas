@@ -10,15 +10,9 @@ const Editor = memo((props: Props) => {
 	return (
 		<BrowserOnly>
 			{() => {
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
 				const VTLEditor = require('@making-sense/antlr-editor').AntlrEditor;
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
 				const VTLTools = require('@making-sense/vtl-2-0-antlr-tools-ts');
-				const {
-					monarchDefinition,
-					getSuggestionsFromRange,
-					// eslint-disable-next-line @typescript-eslint/no-var-requires
-				} = require('./vtl-monaco');
+				const { monarchDefinition, getSuggestionsFromRange } = require('./vtl-monaco');
 				const customTools = {
 					...VTLTools,
 					getSuggestionsFromRange,

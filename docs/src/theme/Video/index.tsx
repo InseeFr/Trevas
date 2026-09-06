@@ -1,12 +1,12 @@
 import React from 'react';
-import ReactPlayer from 'react-player/lazy';
+import ReactPlayer from 'react-player';
 
 interface VideoProps {
 	url: string;
 }
 
 const Video = ({ url }: VideoProps) => (
-	<ReactPlayer url={url} controls={true} width="100%" />
+	<ReactPlayer src={url} controls={true} width="100%" />
 );
 
 export default Video;
