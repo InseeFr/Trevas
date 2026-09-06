@@ -395,7 +395,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("arithmetic");
   }
 
-  /** Dataset name, or a nested clause chain ({@code ds[…][…]}). */
+  /** Dataset name, nested clause chain ({@code ds[…][…]}), or join frame ({@code join(…)[…]}). */
   private void requireDatasetOrClause(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
     if (current instanceof VtlParser.VarIdExprContext) {
@@ -403,6 +403,12 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     }
     if (current instanceof VtlParser.ClauseExprContext clause) {
       visit(clause);
+      return;
+    }
+    // Clauses after a join: {@code inner_join(…)[calc…][drop…]} (BPE).
+    if (current instanceof VtlParser.FunctionsExpressionContext functions
+        && functions.functions() instanceof VtlParser.JoinFunctionsContext) {
+      visit(functions);
       return;
     }
     throw unsupported("clause");
