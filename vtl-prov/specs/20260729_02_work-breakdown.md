@@ -67,13 +67,13 @@ SupportCheck + RHS walk (allow the AST; still forbid nested dataset clauses).
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [ ] | 21 | Dataset-level component-wise (§5.13 complete): `abs(ds)`, boolean/`\|\|` between datasets, dataset `if`/`nvl` | 22-ds-scalar |
-| [ ] | 22 | Membership `#` (component → mono-measure dataset) | 23-membership |
-| [ ] | 23 | `unpivot` + `customPivot` (same producer family; pure derive OK) | 24-unpivot, 32-custom-pivot |
-| [ ] | 24 | `apply` clause | 25-apply |
-| [ ] | 25 | Join **body** (filter/calc/keep/drop/rename/aggr inside join) | 26-join-body |
+| [x] | 21 | Dataset-level component-wise (§5.13 complete): `abs(ds)`, boolean/`\|\|` between datasets, dataset `if`/`nvl` | 22-ds-scalar |
+| [x] | 22 | Membership `#` (component → mono-measure dataset) | 23-membership |
+| [x] | 23 | `unpivot` + `customPivot` (same producer family; pure derive OK) | 24-unpivot, 32-custom-pivot |
+| [x] | 24 | `apply` clause | 25-apply |
+| [x] | 25 | Join **body** (filter/calc/keep/drop/rename/aggr inside join) | 26-join-body |
 | [x] | 26 | Join kinds gap-fill (`full_join`, `cross_join`) if not already green via 08 | 27-join-kinds |
-| [ ] | 27 | Aggr gaps: `having`, `group except` / `group all` as needed by Trevas | 28-aggr-having |
+| [x] | 27 | Aggr gaps: `having`, `group except` / `group all` as needed by Trevas | 28-aggr-having |
 
 ### Wave C — Validation & definitions
 
