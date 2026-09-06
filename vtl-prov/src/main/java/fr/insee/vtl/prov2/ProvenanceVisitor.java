@@ -517,10 +517,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       String component = item.componentID().getText();
       VtlParser.ExprContext rhs = item.expr();
       String exprId = nextExprId();
-      String udoOp = udoCallOperator(rhs);
-      Set<String> valueRefs = udoOp != null ? udoParamRefs(rhs) : componentRefs(rhs);
+      Set<String> valueRefs = expressionValueRefs(rhs);
       Set<String> conditionRefs = analyticConditionRefs(rhs);
-      addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs, udoOp);
+      addExpression(exprId, text(rhs), srcId, valueRefs, conditionRefs, null);
       calcExprs.put(component, exprId);
       calcTypes.put(component, inferCalcType(rhs, src, valueRefs));
     }
@@ -908,12 +907,16 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   /**
-   * Black-box UDO call operator name when {@code rhs} is a registered {@code operatorID(…)} call;
-   * otherwise {@code null}.
+   * Component names feeding a scalar expression. Pure UDO calls are inlined: walk the operator
+   * body and map formal parameters to call-site {@code varID} arguments (PR-39). Otherwise collect
+   * every {@code VarId} under the AST (reference-level).
    */
-  private String udoCallOperator(VtlParser.ExprContext expr) {
+  private Set<String> expressionValueRefs(VtlParser.ExprContext expr) {
     VtlParser.CallDatasetContext call = asUdoCall(expr);
-    return call == null ? null : call.operatorID().getText();
+    if (call != null) {
+      return udoInlinedRefs(call);
+    }
+    return componentRefs(expr);
   }
 
   private VtlParser.CallDatasetContext asUdoCall(VtlParser.ExprContext expr) {
@@ -930,17 +933,28 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return symbols.isUserOperator(call.operatorID().getText()) ? call : null;
   }
 
-  /** Component names passed as UDO arguments ({@code varID} parameters only). */
-  private static Set<String> udoParamRefs(VtlParser.ExprContext expr) {
-    VtlParser.ExprContext current = unwrap(expr);
-    VtlParser.FunctionsExpressionContext functions = (VtlParser.FunctionsExpressionContext) current;
-    VtlParser.GenericFunctionsContext generic =
-        (VtlParser.GenericFunctionsContext) functions.functions();
-    VtlParser.CallDatasetContext call = (VtlParser.CallDatasetContext) generic.genericOperators();
+  /**
+   * Substitute call args into the registered body: only parameters that appear in the body
+   * contribute, and only when the corresponding argument is a {@code varID}.
+   */
+  private Set<String> udoInlinedRefs(VtlParser.CallDatasetContext call) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(call.operatorID().getText());
+    if (udo == null) {
+      throw new IllegalStateException("unknown user operator " + call.operatorID().getText());
+    }
+    List<VtlParser.ParameterContext> args = call.parameter();
+    Map<String, String> paramToArg = new LinkedHashMap<>();
+    for (int i = 0; i < udo.params().size() && i < args.size(); i++) {
+      VtlParser.ParameterContext arg = args.get(i);
+      if (arg.varID() != null) {
+        paramToArg.put(udo.params().get(i), arg.varID().getText());
+      }
+    }
     Set<String> refs = new LinkedHashSet<>();
-    for (VtlParser.ParameterContext parameter : call.parameter()) {
-      if (parameter.varID() != null) {
-        refs.add(parameter.varID().getText());
+    for (String bodyRef : componentRefs(udo.body())) {
+      String mapped = paramToArg.get(bodyRef);
+      if (mapped != null) {
+        refs.add(mapped);
       }
     }
     return refs;
