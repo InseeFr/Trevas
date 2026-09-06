@@ -51,8 +51,8 @@ final class StructureOracle {
     } catch (ScriptException e) {
       // Engine wraps many failures; inputs stay bound for derivation.
       succeeded = false;
-    } catch (UnsupportedOperationException e) {
-      // In-memory engine throws bare UOE for some unimplemented ops (analytic, …).
+    } catch (RuntimeException e) {
+      // Bare UOE / NPE from unimplemented or half-wired ops (customPivot, …).
       succeeded = false;
     }
     return new StructureOracle(context, succeeded);

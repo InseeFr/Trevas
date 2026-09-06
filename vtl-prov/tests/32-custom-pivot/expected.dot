@@ -1,12 +1,13 @@
 digraph {
-  // §5.15 — customPivot: like pivot with explicit IN list (structure known a priori).
+  // §5.15 — customPivot: like pivot with explicit in list (structure known a priori).
+  // Trevas lexer: keyword is lowercase `in`.
 
   "ds1@0"     [kind=dataset];
   "ds1@0.id"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
   "ds1@0.q"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
   "ds1@0.val" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
 
-  "ds2@1"     [kind=dataset, src="ds1[customPivot q, val IN \"Q1\", \"Q2\"]"];
+  "ds2@1"     [kind=dataset, src="ds1[customPivot q, val in \"Q1\", \"Q2\"]"];
   "ds2@1.id"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
   "ds2@1.Q1"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
   "ds2@1.Q2"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
