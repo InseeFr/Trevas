@@ -70,8 +70,11 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
-    // Black-box: register the name; do not walk the body.
-    symbols.addUserOperator(ctx.operatorID().getText());
+    List<String> params = new ArrayList<>();
+    for (VtlParser.ParameterItemContext item : ctx.parameterItem()) {
+      params.add(item.varID().getText());
+    }
+    symbols.putUserOperator(ctx.operatorID().getText(), params, ctx.expr());
     return null;
   }
 

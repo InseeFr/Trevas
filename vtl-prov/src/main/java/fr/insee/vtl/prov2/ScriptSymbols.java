@@ -1,5 +1,6 @@
 package fr.insee.vtl.prov2;
 
+import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,16 +16,26 @@ import java.util.Set;
  */
 final class ScriptSymbols {
 
-  private final Set<String> userOperators = new LinkedHashSet<>();
+  /**
+   * Scalar {@code define operator}: formal parameter names (order = call args) and the body
+   * expression kept for call-site inlining (PR-39).
+   */
+  record UserOperator(List<String> params, VtlParser.ExprContext body) {}
+
+  private final Map<String, UserOperator> userOperators = new LinkedHashMap<>();
   private final Map<String, List<String>> datapointRulesets = new LinkedHashMap<>();
   private final Set<String> hierarchicalRulesets = new LinkedHashSet<>();
 
-  void addUserOperator(String name) {
-    userOperators.add(name);
+  void putUserOperator(String name, List<String> params, VtlParser.ExprContext body) {
+    userOperators.put(name, new UserOperator(List.copyOf(params), body));
   }
 
   boolean isUserOperator(String name) {
-    return userOperators.contains(name);
+    return userOperators.containsKey(name);
+  }
+
+  UserOperator userOperator(String name) {
+    return userOperators.get(name);
   }
 
   void putDatapointRuleset(String name, List<String> variables) {
