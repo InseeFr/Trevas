@@ -1,6 +1,9 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.view;
+
+import fr.insee.vtl.prov.ir.ProvGraph;
 
 import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.prov.extract.VtlJavaTypes;
 import fr.insee.vtl.prov.prov.DataframeInstance;
 import fr.insee.vtl.prov.prov.FileInstance;
 import fr.insee.vtl.prov.prov.Program;

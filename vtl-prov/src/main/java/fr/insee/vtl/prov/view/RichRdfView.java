@@ -1,4 +1,6 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.view;
+
+import fr.insee.vtl.prov.ir.ProvGraph;
 
 import fr.insee.vtl.prov.utils.PROV;
 import java.util.Map;

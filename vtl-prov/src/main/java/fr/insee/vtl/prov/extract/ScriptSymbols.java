@@ -1,4 +1,4 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.extract;
 
 import fr.insee.vtl.parser.VtlParser;
 import java.util.LinkedHashMap;

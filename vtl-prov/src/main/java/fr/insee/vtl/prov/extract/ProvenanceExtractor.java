@@ -1,4 +1,6 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.extract;
+
+import fr.insee.vtl.prov.ir.ProvGraph;
 
 import fr.insee.vtl.antlr.runtime.CharStreams;
 import fr.insee.vtl.antlr.runtime.CommonTokenStream;

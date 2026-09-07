@@ -1,11 +1,11 @@
-package fr.insee.vtl.prov2.tests;
+package fr.insee.vtl.prov.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.insee.vtl.prov.utils.PROV;
-import fr.insee.vtl.prov2.ProvGraph;
-import fr.insee.vtl.prov2.ProvenanceExtractor;
-import fr.insee.vtl.prov2.RichRdfView;
+import fr.insee.vtl.prov.ir.ProvGraph;
+import fr.insee.vtl.prov.extract.ProvenanceExtractor;
+import fr.insee.vtl.prov.view.RichRdfView;
 import fr.insee.vtl.testutils.InputDirectives;
 import java.nio.file.Files;
 import java.nio.file.Path;

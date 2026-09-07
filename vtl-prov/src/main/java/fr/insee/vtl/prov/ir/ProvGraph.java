@@ -1,4 +1,4 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.ir;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

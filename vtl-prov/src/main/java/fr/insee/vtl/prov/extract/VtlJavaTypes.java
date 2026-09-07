@@ -1,14 +1,14 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.extract;
 
 /**
  * VTL scalar type names ({@code STRING}, {@code INTEGER}, …) ↔ Java classes used when materializing
  * {@code $input} bindings for the structure oracle.
  */
-final class VtlJavaTypes {
+public final class VtlJavaTypes {
 
   private VtlJavaTypes() {}
 
-  static Class<?> javaType(String vtlType) {
+  public static Class<?> javaType(String vtlType) {
     return switch (vtlType) {
       case "STRING" -> String.class;
       case "INTEGER" -> Long.class;

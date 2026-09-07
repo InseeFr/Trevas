@@ -1,4 +1,4 @@
-package fr.insee.vtl.prov2;
+package fr.insee.vtl.prov.extract;
 
 import java.util.List;
 import java.util.Map;

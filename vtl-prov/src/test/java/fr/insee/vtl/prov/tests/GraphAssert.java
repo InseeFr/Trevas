@@ -1,4 +1,4 @@
-package fr.insee.vtl.prov2.tests;
+package fr.insee.vtl.prov.tests;
 
 import org.assertj.core.api.AbstractAssert;
 

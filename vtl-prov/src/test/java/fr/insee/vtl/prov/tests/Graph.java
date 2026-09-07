@@ -1,6 +1,6 @@
-package fr.insee.vtl.prov2.tests;
+package fr.insee.vtl.prov.tests;
 
-import fr.insee.vtl.prov2.ProvGraph;
+import fr.insee.vtl.prov.ir.ProvGraph;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
