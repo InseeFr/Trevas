@@ -14,12 +14,13 @@ import java.util.List;
 import java.util.Set;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
+import org.threeten.extra.Interval;
 import org.threeten.extra.PeriodDuration;
 
 /** Validates that a TCK (or other) CSV file matches its {@link Structured.DataStructure}. */
 public final class CsvDatasetValidator {
 
-  private static final int MAX_INTEGER_SCAN_ROWS = 500;
+  private static final int MAX_SCAN_ROWS = 500;
 
   private CsvDatasetValidator() {}
 
@@ -78,39 +79,6 @@ public final class CsvDatasetValidator {
                   structureColumn,
                   DatasetConsistencyIssue.Kind.UNSUPPORTED_TYPE_IN_STRUCTURE,
                   unsupported));
-          continue;
-        }
-
-        if (!Long.class.equals(type)) {
-          continue;
-        }
-
-        int columnIndex = indexOf(header, structureColumn);
-        int limit = Math.min(dataRows.size(), MAX_INTEGER_SCAN_ROWS);
-        for (int i = 0; i < limit; i++) {
-          List<String> row = dataRows.get(i);
-          if (columnIndex < 0 || columnIndex >= row.size()) {
-            continue;
-          }
-          String raw = row.get(columnIndex);
-          if (raw == null || raw.isBlank()) {
-            continue;
-          }
-          if (isDecimalIntegerNotation(raw.trim())) {
-            issues.add(
-                new DatasetConsistencyIssue(
-                    datasetName,
-                    csvFileName,
-                    structureColumn,
-                    DatasetConsistencyIssue.Kind.INTEGER_METADATA_BUT_CSV_DECIMAL_NOTATION,
-                    "structure type is INTEGER but CSV value \""
-                        + raw
-                        + "\" uses decimal notation (Trevas ParseLong rejects it; use \""
-                        + trimDecimalZeros(raw.trim())
-                        + "\" in the TCK CSV or a lenient integer loader)",
-                    i + 2));
-            break;
-          }
         }
       }
     }
@@ -123,7 +91,7 @@ public final class CsvDatasetValidator {
       int structureColumnCount,
       int headerColumnCount,
       List<List<String>> dataRows) {
-    int limit = Math.min(dataRows.size(), MAX_INTEGER_SCAN_ROWS);
+    int limit = Math.min(dataRows.size(), MAX_SCAN_ROWS);
     for (int i = 0; i < limit; i++) {
       int fieldCount = dataRows.get(i).size();
       if (fieldCount < structureColumnCount) {
@@ -170,42 +138,17 @@ public final class CsvDatasetValidator {
   }
 
   static String unsupportedTypeMessage(Class<?> type) {
-    if (Instant.class.equals(type) || LocalDate.class.equals(type)) {
-      return "structure type DATE is not supported by Trevas CSV loader yet";
-    }
-    if (OffsetDateTime.class.equals(type)) {
-      return "structure type TIME is not supported by Trevas CSV loader yet";
-    }
-    if (PeriodDuration.class.equals(type)) {
-      return "structure type DURATION is not supported by Trevas CSV loader yet";
-    }
     if (String.class.equals(type)
         || Long.class.equals(type)
         || Double.class.equals(type)
         || Boolean.class.equals(type)
-        || org.threeten.extra.Interval.class.equals(type)) {
+        || Instant.class.equals(type)
+        || LocalDate.class.equals(type)
+        || OffsetDateTime.class.equals(type)
+        || Interval.class.equals(type)
+        || PeriodDuration.class.equals(type)) {
       return null;
     }
     return "type " + type.getName() + " is not supported by Trevas CSV loader";
-  }
-
-  private static int indexOf(String[] header, String name) {
-    for (int i = 0; i < header.length; i++) {
-      if (name.equals(header[i])) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private static String trimDecimalZeros(String raw) {
-    if (!raw.contains(".")) {
-      return raw;
-    }
-    try {
-      return Long.toString((long) Double.parseDouble(raw));
-    } catch (NumberFormatException e) {
-      return raw;
-    }
   }
 }

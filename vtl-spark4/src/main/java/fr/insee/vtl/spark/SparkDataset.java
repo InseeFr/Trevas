@@ -6,6 +6,7 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.spark.sql.Column;
@@ -13,6 +14,8 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.*;
+import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 /** The <code>SparkDataset</code> class is a wrapper around a Spark dataframe. */
 public class SparkDataset implements Dataset {
@@ -79,18 +82,7 @@ public class SparkDataset implements Dataset {
         vtlDataset.getDataPoints().stream()
             .map(
                 dataPoint -> {
-                  // Convert Instant to Date for Spark compatibility
-                  Object[] values =
-                      dataPoint.stream()
-                          .map(
-                              obj -> {
-                                if (obj instanceof java.time.Instant instant) {
-                                  return java.sql.Date.valueOf(
-                                      instant.atZone(java.time.ZoneOffset.UTC).toLocalDate());
-                                }
-                                return obj;
-                              })
-                          .toArray();
+                  Object[] values = dataPoint.stream().map(SparkDataset::toSparkValue).toArray();
                   return RowFactory.create(values);
                 })
             .collect(Collectors.toList());
@@ -272,9 +264,71 @@ public class SparkDataset implements Dataset {
       return BooleanType;
     } else if (Instant.class.equals(type) || LocalDate.class.equals(type)) {
       return DateType;
+    } else if (Interval.class.equals(type)
+        || PeriodDuration.class.equals(type)
+        || OffsetDateTime.class.equals(type)) {
+      // TCK TimePeriod/Duration/Time often arrive as SDMX-ish codes; keep lexical form as String.
+      return StringType;
     } else {
       throw new UnsupportedOperationException("unsupported type " + type);
     }
+  }
+
+  /** Converts a VTL cell value to a Spark-compatible value for {@link RowFactory}. */
+  static Object toSparkValue(Object obj) {
+    if (obj instanceof Instant instant) {
+      return java.sql.Date.valueOf(instant.atZone(java.time.ZoneOffset.UTC).toLocalDate());
+    }
+    if (obj instanceof LocalDate localDate) {
+      return java.sql.Date.valueOf(localDate);
+    }
+    if (obj instanceof Interval || obj instanceof PeriodDuration || obj instanceof OffsetDateTime) {
+      return obj.toString();
+    }
+    return obj;
+  }
+
+  /** Best-effort restore of temporal VTL values collected from Spark rows. */
+  static Object fromSparkValue(Object v, Class<?> type) {
+    if (v == null) {
+      return null;
+    }
+    if (Instant.class.equals(type)) {
+      if (v instanceof LocalDate ld) {
+        return ld.atStartOfDay().toInstant(java.time.ZoneOffset.UTC);
+      }
+      if (v instanceof java.sql.Date d) {
+        return d.toLocalDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC);
+      }
+      if (v instanceof java.sql.Timestamp ts) {
+        return ts.toInstant();
+      }
+      return v;
+    }
+    if (v instanceof String s) {
+      if (Interval.class.equals(type)) {
+        try {
+          return Interval.parse(s);
+        } catch (RuntimeException ignored) {
+          return s;
+        }
+      }
+      if (PeriodDuration.class.equals(type)) {
+        try {
+          return PeriodDuration.parse(s);
+        } catch (RuntimeException ignored) {
+          return s;
+        }
+      }
+      if (OffsetDateTime.class.equals(type)) {
+        try {
+          return OffsetDateTime.parse(s);
+        } catch (RuntimeException ignored) {
+          return s;
+        }
+      }
+    }
+    return v;
   }
 
   private static Class<?> extractVtlType(StructField field) {
@@ -342,19 +396,7 @@ public class SparkDataset implements Dataset {
                 String column = structure.keyAtIndex(i);
                 Component component = structure.get(column);
                 Object v = row.get(row.fieldIndex(column));
-                if (component.getType().equals(Instant.class)) {
-                  if (v instanceof java.time.LocalDate ld) {
-                    values.add(ld.atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
-                  } else if (v instanceof java.sql.Date d) {
-                    values.add(d.toLocalDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
-                  } else if (v instanceof java.sql.Timestamp ts) {
-                    values.add(ts.toInstant());
-                  } else {
-                    values.add(v);
-                  }
-                } else {
-                  values.add(v);
-                }
+                values.add(fromSparkValue(v, component.getType()));
               }
               return new DataPoint(getDataStructure(), values);
             })

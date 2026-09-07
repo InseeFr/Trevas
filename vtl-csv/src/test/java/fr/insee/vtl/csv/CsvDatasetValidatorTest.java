@@ -8,18 +8,20 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.supercsv.prefs.CsvPreference;
+import org.threeten.extra.Interval;
 
 class CsvDatasetValidatorTest {
 
   @TempDir Path tempDir;
 
   @Test
-  void detectsIntegerDecimalNotation() throws IOException {
+  void acceptsIntegerDecimalNotationAsLoadable() throws IOException {
     File csv = writeCsv("Id_1,Id_2,Me_1\nA,2010,2.0\nX,2011,3.0\n");
     var structure =
         new Structured.DataStructure(
@@ -31,27 +33,23 @@ class CsvDatasetValidatorTest {
     List<DatasetConsistencyIssue> issues =
         CsvDatasetValidator.validate("DS_4", structure, csv, CsvPreference.STANDARD_PREFERENCE);
 
-    assertThat(issues).hasSize(1);
-    assertThat(issues.get(0).kind())
-        .isEqualTo(DatasetConsistencyIssue.Kind.INTEGER_METADATA_BUT_CSV_DECIMAL_NOTATION);
-    assertThat(issues.get(0).detail()).contains("2.0");
+    assertThat(issues).isEmpty();
   }
 
   @Test
-  void detectsUnsupportedTimeType() throws IOException {
-    File csv = writeCsv("Id_1,Me_1\nx,12:00:00\n");
+  void acceptsTimePeriodDateAndTimeTypes() throws IOException {
+    File csv = writeCsv("Id_1,Me_1,Me_2\nx,2010,12:00:00\n");
     var structure =
         new Structured.DataStructure(
             List.of(
                 new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
-                new Structured.Component("Me_1", OffsetDateTime.class, Dataset.Role.MEASURE)));
+                new Structured.Component("Me_1", Interval.class, Dataset.Role.MEASURE),
+                new Structured.Component("Me_2", OffsetDateTime.class, Dataset.Role.MEASURE)));
 
     List<DatasetConsistencyIssue> issues =
         CsvDatasetValidator.validate("DS_1", structure, csv, CsvPreference.STANDARD_PREFERENCE);
 
-    assertThat(issues).hasSize(1);
-    assertThat(issues.get(0).kind())
-        .isEqualTo(DatasetConsistencyIssue.Kind.UNSUPPORTED_TYPE_IN_STRUCTURE);
+    assertThat(issues).isEmpty();
   }
 
   @Test
@@ -85,6 +83,20 @@ class CsvDatasetValidatorTest {
     assertThat(CsvDatasetValidator.isDecimalIntegerNotation("2.0")).isTrue();
     assertThat(CsvDatasetValidator.isDecimalIntegerNotation("2")).isFalse();
     assertThat(CsvDatasetValidator.isDecimalIntegerNotation("2.5")).isFalse();
+  }
+
+  @Test
+  void dateColumnIsSupported() throws IOException {
+    File csv = writeCsv("Id_1,Me_1\nG,2019-01-01\n");
+    var structure =
+        new Structured.DataStructure(
+            List.of(
+                new Structured.Component("Id_1", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("Me_1", Instant.class, Dataset.Role.MEASURE)));
+
+    assertThat(
+            CsvDatasetValidator.validate("DS_1", structure, csv, CsvPreference.STANDARD_PREFERENCE))
+        .isEmpty();
   }
 
   private File writeCsv(String body) throws IOException {
