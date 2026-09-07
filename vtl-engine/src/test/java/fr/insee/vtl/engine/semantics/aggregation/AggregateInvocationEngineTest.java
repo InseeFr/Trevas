@@ -140,4 +140,34 @@ class AggregateInvocationEngineTest {
     assertThat(res.getDataAsMap().get(0).get("id_1")).isEqualTo(1L);
     assertThat(res.getDataAsMap().get(0).get("int_var")).isEqualTo(3L);
   }
+
+  @Test
+  void aggrClauseGroupExceptKeepsComplementOfIdentifiers() throws ScriptException {
+    // TCK Aggregation ex_2: group except Id_3 ≡ group by Id_1, Id_2
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            new Structured.DataStructure(
+                List.of(
+                    new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Role.MEASURE))),
+            List.of(1L, "A", "XX", 0L),
+            List.of(1L, "A", "YY", 2L),
+            List.of(1L, "B", "XX", 3L),
+            List.of(1L, "B", "YY", 5L),
+            List.of(2L, "A", "XX", 7L),
+            List.of(2L, "A", "YY", 2L));
+
+    engine.getContext().setAttribute("DS_1", ds1, ScriptContext.ENGINE_SCOPE);
+    engine.eval("DS_r := DS_1 [ aggr Me_3:= min( Me_1 ) group except Id_3 ];");
+
+    Dataset res = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(res.getDataStructure().keySet()).containsExactly("Id_1", "Id_2", "Me_3");
+    assertThat(res.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("Id_1", 1L, "Id_2", "A", "Me_3", 0L),
+            Map.of("Id_1", 1L, "Id_2", "B", "Me_3", 3L),
+            Map.of("Id_1", 2L, "Id_2", "A", "Me_3", 2L));
+  }
 }

@@ -4,14 +4,17 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/** Produce a normalized group by. Group except are inverted. */
+/**
+ * Produce a normalized group-by key list. {@code group except} expands to all identifiers not
+ * listed.
+ */
 public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
 
   private final Structured.DataStructure dataStructure;
@@ -48,11 +51,21 @@ public class GroupByVisitor extends VtlBaseVisitor<List<String>> {
     if (ctx.BY() != null) {
       return componentNames;
     } else if (ctx.EXCEPT() != null) {
-      // Except is kind of random since the order of identifiers is not really known...
-      // But it's specified.
-      return dataStructure.keySet().stream()
-          .filter(componentNames::contains)
-          .collect(Collectors.toList());
+      for (String componentName : componentNames) {
+        Structured.Component component = dataStructure.get(componentName);
+        if (component.getRole() != Dataset.Role.IDENTIFIER) {
+          throw new VtlRuntimeException(
+              new InvalidArgumentException(
+                  "group except component %s is not an identifier".formatted(componentName),
+                  fromContext(ctx)));
+        }
+      }
+      // group except Id_x ≡ group by all identifiers except Id_x (structure order).
+      return dataStructure.componentsInOrder().stream()
+          .filter(c -> c.getRole() == Dataset.Role.IDENTIFIER)
+          .map(Structured.Component::getName)
+          .filter(name -> !componentNames.contains(name))
+          .toList();
     } else {
       throw new UnsupportedOperationException();
     }
