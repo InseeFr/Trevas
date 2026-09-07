@@ -117,11 +117,11 @@ without changing the IR / DOT contract.
 
 | Done | PR | Capability | Turns green |
 |------|----|------------|-------------|
-| [ ] | 41 | `hasName` + `hasVarInstance` + `hasSourceCode` only on steps | RDF / JSON-LD tests |
-| [ ] | 42 | Dataframe `wasDerivedFrom` (step products → consumed DFs) | own tests |
-| [ ] | 43 | `FileInstance` + root dataframe `wasDerivedFrom` file | own tests |
-| [ ] | 44 | Variable `wasDerivedFrom` / `elaborationOf` | own tests |
-| [ ] | 45 | Wire entity lineage into `Provenance.run` path; NS / JSON-LD-safe ids | BPE + Desktop export still coherent |
+| [x] | 41 | `hasName` + `hasVarInstance` + `hasSourceCode` only on steps | RDF / JSON-LD tests |
+| [x] | 42 | Dataframe `wasDerivedFrom` (step products → consumed DFs) | own tests |
+| [x] | 43 | `FileInstance` + root dataframe `wasDerivedFrom` file | own tests |
+| [x] | 44 | Variable `wasDerivedFrom` / `elaborationOf` | own tests |
+| [x] | 45 | Wire entity lineage into `Provenance.run` path; NS / JSON-LD-safe ids | BPE + Desktop export still coherent |
 
 ## Why this cut
 

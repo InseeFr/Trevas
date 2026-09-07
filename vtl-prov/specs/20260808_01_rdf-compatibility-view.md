@@ -29,21 +29,20 @@ VTL script
 
 | Java (`fr.insee.vtl.prov.prov`) | RDF |
 |---|---|
-| `Program` | `sdth:Program` + `rdfs:label` + `sdth:hasSourceCode` + `sdth:hasProgramStep` |
+| `Program` | `sdth:Program` + `rdfs:label` + `sdth:hasProgramStep` (no `hasSourceCode` on Program) |
 | `ProgramStep` | `sdth:ProgramStep` + label `"Step {index}"` + `hasSourceCode` |
 | step → produced DF | `sdth:producesDataframe` |
 | step → consumed DFs | `sdth:consumesDataframe` |
 | step → used vars | `sdth:usesVariable` |
 | step → assigned vars | `sdth:assignsVariable` |
-| `DataframeInstance` | `sdth:DataframeInstance` + `rdfs:label` + `sdth:hasVariableInstance` |
-| `VariableInstance` | `sdth:VariableInstance` + label; optional Trevas `hasRole` / `hasType`; optional `hasSourceCode` |
+| `DataframeInstance` | `sdth:DataframeInstance` + `rdfs:label` + `sdth:hasName` + `sdth:hasVarInstance` |
+| `VariableInstance` | `sdth:VariableInstance` + label + `hasName`; optional Trevas `hasRole` / `hasType` |
+| Entity lineage | `sdth:wasDerivedFrom` / `sdth:elaborationOf` on DF and variables; roots → `FileInstance` |
 
-URI pattern: `http://trevas/{program\|program-step\|dataset\|variable}/{id}`.
+URI pattern: `http://trevas/{program\|program-step\|dataset\|variable\|file}/{id}` with
+`@` encoded as `__` in the URI local name.
 
 Namespace emitted today: `http://rdf-vocabulary.ddialliance.org/sdth#`.
-
-Not emitted on this path: `sdth:wasDerivedFrom`, `sdth:elaborationOf`,
-`sdth:hasName`, `sdth:hasVarInstance`, `sdth:FileInstance`.
 
 ## 2. How the compatibility adapter was built
 
@@ -116,6 +115,20 @@ Condition edges: fold into `sdth:usesVariable` on the step (no extra predicate).
 - `SdthProgramView` + `SdthProgramViewTest`
 - `Provenance.run` (PR-16) + BPE RDF (PR-37)
 - `RichRdfView` + `RichRdfViewTest` (PR-38, experimental)
+
+## 7b. Landed (Phase B / Wave F)
+
+Production path (`SdthProgramView` → `RDFUtils` → `Provenance.run`) now emits:
+
+- `sdth:hasName` on dataframe / variable / file instances
+- `sdth:hasVarInstance` (replaces `hasVariableInstance`)
+- `sdth:hasSourceCode` only on `ProgramStep`
+- dataframe `wasDerivedFrom` / `elaborationOf` (identity → elaboration)
+- root `FileInstance` + dataframe `wasDerivedFrom` file
+- variable `wasDerivedFrom` / `elaborationOf`
+- JSON-LD-safe URI ids (`@` → `__`)
+
+Tests: `SdthEntityLineageTest`.
 
 ## 8. Phase B — improve the SDTH RDF model
 

@@ -38,7 +38,7 @@ flux:ProgramStepToVariableInstanceAssigns a sh:PropertyShape, fluxSchema:Link ;
 
 flux:DataframeInstanceToVariableInstance a sh:PropertyShape, fluxSchema:Link ;
    sh:name "has variable instance" ;
-   sh:path sdth:hasVariableInstance ;
+   sh:path sdth:hasVarInstance ;
    sh:class  sdth:VariableInstance ;
    sh:targetClass sdth:DataframeInstance .
 
