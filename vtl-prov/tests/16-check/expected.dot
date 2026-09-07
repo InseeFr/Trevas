@@ -1,0 +1,29 @@
+digraph {
+  // Locked schema = Trevas check_datapoint(… all): identifiers + measures from the
+  // operand, plus ruleid / bool_var / errorcode / errorlevel. Validation columns
+  // derive from the ruleset variables; ruleset name is an edge annotation (no node).
+  // stmt 1 = define datapoint ruleset (definition only — bumps the statement index)
+  // stmt 2 = ds_check := check_datapoint(ds1, sexRule all)
+
+  // input binding: ds1
+  "ds1@0"     [kind=dataset];
+  "ds1@0.id"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.sex" [kind=variable, dataset="ds1@0", role=MEASURE, type=STRING];
+
+  // stmt 2
+  "ds_check@2"            [kind=dataset, src="check_datapoint(ds1, sexRule all)"];
+  "ds_check@2.id"         [kind=variable, dataset="ds_check@2", role=IDENTIFIER, type=STRING];
+  "ds_check@2.sex"        [kind=variable, dataset="ds_check@2", role=MEASURE, type=STRING];
+  "ds_check@2.ruleid"     [kind=variable, dataset="ds_check@2", role=IDENTIFIER, type=STRING];
+  "ds_check@2.bool_var"   [kind=variable, dataset="ds_check@2", role=MEASURE, type=BOOLEAN];
+  "ds_check@2.errorcode"  [kind=variable, dataset="ds_check@2", role=MEASURE, type=STRING];
+  "ds_check@2.errorlevel" [kind=variable, dataset="ds_check@2", role=MEASURE, type=INTEGER];
+
+  "ds_check@2"            -> "ds1@0"      [op=check_datapoint, ruleset=sexRule];
+  "ds_check@2.id"         -> "ds1@0.id"   [op=check_datapoint];
+  "ds_check@2.sex"        -> "ds1@0.sex"  [op=check_datapoint];
+  "ds_check@2.bool_var"   -> "ds1@0.sex"  [op=check_datapoint, ruleset=sexRule];
+  "ds_check@2.errorcode"  -> "ds1@0.sex"  [op=check_datapoint, ruleset=sexRule];
+  "ds_check@2.errorlevel" -> "ds1@0.sex"  [op=check_datapoint, ruleset=sexRule];
+  // ruleid originates from the ruleset definition (no input-variable dependency).
+}

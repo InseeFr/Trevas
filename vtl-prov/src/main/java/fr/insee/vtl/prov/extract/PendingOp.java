@@ -1,0 +1,209 @@
+package fr.insee.vtl.prov.extract;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Result of visiting a VTL expression before assignment (or anonymous materialization) emits a
+ * versioned dataset node.
+ *
+ * <p>Each variant carries the payload for {@link StructureDeriver} and {@link EdgeLinker} — not a
+ * stringly {@code lastOp} plus satellite maps. Exhaustiveness of derive/link stays in those two
+ * classes.
+ */
+sealed interface PendingOp {
+
+  /**
+   * Dataset id used as the left/focus operand when chaining clauses ({@code ds[…][…]}): for an
+   * identity this is the dataset itself; for a unary clause it is the source; for multi-operand ops
+   * it is unused (chaining requires materialization first, which only applies to unary clauses).
+   */
+  String focusId();
+
+  /** A resolved dataset reference ({@code ds1}) — no operator pending. */
+  record Identity(String datasetId) implements PendingOp {
+    @Override
+    public String focusId() {
+      return datasetId;
+    }
+  }
+
+  /** Dataset arithmetic ({@code +}, {@code *}, …), possibly with a scalar operand omitted. */
+  record Arithmetic(String op, List<String> operandIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return operandIds.get(0);
+    }
+  }
+
+  record Calc(String srcId, Map<String, String> exprs, Map<String, Class<?>> types)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  record Aggr(
+      String srcId,
+      Map<String, String> exprs,
+      Map<String, Class<?>> types,
+      List<String> groupBy,
+      List<String> havingExprIds)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  record Filter(String srcId, List<String> conditionExprIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  record Sub(String srcId, List<String> conditionExprIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  record Keep(String srcId, List<String> columns) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  record Drop(String srcId, List<String> columns) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** {@code renameFrom}: output name → input name. */
+  record Rename(String srcId, Map<String, String> renameFrom) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** Empty-body join; {@code op} is the keyword ({@code inner_join}, …). */
+  record Join(String op, List<String> operandIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return operandIds.get(0);
+    }
+  }
+
+  /**
+   * Set operator; {@code op} is {@code union}/{@code intersect}/{@code setdiff}/{@code symdiff}.
+   */
+  record SetOp(String op, List<String> operandIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return operandIds.get(0);
+    }
+  }
+
+  /**
+   * {@code check_datapoint(ds, ruleset …)}. {@code validatedVars} come from the datapoint ruleset
+   * signature ({@code variable …}).
+   */
+  record CheckDatapoint(String srcId, String ruleset, List<String> validatedVars)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * {@code check(ds … [imbalance imb] …)}. {@code imbalanceId} is null when the clause is omitted.
+   * Structure mirrors Trevas: operand ids + boolean measure, optional renamed {@code imbalance},
+   * plus {@code errorcode}/{@code errorlevel}.
+   */
+  record Check(String srcId, String imbalanceId) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * Unary dataset producer that keeps the operand structure: {@code hierarchy}, time-series ({@code
+   * flow_to_stock}, …). Optional {@code ruleset} annotates the dataset edge and measure edges
+   * (identifiers stay {@code op}-only).
+   */
+  record PassThrough(String srcId, String op, String ruleset) implements PendingOp {
+    PassThrough(String srcId, String op) {
+      this(srcId, op, null);
+    }
+
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * {@code exists_in(left, right)}: left identifiers + {@code bool_var}; right is membership {@code
+   * role=condition}.
+   */
+  record ExistsIn(String leftId, String rightId) implements PendingOp {
+    @Override
+    public String focusId() {
+      return leftId;
+    }
+  }
+
+  /**
+   * {@code ds[pivot id, measure]} or {@code ds[customPivot id, measure IN …]}. {@code op} is {@code
+   * pivot} or {@code customPivot}. {@code pivotedColumns} are distinct id values (data or IN list).
+   */
+  record Pivot(
+      String srcId,
+      String idComponent,
+      String measureComponent,
+      List<String> pivotedColumns,
+      String op)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** {@code ds[unpivot id, measure]} — inverse of pivot. */
+  record Unpivot(String srcId, String idComponent, String measureComponent) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /** {@code ds#component} — identifiers + selected component. */
+  record Membership(String srcId, String component) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * Join {@code apply} body: identifiers kept; measures replaced by a single default-named measure
+   * from the apply expression.
+   */
+  record Apply(String srcId, String exprId, String measureName, Class<?> measureType)
+      implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+}

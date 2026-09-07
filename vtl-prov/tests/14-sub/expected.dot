@@ -1,0 +1,21 @@
+digraph {
+  // input binding: ds1
+  "ds1@0"     [kind=dataset];
+  "ds1@0.id"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.ref" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1"  [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds2 := ds1[sub ref = "A"]
+  // filters on ref AND drops it; the sub condition is an expression node
+  "ds2@1"     [kind=dataset, src="ds1[sub ref = \"A\"]"];
+  "ds2@1.id"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.m1"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1"      [kind=expression, src="ref = \"A\""];
+  "e1.1" -> "ds1@0.ref";
+
+  "ds2@1"     -> "ds1@0"     [op=sub];
+  "ds2@1"     -> "e1.1"      [op=sub, role=condition];
+  "ds2@1.id"  -> "ds1@0.id"  [op=sub];
+  "ds2@1.m1"  -> "ds1@0.m1"  [op=sub];
+}

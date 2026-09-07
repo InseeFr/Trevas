@@ -1,0 +1,18 @@
+digraph {
+  // §5.33 — time-series producer: measures and time id pass through.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.t"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=DATE];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    [kind=dataset, src="flow_to_stock(ds1)"];
+  "ds2@1.id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.t"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=DATE];
+  "ds2@1.m1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    -> "ds1@0"    [op=flow_to_stock];
+  "ds2@1.id" -> "ds1@0.id" [op=flow_to_stock];
+  "ds2@1.t"  -> "ds1@0.t"  [op=flow_to_stock];
+  "ds2@1.m1" -> "ds1@0.m1" [op=flow_to_stock];
+}

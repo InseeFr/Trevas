@@ -17,6 +17,7 @@
         <module>vtl-jdbc</module>
         <module>vtl-sdmx</module>
         <module>vtl-csv</module>
+        <module>vtl-test-utils</module>
         <module>vtl-prov</module>
         <module>coverage</module>
     </modules>
@@ -189,6 +190,11 @@
             <dependency>
                 <groupId>fr.insee.trevas</groupId>
                 <artifactId>vtl-csv</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.insee.trevas</groupId>
+                <artifactId>vtl-test-utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

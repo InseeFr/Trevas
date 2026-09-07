@@ -32,6 +32,13 @@
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
         </dependency>
+        <!-- DOT import/export for the provenance golden-test corpus (tests/). -->
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-io</artifactId>
+            <version>${jgrapht.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-parser</artifactId>
@@ -43,6 +50,10 @@
         <dependency>
             <groupId>fr.insee.trevas</groupId>
             <artifactId>vtl-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.insee.trevas</groupId>
+            <artifactId>vtl-test-utils</artifactId>
         </dependency>
         <dependency>
             <groupId>fr.insee.trevas</groupId>

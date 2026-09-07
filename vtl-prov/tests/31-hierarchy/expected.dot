@@ -1,0 +1,15 @@
+digraph {
+  // §5.31 — hierarchy roll-up; ruleset as edge annotation. Pure derive OK.
+
+  "ds1@0"      [kind=dataset];
+  "ds1@0.Me_1" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m"    [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@2"      [kind=dataset, src="hierarchy(ds1, HR_1 rule Me_1)"];
+  "ds2@2.Me_1" [kind=variable, dataset="ds2@2", role=IDENTIFIER, type=STRING];
+  "ds2@2.m"    [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
+
+  "ds2@2"      -> "ds1@0"      [op=hierarchy, ruleset=HR_1];
+  "ds2@2.Me_1" -> "ds1@0.Me_1" [op=hierarchy];
+  "ds2@2.m"    -> "ds1@0.m"    [op=hierarchy, ruleset=HR_1];
+}

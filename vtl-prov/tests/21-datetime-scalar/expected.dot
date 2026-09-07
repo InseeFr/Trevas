@@ -1,0 +1,20 @@
+digraph {
+  // §5.21 — datetime scalars in calc (getyear representative).
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.d"  [kind=variable, dataset="ds1@0", role=MEASURE, type=DATE];
+
+  "ds2@1"    [kind=dataset, src="ds1[calc y := getyear(d)]"];
+  "ds2@1.id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.d"  [kind=variable, dataset="ds2@1", role=MEASURE, type=DATE];
+  "ds2@1.y"  [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="getyear(d)"];
+  "e1.1" -> "ds1@0.d";
+
+  "ds2@1"    -> "ds1@0"    [op=calc];
+  "ds2@1.y"  -> "e1.1"     [op=calc];
+  "ds2@1.id" -> "ds1@0.id" [op=calc];
+  "ds2@1.d"  -> "ds1@0.d"  [op=calc];
+}
