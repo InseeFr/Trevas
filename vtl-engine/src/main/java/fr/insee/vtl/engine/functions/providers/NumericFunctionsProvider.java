@@ -55,6 +55,16 @@ public final class NumericFunctionsProvider {
     return Math.sqrt(value.doubleValue());
   }
 
+  /** VTL {@code round(op)} with omitted digits → Integer. */
+  public static Long round(Number value) {
+    if (value == null) {
+      return null;
+    }
+    BigDecimal bd = new BigDecimal(Double.toString(value.doubleValue()));
+    return bd.setScale(0, RoundingMode.HALF_UP).longValue();
+  }
+
+  /** VTL {@code round(op, numDigit)} → Number (even when {@code numDigit} is 0). */
   public static Double round(Number value, Long decimal) {
     if (decimal == null) {
       decimal = 0L;
@@ -67,6 +77,16 @@ public final class NumericFunctionsProvider {
     return bd.doubleValue();
   }
 
+  /** VTL {@code trunc(op)} with omitted digits → Integer. */
+  public static Long trunc(Number value) {
+    if (value == null) {
+      return null;
+    }
+    BigDecimal bd = new BigDecimal(Double.toString(value.doubleValue()));
+    return bd.setScale(0, RoundingMode.DOWN).longValue();
+  }
+
+  /** VTL {@code trunc(op, numDigit)} → Number (even when {@code numDigit} is 0). */
   public static Double trunc(Number value, Long decimal) {
     if (decimal == null) {
       decimal = 0L;
@@ -79,6 +99,19 @@ public final class NumericFunctionsProvider {
     return bd.doubleValue();
   }
 
+  /** Integer × Integer → Integer. */
+  public static Long mod(Long left, Long right) {
+    if (left == null || right == null) {
+      return null;
+    }
+    if (right == 0L) {
+      return left;
+    }
+    long rem = left % right;
+    return right < 0 ? -rem : rem;
+  }
+
+  /** Number (or mixed) → Number. */
   public static Double mod(Number left, Number right) {
     if (left == null || right == null) {
       return null;
@@ -126,9 +159,21 @@ public final class NumericFunctionsProvider {
     functions.put("exp", List.of(Fun.toMethod(NumericFunctionsProvider::exp)));
     functions.put("ln", List.of(Fun.toMethod(NumericFunctionsProvider::ln)));
     functions.put("sqrt", List.of(Fun.toMethod(NumericFunctionsProvider::sqrt)));
-    functions.put("round", List.of(Fun.toMethod(NumericFunctionsProvider::round)));
-    functions.put("trunc", List.of(Fun.toMethod(NumericFunctionsProvider::trunc)));
-    functions.put("mod", List.of(Fun.toMethod(NumericFunctionsProvider::mod)));
+    functions.put(
+        "round",
+        List.of(
+            Fun.<Number>toMethod(NumericFunctionsProvider::round),
+            Fun.<Number, Long>toMethod(NumericFunctionsProvider::round)));
+    functions.put(
+        "trunc",
+        List.of(
+            Fun.<Number>toMethod(NumericFunctionsProvider::trunc),
+            Fun.<Number, Long>toMethod(NumericFunctionsProvider::trunc)));
+    functions.put(
+        "mod",
+        List.of(
+            Fun.<Long, Long>toMethod(NumericFunctionsProvider::mod),
+            Fun.<Number, Number>toMethod(NumericFunctionsProvider::mod)));
     functions.put("power", List.of(Fun.toMethod(NumericFunctionsProvider::power)));
     functions.put("random", List.of(Fun.toMethod(NumericFunctionsProvider::random)));
     functions.put("log", List.of(Fun.toMethod(NumericFunctionsProvider::log)));

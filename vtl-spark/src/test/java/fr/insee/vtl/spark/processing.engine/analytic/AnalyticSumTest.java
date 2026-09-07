@@ -117,9 +117,31 @@ public class AnalyticSumTest {
     assertThat(actual)
         .containsExactly(
             Map.of(
-                "Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D, "sum_Me_1", 3L),
+                "Id_1",
+                "A",
+                "Id_2",
+                "XX",
+                "Year",
+                2000L,
+                "Me_1",
+                3L,
+                "Me_2",
+                1.0D,
+                "sum_Me_1",
+                3.0D),
             Map.of(
-                "Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 9.0D, "sum_Me_1", 7L),
+                "Id_1",
+                "A",
+                "Id_2",
+                "XX",
+                "Year",
+                2001L,
+                "Me_1",
+                4L,
+                "Me_2",
+                9.0D,
+                "sum_Me_1",
+                7.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -132,7 +154,7 @@ public class AnalyticSumTest {
                 "Me_2",
                 5.0D,
                 "sum_Me_1",
-                14L),
+                14.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -145,9 +167,20 @@ public class AnalyticSumTest {
                 "Me_2",
                 8.0D,
                 "sum_Me_1",
-                20L),
+                20.0D),
             Map.of(
-                "Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D, "sum_Me_1", 9L),
+                "Id_1",
+                "A",
+                "Id_2",
+                "YY",
+                "Year",
+                2000L,
+                "Me_1",
+                9L,
+                "Me_2",
+                3.0D,
+                "sum_Me_1",
+                9.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -160,7 +193,7 @@ public class AnalyticSumTest {
                 "Me_2",
                 4.0D,
                 "sum_Me_1",
-                14L),
+                14.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -173,7 +206,7 @@ public class AnalyticSumTest {
                 "Me_2",
                 2.0D,
                 "sum_Me_1",
-                24L),
+                24.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -186,7 +219,7 @@ public class AnalyticSumTest {
                 "Me_2",
                 7.0D,
                 "sum_Me_1",
-                29L));
+                29.0D));
   }
 
   @Test
@@ -231,14 +264,14 @@ public class AnalyticSumTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 16.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 29L, "Me_2", 16.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 29L, "Me_2", 16.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29.0D, "Me_2", 16.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 29.0D, "Me_2", 16.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29.0D, "Me_2", 16.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 29.0D, "Me_2", 16.0D));
   }
 
   @Test
@@ -284,14 +317,14 @@ public class AnalyticSumTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 49L, "Me_2", 39.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 49L, "Me_2", 39.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 49L, "Me_2", 39.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 49.0D, "Me_2", 39.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 49.0D, "Me_2", 39.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 49.0D, "Me_2", 39.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49.0D, "Me_2", 39.0D));
   }
 
   @Test
@@ -337,14 +370,14 @@ public class AnalyticSumTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7L, "Me_2", 10.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 14L, "Me_2", 15.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29L, "Me_2", 26.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 34L, "Me_2", 30.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 44L, "Me_2", 32.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49L, "Me_2", 39.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D, "Me_2", 1.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 7.0D, "Me_2", 10.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 14.0D, "Me_2", 15.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 29.0D, "Me_2", 26.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 34.0D, "Me_2", 30.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 44.0D, "Me_2", 32.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 49.0D, "Me_2", 39.0D));
   }
 
   @Test
@@ -391,14 +424,14 @@ public class AnalyticSumTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 14L, "Me_2", 15.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20L, "Me_2", 23.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 29L, "Me_2", 26.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 31L, "Me_2", 29.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 37L, "Me_2", 22.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 35L, "Me_2", 24.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29L, "Me_2", 16.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 20L, "Me_2", 13.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 14.0D, "Me_2", 15.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 20.0D, "Me_2", 23.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 29.0D, "Me_2", 26.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 31.0D, "Me_2", 29.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 37.0D, "Me_2", 22.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 35.0D, "Me_2", 24.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 29.0D, "Me_2", 16.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 20.0D, "Me_2", 13.0D));
   }
 
   @Test
@@ -445,13 +478,13 @@ public class AnalyticSumTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 21L, "Me_2", 17.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 38L, "Me_2", 24.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 37L, "Me_2", 35.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 28L, "Me_2", 22.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 21.0D, "Me_2", 17.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 21.0D, "Me_2", 17.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 38.0D, "Me_2", 24.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 38.0D, "Me_2", 24.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 37.0D, "Me_2", 35.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 37.0D, "Me_2", 35.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 28.0D, "Me_2", 22.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 28.0D, "Me_2", 22.0D));
   }
 }

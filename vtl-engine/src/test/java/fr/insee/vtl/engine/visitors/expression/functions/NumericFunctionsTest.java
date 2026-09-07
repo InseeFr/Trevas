@@ -216,7 +216,7 @@ public class NumericFunctionsTest {
     engine.eval("c := round(12345.6, 0);");
     assertThat(context.getAttribute("c")).isEqualTo(12346D);
     engine.eval("d := round(12345.6);");
-    assertThat(context.getAttribute("d")).isEqualTo(12346D);
+    assertThat(context.getAttribute("d")).isEqualTo(12346L);
     engine.eval("e := round(12345.6, -1);");
     assertThat(context.getAttribute("e")).isEqualTo(12350D);
 
@@ -253,7 +253,7 @@ public class NumericFunctionsTest {
     engine.eval("c := trunc(12345.6, 0);");
     assertThat(context.getAttribute("c")).isEqualTo(12345D);
     engine.eval("d := trunc(12345.6);");
-    assertThat(context.getAttribute("d")).isEqualTo(12345D);
+    assertThat(context.getAttribute("d")).isEqualTo(12345L);
     engine.eval("e := trunc(12345.6, -1);");
     assertThat(context.getAttribute("e")).isEqualTo(12340D);
 
@@ -292,11 +292,11 @@ public class NumericFunctionsTest {
     Object res = engine.eval("res := round(sqrt(ds[keep long1, double2]));");
     assertThat(((Dataset) res).getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("id", "Toto", "long1", 5.0D, "double2", 1D),
-            Map.of("id", "Hadrien", "long1", 3.0D, "double2", 3.0D),
-            Map.of("id", "Nico", "long1", 4.0D, "double2", 5.0D),
-            Map.of("id", "Franck", "long1", 10.0D, "double2", 10.0D));
-    assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
+            Map.of("id", "Toto", "long1", 5L, "double2", 1L),
+            Map.of("id", "Hadrien", "long1", 3L, "double2", 3L),
+            Map.of("id", "Nico", "long1", 4L, "double2", 5L),
+            Map.of("id", "Franck", "long1", 10L, "double2", 10L));
+    assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Long.class);
 
     // TODO: refine message
     //                .hasMessage("Sqrt operand has to be 0 or positive");
@@ -312,13 +312,13 @@ public class NumericFunctionsTest {
   public void testMod() throws ScriptException {
     ScriptContext context = engine.getContext();
     engine.eval("a := mod(5, 2);");
-    assertThat(context.getAttribute("a")).isEqualTo(1D);
+    assertThat(context.getAttribute("a")).isEqualTo(1L);
     engine.eval("b := mod(5, -2);");
-    assertThat(context.getAttribute("b")).isEqualTo(-1D);
+    assertThat(context.getAttribute("b")).isEqualTo(-1L);
     engine.eval("c := mod(8, 1);");
-    assertThat(context.getAttribute("c")).isEqualTo(0D);
+    assertThat(context.getAttribute("c")).isEqualTo(0L);
     engine.eval("d := mod(9, 0);");
-    assertThat(context.getAttribute("d")).isEqualTo(9D);
+    assertThat(context.getAttribute("d")).isEqualTo(9L);
 
     context.setAttribute("ds", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
     Object res = engine.eval("res := trunc(mod(ds[keep long1, double2], 2), 1);");

@@ -46,7 +46,7 @@ class InMemoryProcessingEngineAggrTest {
 
     assertThat(mechanical.getDataStructure().get("me_1").getRole()).isEqualTo(Dataset.Role.MEASURE);
     assertThat(result.getDataStructure()).isEqualTo(plan.structure());
-    assertThat(result.getDataStructure().get("me_1").getType()).isEqualTo(Double.class);
+    assertThat(result.getDataStructure().get("me_1").getType()).isEqualTo(Long.class);
   }
 
   @Test

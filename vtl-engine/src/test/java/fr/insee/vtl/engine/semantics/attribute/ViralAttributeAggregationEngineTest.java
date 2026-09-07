@@ -41,7 +41,7 @@ class ViralAttributeAggregationEngineTest {
     engine.eval("res := sum(ds group by Id_1);");
     var res = (Dataset) engine.getContext().getAttribute("res");
     assertThat(res.getDataStructure().containsKey("At_1")).isFalse();
-    assertThat(res.getDataStructure().get("Me_1").getType()).isEqualTo(Double.class);
+    assertThat(res.getDataStructure().get("Me_1").getType()).isEqualTo(Long.class);
   }
 
   @Test

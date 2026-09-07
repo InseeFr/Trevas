@@ -91,8 +91,9 @@ public class AggregationExpression
   /**
    * Returns an aggregation expression that sums an expression on data points.
    *
-   * <p>{@link Long} operands are summed as {@link Long} then promoted to {@link Double} (TCK /
-   * numeric aggregate convention). {@link Double} operands yield {@link Double} sums.
+   * <p>{@link Long} (VTL Integer) operands stay {@link Long}; {@link Double} (VTL Number) operands
+   * stay {@link Double}. Analytic windows that must yield Number are handled separately by the
+   * processing engines.
    *
    * @param expression The expression on data points.
    * @return The summing expression.
@@ -105,10 +106,7 @@ public class AggregationExpression
     }
     if (Long.class.equals(operandType)) {
       return new SumAggregationExpression(
-          expression,
-          Collectors.mapping(
-              value -> ((Long) value).doubleValue(), Collectors.summingDouble(v -> v)),
-          Double.class);
+          expression, Collectors.summingLong(value -> (Long) value), Long.class);
     }
     // Type asserted in visitor.
     throw new Error("unexpected type");

@@ -24,6 +24,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
+import org.apache.spark.sql.types.DataTypes;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -214,16 +215,22 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
 
   private Dataset<Row> executeCalcEvaluated(
       Dataset<Row> interpreted, Map<String, ResolvableExpression> expressions) {
-    var columnNames = Set.of(interpreted.columns());
-    Column structColumns =
-        struct(columnNames.stream().map(SparkUtils::safeCol).toArray(Column[]::new));
+    Set<String> columnNames = new HashSet<>(Arrays.asList(interpreted.columns()));
     for (var name : expressions.keySet()) {
-      // Ignore the columns that already exist.
-      if (columnNames.contains(name)) {
-        continue;
-      }
-      // Execute the ResolvableExpression by wrapping it in a UserDefinedFunction.
       ResolvableExpression expression = expressions.get(name);
+      org.apache.spark.sql.types.DataType expectedType = fromVtlType(expression.getType());
+      // Spark SQL shortcuts (e.g. round) can succeed with a wrong VTL type — drop and re-evaluate.
+      if (columnNames.contains(name)) {
+        org.apache.spark.sql.types.DataType actualType =
+            interpreted.schema().apply(name).dataType();
+        if (actualType.sameType(expectedType)) {
+          continue;
+        }
+        interpreted = interpreted.drop(name);
+        columnNames.remove(name);
+      }
+      Column structColumns =
+          struct(columnNames.stream().map(SparkUtils::safeCol).toArray(Column[]::new));
       UserDefinedFunction exprFunction =
           udf(
               (Row row) -> {
@@ -245,8 +252,9 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
                       "Error in UDF for column '" + name + "': " + e.getMessage(), e);
                 }
               },
-              fromVtlType(expression.getType()));
+              expectedType);
       interpreted = interpreted.withColumn(name, exprFunction.apply(structColumns));
+      columnNames.add(name);
     }
     return interpreted;
   }
@@ -417,7 +425,7 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
     Column column =
         switch (function) {
           case COUNT -> count(safeCol).over(windowSpec);
-          case SUM -> sum(safeCol).over(windowSpec);
+          case SUM -> sum(safeCol).over(windowSpec).cast(DataTypes.DoubleType);
           case MIN -> min(safeCol).over(windowSpec);
           case MAX -> max(safeCol).over(windowSpec);
           case AVG -> avg(safeCol).over(windowSpec);

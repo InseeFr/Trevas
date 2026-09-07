@@ -54,13 +54,11 @@ public class NumericFunctionsVisitor extends VtlBaseVisitor<ResolvableExpression
   public ResolvableExpression visitUnaryWithOptionalNumeric(
       VtlParser.UnaryWithOptionalNumericContext ctx) {
     try {
-      var pos = fromContext(ctx);
+      // Omitted numDigit → Integer overload; explicit digit (incl. 0) → Number overload.
       List<ResolvableExpression> parameters =
-          List.of(
-              exprVisitor.visit(ctx.expr()),
-              ctx.optionalExpr() == null
-                  ? ResolvableExpression.withType(Long.class).withPosition(pos).using(c -> 0L)
-                  : exprVisitor.visit(ctx.optionalExpr()));
+          ctx.optionalExpr() == null
+              ? List.of(exprVisitor.visit(ctx.expr()))
+              : List.of(exprVisitor.visit(ctx.expr()), exprVisitor.visit(ctx.optionalExpr()));
       return switch (ctx.op.getType()) {
         case VtlParser.ROUND ->
             genericFunctionsVisitor.invokeFunction("round", parameters, fromContext(ctx));

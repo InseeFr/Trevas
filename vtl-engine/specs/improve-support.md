@@ -50,6 +50,8 @@ Directions:
 - Align `AggregationExpression` / Spark collectors / analytic windows.
 - Targeted unit tests + re-run Aggregate / Numeric / Clause Aggregation families.
 
+TCK note: `Sum` / clause `aggr … sum` expect Integer for Integer measures; `Aggregate invocation` ex_2 expects Number for the same pattern. Prefer Integer fidelity (majority); leave that fixture as a known TCK conflict.
+
 Quick win, no new operator: also makes remaining “business” diffs easier to read.
 
 ### 2. Set operators (~4)
