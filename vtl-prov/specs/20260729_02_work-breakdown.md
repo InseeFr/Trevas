@@ -163,8 +163,9 @@ without changing the IR / DOT contract.
 
 ## Notes (phase 1)
 
-**PR-1…16** as above. Entry point: `fr.insee.vtl.prov.Provenance.run`. IR package:
-`fr.insee.vtl.prov2`. `$input` parsing: `fr.insee.vtl.testutils.InputDirectives`
+**PR-1…16** as above. Entry point: `fr.insee.vtl.prov.Provenance.run`. Packages:
+`fr.insee.vtl.prov.ir` (`ProvGraph`), `fr.insee.vtl.prov.extract`, `fr.insee.vtl.prov.view`.
+`$input` parsing: `fr.insee.vtl.testutils.InputDirectives`
 (`vtl-test-utils`, PR-40).
 
 ## Embedded decisions (flag if you disagree)
