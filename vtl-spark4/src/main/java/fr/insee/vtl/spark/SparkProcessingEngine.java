@@ -81,7 +81,8 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
     } else if (expression instanceof AverageAggregationExpression) {
       column = avg(SparkUtils.safeCol(columnName));
     } else if (expression instanceof SumAggregationExpression) {
-      column = sum(SparkUtils.safeCol(columnName));
+      // VTL sum Result type is Number even when the measure is Integer.
+      column = sum(SparkUtils.safeCol(columnName)).cast(DataTypes.DoubleType);
     } else if (expression instanceof CountAggregationExpression) {
       column = count("*");
     } else if (expression instanceof MedianAggregationExpression) {

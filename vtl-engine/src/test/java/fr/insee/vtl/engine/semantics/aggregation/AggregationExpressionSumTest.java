@@ -19,13 +19,14 @@ class AggregationExpressionSumTest {
   private static final Positioned.Position POSITION = new Positioned.Position("test", 1, 1, 0, 0);
 
   @Test
-  void sumLongOperandTypeIsLong() {
+  void sumLongOperandTypeIsNumber() {
     ResolvableExpression longMeasure =
         ResolvableExpression.withType(Long.class)
             .withPosition(POSITION)
             .using(ctx -> Long.class.cast(ctx.get("me_1")));
 
-    assertThat(AggregationExpression.sum(longMeasure).getType()).isEqualTo(Long.class);
+    // VTL Sum Result type is Number for Integer and Number operands.
+    assertThat(AggregationExpression.sum(longMeasure).getType()).isEqualTo(Double.class);
   }
 
   @Test
@@ -39,7 +40,7 @@ class AggregationExpressionSumTest {
   }
 
   @Test
-  void sumLongValuesStayLong() {
+  void sumLongValuesPromoteToNumber() {
     DataStructure structure =
         new DataStructure(
             List.of(new Structured.Component("me_1", Long.class, Dataset.Role.MEASURE)));
@@ -55,8 +56,8 @@ class AggregationExpressionSumTest {
                 new DataPoint(structure, Map.of("me_1", 3L)))
             .collect(sum);
 
-    assertThat(result).isEqualTo(5L);
-    assertThat(sum.getType()).isEqualTo(Long.class);
+    assertThat(result).isEqualTo(5.0D);
+    assertThat(sum.getType()).isEqualTo(Double.class);
   }
 
   @Test

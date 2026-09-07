@@ -74,9 +74,9 @@ public class AggregateTest {
 
     assertThat(actual.getDataAsMap())
         .containsExactly(
-            Map.of("test", 23L, "time", 7L),
-            Map.of("test", 12L, "time", 6L),
-            Map.of("test", 11L, "time", 4L));
+            Map.of("test", 23.0D, "time", 7L),
+            Map.of("test", 12.0D, "time", 6L),
+            Map.of("test", 11.0D, "time", 4L));
   }
 
   @Test
@@ -135,7 +135,7 @@ public class AggregateTest {
                 "country",
                 "france",
                 "sumAge",
-                72L,
+                72.0D,
                 "avgWeight",
                 10.0D,
                 "countVal",
@@ -156,7 +156,7 @@ public class AggregateTest {
                 "country",
                 "norway",
                 "sumAge",
-                20L,
+                20.0D,
                 "avgWeight",
                 11.0,
                 "countVal",

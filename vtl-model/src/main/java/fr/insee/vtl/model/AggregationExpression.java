@@ -91,9 +91,10 @@ public class AggregationExpression
   /**
    * Returns an aggregation expression that sums an expression on data points.
    *
-   * <p>{@link Long} (VTL Integer) operands stay {@link Long}; {@link Double} (VTL Number) operands
-   * stay {@link Double}. Analytic windows that must yield Number are handled separately by the
-   * processing engines.
+   * <p>VTL 2.1 {@code sum} Result type is {@code measure<number>} / {@code component<number>}
+   * (reference manual), for both Integer and Number operands — aggregate and analytic alike.
+   * Processing engines must materialize {@link Double} (including Spark window {@code sum} on Long
+   * columns).
    *
    * @param expression The expression on data points.
    * @return The summing expression.
@@ -106,7 +107,10 @@ public class AggregationExpression
     }
     if (Long.class.equals(operandType)) {
       return new SumAggregationExpression(
-          expression, Collectors.summingLong(value -> (Long) value), Long.class);
+          expression,
+          Collectors.mapping(
+              value -> ((Long) value).doubleValue(), Collectors.summingDouble(v -> v)),
+          Double.class);
     }
     // Type asserted in visitor.
     throw new Error("unexpected type");

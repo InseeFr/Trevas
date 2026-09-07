@@ -2,6 +2,12 @@
 
 Baseline Spark 3 (after CSV TimePeriod + `group except`): **123 / 183** pass, **60** fails.
 
+## Method
+
+Source of truth for each operator: official VTL 2.1 reference (`vtl/v2.1/docs/…`) — Result type, Behavior / Semantics, then typical behaviours. TCK examples validate; they do not override the manual when they conflict (document the conflict).
+
+Implement generically for the operator (scalar / component / dataset, aggregate vs analytic when the manual uses the same Result type). Avoid one-off casts that only silence a single fixture.
+
 Order: non-date work first (by TCK cases unlocked), date / time work last.
 Within each block, higher impact first, then cost / dependencies.
 
@@ -38,21 +44,14 @@ Counts overlap a bit (e.g. hierarchy and check_hierarchy). Non-date ceiling ≈ 
 
 ### 1. Integer vs Number type fidelity (~8)
 
-Trevas often over-promotes to `Double` (or the opposite on analytic windows).
+Follow each operator’s official type rules (not TCK majority vote):
 
-Typical cases:
-- `sum(DS group by …)` / `[aggr … sum …]` → TCK expects `Long` when measures are Integer
-- `mod`, `round`, `trunc` on Integer → same issue
-- analytic window `sum ( DS over (…))` → TCK sometimes expects `Double` (e.g. Analytic invocation) while Trevas keeps `Long`
+- `sum`: Result type is always `number` (aggregate and analytic). Integer measures promote to Number.
+- `mod`: Integer×Integer → Integer; otherwise Number (Behavior paragraph).
+- `round` / `trunc`: omitted `numDigit` → Integer; otherwise Number (Semantics). Watch Spark SQL shortcuts that return Double.
+- Other numeric ops: same pattern as Addition / Multiplication / Division docs.
 
-Directions:
-- VTL promotion rules for aggregates and numeric operators (Integer×Integer → Integer when the manual says so; Number otherwise).
-- Align `AggregationExpression` / Spark collectors / analytic windows.
-- Targeted unit tests + re-run Aggregate / Numeric / Clause Aggregation families.
-
-TCK note: `Sum` / clause `aggr … sum` expect Integer for Integer measures; `Aggregate invocation` ex_2 expects Number for the same pattern. Prefer Integer fidelity (majority); leave that fixture as a known TCK conflict.
-
-Quick win, no new operator: also makes remaining “business” diffs easier to read.
+TCK note: some Sum / `aggr … sum` fixtures still declare Integer for Integer measures — that conflicts with the Sum Result type; keep Number and treat those fixtures as known TCK drift.
 
 ### 2. Set operators (~4)
 

@@ -18,7 +18,7 @@ class AggregationResultStructureBuilderTest {
       new Positioned.Position("test", 1, 1, 0, 0);
 
   @Test
-  void groupedSumKeepsLongMeasureType() {
+  void groupedSumPromotesIntegerMeasureToNumber() {
     Structured.DataStructure input =
         new Structured.DataStructure(
             List.of(

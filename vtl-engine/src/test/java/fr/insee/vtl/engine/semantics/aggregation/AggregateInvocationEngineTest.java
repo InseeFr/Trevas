@@ -49,7 +49,7 @@ class AggregateInvocationEngineTest {
   }
 
   @Test
-  void sumGroupByKeepsLongMeasureAsLong() throws ScriptException {
+  void sumGroupByPromotesIntegerMeasureToNumber() throws ScriptException {
     InMemoryDataset ds1 =
         new InMemoryDataset(
             List.of(Map.of("id_1", 1L, "me_1", 2L), Map.of("id_1", 1L, "me_1", 3L)),
@@ -61,10 +61,10 @@ class AggregateInvocationEngineTest {
 
     Structured.DataStructure structure =
         ((Dataset) engine.getContext().getAttribute("res")).getDataStructure();
-    assertThat(structure.get("me_1").getType()).isEqualTo(Long.class);
+    assertThat(structure.get("me_1").getType()).isEqualTo(Double.class);
     assertThat(
             ((Dataset) engine.getContext().getAttribute("res")).getDataAsMap().get(0).get("me_1"))
-        .isEqualTo(5L);
+        .isEqualTo(5.0D);
   }
 
   @Test
