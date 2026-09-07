@@ -1,7 +1,5 @@
 package fr.insee.vtl.prov.extract;
 
-import fr.insee.vtl.prov.ir.ProvGraph;
-
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
@@ -23,6 +21,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Rename;
 import fr.insee.vtl.prov.extract.PendingOp.SetOp;
 import fr.insee.vtl.prov.extract.PendingOp.Sub;
 import fr.insee.vtl.prov.extract.PendingOp.Unpivot;
+import fr.insee.vtl.prov.ir.ProvGraph;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;

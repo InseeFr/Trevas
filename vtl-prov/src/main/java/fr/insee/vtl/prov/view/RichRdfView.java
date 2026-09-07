@@ -1,7 +1,6 @@
 package fr.insee.vtl.prov.view;
 
 import fr.insee.vtl.prov.ir.ProvGraph;
-
 import fr.insee.vtl.prov.utils.PROV;
 import java.util.Map;
 import org.apache.jena.rdf.model.Model;

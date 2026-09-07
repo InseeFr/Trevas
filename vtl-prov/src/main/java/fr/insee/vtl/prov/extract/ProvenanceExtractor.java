@@ -1,11 +1,10 @@
 package fr.insee.vtl.prov.extract;
 
-import fr.insee.vtl.prov.ir.ProvGraph;
-
 import fr.insee.vtl.antlr.runtime.CharStreams;
 import fr.insee.vtl.antlr.runtime.CommonTokenStream;
 import fr.insee.vtl.parser.VtlLexer;
 import fr.insee.vtl.parser.VtlParser;
+import fr.insee.vtl.prov.ir.ProvGraph;
 import fr.insee.vtl.testutils.InputDataset;
 import java.util.List;
 

@@ -2,10 +2,10 @@ package fr.insee.vtl.prov;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured.Component;
+import fr.insee.vtl.prov.extract.ProvenanceExtractor;
+import fr.insee.vtl.prov.ir.ProvGraph;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.utils.VTLTypes;
-import fr.insee.vtl.prov.ir.ProvGraph;
-import fr.insee.vtl.prov.extract.ProvenanceExtractor;
 import fr.insee.vtl.prov.view.SdthProgramView;
 import fr.insee.vtl.testutils.InputDataset;
 import java.util.ArrayList;

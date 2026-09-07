@@ -1,7 +1,5 @@
 package fr.insee.vtl.prov.extract;
 
-import fr.insee.vtl.prov.ir.ProvGraph;
-
 import fr.insee.vtl.antlr.runtime.CharStream;
 import fr.insee.vtl.antlr.runtime.ParserRuleContext;
 import fr.insee.vtl.antlr.runtime.Token;
@@ -11,7 +9,6 @@ import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
-import fr.insee.vtl.prov.utils.VTLTypes;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
@@ -31,6 +28,8 @@ import fr.insee.vtl.prov.extract.PendingOp.Rename;
 import fr.insee.vtl.prov.extract.PendingOp.SetOp;
 import fr.insee.vtl.prov.extract.PendingOp.Sub;
 import fr.insee.vtl.prov.extract.PendingOp.Unpivot;
+import fr.insee.vtl.prov.ir.ProvGraph;
+import fr.insee.vtl.prov.utils.VTLTypes;
 import fr.insee.vtl.testutils.InputDataset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
