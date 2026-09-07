@@ -2,6 +2,7 @@ package fr.insee.vtl.prov2;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.prov.prov.DataframeInstance;
+import fr.insee.vtl.prov.prov.FileInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
@@ -19,7 +20,8 @@ import java.util.regex.Pattern;
 /**
  * Compatibility projection: {@link ProvGraph} → legacy {@link Program} for {@link
  * fr.insee.vtl.prov.utils.RDFUtils} (spec 20260808_01). Rolls up expression nodes and anonymous
- * intermediates; folds condition deps into {@code usesVariable}.
+ * intermediates; folds condition deps into {@code usesVariable}; fills SDTH entity lineage ({@code
+ * wasDerivedFrom} / {@code elaborationOf} / {@code FileInstance}).
  */
 public final class SdthProgramView {
 
@@ -30,7 +32,8 @@ public final class SdthProgramView {
   /**
    * @param programId stable program resource id (URI segment)
    * @param label human label ({@code rdfs:label})
-   * @param sourceCode full script text ({@code sdth:hasSourceCode} on the program)
+   * @param sourceCode full script text (kept on {@link Program} for callers; not emitted on Program
+   *     RDF — only on steps)
    */
   public static Program toProgram(
       ProvGraph graph, String programId, String label, String sourceCode) {
@@ -59,6 +62,8 @@ public final class SdthProgramView {
         Comparator.comparingInt((String id) -> statementIndex(id)).thenComparing(id -> id));
 
     Map<String, DataframeInstance> dataframes = new LinkedHashMap<>();
+    Map<String, VariableInstance> variables = new LinkedHashMap<>();
+    Map<String, FileInstance> files = new LinkedHashMap<>();
     int stepIndex = 1;
     for (String outId : producedIds) {
       Map<String, String> outAttrs = vertices.get(outId);
@@ -67,7 +72,7 @@ public final class SdthProgramView {
       ProgramStep step = new ProgramStep(outLabel, stepSrc, stepIndex++);
       step.setId("step-" + outId);
 
-      DataframeInstance produced = dataframe(dataframes, outId, outLabel, vertices);
+      DataframeInstance produced = dataframe(dataframes, variables, outId, outLabel, vertices);
       step.setProducedDataframe(produced);
 
       Set<String> consumedIds = new LinkedHashSet<>();
@@ -99,9 +104,27 @@ public final class SdthProgramView {
       }
 
       for (String consumedId : consumedIds) {
-        step.getConsumedDataframes()
-            .add(dataframe(dataframes, consumedId, bindingName(consumedId), vertices));
+        DataframeInstance consumed =
+            dataframe(dataframes, variables, consumedId, bindingName(consumedId), vertices);
+        ensureRootFileLineage(consumed, consumedId, files, variables, vertices);
+        step.getConsumedDataframes().add(consumed);
       }
+
+      boolean identityStep = isIdentityDatasetOp(outId, outEdges, vertices);
+      if (identityStep && consumedIds.size() == 1) {
+        String only = consumedIds.iterator().next();
+        produced
+            .getElaborationOfDataframes()
+            .add(dataframe(dataframes, variables, only, bindingName(only), vertices));
+      } else {
+        for (String consumedId : consumedIds) {
+          produced
+              .getWasDerivedFromDataframes()
+              .add(dataframe(dataframes, variables, consumedId, bindingName(consumedId), vertices));
+        }
+      }
+
+      linkVariableLineage(outId, variables, vertices, outEdges);
 
       for (String varId : usedVarIds) {
         Map<String, String> attrs = vertices.get(varId);
@@ -111,29 +134,142 @@ public final class SdthProgramView {
         String comp = componentName(varId);
         String parentId = attrs.get("dataset");
         String parentLabel = namedParentLabel(parentId, vertices, outEdges);
-        VariableInstance used = new VariableInstance(comp);
-        used.setId(varId);
+        VariableInstance used = variable(variables, varId, comp, attrs);
         used.setParentDataframe(parentLabel);
-        applyRoleType(used, attrs);
         step.getUsedVariables().add(used);
       }
 
       for (String varId : assignedVarIds) {
         Map<String, String> attrs = vertices.get(varId);
         String comp = componentName(varId);
+        VariableInstance assigned = variable(variables, varId, comp, attrs);
         String exprSrc = assignedExpressionSrc(varId, outEdges, vertices);
-        VariableInstance assigned =
-            exprSrc == null ? new VariableInstance(comp) : new VariableInstance(comp, exprSrc);
-        assigned.setId(varId);
+        if (exprSrc != null) {
+          assigned.setSourceCode(exprSrc.endsWith(";") ? exprSrc : exprSrc + ";");
+        }
         assigned.setParentDataframe(outLabel);
-        applyRoleType(assigned, attrs);
         step.getAssignedVariables().add(assigned);
       }
 
       step.getRulesets().addAll(rulesets);
       program.getProgramSteps().add(step);
     }
+
+    // Root inputs that never appear as consumed still get FileInstance lineage if present in IR.
+    for (Map.Entry<String, Map<String, String>> entry : vertices.entrySet()) {
+      String id = entry.getKey();
+      Map<String, String> attrs = entry.getValue();
+      if (!"dataset".equals(attrs.get("kind")) || "true".equals(attrs.get("anon"))) {
+        continue;
+      }
+      Matcher m = STMT.matcher(id);
+      if (m.matches() && Integer.parseInt(m.group(2)) == 0) {
+        DataframeInstance root = dataframe(dataframes, variables, id, bindingName(id), vertices);
+        ensureRootFileLineage(root, id, files, variables, vertices);
+      }
+    }
     return program;
+  }
+
+  private static void linkVariableLineage(
+      String outDatasetId,
+      Map<String, VariableInstance> variables,
+      Map<String, Map<String, String>> vertices,
+      Map<String, List<ProvGraph.Edge>> outEdges) {
+    for (String varId : variablesOf(outDatasetId, vertices)) {
+      VariableInstance outVar =
+          variable(variables, varId, componentName(varId), vertices.get(varId));
+      for (ProvGraph.Edge edge : outEdges.getOrDefault(varId, List.of())) {
+        String to = edge.to();
+        Map<String, String> toAttrs = vertices.getOrDefault(to, Map.of());
+        String op = edge.attrs().get("op");
+        if ("expression".equals(toAttrs.get("kind"))) {
+          Set<String> leafVars = new LinkedHashSet<>();
+          collectLeafVariables(to, vertices, outEdges, leafVars, new HashSet<>());
+          for (String leafId : leafVars) {
+            Map<String, String> leafAttrs = vertices.get(leafId);
+            outVar
+                .getWasDerivedFromVariables()
+                .add(variable(variables, leafId, componentName(leafId), leafAttrs));
+          }
+        } else if ("variable".equals(toAttrs.get("kind"))) {
+          VariableInstance parent = variable(variables, to, componentName(to), toAttrs);
+          if ("assign".equals(op) || componentName(varId).equals(componentName(to))) {
+            outVar.getElaborationOfVariables().add(parent);
+          } else {
+            outVar.getWasDerivedFromVariables().add(parent);
+          }
+        }
+      }
+    }
+  }
+
+  private static void collectLeafVariables(
+      String nodeId,
+      Map<String, Map<String, String>> vertices,
+      Map<String, List<ProvGraph.Edge>> outEdges,
+      Set<String> leafVars,
+      Set<String> seen) {
+    if (!seen.add(nodeId)) {
+      return;
+    }
+    Map<String, String> attrs = vertices.getOrDefault(nodeId, Map.of());
+    if ("variable".equals(attrs.get("kind"))) {
+      leafVars.add(nodeId);
+      return;
+    }
+    for (ProvGraph.Edge edge : outEdges.getOrDefault(nodeId, List.of())) {
+      collectLeafVariables(edge.to(), vertices, outEdges, leafVars, seen);
+    }
+  }
+
+  private static boolean isIdentityDatasetOp(
+      String outId,
+      Map<String, List<ProvGraph.Edge>> outEdges,
+      Map<String, Map<String, String>> vertices) {
+    boolean sawDataset = false;
+    for (ProvGraph.Edge edge : outEdges.getOrDefault(outId, List.of())) {
+      Map<String, String> toAttrs = vertices.getOrDefault(edge.to(), Map.of());
+      if (!"dataset".equals(toAttrs.get("kind"))) {
+        continue;
+      }
+      if ("true".equals(toAttrs.get("anon"))) {
+        return false;
+      }
+      sawDataset = true;
+      if (!"assign".equals(edge.attrs().get("op"))) {
+        return false;
+      }
+    }
+    return sawDataset;
+  }
+
+  private static void ensureRootFileLineage(
+      DataframeInstance df,
+      String versionedId,
+      Map<String, FileInstance> files,
+      Map<String, VariableInstance> variables,
+      Map<String, Map<String, String>> vertices) {
+    Matcher m = STMT.matcher(versionedId);
+    if (!m.matches() || Integer.parseInt(m.group(2)) != 0) {
+      return;
+    }
+    if (!df.getWasDerivedFromFiles().isEmpty()) {
+      return;
+    }
+    String name = bindingName(versionedId);
+    FileInstance file = files.get(name);
+    if (file == null) {
+      file = new FileInstance(name);
+      file.setId("file-" + name);
+      for (String varId : variablesOf(versionedId, vertices)) {
+        Map<String, String> attrs = vertices.get(varId);
+        // File shares the same variable instances as the root dataframe (same IR nodes).
+        file.getHasVariableInstances().add(variable(variables, varId, componentName(varId), attrs));
+      }
+      files.put(name, file);
+    }
+    df.getWasDerivedFromFiles().add(file);
   }
 
   private static void collectFromNode(
@@ -178,7 +314,6 @@ public final class SdthProgramView {
       return;
     }
     if ("variable".equals(kind)) {
-      // Pass-through / direct var deps: not "used" in the legacy sense unless via an expression.
       return;
     }
   }
@@ -198,6 +333,7 @@ public final class SdthProgramView {
 
   private static DataframeInstance dataframe(
       Map<String, DataframeInstance> cache,
+      Map<String, VariableInstance> variables,
       String versionedId,
       String label,
       Map<String, Map<String, String>> vertices) {
@@ -209,13 +345,23 @@ public final class SdthProgramView {
     df.setId(versionedId);
     for (String varId : variablesOf(versionedId, vertices)) {
       Map<String, String> attrs = vertices.get(varId);
-      VariableInstance v = new VariableInstance(componentName(varId));
-      v.setId(varId);
-      applyRoleType(v, attrs);
-      df.getHasVariableInstances().add(v);
+      df.getHasVariableInstances().add(variable(variables, varId, componentName(varId), attrs));
     }
     cache.put(versionedId, df);
     return df;
+  }
+
+  private static VariableInstance variable(
+      Map<String, VariableInstance> cache, String varId, String label, Map<String, String> attrs) {
+    VariableInstance existing = cache.get(varId);
+    if (existing != null) {
+      return existing;
+    }
+    VariableInstance v = new VariableInstance(label);
+    v.setId(varId);
+    applyRoleType(v, attrs);
+    cache.put(varId, v);
+    return v;
   }
 
   private static List<String> variablesOf(
