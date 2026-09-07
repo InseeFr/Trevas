@@ -1,0 +1,2 @@
+// $input ds1: id STRING IDENTIFIER, g STRING IDENTIFIER, m1 INTEGER MEASURE
+ds2 := ds1[aggr s := sum(m1) group by g having sum(m1) > 0];

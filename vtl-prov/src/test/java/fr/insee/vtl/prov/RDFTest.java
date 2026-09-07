@@ -120,8 +120,7 @@ public class RDFTest {
     context.setAttribute("ds2", ds2, ScriptContext.ENGINE_SCOPE);
 
     Program program =
-        ProvenanceListener.run(
-            engine, script, "trevas-simple-test", "Simple test from Trevas tests");
+        Provenance.run(engine, script, "trevas-simple-test", "Simple test from Trevas tests");
     Model model = RDFUtils.buildModel(program);
     String content = RDFUtils.serialize(model, "JSON-LD");
     assertThat(content).isNotEmpty();
@@ -208,8 +207,7 @@ public class RDFTest {
     context.setAttribute("BPE_DETAIL_VTL", bpeDetailDs, ScriptContext.ENGINE_SCOPE);
     context.setAttribute("LEGAL_POP", censusNuts, ScriptContext.ENGINE_SCOPE);
 
-    Program program =
-        ProvenanceListener.run(engine, bpeScript, "trevas-bpe-test", "BPE from Trevas tests");
+    Program program = Provenance.run(engine, bpeScript, "trevas-bpe-test", "BPE from Trevas tests");
     Model model = RDFUtils.buildModel(program);
     RDFUtils.loadModelWithCredentials(
         model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);

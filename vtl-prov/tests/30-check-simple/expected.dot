@@ -1,0 +1,24 @@
+digraph {
+  // §5.30 — simple check with imbalance (Trevas schema).
+
+  "ds1@0"          [kind=dataset];
+  "ds1@0.id"       [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.bool_var" [kind=variable, dataset="ds1@0", role=MEASURE, type=BOOLEAN];
+
+  "ds_imb@0"     [kind=dataset];
+  "ds_imb@0.id"  [kind=variable, dataset="ds_imb@0", role=IDENTIFIER, type=STRING];
+  "ds_imb@0.imb" [kind=variable, dataset="ds_imb@0", role=MEASURE, type=INTEGER];
+
+  "ds_c@1"            [kind=dataset, src="check(ds1 imbalance ds_imb)"];
+  "ds_c@1.id"         [kind=variable, dataset="ds_c@1", role=IDENTIFIER, type=STRING];
+  "ds_c@1.bool_var"   [kind=variable, dataset="ds_c@1", role=MEASURE, type=BOOLEAN];
+  "ds_c@1.imbalance"  [kind=variable, dataset="ds_c@1", role=MEASURE, type=INTEGER];
+  "ds_c@1.errorcode"  [kind=variable, dataset="ds_c@1", role=MEASURE, type=STRING];
+  "ds_c@1.errorlevel" [kind=variable, dataset="ds_c@1", role=MEASURE, type=STRING];
+
+  "ds_c@1"           -> "ds1@0"          [op=check];
+  "ds_c@1"           -> "ds_imb@0"       [op=check];
+  "ds_c@1.id"        -> "ds1@0.id"       [op=check];
+  "ds_c@1.bool_var"  -> "ds1@0.bool_var" [op=check];
+  "ds_c@1.imbalance" -> "ds_imb@0.imb"   [op=check];
+}

@@ -1,0 +1,20 @@
+digraph {
+  // §5.15/24 — unpivot: measures collapse into identifier q + measure val.
+  // Pure derive: output structure from clause ids (q, val) + remaining ids.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.Q1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.Q2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"     [kind=dataset, src="ds1[unpivot q, val]"];
+  "ds2@1.id"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.q"   [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.val" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "ds2@1"     -> "ds1@0"    [op=unpivot];
+  "ds2@1.id"  -> "ds1@0.id" [op=unpivot];
+  // q values come from pivoted measure *names* (no input variable dep).
+  "ds2@1.val" -> "ds1@0.Q1" [op=unpivot];
+  "ds2@1.val" -> "ds1@0.Q2" [op=unpivot];
+}

@@ -1,0 +1,29 @@
+digraph {
+  // input binding: ds1
+  "ds1@0"      [kind=dataset];
+  "ds1@0.id"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.var1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.var2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // input binding: ds2
+  "ds2@0"      [kind=dataset];
+  "ds2@0.id"   [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.var1" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+  "ds2@0.var2" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds_sum := ds1 + ds2   (dataset-level op, no expression node)
+  "ds_sum@1"      [kind=dataset, src="ds1 + ds2"];
+  "ds_sum@1.id"   [kind=variable, dataset="ds_sum@1", role=IDENTIFIER, type=STRING];
+  "ds_sum@1.var1" [kind=variable, dataset="ds_sum@1", role=MEASURE, type=INTEGER];
+  "ds_sum@1.var2" [kind=variable, dataset="ds_sum@1", role=MEASURE, type=INTEGER];
+
+  // identifiers must match; each measure from both operands
+  "ds_sum@1"      -> "ds1@0"      [op="+"];
+  "ds_sum@1"      -> "ds2@0"      [op="+"];
+  "ds_sum@1.id"   -> "ds1@0.id"   [op="+"];
+  "ds_sum@1.id"   -> "ds2@0.id"   [op="+"];
+  "ds_sum@1.var1" -> "ds1@0.var1" [op="+"];
+  "ds_sum@1.var1" -> "ds2@0.var1" [op="+"];
+  "ds_sum@1.var2" -> "ds1@0.var2" [op="+"];
+  "ds_sum@1.var2" -> "ds2@0.var2" [op="+"];
+}

@@ -11,36 +11,38 @@ custom_edit_url: null
 ```xml
 <dependency>
     <groupId>fr.insee.trevas</groupId>
-    <artifactId>vtl-spark</artifactId>
-    <version>2.5.0</version>
+    <artifactId>vtl-prov</artifactId>
+    <version>2.7.0</version>
 </dependency>
 ```
 
-### ProvenanceListener
+### Provenance
 
-`vtl-prov` module expose the `ProvenanceListener` static class.
+`vtl-prov` exposes `fr.insee.vtl.prov.Provenance` as the public entry point.
 
-This class give access to the `run` function with the following signature:
+`Provenance.run` evaluates the script on the caller’s `ScriptEngine`, extracts an IR graph, then projects it to an SDTH `Program`:
 
 ```java
-run(String script, String programId, String programeName)
+Program program = Provenance.run(engine, script, "program-id", "program-name");
 ```
+
+Packages under the façade:
+
+- `fr.insee.vtl.prov.extract` — parse → support-check → structure oracle → `ProvGraph`
+- `fr.insee.vtl.prov.ir` — `ProvGraph`
+- `fr.insee.vtl.prov.view` — `SdthProgramView` (production) / `RichRdfView` (experimental)
+- `fr.insee.vtl.prov.prov` — SDTH beans (`Program`, `ProgramStep`, …)
+- `fr.insee.vtl.prov.utils` — `RDFUtils`, …
 
 ### Program
 
-`run` function returns a `Program` object, containing all provenance information of a script.
-
-```java
-Program program = ProvenanceListener.run(script, "program-id", "program-name");
-```
+`run` returns a `Program` containing steps, dataframes, variables, and entity lineage.
 
 ### RDF
 
-`vtl-prov` embeds `jena` package and expose `RDFUtils` static class.
+`vtl-prov` embeds Jena and exposes `RDFUtils`.
 
 #### Build RDF model
-
-`RDFUtils` `buildModel` method enables to build easily a RDF model of `Program`:
 
 ```java
 Model model = RDFUtils.buildModel(program);
@@ -48,18 +50,6 @@ Model model = RDFUtils.buildModel(program);
 
 #### RDF serialization
 
-`RDFUtils` `buildModel` enables to obtain easily a RDF serialization of `Model`:
-
 ```java
-String jsonLD = RDFUtils.serialize(model, "JSON-LD");
-String ttl = RDFUtils.serialize(model, "TTL");
-...
-```
-
-#### Load in triple store
-
-`RDFUrils` `loadModelWithCredentials` enables to push easily RDF model in a triple store:
-
-```java
-RDFUtils.loadModelWithCredentials(model, sparqlEndpoint, sparqlEndpointUser, sparlqEndpointPassword);
+String jsonLd = RDFUtils.serialize(model, "JSON-LD");
 ```

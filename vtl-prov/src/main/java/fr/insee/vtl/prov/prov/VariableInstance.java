@@ -2,6 +2,8 @@ package fr.insee.vtl.prov.prov;
 
 import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class VariableInstance {
   String id;
@@ -10,6 +12,12 @@ public class VariableInstance {
   String parentDataframe;
   Class<?> type;
   String sourceCode;
+
+  /** Value transform lineage (SDTH {@code wasDerivedFrom}). */
+  Set<VariableInstance> wasDerivedFromVariables = new LinkedHashSet<>();
+
+  /** Pass-through / same-entity lineage (SDTH {@code elaborationOf}). */
+  Set<VariableInstance> elaborationOfVariables = new LinkedHashSet<>();
 
   public VariableInstance(String label) {
     this.id = ProvenanceUtils.generateUUID();
@@ -64,5 +72,17 @@ public class VariableInstance {
 
   public String getSourceCode() {
     return sourceCode;
+  }
+
+  public void setSourceCode(String sourceCode) {
+    this.sourceCode = sourceCode;
+  }
+
+  public Set<VariableInstance> getWasDerivedFromVariables() {
+    return wasDerivedFromVariables;
+  }
+
+  public Set<VariableInstance> getElaborationOfVariables() {
+    return elaborationOfVariables;
   }
 }

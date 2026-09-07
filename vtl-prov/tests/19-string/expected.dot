@@ -1,0 +1,20 @@
+digraph {
+  // §5.19 — string ops in calc (substr representative).
+
+  "ds1@0"      [kind=dataset];
+  "ds1@0.id"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.name" [kind=variable, dataset="ds1@0", role=MEASURE, type=STRING];
+
+  "ds2@1"       [kind=dataset, src="ds1[calc short := substr(name, 1, 2)]"];
+  "ds2@1.id"    [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.name"  [kind=variable, dataset="ds2@1", role=MEASURE, type=STRING];
+  "ds2@1.short" [kind=variable, dataset="ds2@1", role=MEASURE, type=STRING];
+
+  "e1.1" [kind=expression, src="substr(name, 1, 2)"];
+  "e1.1" -> "ds1@0.name";
+
+  "ds2@1"       -> "ds1@0"      [op=calc];
+  "ds2@1.short" -> "e1.1"       [op=calc];
+  "ds2@1.id"    -> "ds1@0.id"   [op=calc];
+  "ds2@1.name"  -> "ds1@0.name" [op=calc];
+}

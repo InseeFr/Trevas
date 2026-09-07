@@ -1,0 +1,16 @@
+digraph {
+  // §5.35 — eval black-box: outputs derive from inputs; op=eval.
+  // RETURNS optional; structure taken from engine or pure-derive from operand.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    [kind=dataset, src="eval(ext_add(ds1) language \"groovy\")"];
+  "ds2@1.id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.m1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    -> "ds1@0"    [op=eval];
+  "ds2@1.id" -> "ds1@0.id" [op=eval];
+  "ds2@1.m1" -> "ds1@0.m1" [op=eval];
+}

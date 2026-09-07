@@ -1,0 +1,11 @@
+/* $input ds1
+ * | id         | q          | val     |
+ * | STRING     | STRING     | INTEGER |
+ * | IDENTIFIER | IDENTIFIER | MEASURE |
+ * |------------|------------|---------|
+ * | A          | Q1         | 10      |
+ * | A          | Q2         | 20      |
+ * | B          | Q1         | 30      |
+ * | B          | Q2         | 40      |
+ */
+ds2 := ds1[pivot q, val];

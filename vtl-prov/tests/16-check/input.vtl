@@ -1,0 +1,6 @@
+// $input ds1: id STRING IDENTIFIER, sex STRING MEASURE
+// Output mode `all` keeps bool_var (default/invalid drops it). Schema locked to Trevas.
+define datapoint ruleset sexRule (variable sex) is
+    myrule : sex in {"M", "F"} errorcode "bad_sex"
+end datapoint ruleset;
+ds_check := check_datapoint(ds1, sexRule all);

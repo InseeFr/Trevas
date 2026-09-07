@@ -1,0 +1,39 @@
+digraph {
+  // §5.26 — join with non-empty body: filter inside join frame.
+  // Intermediate #s1.1 = join result before filter; ds_j@1 after filter.
+  // Exact anon indexing mirrors clause-chain convention.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@0"    [kind=dataset];
+  "ds2@0.id" [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.m2" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  "#s1.1"    [kind=dataset, anon=true, src="inner_join(ds1, ds2 using id)"];
+  "#s1.1.id" [kind=variable, dataset="#s1.1", role=IDENTIFIER, type=STRING];
+  "#s1.1.m1" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+  "#s1.1.m2" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+
+  "#s1.1"    -> "ds1@0"    [op=inner_join];
+  "#s1.1"    -> "ds2@0"    [op=inner_join];
+  "#s1.1.id" -> "ds1@0.id" [op=inner_join];
+  "#s1.1.id" -> "ds2@0.id" [op=inner_join];
+  "#s1.1.m1" -> "ds1@0.m1" [op=inner_join];
+  "#s1.1.m2" -> "ds2@0.m2" [op=inner_join];
+
+  "ds_j@1"    [kind=dataset, src="inner_join(ds1, ds2 using id filter m1 > 0)"];
+  "ds_j@1.id" [kind=variable, dataset="ds_j@1", role=IDENTIFIER, type=STRING];
+  "ds_j@1.m1" [kind=variable, dataset="ds_j@1", role=MEASURE, type=INTEGER];
+  "ds_j@1.m2" [kind=variable, dataset="ds_j@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="m1 > 0"];
+  "e1.1" -> "#s1.1.m1";
+
+  "ds_j@1"    -> "#s1.1"    [op=filter];
+  "ds_j@1"    -> "e1.1"     [op=filter, role=condition];
+  "ds_j@1.id" -> "#s1.1.id" [op=filter];
+  "ds_j@1.m1" -> "#s1.1.m1" [op=filter];
+  "ds_j@1.m2" -> "#s1.1.m2" [op=filter];
+}

@@ -1,0 +1,24 @@
+digraph {
+  // input binding: ds1
+  "ds1@0"      [kind=dataset];
+  "ds1@0.id"   [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.var1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.var2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  // stmt 1: ds2 := ds1[filter mod(var1, 2) = 0]   (structure unchanged)
+  "ds2@1"      [kind=dataset, src="ds1[filter mod(var1, 2) = 0]"];
+  "ds2@1.id"   [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.var1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  "ds2@1.var2" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  // filter predicate is a written expression -> its own node
+  "e1.1"       [kind=expression, src="mod(var1, 2) = 0"];
+  "e1.1" -> "ds1@0.var1";
+
+  // dataset from input (data) + predicate (condition); columns pass through
+  "ds2@1"      -> "ds1@0"      [op=filter];
+  "ds2@1"      -> "e1.1"       [op=filter, role=condition];
+  "ds2@1.id"   -> "ds1@0.id"   [op=filter];
+  "ds2@1.var1" -> "ds1@0.var1" [op=filter];
+  "ds2@1.var2" -> "ds1@0.var2" [op=filter];
+}

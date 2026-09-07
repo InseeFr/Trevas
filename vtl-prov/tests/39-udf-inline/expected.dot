@@ -1,0 +1,23 @@
+digraph {
+  // PR-39 — unused formal `b` does not appear in lineage (body is `a + 1`).
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.m2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds_out@2"     [kind=dataset, src="ds1[calc out := pick(m1, m2)]"];
+  "ds_out@2.id"  [kind=variable, dataset="ds_out@2", role=IDENTIFIER, type=STRING];
+  "ds_out@2.m1"  [kind=variable, dataset="ds_out@2", role=MEASURE, type=INTEGER];
+  "ds_out@2.m2"  [kind=variable, dataset="ds_out@2", role=MEASURE, type=INTEGER];
+  "ds_out@2.out" [kind=variable, dataset="ds_out@2", role=MEASURE, type=INTEGER];
+
+  "e2.1" [kind=expression, src="pick(m1, m2)"];
+  "e2.1" -> "ds1@0.m1";
+
+  "ds_out@2"     -> "ds1@0"    [op=calc];
+  "ds_out@2.out" -> "e2.1"     [op=calc];
+  "ds_out@2.id"  -> "ds1@0.id" [op=calc];
+  "ds_out@2.m1"  -> "ds1@0.m1" [op=calc];
+  "ds_out@2.m2"  -> "ds1@0.m2" [op=calc];
+}
