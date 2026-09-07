@@ -37,12 +37,14 @@ public final class TckCaseExecutor {
               displayPath, test, "expected output", test.getOutputFixtureIssues()));
     }
 
-    Bindings bindings = new SimpleBindings();
+    // Replace ENGINE_SCOPE with inputs, but keep $vtl.* engine config (Spark PE name + session).
+    // Otherwise each case wipes PROCESSING_ENGINE_NAMES and the harness silently falls back to
+    // InMemoryProcessingEngine.
+    Bindings bindings = newEngineScopeWithPreservedVtlConfig(engine);
     Map<String, Dataset> inputs = test.getInput();
     if (inputs != null) {
       bindings.putAll(inputs);
     }
-
     engine.getContext().setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
     SoftAssertions softly = new SoftAssertions();
@@ -107,6 +109,21 @@ public final class TckCaseExecutor {
               }
             });
     softly.assertAll();
+  }
+
+  /** Fresh ENGINE_SCOPE bindings that keep Trevas {@code $vtl.*} configuration keys. */
+  static Bindings newEngineScopeWithPreservedVtlConfig(ScriptEngine engine) {
+    Bindings bindings = new SimpleBindings();
+    Bindings previous = engine.getContext().getBindings(ScriptContext.ENGINE_SCOPE);
+    if (previous != null) {
+      for (Map.Entry<String, Object> entry : previous.entrySet()) {
+        String key = entry.getKey();
+        if (key != null && key.startsWith("$vtl.")) {
+          bindings.put(key, entry.getValue());
+        }
+      }
+    }
+    return bindings;
   }
 
   private static AssertionError fixtureOrExecutionError(
