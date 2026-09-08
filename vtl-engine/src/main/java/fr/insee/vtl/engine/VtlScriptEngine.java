@@ -99,6 +99,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    * @deprecated This method is no longer acceptable to compute time between versions.
    *     <p>Use {@link VtlScriptEngine#toPositioned(Token)} instead.
    */
+  @Deprecated
   public static Positioned fromToken(Token token) {
     Positioned.Position position =
         new Positioned.Position(
@@ -116,6 +117,7 @@ public class VtlScriptEngine extends AbstractScriptEngine {
    * @deprecated This method is no longer acceptable to compute time between versions.
    *     <p>Use {@link VtlScriptEngine#toPositioned(ParseTree)} instead.
    */
+  @Deprecated
   public static Positioned fromContext(ParseTree tree) {
     if (tree instanceof ParserRuleContext parserRuleContext) {
       return fromTokens(parserRuleContext.getStart(), parserRuleContext.getStop());
