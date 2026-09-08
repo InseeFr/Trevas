@@ -51,7 +51,7 @@ Follow each operator’s official type rules (not TCK majority vote):
 - `round` / `trunc`: omitted `numDigit` → Integer; otherwise Number (Semantics). Watch Spark SQL shortcuts that return Double.
 - Other numeric ops: same pattern as Addition / Multiplication / Division docs.
 
-TCK note: some Sum / `aggr … sum` fixtures still declare Integer for Integer measures — that conflicts with the Sum Result type; keep Number and treat those fixtures as known TCK drift.
+TCK harness hack (2.1 only): a few `sum` examples disagree Integer vs Number for the same pattern ([sdmx-twg/vtl#708](https://github.com/sdmx-twg/vtl/issues/708); clarified in 2.2 via [PR #713](https://github.com/sdmx-twg/vtl/pull/713)). `TckStructureComparison` soft-matches Long↔Double **only** on that allowlist; every other operator stays strict. Drop the hack when fixtures target 2.2.
 
 ### 2. Set operators (~4)
 
