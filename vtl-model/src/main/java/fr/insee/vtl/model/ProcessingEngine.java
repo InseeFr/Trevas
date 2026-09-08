@@ -60,6 +60,26 @@ public interface ProcessingEngine {
   DatasetExpression executeUnion(List<DatasetExpression> datasets, List<String> dedupeOnColumns);
 
   /**
+   * Intersection of datasets by identifier keys. Rows present in every operand; on collision keep
+   * the leftmost datapoint.
+   */
+  DatasetExpression executeIntersect(List<DatasetExpression> datasets, List<String> idColumns);
+
+  /**
+   * Set difference by identifier keys: rows of {@code left} whose ids are absent from {@code
+   * right}.
+   */
+  DatasetExpression executeSetDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns);
+
+  /**
+   * Symmetric difference by identifier keys: ({@code left} − {@code right}) ∪ ({@code right} −
+   * {@code left}).
+   */
+  DatasetExpression executeSymDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns);
+
+  /**
    * Execute an aggregate transformations on the dataset expression.
    *
    * <p>Produces grouped rows and aggregated column values only. VTL roles and attribute propagation
