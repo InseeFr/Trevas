@@ -1,7 +1,8 @@
 # Improve VTL 2.1 TCK support
 
 Baseline Spark 3 after CSV TimePeriod + `group except`: **123 / 183**.
-After P0 Integer/Number + set operators (`setdiff`/`intersect`/`symdiff`): **132 / 183** pass, **51** fails (local Spark 3 TCK).
+After P0 Integer/Number + set operators (`setdiff`/`intersect`/`symdiff`): **132 / 183**.
+After Join body (`filter`/`calc`/`apply`/`keep`/`drop`/`rename`, incl. unary legacy): **136 / 183** pass, **47** fails (local Spark 3 TCK).
 
 ## Method
 
@@ -24,7 +25,7 @@ Measure: `mvn test -pl coverage -am` then `python3 coverage/scripts/render_tck_j
 |----------|--------|------:|--------|--------|
 | P0 | Integer vs Number fidelity (`sum`/`mod`/`round`/`trunc`/windows) | 8 | M | done |
 | P1 | Set operators (`setdiff`/`intersect`/`symdiff`) | 4 | M | done |
-| P1 | Join (structure + rows) | 4 | M | |
+| P1 | Join (structure + rows) | 4 | M | done |
 | P1 | `exists_in` | 3 | S | |
 | P1 | Viral / null attributes in aggregation | 2–3 | M | |
 | P2 | Validation `check` / `check_datapoint` | 3 | M | |
@@ -64,9 +65,16 @@ leftmost datapoint on collision; no attribute propagation.
 Implemented in `SetOperatorsExecutor` + PE (`executeSetDiff` / `executeIntersect` / `executeSymDiff`)
 for InMemory and Spark 3/4 (`left_anti` / `left_semi`). TCK set leaves green (4/4).
 
-### 3. Join (~4)
+### 3. Join (~4) — done
 
-ex_4/ex_5 structure, ex_6/ex_7 rows. Likely keep/drop/rename of components and handling of homonymous attributes / measures. Audit diffs one by one before a broad refactor.
+ex_4/ex_5 structure, ex_6/ex_7 rows. Root cause: `joinBody` was parsed but ignored.
+
+Implemented `JoinBodyExecutor`: filter → apply|calc|aggr → keep|drop → rename on the
+virtual result (still carrying `alias#name`), then automatic alias stripping.
+`apply` expands pairwise over homonym measures. Unary `inner_join` (legacy TCK;
+manual 2.1 asks for ≥2 operands) is accepted as identity + body.
+
+TCK Join leaves green (7/7). Baseline after Join: **136 / 183** (47 fails).
 
 ### 4. `exists_in` (~3)
 
@@ -144,6 +152,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 - `group except` (complement of identifiers)
 - Integer/Number fidelity for `sum` / `mod` / `round` / `trunc` (+ analytic where Result type matches); 2.1 sum Long↔Double TCK allowlist in `TckStructureComparison`
 - Set operators `setdiff` / `intersect` / `symdiff` (engine + Spark 3/4)
+- Join body clauses (`filter` / `calc` / `apply` / `keep`/`drop` / `rename`) + unary legacy join
 
 ## Working method
 
@@ -155,8 +164,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 
 ## Suggested next wave (non-date only)
 
-1. Join (~4)
-2. `exists_in` (~3)
-3. Null attributes on global / grouped aggr (~2)
+1. `exists_in` (~3)
+2. Null attributes on global / grouped aggr (~2)
 
 Then remaining P2/P3 toward about **144 / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.

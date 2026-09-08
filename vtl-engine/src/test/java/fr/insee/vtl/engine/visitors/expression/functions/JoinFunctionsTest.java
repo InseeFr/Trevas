@@ -389,4 +389,111 @@ public class JoinFunctionsTest {
             Arrays.asList("b", 2L, "a", 1L, 4L, 7L),
             Arrays.asList("b", 2L, "a", 2L, 4L, 8L));
   }
+
+  @Test
+  public void testCrossJoinBodyRename() throws ScriptException {
+    InMemoryDataset left =
+        new InMemoryDataset(
+            List.of(List.of(1L, "A", "X", "Y")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    InMemoryDataset right =
+        new InMemoryDataset(
+            List.of(List.of(2L, "B", "P", "Q")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1A", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    engine.getContext().setAttribute("DS_1", left, ScriptContext.ENGINE_SCOPE);
+    engine.getContext().setAttribute("DS_2", right, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "DS_r := cross_join (DS_1 as d1, DS_2 as d2 rename d1#Id_1 to Id_11, d1#Id_2 to Id_12,"
+            + " d2#Id_1 to Id_21, d2#Id_2 to Id_22, d1#Me_2 to Me12 );");
+    Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(result.getColumnNames())
+        .containsExactlyInAnyOrder(
+            "Id_11", "Id_12", "Id_21", "Id_22", "Me_1", "Me12", "Me_1A", "Me_2");
+  }
+
+  @Test
+  public void testInnerJoinBodyFilterCalcDrop() throws ScriptException {
+    InMemoryDataset left =
+        new InMemoryDataset(
+            List.of(List.of(1L, "A", "A", "B"), List.of(1L, "B", "C", "D")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    InMemoryDataset right =
+        new InMemoryDataset(
+            List.of(List.of(1L, "A", "X", "Y"), List.of(1L, "B", "S", "T")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1A", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    engine.getContext().setAttribute("DS_1", left, ScriptContext.ENGINE_SCOPE);
+    engine.getContext().setAttribute("DS_2", right, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "DS_r := inner_join (DS_1 as d1, DS_2 as d2 filter Me_1 = \"A\" calc Me_4 := Me_1 || Me_1A"
+            + " drop d1#Me_2);");
+    Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(result.getColumnNames())
+        .containsExactlyInAnyOrder("Id_1", "Id_2", "Me_1", "Me_1A", "Me_2", "Me_4");
+    assertThat(result.getDataAsMap())
+        .containsExactly(
+            Map.of("Id_1", 1L, "Id_2", "A", "Me_1", "A", "Me_1A", "X", "Me_2", "Y", "Me_4", "AX"));
+  }
+
+  @Test
+  public void testUnaryInnerJoinBody() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(
+                List.of(1L, "A", "A", "B"), List.of(1L, "B", "C", "D"), List.of(2L, "A", "E", "F")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    engine.getContext().setAttribute("DS_1", ds, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "DS_r := inner_join ( DS_1  filter Id_2 =\"B\" calc Me_2 := Me_2 || \"_NEW\" keep Me_1, Me_2);");
+    Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(result.getDataAsMap())
+        .containsExactly(Map.of("Id_1", 1L, "Id_2", "B", "Me_1", "C", "Me_2", "D_NEW"));
+  }
+
+  @Test
+  public void testInnerJoinApply() throws ScriptException {
+    InMemoryDataset left =
+        new InMemoryDataset(
+            List.of(List.of(1L, "A", "A", "B"), List.of(1L, "B", "C", "D")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    InMemoryDataset right =
+        new InMemoryDataset(
+            List.of(List.of(1L, "A", "B", "Q"), List.of(1L, "B", "S", "T")),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                new Structured.Component("Me_1", String.class, Role.MEASURE),
+                new Structured.Component("Me_2", String.class, Role.MEASURE)));
+    engine.getContext().setAttribute("DS_1", left, ScriptContext.ENGINE_SCOPE);
+    engine.getContext().setAttribute("DS_3", right, ScriptContext.ENGINE_SCOPE);
+    engine.eval("DS_r := inner_join (DS_1 as d1, DS_3 as d2 apply d1 || d2);");
+    Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(result.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("Id_1", 1L, "Id_2", "A", "Me_1", "AB", "Me_2", "BQ"),
+            Map.of("Id_1", 1L, "Id_2", "B", "Me_1", "CS", "Me_2", "DT"));
+  }
 }

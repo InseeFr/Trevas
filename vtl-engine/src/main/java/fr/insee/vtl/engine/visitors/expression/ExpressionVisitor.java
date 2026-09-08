@@ -418,6 +418,11 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     return context.get(name);
   }
 
+  /** Script engine used for scalar function resolution (join body, clauses, …). */
+  public VtlScriptEngine getEngine() {
+    return engine;
+  }
+
   @Override
   public ResolvableExpression visitFunctionsExpression(VtlParser.FunctionsExpressionContext ctx) {
     ResolvableExpression expr = super.visitFunctionsExpression(ctx);

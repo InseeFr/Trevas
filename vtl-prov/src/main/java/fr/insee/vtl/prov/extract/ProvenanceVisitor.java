@@ -482,7 +482,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
             && body.renameClause() == null)) {
       return;
     }
-    // Engine ignores join body — structure must come from PendingOp derive.
+    // Join body is applied by JoinExecutor; provenance still derives output
+    // structure when the body reshapes columns (keep/drop/rename/apply/calc).
     forceDerive = true;
     String joinSrc = joinSourceFragment(ctx);
     materializeAnonymous(joinSrc);

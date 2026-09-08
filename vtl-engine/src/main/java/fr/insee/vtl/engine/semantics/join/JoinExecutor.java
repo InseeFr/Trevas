@@ -37,7 +37,9 @@ public final class JoinExecutor {
     var joinClause = ctx.joinClause();
     var operands = normalizeOperands(joinClause.joinClauseItem(), expressionVisitor);
     List<Component> keys = resolveJoinKeys(joinClause, operands);
-    return finalizeJoin(
+    return completeJoin(
+        ctx,
+        expressionVisitor,
         engine,
         mechanicalLeftJoin(engine, renameDuplicates(keys, operands, engine), keys),
         keys,
@@ -49,7 +51,9 @@ public final class JoinExecutor {
     var joinClause = ctx.joinClause();
     var operands = normalizeOperands(joinClause.joinClauseItem(), expressionVisitor);
     List<Component> keys = resolveJoinKeys(joinClause, operands);
-    return finalizeJoin(
+    return completeJoin(
+        ctx,
+        expressionVisitor,
         engine,
         mechanicalInnerJoin(engine, renameDuplicates(keys, operands, engine), keys),
         keys,
@@ -61,7 +65,9 @@ public final class JoinExecutor {
     var joinClause = ctx.joinClauseWithoutUsing();
     var operands = normalizeOperands(joinClause.joinClauseItem(), expressionVisitor);
     List<Component> keys = requireCommonIdentifiers(operands.values(), joinClause);
-    return finalizeJoin(
+    return completeJoin(
+        ctx,
+        expressionVisitor,
         engine,
         mechanicalFullJoin(engine, renameDuplicates(keys, operands, engine), keys),
         keys,
@@ -74,6 +80,9 @@ public final class JoinExecutor {
     var operands = normalizeOperands(joinClause.joinClauseItem(), expressionVisitor);
     Map<String, DatasetExpression> renamed = renameDuplicates(List.of(), operands, engine);
     DatasetExpression joined = mechanicalCrossJoin(engine, renamed);
+    if (!JoinBodyExecutor.isEmpty(ctx.joinBody())) {
+      return completeJoin(ctx, expressionVisitor, engine, joined, List.of(), operands);
+    }
     if (JoinResultColumnOrder.hasAliasedColumn(joined.getDataStructure())) {
       List<DataStructure> structures =
           renamed.values().stream().map(DatasetExpression::getDataStructure).toList();
@@ -84,6 +93,43 @@ public final class JoinExecutor {
       return joined;
     }
     return finalizeJoin(engine, joined, List.of(), operands);
+  }
+
+  /**
+   * Apply join body on the virtual result (with {@code alias#} names), then automatic alias
+   * removal. Unary join (legacy TCK) is supported as identity + body.
+   */
+  private static DatasetExpression completeJoin(
+      VtlParser.JoinExprContext ctx,
+      ExpressionVisitor expressionVisitor,
+      ProcessingEngine engine,
+      DatasetExpression joined,
+      List<Component> keys,
+      LinkedHashMap<String, DatasetExpression> operands) {
+    DatasetExpression withBody =
+        JoinBodyExecutor.apply(
+            joined, ctx.joinBody(), operands.keySet(), expressionVisitor, engine);
+    if (JoinBodyExecutor.isEmpty(ctx.joinBody())) {
+      return finalizeJoin(engine, withBody, keys, operands);
+    }
+    return stripJoinAliases(engine, withBody);
+  }
+
+  /** VTL final automatic alias removal: {@code alias#name} → {@code name}. */
+  private static DatasetExpression stripJoinAliases(
+      ProcessingEngine engine, DatasetExpression dataset) {
+    if (!JoinResultColumnOrder.hasAliasedColumn(dataset.getDataStructure())) {
+      return dataset;
+    }
+    List<String> order = new ArrayList<>();
+    Set<String> seen = new LinkedHashSet<>();
+    for (Component component : dataset.getDataStructure().componentsInOrder()) {
+      String bare = JoinColumnNames.stripJoinAlias(component.getName());
+      if (seen.add(bare)) {
+        order.add(bare);
+      }
+    }
+    return JoinFinalization.apply(engine, dataset, order);
   }
 
   public static DatasetExpression innerJoinInferringKeys(
