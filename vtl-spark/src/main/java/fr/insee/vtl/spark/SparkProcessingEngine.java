@@ -379,6 +379,58 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
   }
 
   @Override
+  public DatasetExpression executeIntersect(
+      List<DatasetExpression> datasets, List<String> idColumns) {
+    Map<String, Role> dataRoles = rolesOf(datasets.get(0));
+    Dataset<Row> result = asSparkDataset(datasets.get(0)).getSparkDataset();
+    String[] joinCols = idColumns.toArray(new String[0]);
+    for (int i = 1; i < datasets.size(); i++) {
+      Dataset<Row> rightIds =
+          projectColumns(asSparkDataset(datasets.get(i)).getSparkDataset(), idColumns);
+      result = result.join(rightIds, joinCols, "left_semi");
+    }
+    return new SparkDatasetExpression(new SparkDataset(result, dataRoles), datasets.get(0));
+  }
+
+  @Override
+  public DatasetExpression executeSetDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns) {
+    Map<String, Role> dataRoles = rolesOf(left);
+    Dataset<Row> leftDs = asSparkDataset(left).getSparkDataset();
+    Dataset<Row> rightIds = projectColumns(asSparkDataset(right).getSparkDataset(), idColumns);
+    Dataset<Row> result = leftDs.join(rightIds, idColumns.toArray(new String[0]), "left_anti");
+    return new SparkDatasetExpression(new SparkDataset(result, dataRoles), left);
+  }
+
+  @Override
+  public DatasetExpression executeSymDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns) {
+    Map<String, Role> dataRoles = rolesOf(left);
+    Dataset<Row> leftDs = asSparkDataset(left).getSparkDataset();
+    Dataset<Row> rightDs = asSparkDataset(right).getSparkDataset();
+    String[] joinCols = idColumns.toArray(new String[0]);
+    Dataset<Row> leftOnly = leftDs.join(projectColumns(rightDs, idColumns), joinCols, "left_anti");
+    Dataset<Row> rightOnly = rightDs.join(projectColumns(leftDs, idColumns), joinCols, "left_anti");
+    Dataset<Row> result = leftOnly.union(rightOnly);
+    return new SparkDatasetExpression(new SparkDataset(result, dataRoles), left);
+  }
+
+  private static Map<String, Role> rolesOf(DatasetExpression dataset) {
+    Structured.DataStructure structure = dataset.getDataStructure();
+    Map<String, Role> dataRoles = new LinkedHashMap<>();
+    for (String key : structure.keySet()) {
+      Component item = structure.get(key);
+      dataRoles.put(item.getName(), item.getRole());
+    }
+    return dataRoles;
+  }
+
+  private static Dataset<Row> projectColumns(Dataset<Row> dataset, List<String> columnNames) {
+    Column[] cols = columnNames.stream().map(SparkUtils::safeCol).toArray(Column[]::new);
+    return dataset.select(cols);
+  }
+
+  @Override
   public DatasetExpression executeAggr(
       DatasetExpression dataset,
       List<String> groupBy,
