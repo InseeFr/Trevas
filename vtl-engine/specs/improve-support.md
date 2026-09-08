@@ -1,12 +1,15 @@
 # Improve VTL 2.1 TCK support
 
-Baseline Spark 3 (after CSV TimePeriod + `group except`): **123 / 183** pass, **60** fails.
+Baseline Spark 3 after CSV TimePeriod + `group except`: **123 / 183**.
+After P0 Integer/Number + set operators (`setdiff`/`intersect`/`symdiff`): **132 / 183** pass, **51** fails (local Spark 3 TCK).
 
 ## Method
 
 Source of truth for each operator: official VTL 2.1 reference (`vtl/v2.1/docs/…`) — Result type, Behavior / Semantics, then typical behaviours. TCK examples validate; they do not override the manual when they conflict (document the conflict).
 
 Implement generically for the operator (scalar / component / dataset, aggregate vs analytic when the manual uses the same Result type). Avoid one-off casts that only silence a single fixture.
+
+When a theme is done: unit tests (engine + Spark 3/4 when PE changes), related TCK subset green, update this doc (baseline, theme status, “Out of scope / done”), and flip the matching rows in `docs/docs/user-guide/coverage/*.mdx` (+ FR i18n).
 
 Order: non-date work first (by TCK cases unlocked), date / time work last.
 Within each block, higher impact first, then cost / dependencies.
@@ -17,16 +20,16 @@ Measure: `mvn test -pl coverage -am` then `python3 coverage/scripts/render_tck_j
 
 ### Non-date (do first)
 
-| Priority | Theme | Cases ≈ | Effort |
-|----------|--------|------:|--------|
-| P0 | Integer vs Number fidelity (`sum`/`mod`/`round`/`trunc`/windows) | 8 | M |
-| P1 | Set operators (`setdiff`/`intersect`/`symdiff`) | 4 | M |
-| P1 | Join (structure + rows) | 4 | M |
-| P1 | `exists_in` | 3 | S |
-| P1 | Viral / null attributes in aggregation | 2–3 | M |
-| P2 | Validation `check` / `check_datapoint` | 3 | M |
-| P2 | `hierarchy` (+ `check_hierarchy`) | 3–4 | L |
-| P3 | Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log) | 7 | S–M |
+| Priority | Theme | Cases ≈ | Effort | Status |
+|----------|--------|------:|--------|--------|
+| P0 | Integer vs Number fidelity (`sum`/`mod`/`round`/`trunc`/windows) | 8 | M | done |
+| P1 | Set operators (`setdiff`/`intersect`/`symdiff`) | 4 | M | done |
+| P1 | Join (structure + rows) | 4 | M | |
+| P1 | `exists_in` | 3 | S | |
+| P1 | Viral / null attributes in aggregation | 2–3 | M | |
+| P2 | Validation `check` / `check_datapoint` | 3 | M | |
+| P2 | `hierarchy` (+ `check_hierarchy`) | 3–4 | L | |
+| P3 | Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log) | 7 | S–M | |
 
 ### Date / time (do last)
 
@@ -42,7 +45,7 @@ Counts overlap a bit (e.g. hierarchy and check_hierarchy). Non-date ceiling ≈ 
 
 ## Non-date — P0 / P1 / P2 / P3
 
-### 1. Integer vs Number type fidelity (~8)
+### 1. Integer vs Number type fidelity (~8) — done
 
 Follow each operator’s official type rules (not TCK majority vote):
 
@@ -53,11 +56,13 @@ Follow each operator’s official type rules (not TCK majority vote):
 
 TCK harness hack (2.1 only): a few `sum` examples disagree Integer vs Number for the same pattern ([sdmx-twg/vtl#708](https://github.com/sdmx-twg/vtl/issues/708); clarified in 2.2 via [PR #713](https://github.com/sdmx-twg/vtl/pull/713)). `TckStructureComparison` soft-matches Long↔Double **only** on that allowlist; every other operator stays strict. Drop the hack when fixtures target 2.2.
 
-### 2. Set operators (~4)
+### 2. Set operators (~4) — done
 
-`setdiff` (2), `intersect` (1), `symdiff` (1): unimplemented.
+`setdiff` (2), `intersect` (1), `symdiff` (1): same structure; compare by identifier keys;
+leftmost datapoint on collision; no attribute propagation.
 
-Same algorithm family (identifier keys, multiset / set per VTL). One workstream.
+Implemented in `SetOperatorsExecutor` + PE (`executeSetDiff` / `executeIntersect` / `executeSymDiff`)
+for InMemory and Spark 3/4 (`left_anti` / `left_semi`). TCK set leaves green (4/4).
 
 ### 3. Join (~4)
 
@@ -137,6 +142,8 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 - CSV loading for TimePeriod / DATE / TIME / DURATION + INTEGER `2.0`
 - Spark `Interval` / `PeriodDuration` / `OffsetDateTime` → StringType
 - `group except` (complement of identifiers)
+- Integer/Number fidelity for `sum` / `mod` / `round` / `trunc` (+ analytic where Result type matches); 2.1 sum Long↔Double TCK allowlist in `TckStructureComparison`
+- Set operators `setdiff` / `intersect` / `symdiff` (engine + Spark 3/4)
 
 ## Working method
 
@@ -144,14 +151,12 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 2. Always a Trevas unit test + re-run the related TCK subset.
 3. Do not classify business fails as “fixture” (null attribute, Long/Double type).
 4. Recompute the impact table after each wave (TCK zip and engine both move).
+5. Keep this roadmap and any operator “support” notes in sync when a theme lands.
 
-## Suggested first wave (non-date only)
+## Suggested next wave (non-date only)
 
-1. Integer/Number on `sum` / `mod` / `round` / `trunc` (~8)
-2. Set operators (~4)
-3. Join (~4)
-4. `exists_in` (~3)
-5. Null attributes on global / grouped aggr (~2)
+1. Join (~4)
+2. `exists_in` (~3)
+3. Null attributes on global / grouped aggr (~2)
 
-≈ 21 cases without touching dates, toward about **144 / 183**.
-Then SDMX parser → `fill_time_series` → remaining time ops for **150+**.
+Then remaining P2/P3 toward about **144 / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.
