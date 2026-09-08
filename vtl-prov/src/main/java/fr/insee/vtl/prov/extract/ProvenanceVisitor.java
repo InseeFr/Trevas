@@ -74,6 +74,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /** When true, assignment structure comes from {@link StructureDeriver} only (join apply, …). */
   private boolean forceDerive;
 
+  /**
+   * Scalar formals of a dataset UDO being inlined — excluded from {@link #componentRefs} so they do
+   * not become fake component edges on the operand dataset.
+   */
+  private final Set<String> udoScalarFormals = new LinkedHashSet<>();
+
   /** Outcome of the last visited expression; never null after a successful expr visit. */
   private PendingOp pending;
 
@@ -209,6 +215,56 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return null;
   }
 
+  /**
+   * Dataset-returning UDO: alias dataset formals in {@link #versions}, skip scalar formals in
+   * component refs, visit the body so {@link #pending} becomes the body's op (calc, …) — no {@code
+   * op=<operatorId>}.
+   */
+  @Override
+  public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
+    if (udo == null || !udo.returnsDataset()) {
+      throw unsupported("functions");
+    }
+    List<VtlParser.ParameterContext> args = ctx.parameter();
+    Map<String, String> shadowed = new LinkedHashMap<>();
+    Set<String> introduced = new LinkedHashSet<>();
+    Set<String> previousScalarFormals = new LinkedHashSet<>(udoScalarFormals);
+    try {
+      udoScalarFormals.clear();
+      for (int i = 0; i < udo.params().size(); i++) {
+        String formal = udo.params().get(i);
+        VtlParser.ParameterContext arg = i < args.size() ? args.get(i) : null;
+        if (udo.datasetParams().contains(formal)) {
+          if (arg == null || arg.varID() == null) {
+            throw unsupported("functions");
+          }
+          String versioned = versions.get(arg.varID().getText());
+          if (versioned == null || !structures.containsKey(versioned)) {
+            throw unsupported("functions");
+          }
+          if (versions.containsKey(formal)) {
+            shadowed.put(formal, versions.get(formal));
+          } else {
+            introduced.add(formal);
+          }
+          versions.put(formal, versioned);
+        } else {
+          udoScalarFormals.add(formal);
+        }
+      }
+      visit(udo.body());
+    } finally {
+      for (String formal : introduced) {
+        versions.remove(formal);
+      }
+      versions.putAll(shadowed);
+      udoScalarFormals.clear();
+      udoScalarFormals.addAll(previousScalarFormals);
+    }
+    return null;
+  }
+
   @Override
   public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
     String name = ctx.varID().getText();
@@ -228,6 +284,42 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   @Override
   public Void visitArithmeticExprOrConcat(VtlParser.ArithmeticExprOrConcatContext ctx) {
     return binaryArithmetic(ctx.left, ctx.right, ctx.op);
+  }
+
+  @Override
+  public Void visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
+    return binaryArithmetic(ctx.left, ctx.right, ctx.op.getText());
+  }
+
+  @Override
+  public Void visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
+    return binaryArithmetic(ctx.left, ctx.right, ctx.op);
+  }
+
+  @Override
+  public Void visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
+    String operandId = datasetOperand(ctx.right);
+    if (operandId == null) {
+      throw unsupported("scalar");
+    }
+    pending = new Arithmetic(ctx.op.getText(), List.of(operandId));
+    return null;
+  }
+
+  @Override
+  public Void visitIfExpr(VtlParser.IfExprContext ctx) {
+    List<String> operands = new ArrayList<>(3);
+    for (VtlParser.ExprContext branch : List.of(ctx.conditionalExpr, ctx.thenExpr, ctx.elseExpr)) {
+      String id = datasetOperand(branch);
+      if (id != null) {
+        operands.add(id);
+      }
+    }
+    if (operands.isEmpty()) {
+      throw unsupported("scalar");
+    }
+    pending = new Arithmetic("if", List.copyOf(operands));
+    return null;
   }
 
   @Override
@@ -627,6 +719,11 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   private Void binaryArithmetic(VtlParser.ExprContext left, VtlParser.ExprContext right, Token op) {
+    return binaryArithmetic(left, right, op.getText());
+  }
+
+  private Void binaryArithmetic(
+      VtlParser.ExprContext left, VtlParser.ExprContext right, String op) {
     List<String> operands = new ArrayList<>(2);
     String leftId = datasetOperand(left);
     if (leftId != null) {
@@ -639,21 +736,25 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operands.isEmpty()) {
       throw unsupported("scalar");
     }
-    pending = new Arithmetic(op.getText(), List.copyOf(operands));
+    pending = new Arithmetic(op, List.copyOf(operands));
     return null;
   }
 
-  /** {@code null} if the operand is a scalar literal (not a provenance node). */
+  /**
+   * Resolve a dataset-valued expression to a versioned dataset id.
+   *
+   * <p>{@code null} if the operand is a scalar literal. Any other expression is visited; when the
+   * result is not already an {@link Identity}, it is materialized as an anonymous {@code #s…}
+   * dataset so nested producers work anywhere a dataset name is expected.
+   */
   private String datasetOperand(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.VarIdExprContext) {
-      visit(current);
-      return ((Identity) pending).datasetId();
-    }
     if (current instanceof VtlParser.ConstantExprContext) {
       return null;
     }
-    throw unsupported("arithmetic");
+    visit(current);
+    ensureMaterialized();
+    return ((Identity) pending).datasetId();
   }
 
   private Void assign(String out, VtlParser.ExprContext expr) {
@@ -711,12 +812,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   /**
-   * Scalar when the RHS never touches a dataset: no {@code eval(…)} (varIDs, not {@code
-   * VarIdExpr}), and every {@code VarId} is either a literal-free reference to a prior scalar or
-   * absent. Dataset producers always name a dataset {@code VarId} (or {@code eval}).
+   * Scalar when the RHS never touches a dataset: no {@code eval(…)} / dataset UDO, and every {@code
+   * VarId} is either a literal-free reference to a prior scalar or absent. Dataset producers always
+   * name a dataset {@code VarId} (or {@code eval} / dataset UDO).
    */
   private boolean isScalarAssignment(VtlParser.ExprContext expr) {
-    if (containsEval(expr)) {
+    if (containsEval(expr) || containsDatasetUdo(expr)) {
       return false;
     }
     for (String name : varIdNames(expr)) {
@@ -733,6 +834,21 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       @Override
       public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
         found[0] = true;
+        return null;
+      }
+    }.visit(expr);
+    return found[0];
+  }
+
+  private boolean containsDatasetUdo(VtlParser.ExprContext expr) {
+    boolean[] found = {false};
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+        ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
+        if (udo != null && udo.returnsDataset()) {
+          found[0] = true;
+        }
         return null;
       }
     }.visit(expr);
@@ -1057,13 +1173,18 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return "e" + stmtIndex + "." + exprSeq;
   }
 
-  /** Component names referenced in a scalar expression (not dataset bindings). */
-  private static Set<String> componentRefs(VtlParser.ExprContext expr) {
+  /**
+   * Component names referenced in a scalar expression (not dataset bindings / UDO scalar formals).
+   */
+  private Set<String> componentRefs(VtlParser.ExprContext expr) {
     Set<String> refs = new LinkedHashSet<>();
     new VtlBaseVisitor<Void>() {
       @Override
       public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
-        refs.add(ctx.varID().getText());
+        String name = ctx.varID().getText();
+        if (!udoScalarFormals.contains(name)) {
+          refs.add(name);
+        }
         return null;
       }
     }.visit(expr);

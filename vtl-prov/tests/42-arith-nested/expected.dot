@@ -1,0 +1,33 @@
+digraph {
+  // Nested arithmetic operand: ds1 + ds2[calc …] materializes calc as #s1.1
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@0"    [kind=dataset];
+  "ds2@0.id" [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.m1" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  "#s1.1"    [kind=dataset, anon=true];
+  "#s1.1.id" [kind=variable, dataset="#s1.1", role=IDENTIFIER, type=STRING];
+  "#s1.1.m1" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+
+  "e1.1"     [kind=expression, src="m1 * 2"];
+  "e1.1" -> "ds2@0.m1";
+
+  "#s1.1"    -> "ds2@0"    [op=calc];
+  "#s1.1.m1" -> "e1.1"     [op=calc];
+  "#s1.1.id" -> "ds2@0.id" [op=calc];
+
+  "ds_sum@1"    [kind=dataset, src="ds1 + ds2[calc m1 := m1 * 2]"];
+  "ds_sum@1.id" [kind=variable, dataset="ds_sum@1", role=IDENTIFIER, type=STRING];
+  "ds_sum@1.m1" [kind=variable, dataset="ds_sum@1", role=MEASURE, type=INTEGER];
+
+  "ds_sum@1"    -> "ds1@0"    [op="+"];
+  "ds_sum@1"    -> "#s1.1"    [op="+"];
+  "ds_sum@1.id" -> "ds1@0.id" [op="+"];
+  "ds_sum@1.id" -> "#s1.1.id" [op="+"];
+  "ds_sum@1.m1" -> "ds1@0.m1" [op="+"];
+  "ds_sum@1.m1" -> "#s1.1.m1" [op="+"];
+}

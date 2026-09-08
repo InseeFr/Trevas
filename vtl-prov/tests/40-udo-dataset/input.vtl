@@ -1,0 +1,7 @@
+// $input test: id STRING IDENTIFIER, long1 INTEGER MEASURE, other INTEGER MEASURE
+define operator scale_by (ds dataset, factor integer)
+returns dataset is
+  ds[calc scaled := long1 * factor]
+end operator;
+
+res := scale_by(test, 3);

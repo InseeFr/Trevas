@@ -1,0 +1,36 @@
+digraph {
+  // Nested set operand: union(ds1[filter …], ds2) materializes filter as #s1.1
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@0"    [kind=dataset];
+  "ds2@0.id" [kind=variable, dataset="ds2@0", role=IDENTIFIER, type=STRING];
+  "ds2@0.m1" [kind=variable, dataset="ds2@0", role=MEASURE, type=INTEGER];
+
+  // filter operand -> anonymous intermediate
+  "#s1.1"    [kind=dataset, anon=true];
+  "#s1.1.id" [kind=variable, dataset="#s1.1", role=IDENTIFIER, type=STRING];
+  "#s1.1.m1" [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+
+  "e1.1"     [kind=expression, src="m1 > 0"];
+  "e1.1" -> "ds1@0.m1";
+
+  "#s1.1"    -> "ds1@0"    [op=filter];
+  "#s1.1"    -> "e1.1"     [op=filter, role=condition];
+  "#s1.1.id" -> "ds1@0.id" [op=filter];
+  "#s1.1.m1" -> "ds1@0.m1" [op=filter];
+
+  // stmt 1: ds_u := union(ds1[filter m1 > 0], ds2)
+  "ds_u@1"    [kind=dataset, src="union(ds1[filter m1 > 0], ds2)"];
+  "ds_u@1.id" [kind=variable, dataset="ds_u@1", role=IDENTIFIER, type=STRING];
+  "ds_u@1.m1" [kind=variable, dataset="ds_u@1", role=MEASURE, type=INTEGER];
+
+  "ds_u@1"    -> "#s1.1"    [op=union];
+  "ds_u@1"    -> "ds2@0"    [op=union];
+  "ds_u@1.id" -> "#s1.1.id" [op=union];
+  "ds_u@1.id" -> "ds2@0.id" [op=union];
+  "ds_u@1.m1" -> "#s1.1.m1" [op=union];
+  "ds_u@1.m1" -> "ds2@0.m1" [op=union];
+}
