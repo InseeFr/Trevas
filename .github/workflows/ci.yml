@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: 17
-          distribution: "adopt"
+          distribution: "temurin"
       - name: Build parser stack (vtl-antlr + vtl-parser)
         run: mvn install -pl vtl-antlr,vtl-parser -am -DskipTests
       - name: Test
@@ -96,7 +96,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: 17
-          distribution: "adopt"
+          distribution: "temurin"
       - name: Test
         run: mvn package
   #  test-sonar-package:
@@ -117,7 +117,7 @@ jobs:
   #        uses: actions/setup-java@v4
   #        with:
   #          java-version: 17
-  #          distribution: "adopt"
+  #          distribution: "temurin"
   #      - name: Test, package and analyze with maven & SonarCloud
   #        run: mvn verify sonar:sonar -Pcoverage -Dsonar.projectKey=InseeFr_Trevas -Dsonar.organization=inseefr -Dsonar.host.url=https://sonarcloud.io
   #        env:
