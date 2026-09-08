@@ -123,6 +123,18 @@
                 <tck.suite.title>TCK VTL v2.1 (Spark 4)</tck.suite.title>
                 <tck.processing.engine>spark4</tck.processing.engine>
             </properties>
+            <!-- Parent DM pins org.antlr:antlr4-runtime to 4.9.3 (Spark 3 / ATN v3). That
+                 overrides vtl-spark4's 4.13.1 when it is only transitive here, and Spark 4's
+                 SQL parser then fails on almost every TCK case. -->
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-runtime</artifactId>
+                        <version>${antlr4.spark4.version}</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
         <!-- Internal TCK harness: do not publish to Maven Central on release tags (-Prelease). -->
         <profile>
