@@ -54,12 +54,12 @@ public class TemporalTest {
     assertThat(engine.get("r")).isInstanceOf(Dataset.class);
     assertThat(((Dataset) engine.get("r")).getDataAsList())
         .containsExactlyInAnyOrder(
-            List.of("A", Instant.parse("2009-01-01T00:00:00Z"), 2L),
-            List.of("A", Instant.parse("2011-01-01T00:00:00Z"), 7L),
-            List.of("A", Instant.parse("2012-01-01T00:00:00Z"), 4L),
-            List.of("B", Instant.parse("2010-01-01T00:00:00Z"), 9L),
-            List.of("B", Instant.parse("2011-01-01T00:00:00Z"), 13L),
-            List.of("B", Instant.parse("2013-01-01T00:00:00Z"), 7L));
+            List.of("A", Instant.parse("2009-01-01T00:00:00Z"), 2.0D),
+            List.of("A", Instant.parse("2011-01-01T00:00:00Z"), 7.0D),
+            List.of("A", Instant.parse("2012-01-01T00:00:00Z"), 4.0D),
+            List.of("B", Instant.parse("2010-01-01T00:00:00Z"), 9.0D),
+            List.of("B", Instant.parse("2011-01-01T00:00:00Z"), 13.0D),
+            List.of("B", Instant.parse("2013-01-01T00:00:00Z"), 7.0D));
   }
 
   @Test
