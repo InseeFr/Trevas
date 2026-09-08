@@ -2,7 +2,6 @@ package fr.insee.vtl.engine.semantics.comparison;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import static fr.insee.vtl.engine.utils.DefaultMeasureNames.BOOL_VAR;
-import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 import fr.insee.vtl.engine.exceptions.InvalidArgumentException;
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
@@ -35,15 +34,11 @@ public final class ExistsInExecutor {
   private ExistsInExecutor() {}
 
   public static DatasetExpression execute(
-      VtlParser.ExistInAtomContext ctx,
-      ResolvableExpression leftExpr,
-      ResolvableExpression rightExpr,
-      ProcessingEngine engine) {
+      ProcessingEngine engine,
+      DatasetExpression left,
+      DatasetExpression right,
+      VtlParser.ExistInAtomContext ctx) {
     Positioned position = fromContext(ctx);
-    DatasetExpression left =
-        (DatasetExpression) assertTypeExpression(leftExpr, Dataset.class, ctx.left);
-    DatasetExpression right =
-        (DatasetExpression) assertTypeExpression(rightExpr, Dataset.class, ctx.right);
     Retain retain = parseRetain(ctx.retainType(), position);
 
     List<String> leftIds = identifierNames(left);

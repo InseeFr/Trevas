@@ -1,10 +1,13 @@
 package fr.insee.vtl.engine.visitors.expression.functions;
 
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
+import static fr.insee.vtl.engine.utils.TypeChecking.assertTypeExpression;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.semantics.comparison.ExistsInExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.Dataset;
+import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
@@ -64,7 +67,12 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
   @Override
   public ResolvableExpression visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
-    return ExistsInExecutor.execute(
-        ctx, exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right), processingEngine);
+    DatasetExpression left =
+        (DatasetExpression)
+            assertTypeExpression(exprVisitor.visit(ctx.left), Dataset.class, ctx.left);
+    DatasetExpression right =
+        (DatasetExpression)
+            assertTypeExpression(exprVisitor.visit(ctx.right), Dataset.class, ctx.right);
+    return ExistsInExecutor.execute(processingEngine, left, right, ctx);
   }
 }
