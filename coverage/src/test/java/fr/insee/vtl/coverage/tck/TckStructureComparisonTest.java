@@ -14,7 +14,8 @@ class TckStructureComparisonTest {
   void strictElsewhereRejectsIntegerVsNumber() {
     DataStructure longMe = structure(Long.class);
     DataStructure doubleMe = structure(Double.class);
-    String path = "Numeric operators" + TckPaths.SEGMENT_SEP + "Modulo" + TckPaths.SEGMENT_SEP + "ex_1";
+    String path =
+        "Numeric operators" + TckPaths.SEGMENT_SEP + "Modulo" + TckPaths.SEGMENT_SEP + "ex_1";
 
     assertThat(TckStructureComparison.isSumIntegerNumberDriftCase(path)).isFalse();
     assertThat(TckStructureComparison.sameStructure(longMe, doubleMe, path)).isFalse();
