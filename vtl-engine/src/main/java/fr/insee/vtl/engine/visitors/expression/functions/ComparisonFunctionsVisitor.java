@@ -3,7 +3,9 @@ package fr.insee.vtl.engine.visitors.expression.functions;
 import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 
 import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
+import fr.insee.vtl.engine.semantics.comparison.ExistsInExecutor;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
+import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
@@ -16,11 +18,15 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
 
   private final ExpressionVisitor exprVisitor;
   private final GenericFunctionsVisitor genericFunctionsVisitor;
+  private final ProcessingEngine processingEngine;
 
   public ComparisonFunctionsVisitor(
-      ExpressionVisitor expressionVisitor, GenericFunctionsVisitor genericFunctionsVisitor) {
+      ExpressionVisitor expressionVisitor,
+      GenericFunctionsVisitor genericFunctionsVisitor,
+      ProcessingEngine processingEngine) {
     exprVisitor = Objects.requireNonNull(expressionVisitor);
     this.genericFunctionsVisitor = Objects.requireNonNull(genericFunctionsVisitor);
+    this.processingEngine = Objects.requireNonNull(processingEngine);
   }
 
   @Override
@@ -54,5 +60,11 @@ public class ComparisonFunctionsVisitor extends VtlBaseVisitor<ResolvableExpress
     } catch (VtlScriptException e) {
       throw new VtlRuntimeException(e);
     }
+  }
+
+  @Override
+  public ResolvableExpression visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
+    return ExistsInExecutor.execute(
+        ctx, exprVisitor.visit(ctx.left), exprVisitor.visit(ctx.right), processingEngine);
   }
 }
