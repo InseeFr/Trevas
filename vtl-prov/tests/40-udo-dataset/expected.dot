@@ -1,0 +1,26 @@
+digraph {
+  // Dataset-returning UDO inlined: body visited with ds→test, factor skipped (scalar formal).
+  // stmt 1 = define operator; stmt 2 = res := scale_by(test, 3)
+
+  // input binding: test
+  "test@0"       [kind=dataset];
+  "test@0.id"    [kind=variable, dataset="test@0", role=IDENTIFIER, type=STRING];
+  "test@0.long1" [kind=variable, dataset="test@0", role=MEASURE, type=INTEGER];
+  "test@0.other" [kind=variable, dataset="test@0", role=MEASURE, type=INTEGER];
+
+  // stmt 2: res := scale_by(test, 3)  → same lineage as test[calc scaled := long1 * factor]
+  "res@2"        [kind=dataset, src="scale_by(test, 3)"];
+  "res@2.id"     [kind=variable, dataset="res@2", role=IDENTIFIER, type=STRING];
+  "res@2.long1"  [kind=variable, dataset="res@2", role=MEASURE, type=INTEGER];
+  "res@2.other"  [kind=variable, dataset="res@2", role=MEASURE, type=INTEGER];
+  "res@2.scaled" [kind=variable, dataset="res@2", role=MEASURE, type=INTEGER];
+
+  "e2.1"         [kind=expression, src="long1 * factor"];
+  "e2.1" -> "test@0.long1";
+
+  "res@2"        -> "test@0"       [op=calc];
+  "res@2.scaled" -> "e2.1"         [op=calc];
+  "res@2.id"     -> "test@0.id"    [op=calc];
+  "res@2.long1"  -> "test@0.long1" [op=calc];
+  "res@2.other"  -> "test@0.other" [op=calc];
+}

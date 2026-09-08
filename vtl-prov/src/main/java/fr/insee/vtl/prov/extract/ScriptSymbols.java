@@ -17,17 +17,29 @@ import java.util.Set;
 final class ScriptSymbols {
 
   /**
-   * Scalar {@code define operator}: formal parameter names (order = call args) and the body
-   * expression kept for call-site inlining (PR-39).
+   * {@code define operator}: formal parameter names (order = call args), which formals are
+   * datasets, whether the operator returns a dataset, and the body AST for call-site inlining
+   * (PR-39 scalar-in-calc; dataset producers via body visit).
    */
-  record UserOperator(List<String> params, VtlParser.ExprContext body) {}
+  record UserOperator(
+      List<String> params,
+      Set<String> datasetParams,
+      boolean returnsDataset,
+      VtlParser.ExprContext body) {}
 
   private final Map<String, UserOperator> userOperators = new LinkedHashMap<>();
   private final Map<String, List<String>> datapointRulesets = new LinkedHashMap<>();
   private final Set<String> hierarchicalRulesets = new LinkedHashSet<>();
 
-  void putUserOperator(String name, List<String> params, VtlParser.ExprContext body) {
-    userOperators.put(name, new UserOperator(List.copyOf(params), body));
+  void putUserOperator(
+      String name,
+      List<String> params,
+      Set<String> datasetParams,
+      boolean returnsDataset,
+      VtlParser.ExprContext body) {
+    userOperators.put(
+        name,
+        new UserOperator(List.copyOf(params), Set.copyOf(datasetParams), returnsDataset, body));
   }
 
   boolean isUserOperator(String name) {

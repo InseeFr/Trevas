@@ -74,6 +74,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /** When true, assignment structure comes from {@link StructureDeriver} only (join apply, …). */
   private boolean forceDerive;
 
+  /**
+   * Scalar formals of a dataset UDO being inlined — excluded from {@link #componentRefs} so they do
+   * not become fake component edges on the operand dataset.
+   */
+  private final Set<String> udoScalarFormals = new LinkedHashSet<>();
+
   /** Outcome of the last visited expression; never null after a successful expr visit. */
   private PendingOp pending;
 
@@ -206,6 +212,56 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
         operands.size() == 1
             ? new PassThrough(operands.get(0), "eval")
             : new Arithmetic("eval", List.copyOf(operands));
+    return null;
+  }
+
+  /**
+   * Dataset-returning UDO: alias dataset formals in {@link #versions}, skip scalar formals in
+   * component refs, visit the body so {@link #pending} becomes the body's op (calc, …) — no {@code
+   * op=<operatorId>}.
+   */
+  @Override
+  public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
+    if (udo == null || !udo.returnsDataset()) {
+      throw unsupported("functions");
+    }
+    List<VtlParser.ParameterContext> args = ctx.parameter();
+    Map<String, String> shadowed = new LinkedHashMap<>();
+    Set<String> introduced = new LinkedHashSet<>();
+    Set<String> previousScalarFormals = new LinkedHashSet<>(udoScalarFormals);
+    try {
+      udoScalarFormals.clear();
+      for (int i = 0; i < udo.params().size(); i++) {
+        String formal = udo.params().get(i);
+        VtlParser.ParameterContext arg = i < args.size() ? args.get(i) : null;
+        if (udo.datasetParams().contains(formal)) {
+          if (arg == null || arg.varID() == null) {
+            throw unsupported("functions");
+          }
+          String versioned = versions.get(arg.varID().getText());
+          if (versioned == null || !structures.containsKey(versioned)) {
+            throw unsupported("functions");
+          }
+          if (versions.containsKey(formal)) {
+            shadowed.put(formal, versions.get(formal));
+          } else {
+            introduced.add(formal);
+          }
+          versions.put(formal, versioned);
+        } else {
+          udoScalarFormals.add(formal);
+        }
+      }
+      visit(udo.body());
+    } finally {
+      for (String formal : introduced) {
+        versions.remove(formal);
+      }
+      versions.putAll(shadowed);
+      udoScalarFormals.clear();
+      udoScalarFormals.addAll(previousScalarFormals);
+    }
     return null;
   }
 
@@ -711,12 +767,12 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   /**
-   * Scalar when the RHS never touches a dataset: no {@code eval(…)} (varIDs, not {@code
-   * VarIdExpr}), and every {@code VarId} is either a literal-free reference to a prior scalar or
-   * absent. Dataset producers always name a dataset {@code VarId} (or {@code eval}).
+   * Scalar when the RHS never touches a dataset: no {@code eval(…)} / dataset UDO, and every {@code
+   * VarId} is either a literal-free reference to a prior scalar or absent. Dataset producers always
+   * name a dataset {@code VarId} (or {@code eval} / dataset UDO).
    */
   private boolean isScalarAssignment(VtlParser.ExprContext expr) {
-    if (containsEval(expr)) {
+    if (containsEval(expr) || containsDatasetUdo(expr)) {
       return false;
     }
     for (String name : varIdNames(expr)) {
@@ -733,6 +789,21 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       @Override
       public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
         found[0] = true;
+        return null;
+      }
+    }.visit(expr);
+    return found[0];
+  }
+
+  private boolean containsDatasetUdo(VtlParser.ExprContext expr) {
+    boolean[] found = {false};
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+        ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
+        if (udo != null && udo.returnsDataset()) {
+          found[0] = true;
+        }
         return null;
       }
     }.visit(expr);
@@ -1057,13 +1128,18 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     return "e" + stmtIndex + "." + exprSeq;
   }
 
-  /** Component names referenced in a scalar expression (not dataset bindings). */
-  private static Set<String> componentRefs(VtlParser.ExprContext expr) {
+  /**
+   * Component names referenced in a scalar expression (not dataset bindings / UDO scalar formals).
+   */
+  private Set<String> componentRefs(VtlParser.ExprContext expr) {
     Set<String> refs = new LinkedHashSet<>();
     new VtlBaseVisitor<Void>() {
       @Override
       public Void visitVarIdExpr(VtlParser.VarIdExprContext ctx) {
-        refs.add(ctx.varID().getText());
+        String name = ctx.varID().getText();
+        if (!udoScalarFormals.contains(name)) {
+          refs.add(name);
+        }
         return null;
       }
     }.visit(expr);

@@ -4,7 +4,9 @@ import fr.insee.vtl.antlr.runtime.tree.RuleNode;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Grammar-only support gate: throws {@code unsupported: …} before the structure oracle runs, so the
@@ -71,11 +73,42 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   @Override
   public Void visitDefOperator(VtlParser.DefOperatorContext ctx) {
     List<String> params = new ArrayList<>();
+    Set<String> datasetParams = new LinkedHashSet<>();
     for (VtlParser.ParameterItemContext item : ctx.parameterItem()) {
-      params.add(item.varID().getText());
+      String name = item.varID().getText();
+      params.add(name);
+      if (item.inputParameterType().datasetType() != null) {
+        datasetParams.add(name);
+      }
     }
-    symbols.putUserOperator(ctx.operatorID().getText(), params, ctx.expr());
+    symbols.putUserOperator(
+        ctx.operatorID().getText(),
+        params,
+        datasetParams,
+        returnsDataset(ctx, datasetParams),
+        ctx.expr());
     return null;
+  }
+
+  /**
+   * Dataset producer when {@code RETURNS dataset} is declared, or when the body is clearly a
+   * dataset expression (clause / membership / dataset formal).
+   */
+  private static boolean returnsDataset(
+      VtlParser.DefOperatorContext ctx, Set<String> datasetParams) {
+    if (ctx.outputParameterType() != null && ctx.outputParameterType().datasetType() != null) {
+      return true;
+    }
+    VtlParser.ExprContext body = unwrap(ctx.expr());
+    if (body instanceof VtlParser.ClauseExprContext
+        || body instanceof VtlParser.MembershipExprContext) {
+      return true;
+    }
+    if (body instanceof VtlParser.VarIdExprContext varId
+        && datasetParams.contains(varId.varID().getText())) {
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -178,9 +211,22 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       if (generic.genericOperators() instanceof VtlParser.EvalAtomContext eval) {
         return visit(eval);
       }
+      if (generic.genericOperators() instanceof VtlParser.CallDatasetContext call) {
+        return visit(call);
+      }
       throw unsupported("functions");
     }
     throw unsupported("functions");
+  }
+
+  /**
+   * Dataset-returning UDO call as a producer ({@code res := scale_by(ds, 3)}). Scalar UDOs stay
+   * calc-only via {@link #requireKnownUdoCall}.
+   */
+  @Override
+  public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+    requireDatasetUdoCall(ctx);
+    return null;
   }
 
   @Override
@@ -398,7 +444,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("arithmetic");
   }
 
-  /** Dataset name, nested clause chain ({@code ds[…][…]}), or join frame ({@code join(…)[…]}). */
+  /** Dataset name, nested clause chain ({@code ds[…][…]}), join frame, or dataset UDO call. */
   private void requireDatasetOrClause(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
     if (current instanceof VtlParser.VarIdExprContext) {
@@ -411,6 +457,13 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     // Clauses after a join: {@code inner_join(…)[calc…][drop…]} (BPE).
     if (current instanceof VtlParser.FunctionsExpressionContext functions
         && functions.functions() instanceof VtlParser.JoinFunctionsContext) {
+      visit(functions);
+      return;
+    }
+    // Clauses after a dataset UDO: {@code scale_by(ds, 3)[filter …]}.
+    if (current instanceof VtlParser.FunctionsExpressionContext functions
+        && functions.functions() instanceof VtlParser.GenericFunctionsContext generic
+        && generic.genericOperators() instanceof VtlParser.CallDatasetContext) {
       visit(functions);
       return;
     }
@@ -491,14 +544,41 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     }.visit(expr);
   }
 
-  /** Scalar UDO call in calc: known operator, args are varId or constant only. */
+  /** Scalar UDO call in calc: known scalar operator, args are varId or constant only. */
   private void requireKnownUdoCall(VtlParser.CallDatasetContext call) {
-    if (!symbols.isUserOperator(call.operatorID().getText())) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(call.operatorID().getText());
+    if (udo == null || udo.returnsDataset()) {
       throw unsupported("calc");
     }
     for (VtlParser.ParameterContext parameter : call.parameter()) {
       if (parameter.OPTIONAL() != null) {
         throw unsupported("calc");
+      }
+    }
+  }
+
+  /** Dataset UDO call as producer: known returns-dataset operator; args varID/constant only. */
+  private void requireDatasetUdoCall(VtlParser.CallDatasetContext call) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(call.operatorID().getText());
+    if (udo == null || !udo.returnsDataset()) {
+      throw unsupported("functions");
+    }
+    List<VtlParser.ParameterContext> args = call.parameter();
+    for (int i = 0; i < udo.params().size(); i++) {
+      if (i >= args.size()) {
+        break;
+      }
+      VtlParser.ParameterContext arg = args.get(i);
+      if (arg.OPTIONAL() != null) {
+        throw unsupported("functions");
+      }
+      String formal = udo.params().get(i);
+      if (udo.datasetParams().contains(formal)) {
+        if (arg.varID() == null) {
+          throw unsupported("functions");
+        }
+      } else if (arg.varID() == null && arg.constant() == null) {
+        throw unsupported("functions");
       }
     }
   }
