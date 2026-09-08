@@ -52,8 +52,10 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build dependencies and run TCK (coverage only, Spark 4 profile)
+        id: tck-maven
         continue-on-error: true
         run: |
+          set -euo pipefail
           mvn clean install -pl coverage -am -DskipTests --batch-mode -Pspark4-tck
           mvn test -pl coverage --batch-mode -Pspark4-tck
 
@@ -72,11 +74,29 @@ jobs:
           only-summary: 'true'
           max-annotations: 0
           fail-on-error: 'false'
-          fail-on-empty: 'false'
+          fail-on-empty: 'true'
 
       - name: Generate TCK scripts report
         if: always()
-        run: python3 coverage/scripts/render_tck_job_summary.py
+        run: |
+          set -euo pipefail
+          python3 coverage/scripts/render_tck_job_summary.py
+          report=coverage/target/tck-scripts-report.md
+          if [[ ! -f "$report" ]]; then
+            echo "Missing TCK report at $report" >&2
+            exit 1
+          fi
+          cases=$(sed -n 's/^Total cases: //p' "$report" | head -1)
+          if [[ -z "${cases}" || "${cases}" -eq 0 ]]; then
+            echo "TCK report has Total cases: ${cases:-missing} (build/tests did not produce Surefire results)" >&2
+            exit 1
+          fi
+          echo "TCK report OK ($cases cases)"
+          # Fail the job when Maven produced no usable suite (empty), not when cases fail.
+          if [[ "${{ steps.tck-maven.outcome }}" != "success" ]] && [[ ! -f coverage/target/surefire-reports/TEST-fr.insee.vtl.coverage.TCKTest.xml ]]; then
+            echo "Maven TCK step failed before writing Surefire XML" >&2
+            exit 1
+          fi
 
       - name: Upload full TCK script report artifact
         if: always()
@@ -84,4 +104,4 @@ jobs:
         with:
           name: tck-scripts-report-spark4
           path: coverage/target/tck-scripts-report.md
-          if-no-files-found: ignore
+          if-no-files-found: error
