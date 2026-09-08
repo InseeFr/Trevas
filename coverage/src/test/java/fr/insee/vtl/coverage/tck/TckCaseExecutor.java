@@ -82,7 +82,8 @@ public final class TckCaseExecutor {
                 return;
               }
               Dataset actual = (Dataset) actualBinding;
-              if (!actual.getDataStructure().equals(expected.getDataStructure())) {
+              if (!TckStructureComparison.sameStructure(
+                  actual.getDataStructure(), expected.getDataStructure(), displayPath)) {
                 softly.fail(
                     TckFailureText.structureMismatch(
                         displayPath,
