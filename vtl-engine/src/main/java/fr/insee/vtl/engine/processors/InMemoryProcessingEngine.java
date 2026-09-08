@@ -204,6 +204,92 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
   }
 
   @Override
+  public DatasetExpression executeIntersect(
+      List<DatasetExpression> datasets, List<String> idColumns) {
+    return new DatasetExpression(datasets.get(0)) {
+      @Override
+      public Dataset resolve(Map<String, Object> context) {
+        List<DataPoint> left = datasets.get(0).resolve(context).getDataPoints();
+        Set<List<Object>> commonKeys = idKeySet(left, idColumns);
+        for (int i = 1; i < datasets.size(); i++) {
+          commonKeys.retainAll(
+              idKeySet(datasets.get(i).resolve(context).getDataPoints(), idColumns));
+        }
+        Set<List<Object>> keep = commonKeys;
+        List<DataPoint> result =
+            left.stream().filter(point -> keep.contains(idKey(point, idColumns))).collect(toList());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
+      }
+
+      @Override
+      public DataStructure getDataStructure() {
+        return datasets.get(0).getDataStructure();
+      }
+    };
+  }
+
+  @Override
+  public DatasetExpression executeSetDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns) {
+    return new DatasetExpression(left) {
+      @Override
+      public Dataset resolve(Map<String, Object> context) {
+        Set<List<Object>> rightKeys = idKeySet(right.resolve(context).getDataPoints(), idColumns);
+        List<DataPoint> result =
+            left.resolve(context).getDataPoints().stream()
+                .filter(point -> !rightKeys.contains(idKey(point, idColumns)))
+                .collect(toList());
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
+      }
+
+      @Override
+      public DataStructure getDataStructure() {
+        return left.getDataStructure();
+      }
+    };
+  }
+
+  @Override
+  public DatasetExpression executeSymDiff(
+      DatasetExpression left, DatasetExpression right, List<String> idColumns) {
+    return new DatasetExpression(left) {
+      @Override
+      public Dataset resolve(Map<String, Object> context) {
+        List<DataPoint> leftPoints = left.resolve(context).getDataPoints();
+        List<DataPoint> rightPoints = right.resolve(context).getDataPoints();
+        Set<List<Object>> leftKeys = idKeySet(leftPoints, idColumns);
+        Set<List<Object>> rightKeys = idKeySet(rightPoints, idColumns);
+        List<DataPoint> result =
+            leftPoints.stream()
+                .filter(point -> !rightKeys.contains(idKey(point, idColumns)))
+                .collect(toList());
+        rightPoints.stream()
+            .filter(point -> !leftKeys.contains(idKey(point, idColumns)))
+            .forEach(result::add);
+        return InMemoryDataset.ofDataPoints(result, getDataStructure());
+      }
+
+      @Override
+      public DataStructure getDataStructure() {
+        return left.getDataStructure();
+      }
+    };
+  }
+
+  private static Set<List<Object>> idKeySet(
+      List<Structured.DataPoint> points, List<String> idColumns) {
+    Set<List<Object>> keys = new LinkedHashSet<>();
+    for (Structured.DataPoint point : points) {
+      keys.add(idKey(point, idColumns));
+    }
+    return keys;
+  }
+
+  private static List<Object> idKey(Structured.DataPoint point, List<String> idColumns) {
+    return idColumns.stream().map(point::get).collect(toList());
+  }
+
+  @Override
   public DatasetExpression executeAggr(
       DatasetExpression expression,
       List<String> groupBy,
