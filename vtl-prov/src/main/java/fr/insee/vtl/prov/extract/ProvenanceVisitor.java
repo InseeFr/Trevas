@@ -287,6 +287,42 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   @Override
+  public Void visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
+    return binaryArithmetic(ctx.left, ctx.right, ctx.op.getText());
+  }
+
+  @Override
+  public Void visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
+    return binaryArithmetic(ctx.left, ctx.right, ctx.op);
+  }
+
+  @Override
+  public Void visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
+    String operandId = datasetOperand(ctx.right);
+    if (operandId == null) {
+      throw unsupported("scalar");
+    }
+    pending = new Arithmetic(ctx.op.getText(), List.of(operandId));
+    return null;
+  }
+
+  @Override
+  public Void visitIfExpr(VtlParser.IfExprContext ctx) {
+    List<String> operands = new ArrayList<>(3);
+    for (VtlParser.ExprContext branch : List.of(ctx.conditionalExpr, ctx.thenExpr, ctx.elseExpr)) {
+      String id = datasetOperand(branch);
+      if (id != null) {
+        operands.add(id);
+      }
+    }
+    if (operands.isEmpty()) {
+      throw unsupported("scalar");
+    }
+    pending = new Arithmetic("if", List.copyOf(operands));
+    return null;
+  }
+
+  @Override
   public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
     List<String> operands = new ArrayList<>();
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
@@ -683,6 +719,11 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   private Void binaryArithmetic(VtlParser.ExprContext left, VtlParser.ExprContext right, Token op) {
+    return binaryArithmetic(left, right, op.getText());
+  }
+
+  private Void binaryArithmetic(
+      VtlParser.ExprContext left, VtlParser.ExprContext right, String op) {
     List<String> operands = new ArrayList<>(2);
     String leftId = datasetOperand(left);
     if (leftId != null) {
@@ -695,21 +736,25 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operands.isEmpty()) {
       throw unsupported("scalar");
     }
-    pending = new Arithmetic(op.getText(), List.copyOf(operands));
+    pending = new Arithmetic(op, List.copyOf(operands));
     return null;
   }
 
-  /** {@code null} if the operand is a scalar literal (not a provenance node). */
+  /**
+   * Resolve a dataset-valued expression to a versioned dataset id.
+   *
+   * <p>{@code null} if the operand is a scalar literal. Any other expression is visited; when the
+   * result is not already an {@link Identity}, it is materialized as an anonymous {@code #s…}
+   * dataset so nested producers work anywhere a dataset name is expected.
+   */
   private String datasetOperand(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.VarIdExprContext) {
-      visit(current);
-      return ((Identity) pending).datasetId();
-    }
     if (current instanceof VtlParser.ConstantExprContext) {
       return null;
     }
-    throw unsupported("arithmetic");
+    visit(current);
+    ensureMaterialized();
+    return ((Identity) pending).datasetId();
   }
 
   private Void assign(String out, VtlParser.ExprContext expr) {

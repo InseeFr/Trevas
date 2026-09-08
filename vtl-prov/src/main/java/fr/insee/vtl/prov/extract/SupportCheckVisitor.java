@@ -17,6 +17,10 @@ import java.util.Set;
  * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc},
  * {@code aggr}, {@code join}, {@code set}, {@code functions} (catch-all for other function
  * families), {@code check}.
+ *
+ * <p><b>Dataset operands:</b> wherever a dataset is required, {@link #requireDatasetOperand}
+ * rejects constants and otherwise {@code visit}s the expression — nested producers are validated by
+ * their own visit methods; extraction materializes them as {@code #s…} anonymes.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -145,13 +149,39 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitComparisonExpr(VtlParser.ComparisonExprContext ctx) {
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
+  }
+
+  @Override
+  public Void visitBooleanExpr(VtlParser.BooleanExprContext ctx) {
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
+  }
+
+  @Override
   public Void visitUnaryExpr(VtlParser.UnaryExprContext ctx) {
-    throw unsupported("arithmetic");
+    // Dataset-level +/−/not: operand may itself be a nested producer.
+    requireDatasetOperand(ctx.right, "arithmetic");
+    return null;
+  }
+
+  @Override
+  public Void visitIfExpr(VtlParser.IfExprContext ctx) {
+    // Dataset-level if: each branch may be a nested producer or a scalar literal.
+    leafOperand(ctx.conditionalExpr);
+    leafOperand(ctx.thenExpr);
+    leafOperand(ctx.elseExpr);
+    return null;
   }
 
   @Override
   public Void visitClauseExpr(VtlParser.ClauseExprContext ctx) {
-    requireDatasetOrClause(ctx.expr());
+    // Left of […] is any dataset producer (name, nested clause, set, join, arith, …).
+    requireDatasetOperand(ctx.expr(), "clause");
     VtlParser.DatasetClauseContext clause = ctx.datasetClause();
     if (clause.calcClause() != null) {
       clause.calcClause().calcClauseItem().forEach(item -> calcRhs(item.expr()));
@@ -231,8 +261,8 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitExistInAtom(VtlParser.ExistInAtomContext ctx) {
-    requireDatasetVarId(ctx.left, "functions");
-    requireDatasetVarId(ctx.right, "functions");
+    requireDatasetOperand(ctx.left, "functions");
+    requireDatasetOperand(ctx.right, "functions");
     return null;
   }
 
@@ -252,7 +282,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitHierarchyOperators(VtlParser.HierarchyOperatorsContext ctx) {
-    requireDatasetVarId(ctx.op, "functions");
+    requireDatasetOperand(ctx.op, "functions");
     if (!symbols.isHierarchicalRuleset(ctx.hrName.getText())) {
       throw unsupported("functions");
     }
@@ -274,19 +304,19 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitFlowAtom(VtlParser.FlowAtomContext ctx) {
-    requireDatasetVarId(ctx.expr(), "functions");
+    requireDatasetOperand(ctx.expr(), "functions");
     return null;
   }
 
   @Override
   public Void visitFillTimeAtom(VtlParser.FillTimeAtomContext ctx) {
-    requireDatasetVarId(ctx.expr(), "functions");
+    requireDatasetOperand(ctx.expr(), "functions");
     return null;
   }
 
   @Override
   public Void visitTimeShiftAtom(VtlParser.TimeShiftAtomContext ctx) {
-    requireDatasetVarId(ctx.expr(), "functions");
+    requireDatasetOperand(ctx.expr(), "functions");
     return null;
   }
 
@@ -296,7 +326,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.op == null || ctx.op.expr() == null) {
       throw unsupported("functions");
     }
-    requireDatasetVarId(ctx.op.expr(), "functions");
+    requireDatasetOperand(ctx.op.expr(), "functions");
     return null;
   }
 
@@ -307,13 +337,13 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
-    requireDatasetVarId(ctx.expr(), "functions");
+    requireDatasetOperand(ctx.expr(), "functions");
     return null;
   }
 
   @Override
   public Void visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
-    requireDatasetVarId(ctx.expr(), "functions");
+    requireDatasetOperand(ctx.expr(), "functions");
     return null;
   }
 
@@ -324,7 +354,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
-    requireDatasetOrClause(ctx.expr());
+    requireDatasetOperand(ctx.expr(), "clause");
     return null;
   }
 
@@ -338,7 +368,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.componentID() != null && !ctx.componentID().isEmpty()) {
       throw unsupported("check");
     }
-    requireDatasetVarId(ctx.op, "check");
+    requireDatasetOperand(ctx.op, "check");
     return null;
   }
 
@@ -349,9 +379,9 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitValidationSimple(VtlParser.ValidationSimpleContext ctx) {
-    requireDatasetVarId(ctx.expr(), "check");
+    requireDatasetOperand(ctx.expr(), "check");
     if (ctx.imbalanceExpr() != null) {
-      requireDatasetVarId(ctx.imbalanceExpr().expr(), "check");
+      requireDatasetOperand(ctx.imbalanceExpr().expr(), "check");
     }
     return null;
   }
@@ -367,7 +397,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       if (item.AS() != null) {
         throw unsupported("join");
       }
-      requireDatasetVarId(item.expr(), "join");
+      requireDatasetOperand(item.expr(), "join");
     }
     checkJoinBody(ctx.joinBody());
     return null;
@@ -380,20 +410,20 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitUnionAtom(VtlParser.UnionAtomContext ctx) {
-    ctx.expr().forEach(e -> requireDatasetVarId(e, "set"));
+    ctx.expr().forEach(e -> requireDatasetOperand(e, "set"));
     return null;
   }
 
   @Override
   public Void visitIntersectAtom(VtlParser.IntersectAtomContext ctx) {
-    ctx.expr().forEach(e -> requireDatasetVarId(e, "set"));
+    ctx.expr().forEach(e -> requireDatasetOperand(e, "set"));
     return null;
   }
 
   @Override
   public Void visitSetOrSYmDiffAtom(VtlParser.SetOrSYmDiffAtomContext ctx) {
-    requireDatasetVarId(ctx.left, "set");
-    requireDatasetVarId(ctx.right, "set");
+    requireDatasetOperand(ctx.left, "set");
+    requireDatasetOperand(ctx.right, "set");
     return null;
   }
 
@@ -402,11 +432,17 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     throw unsupported("scalar");
   }
 
-  /** Dataset name only (no nested clause / expression operands yet). */
-  private void requireDatasetVarId(VtlParser.ExprContext expr, String what) {
-    if (!(unwrap(expr) instanceof VtlParser.VarIdExprContext)) {
+  /**
+   * Anywhere a dataset is required: reject constants, otherwise visit the expression. Nested
+   * producers (clause / set / join / arith / UDO / …) are validated by their own {@code visit*}
+   * methods; extraction materializes non-identity results as {@code #s…} anonymes.
+   */
+  private void requireDatasetOperand(VtlParser.ExprContext expr, String what) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.ConstantExprContext) {
       throw unsupported(what);
     }
+    visit(current);
   }
 
   static List<VtlParser.JoinClauseItemContext> joinItems(VtlParser.JoinExprContext ctx) {
@@ -434,40 +470,12 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     }
   }
 
-  /** Dataset name or scalar literal; nested ops deferred. */
+  /** Arithmetic leaf: scalar literal OK, otherwise a dataset producer. */
   private void leafOperand(VtlParser.ExprContext expr) {
-    VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.VarIdExprContext
-        || current instanceof VtlParser.ConstantExprContext) {
+    if (unwrap(expr) instanceof VtlParser.ConstantExprContext) {
       return;
     }
-    throw unsupported("arithmetic");
-  }
-
-  /** Dataset name, nested clause chain ({@code ds[…][…]}), join frame, or dataset UDO call. */
-  private void requireDatasetOrClause(VtlParser.ExprContext expr) {
-    VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.VarIdExprContext) {
-      return;
-    }
-    if (current instanceof VtlParser.ClauseExprContext clause) {
-      visit(clause);
-      return;
-    }
-    // Clauses after a join: {@code inner_join(…)[calc…][drop…]} (BPE).
-    if (current instanceof VtlParser.FunctionsExpressionContext functions
-        && functions.functions() instanceof VtlParser.JoinFunctionsContext) {
-      visit(functions);
-      return;
-    }
-    // Clauses after a dataset UDO: {@code scale_by(ds, 3)[filter …]}.
-    if (current instanceof VtlParser.FunctionsExpressionContext functions
-        && functions.functions() instanceof VtlParser.GenericFunctionsContext generic
-        && generic.genericOperators() instanceof VtlParser.CallDatasetContext) {
-      visit(functions);
-      return;
-    }
-    throw unsupported("clause");
+    requireDatasetOperand(expr, "arithmetic");
   }
 
   /**
