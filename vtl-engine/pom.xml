@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.7.0</version>
+        <version>2.7.1</version>
     </parent>
 
     <artifactId>vtl-engine</artifactId>
     <name>VTL Engine</name>
     <description>VTL engine framework for Trevas</description>
-    <version>2.7.0</version>
+    <version>2.7.1</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>

@@ -5,17 +5,18 @@ import java.io.IOException;
 import java.io.Reader;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ParseBool;
 import org.supercsv.cellprocessor.ParseDouble;
-import org.supercsv.cellprocessor.ParseLong;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 import org.threeten.extra.Interval;
+import org.threeten.extra.PeriodDuration;
 
 public class CSVDataset implements Dataset {
 
@@ -50,17 +51,20 @@ public class CSVDataset implements Dataset {
     if (String.class.equals(type)) {
       return new Optional();
     } else if (Long.class.equals(type)) {
-      return new Optional(new ParseLong());
+      return new Optional(new ParseLongLenient());
     } else if (Double.class.equals(type)) {
       return new Optional(new ParseDouble());
     } else if (Boolean.class.equals(type)) {
       return new Optional(new ParseBool());
     } else if (Instant.class.equals(type)) {
-      throw new RuntimeException("TODO");
+      return new Optional(new ParseInstant());
     } else if (LocalDate.class.equals(type)) {
-      throw new RuntimeException("TODO");
-    } else if (Interval.class.equals(type)) {
-      // TODO: refine
+      return new Optional(new ParseLocalDate());
+    } else if (Interval.class.equals(type)
+        || OffsetDateTime.class.equals(type)
+        || PeriodDuration.class.equals(type)) {
+      // TCK TimePeriod / Time / Duration often use SDMX lexical codes ("2010", "2010Q1",
+      // "2010M1/2010M12", "A"). Keep the lexical form; Spark maps these types to StringType.
       return new Optional();
     } else {
       throw new UnsupportedOperationException("unsupported type " + type);
