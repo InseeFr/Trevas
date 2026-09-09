@@ -1,0 +1,13 @@
+digraph {
+  // Wave G PR-47 — scalar UDO as assignment RHS (stress s0121).
+  // stmt 1 = define operator; stmt 2–3 = scalar assigns.
+
+  "e2.1" [kind=expression, src="add1(1)"];
+  "y@2"  [kind=scalar, type=INTEGER];
+  "y@2"  -> "e2.1";
+
+  "e3.1" [kind=expression, src="add1(y)"];
+  "e3.1" -> "y@2";
+  "z@3"  [kind=scalar, type=INTEGER];
+  "z@3"  -> "e3.1";
+}

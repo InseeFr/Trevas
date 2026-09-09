@@ -267,11 +267,21 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   }
 
   /**
-   * Dataset-returning UDO call as a producer ({@code res := scale_by(ds, 3)}). Scalar UDOs stay
-   * calc-only via {@link #requireKnownUdoCall}.
+   * Dataset-returning UDO call as a producer ({@code res := scale_by(ds, 3)}). Scalar UDOs as
+   * statement RHS ({@code y := add1(1)}) are allowed here; inside calc they go through {@link
+   * #requireKnownUdoCall}.
    */
   @Override
   public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+    ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
+    if (udo != null && !udo.returnsDataset()) {
+      for (VtlParser.ParameterContext parameter : ctx.parameter()) {
+        if (parameter.OPTIONAL() != null) {
+          throw unsupported("functions");
+        }
+      }
+      return null;
+    }
     requireDatasetUdoCall(ctx);
     return null;
   }

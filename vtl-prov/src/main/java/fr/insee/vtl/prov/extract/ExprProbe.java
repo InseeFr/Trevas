@@ -46,7 +46,12 @@ final class ExprProbe {
         if (isDatasetUdo.test(ctx.operatorID().getText())) {
           datasetUdo[0] = true;
         }
-        return visitChildren(ctx);
+        for (VtlParser.ParameterContext parameter : ctx.parameter()) {
+          if (parameter.varID() != null) {
+            varIds.add(parameter.varID().getText());
+          }
+        }
+        return null;
       }
 
       @Override

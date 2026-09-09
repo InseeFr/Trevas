@@ -1128,6 +1128,17 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
         names.add(ctx.varID().getText());
         return null;
       }
+
+      @Override
+      public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
+        // Call args are grammar {@code parameter → varID}, not {@code VarIdExpr}.
+        for (VtlParser.ParameterContext parameter : ctx.parameter()) {
+          if (parameter.varID() != null) {
+            names.add(parameter.varID().getText());
+          }
+        }
+        return null;
+      }
     }.visit(expr);
     return names;
   }
