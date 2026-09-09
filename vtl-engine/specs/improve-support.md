@@ -6,6 +6,7 @@ After Join body (`filter`/`calc`/`apply`/`keep`/`drop`/`rename`, incl. unary leg
 After `exists_in`: **139 / 183**.
 After viral attribute nulls-first min on Spark: **141 / 183**.
 After aggr-clause `having` (source-group aggregates): **142 / 183** pass, **41** fails (local Spark 3 TCK).
+After validation + misc non-date wave: **149 / 183** pass, **34** fails (local Spark 3 TCK).
 
 ## Method
 
@@ -31,21 +32,21 @@ Measure: `mvn test -pl coverage -am` then `python3 coverage/scripts/render_tck_j
 | P1 | Join (structure + rows) | 4 | M | done |
 | P1 | `exists_in` | 3 | S | done |
 | P1 | Viral / null attributes in aggregation | 2–3 | M | done |
-| P2 | Validation `check` / `check_datapoint` | 3 | M | |
+| P2 | Validation `check` / `check_datapoint` | 3 | M | done |
 | P2 | `hierarchy` (+ `check_hierarchy`) | 3–4 | L | |
-| P3 | Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log) | 7 | S–M | |
+| P3 | Misc non-date (unpivot, if datasets, median, log; leftovers: valuedomain `in`, random RNG) | 7 | S–M | mostly done |
 
 ### Date / time (do last)
 
-| Priority | Theme | Cases ≈ | Effort |
-|----------|--------|------:|--------|
-| T0 | `fill_time_series` | 8 | L |
-| T1 | SDMX TimePeriod + `timeshift` / `period_indicator` | 6 | L |
-| T1 | Date / duration extractors and converters | 6 | M |
-| T2 | `flow_to_stock` / `stock_to_flow` | 4 | M |
-| T3 | `time_agg` | 1 | M |
+| Priority | Theme | Cases ≈ | Effort | Status |
+|----------|--------|------:|--------|--------|
+| T0 | `fill_time_series` | 8 | L | |
+| T1 | SDMX TimePeriod + `timeshift` / `period_indicator` | 6 | L | |
+| T1 | Date / duration extractors and converters | 6 | M | |
+| T2 | `flow_to_stock` / `stock_to_flow` | 4 | M | |
+| T3 | `time_agg` | 1 | M | |
 
-Counts overlap a bit (e.g. hierarchy and check_hierarchy). Non-date ceiling ≈ 30+ cases before touching time.
+Counts overlap a bit (e.g. hierarchy and check_hierarchy). Remaining non-date ≈ valuedomain `in` + random RNG + hierarchy (~6); the rest of the 34 fails are date/time.
 
 ## Non-date — P0 / P1 / P2 / P3
 
@@ -106,26 +107,30 @@ aggregates on source groups (`avg(Me_1)` ≠ `avg` of output `sum(Me_1)`).
 filters, projects temps away — shared by aggr clause and aggregate invocation.
 TCK Aggregation ex_3 green. Baseline: **142 / 183** (41 fails).
 
-### 6. Validation `check` / `check_datapoint` (~3)
+### 6. Validation `check` / `check_datapoint` (~3) — done
 
-Structure (column order, presence of `Me_1` in output, roles) and ruleid/errorcode mapping.
+Unnamed datapoint rules now use their one-based index as `ruleid`. Output projection is
+ordered identifiers → `ruleid` → operand measures → validation measures; `all` drops
+operand measures while `all_measures` keeps them. Omitted `check` error levels are Integer,
+and omitted imbalance no longer dereferences null. The CSV loader now follows file headers
+when their order differs from structure metadata, which is required by both datapoint fixtures.
 
 ### 7. `hierarchy` (~3) and `check_hierarchy` (~1)
 
 Roll-up unimplemented. `check_hierarchy` already blows up on Spark (unresolved valuedomain column). Large semantics + ruleset work — lower priority than smaller wins above despite similar case count.
 
-### 8. Misc non-date (~7)
+### 8. Misc non-date (~7) — mostly done
 
-| Case | Suspected issue |
-|------|-----------------|
-| Unpivot ex_1 | `Id_2` not an identifier — unpivot semantics over measures A/B/C |
-| if-then-else ex_1 | dataset if: mono-measure names (`bool_var` vs …) |
-| Element of ex_3 | `in` valuedomain → visitor NPE |
-| Random ex_1/ex_2 | non-deterministic / not wired on Spark |
-| Median ex_1 | row mismatch |
-| Logarithm ex_2 | numeric / null mismatch |
+| Case | Status |
+|------|--------|
+| Unpivot ex_1 | done — `executeUnpivot` on InMemory + Spark 3/4; docs flipped |
+| if-then-else ex_1 | done — mono-measure operands may use different names |
+| Median ex_1 | done — Spark uses exact `percentile` (even-length average) |
+| Logarithm ex_2 | done — Spark calc skips SQL `log(...)` shortcut (VTL arg order) |
+| Element of ex_3 | leftover — valuedomain `in` needs a code-list registry; TCK zip has none |
+| Random ex_1/ex_2 | leftover — `Number` seed overload works; Java `Random` ≠ manual/TCK floats |
 
-Pick up as you go once items 1–7 are stable.
+Baseline after this wave: **149 / 183** (34 fails).
 
 ## Date / time — last
 
@@ -175,6 +180,10 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 - `exists_in` (retain all/true/false)
 - Viral attribute aggregation: Spark `min` nulls-first (align with in-memory / TCK)
 - Aggr-clause `having` via shared `HavingClauseApplier` (temp collectors on source groups)
+- Validation output modes, unnamed rule ids, default error-level type, and optional imbalance
+- Exact median and VTL logarithm evaluation on Spark 3/4
+- Dataset conditional with distinct mono-measure names
+- Unpivot for InMemory and Spark 3/4
 
 ## Working method
 
@@ -186,7 +195,8 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 
 ## Suggested next wave (non-date only)
 
-1. Validation `check` / `check_datapoint` (~3)
-2. Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log)
+1. Value-domain registry / code-list loading for `in myValueDomain` (TCK Element of ex_3)
+2. TCK-compatible seeded random algorithm (manual examples use an unspecified RNG)
+3. Hierarchy and `check_hierarchy`
 
-Then remaining P2 toward about **144+ / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.
+Then SDMX TimePeriod parser → `fill_time_series` → remaining time ops toward **160+ / 183**.
