@@ -127,7 +127,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 1.0D,
                 "median_Me_1",
-                3L),
+                3.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -140,7 +140,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 9.0D,
                 "median_Me_1",
-                3L),
+                3.5D),
             Map.of(
                 "Id_1",
                 "A",
@@ -153,7 +153,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 5.0D,
                 "median_Me_1",
-                4L),
+                4.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -166,7 +166,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 8.0D,
                 "median_Me_1",
-                4L),
+                5.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -179,7 +179,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 3.0D,
                 "median_Me_1",
-                9L),
+                9.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -192,7 +192,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 4.0D,
                 "median_Me_1",
-                5L),
+                7.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -205,7 +205,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 2.0D,
                 "median_Me_1",
-                9L),
+                9.0D),
             Map.of(
                 "Id_1",
                 "A",
@@ -218,7 +218,7 @@ public class AnalyticMedianTest {
                 "Me_2",
                 7.0D,
                 "median_Me_1",
-                5L));
+                7.0D));
   }
 
   @Test
@@ -262,14 +262,14 @@ public class AnalyticMedianTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.0D, "Me_2", 3.5D));
   }
 
   @Test
@@ -313,14 +313,14 @@ public class AnalyticMedianTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3L, "Me_2", 1.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3L, "Me_2", 1.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 9L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 3.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 3.0D, "Me_2", 1.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 3.5D, "Me_2", 5.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 4.0D, "Me_2", 5.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 9.0D, "Me_2", 3.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 7.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 9.0D, "Me_2", 3.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 7.0D, "Me_2", 3.5D));
   }
 
   @Test
@@ -368,14 +368,14 @@ public class AnalyticMedianTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactly(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 4L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7L, "Me_2", 4.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6L, "Me_2", 4.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5L, "Me_2", 4.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.0D, "Me_2", 5.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5.0D, "Me_2", 6.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 6.0D, "Me_2", 5.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6.0D, "Me_2", 5.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 7.0D, "Me_2", 4.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.0D, "Me_2", 4.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 7.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 5.0D, "Me_2", 4.0D));
   }
 
   @Test
@@ -422,13 +422,13 @@ public class AnalyticMedianTest {
     * */
     assertThat(((Dataset) engine.getContext().getAttribute("res")).getDataAsMap())
         .containsExactlyInAnyOrder(
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 5L, "Me_2", 3.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D),
-            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6L, "Me_2", 5.0D));
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2000L, "Me_1", 4.5D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2000L, "Me_1", 4.5D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2001L, "Me_1", 6.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2001L, "Me_1", 6.0D, "Me_2", 3.5D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2002L, "Me_1", 5.5D, "Me_2", 6.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2002L, "Me_1", 5.5D, "Me_2", 6.0D),
+            Map.of("Id_1", "A", "Id_2", "XX", "Year", 2003L, "Me_1", 6.5D, "Me_2", 6.0D),
+            Map.of("Id_1", "A", "Id_2", "YY", "Year", 2003L, "Me_1", 6.5D, "Me_2", 6.0D));
   }
 }

@@ -152,7 +152,7 @@ public class AggregateTest {
                 "minWeight",
                 9D,
                 "medianAge",
-                12L,
+                12.0D,
                 "medianWeight",
                 10.0D),
             Map.of(
@@ -173,7 +173,7 @@ public class AggregateTest {
                 "minWeight",
                 11D,
                 "medianAge",
-                10L,
+                10.0D,
                 "medianWeight",
                 11D));
 
