@@ -113,10 +113,10 @@ public class PivotTest {
         new InMemoryDataset(
             List.of(List.of(1L, 5L, 2L, 7L), List.of(2L, 3L, 4L, 9L)),
             List.of(
-                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
-                new Structured.Component("A", Long.class, Role.MEASURE),
-                new Structured.Component("B", Long.class, Role.MEASURE),
-                new Structured.Component("C", Long.class, Role.MEASURE)));
+                new Structured.Component("Id_1", Long.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("A", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("B", Long.class, Dataset.Role.MEASURE),
+                new Structured.Component("C", Long.class, Dataset.Role.MEASURE)));
     engine.getContext().setAttribute("DS_1", ds, ScriptContext.ENGINE_SCOPE);
     engine.eval("DS_r := DS_1 [ unpivot Id_2, Me_1 ];");
     Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
