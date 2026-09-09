@@ -390,9 +390,11 @@ public class DagTest {
   void testDagInnerJoinWithFunctions() throws ScriptException {
     engine.getContext().setAttribute("ds1", ds1, ScriptContext.ENGINE_SCOPE);
     engine.getContext().setAttribute("ds3", ds3, ScriptContext.ENGINE_SCOPE);
+    // Join body filter is applied (always-false would yield []). Keep a comparison that
+    // retains the inner-join keys so DAG reordering of tmp1/tmp3 stays covered.
     engine.eval(
         "result := inner_join(tmp1, tmp3 using id1, id2 "
-            + "filter 1>2); tmp3 := ds3; tmp1 := ds1;");
+            + "filter 1 < 2); tmp3 := ds3; tmp1 := ds1;");
 
     var result = (Dataset) engine.getContext().getAttribute("result");
     assertThat(result.getColumnNames()).containsExactlyInAnyOrder("id1", "id2", "m1", "m2");
