@@ -12,10 +12,14 @@ public final class SparkUtils {
   private SparkUtils() {}
 
   public static Column safeCol(String name) {
+    return functions.col(quoteIdentifier(name));
+  }
+
+  public static String quoteIdentifier(String name) {
     if (name == null) {
       throw new IllegalArgumentException("Column name cannot be null");
     }
-    return functions.col("`" + name.replace("`", "``") + "`");
+    return "`" + name.replace("`", "``") + "`";
   }
 
   public static Seq<Column> safeCols(Collection<String> names) {

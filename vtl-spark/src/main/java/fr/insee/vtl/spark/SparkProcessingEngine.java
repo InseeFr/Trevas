@@ -93,8 +93,7 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
     } else if (expression instanceof CountAggregationExpression) {
       column = count("*");
     } else if (expression instanceof MedianAggregationExpression) {
-      column =
-          percentile_approx(SparkUtils.safeCol(columnName), lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY));
+      column = expr("percentile(" + SparkUtils.quoteIdentifier(columnName) + ", 0.5)");
     } else if (expression instanceof StdDevPopAggregationExpression) {
       column = stddev_pop(SparkUtils.safeCol(columnName));
     } else if (expression instanceof StdDevSampAggregationExpression) {
@@ -492,7 +491,8 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
           case MAX -> max(safeCol).over(windowSpec);
           case AVG -> avg(safeCol).over(windowSpec);
           case MEDIAN ->
-              percentile_approx(safeCol, lit(0.5), lit(DEFAULT_MEDIAN_ACCURACY)).over(windowSpec);
+              expr("percentile(" + SparkUtils.quoteIdentifier(sourceColName) + ", 0.5)")
+                  .over(windowSpec);
           case STDDEV_POP -> stddev_pop(safeCol).over(windowSpec);
           case STDDEV_SAMP -> stddev_samp(safeCol).over(windowSpec);
           case VAR_POP -> var_pop(safeCol).over(windowSpec);
