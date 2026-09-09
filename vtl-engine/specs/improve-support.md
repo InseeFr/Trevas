@@ -3,7 +3,8 @@
 Baseline Spark 3 after CSV TimePeriod + `group except`: **123 / 183**.
 After P0 Integer/Number + set operators (`setdiff`/`intersect`/`symdiff`): **132 / 183**.
 After Join body (`filter`/`calc`/`apply`/`keep`/`drop`/`rename`, incl. unary legacy): **136 / 183**.
-After `exists_in`: **139 / 183** pass, **44** fails (local Spark 3 TCK).
+After `exists_in`: **139 / 183**.
+After viral attribute nulls-first min on Spark: **141 / 183** pass, **42** fails (local Spark 3 TCK).
 
 ## Method
 
@@ -28,7 +29,7 @@ Measure: `mvn test -pl coverage -am` then `python3 coverage/scripts/render_tck_j
 | P1 | Set operators (`setdiff`/`intersect`/`symdiff`) | 4 | M | done |
 | P1 | Join (structure + rows) | 4 | M | done |
 | P1 | `exists_in` | 3 | S | done |
-| P1 | Viral / null attributes in aggregation | 2–3 | M | |
+| P1 | Viral / null attributes in aggregation | 2–3 | M | done |
 | P2 | Validation `check` / `check_datapoint` | 3 | M | |
 | P2 | `hierarchy` (+ `check_hierarchy`) | 3–4 | L | |
 | P3 | Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log) | 7 | S–M | |
@@ -86,12 +87,14 @@ contain the other’s.
 Implemented in `ExistsInExecutor` via PE project + intersect / setdiff + calc + union.
 TCK Exists-in leaves green (3/3). Baseline after exists_in: **139 / 183** (44 fails).
 
-### 5. Attributes in aggregation (~2–3)
+### 5. Attributes in aggregation (~2–3) — done
 
-`avg(DS)` / `aggr … group by`: Trevas sometimes keeps `At_1 = "A"` where the TCK expects null / empty (e.g. Aggregate invocation ex_3, ex_4).
+`avg(DS)` / `aggr … group by` with viral attributes: reduction is nulls-first `min`
+(empty CSV → null ⇒ group result null). In-memory already matched; Spark SQL `min`
+skipped nulls and produced wrong values (e.g. `"A"`).
 
-- Review `AggregationViralPropagation` and VTL rules for non-viral attributes (drop / null).
-- Check Median as well if the diff comes from the same mechanism.
+Fixed `minNullsFirst` in Spark 3/4 `convertAggregation` for `MinAggregationExpression`.
+TCK Aggregate invocation ex_3/ex_4 green. Baseline: **141 / 183** (42 fails).
 
 ### 6. Validation `check` / `check_datapoint` (~3)
 
@@ -160,6 +163,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 - Set operators `setdiff` / `intersect` / `symdiff` (engine + Spark 3/4)
 - Join body clauses (`filter` / `calc` / `apply` / `keep`/`drop` / `rename`) + unary legacy join
 - `exists_in` (retain all/true/false)
+- Viral attribute aggregation: Spark `min` nulls-first (align with in-memory / TCK)
 
 ## Working method
 
@@ -171,7 +175,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 
 ## Suggested next wave (non-date only)
 
-1. Null attributes on global / grouped aggr (~2–3)
+1. Aggr-clause `having` / source-group aggregates (~1)
 2. Validation `check` / `check_datapoint` (~3)
 
 Then remaining P2/P3 toward about **144 / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.

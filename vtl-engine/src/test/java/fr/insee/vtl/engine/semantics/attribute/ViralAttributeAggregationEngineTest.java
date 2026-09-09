@@ -8,6 +8,7 @@ import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -33,6 +34,32 @@ class ViralAttributeAggregationEngineTest {
     assertThat(res.getDataStructure().containsKey("At_1")).isTrue();
     assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
     assertThat(res.getDataStructure().get("Me_1").getRole()).isEqualTo(Role.IDENTIFIER);
+  }
+
+  @Test
+  void globalAvgNullsViralWhenAnyNullInGroup() throws ScriptException {
+    engine
+        .getContext()
+        .setAttribute("ds", viralMeasureDatasetWithNullAttribute(), ScriptContext.ENGINE_SCOPE);
+    engine.eval("res := avg(ds);");
+    var res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataAsMap()).hasSize(1);
+    assertThat(res.getDataAsMap().get(0).get("At_1")).isNull();
+  }
+
+  @Test
+  void aggrClauseNullsViralWhenGroupContainsNull() throws ScriptException {
+    engine
+        .getContext()
+        .setAttribute("ds", viralMeasureDatasetWithNullAttribute(), ScriptContext.ENGINE_SCOPE);
+    engine.eval("res := ds[aggr Me_2 := max(Me_1) group by Id_1];");
+    var res = (Dataset) engine.getContext().getAttribute("res");
+    Map<String, Object> id1 =
+        res.getDataAsMap().stream()
+            .filter(row -> Long.valueOf(1L).equals(row.get("Id_1")))
+            .findFirst()
+            .orElseThrow();
+    assertThat(id1.get("At_1")).isNull();
   }
 
   @Test
@@ -63,6 +90,15 @@ class ViralAttributeAggregationEngineTest {
   private static InMemoryDataset viralMeasureDataset() {
     return new InMemoryDataset(
         List.of(row(1L, 2L, "a"), row(1L, 4L, "b"), row(2L, 6L, "c")),
+        List.of(
+            new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+            new Structured.Component("Me_1", Long.class, Role.MEASURE),
+            new Structured.Component("At_1", String.class, Role.VIRALATTRIBUTE)));
+  }
+
+  private static InMemoryDataset viralMeasureDatasetWithNullAttribute() {
+    return new InMemoryDataset(
+        List.of(row(1L, 2L, null), row(1L, 4L, "A"), row(2L, 6L, "P")),
         List.of(
             new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
             new Structured.Component("Me_1", Long.class, Role.MEASURE),

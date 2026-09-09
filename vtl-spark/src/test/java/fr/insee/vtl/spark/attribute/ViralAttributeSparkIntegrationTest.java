@@ -51,13 +51,24 @@ class ViralAttributeSparkIntegrationTest {
     assertGroupedAggrViralValues(res.getDataAsMap());
   }
 
+  @Test
+  void globalAvg_nullViralWhenGroupContainsNull() throws ScriptException {
+    engine.put("ds", multiIdentifierGroupedAggrDataset());
+    engine.eval("res := avg(ds);");
+    var res = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(res.getDataStructure().get("At_1").getRole()).isEqualTo(Role.ATTRIBUTE);
+    assertThat(res.getDataAsMap()).hasSize(1);
+    assertThat(res.getDataAsMap().get(0).get("At_1")).isNull();
+  }
+
   private static InMemoryDataset multiIdentifierGroupedAggrDataset() {
+    // TCK Aggregate invocation: empty CSV cells load as null; viral reduction is nulls-first min.
     return new InMemoryDataset(
         List.of(
-            aggrRow(2010L, "E", "XX", 20L, ""),
+            aggrRow(2010L, "E", "XX", 20L, null),
             aggrRow(2010L, "B", "XX", 1L, "H"),
             aggrRow(2010L, "R", "XX", 1L, "A"),
-            aggrRow(2010L, "F", "YY", 23L, ""),
+            aggrRow(2010L, "F", "YY", 23L, null),
             aggrRow(2011L, "E", "XX", 20L, "P"),
             aggrRow(2011L, "B", "ZZ", 1L, "N"),
             aggrRow(2011L, "R", "YY", -1L, "P"),
@@ -83,7 +94,7 @@ class ViralAttributeSparkIntegrationTest {
     assertThat(findRowById1(rows, 2010L))
         .containsEntry("Me_2", 23L)
         .containsEntry("Me_3", 1L)
-        .containsEntry("At_1", "");
+        .containsEntry("At_1", null);
     assertThat(findRowById1(rows, 2011L))
         .containsEntry("Me_2", 20L)
         .containsEntry("Me_3", -1L)
@@ -96,7 +107,13 @@ class ViralAttributeSparkIntegrationTest {
 
   private static Map<String, Object> aggrRow(
       long id1, String id2, String id3, long me1, String at1) {
-    return Map.of("Id_1", id1, "Id_2", id2, "Id_3", id3, "Me_1", me1, "At_1", at1);
+    Map<String, Object> row = new java.util.LinkedHashMap<>();
+    row.put("Id_1", id1);
+    row.put("Id_2", id2);
+    row.put("Id_3", id3);
+    row.put("Me_1", me1);
+    row.put("At_1", at1);
+    return row;
   }
 
   private static Map<String, Object> findRowById1(List<Map<String, Object>> rows, long id1) {

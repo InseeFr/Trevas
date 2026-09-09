@@ -69,11 +69,20 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
     return roles;
   }
 
+  /**
+   * Spark SQL {@code min} skips nulls; VTL {@link MinAggregationExpression} uses {@code
+   * nullsFirst}, so any null in the group yields null (needed for viral attributes from empty CSV
+   * cells).
+   */
+  private static Column minNullsFirst(Column column) {
+    return when(count(when(column.isNull(), lit(1))).gt(0), lit(null)).otherwise(min(column));
+  }
+
   private static Column convertAggregation(String columnName, AggregationExpression expression)
       throws UnsupportedOperationException {
     Column column;
     if (expression instanceof MinAggregationExpression) {
-      column = min(SparkUtils.safeCol(columnName));
+      column = minNullsFirst(SparkUtils.safeCol(columnName));
     } else if (expression instanceof MaxAggregationExpression) {
       column = max(SparkUtils.safeCol(columnName));
     } else if (expression instanceof AverageAggregationExpression) {
