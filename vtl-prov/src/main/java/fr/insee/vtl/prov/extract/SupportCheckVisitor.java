@@ -16,8 +16,10 @@ import java.util.Set;
  * ScriptSymbols}. Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for
  * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc},
  * {@code aggr}, {@code join}, {@code set}, {@code functions} (remaining gaps: bare {@code count()},
- * {@code rank(over …)} without a dataset, unknown UDO, …), {@code check}. Bare constants are
- * allowed ({@code x := 1}); dataset contexts still reject them via {@link #requireDatasetOperand}.
+ * {@code rank(over …)} without a dataset — intentional fail-loud, not dataset producers alone —,
+ * unknown UDO, …), {@code check}. Bare constants are allowed ({@code x := 1}); dataset contexts
+ * still reject them via {@link #requireDatasetOperand}. Pivot without table {@code $input} rows
+ * stays {@code unsupported: clause} (data-dependent).
  *
  * <p><b>Dataset operands:</b> wherever a dataset is required, {@link #requireDatasetOperand}
  * rejects constants and otherwise {@code visit}s the expression — nested producers are validated by
@@ -315,7 +317,8 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitCountAggr(VtlParser.CountAggrContext ctx) {
-    // Bare count() is only valid inside an aggr clause, not as a dataset producer.
+    // Wave G PR-53: bare count() is only valid inside an aggr clause / analytic window with a
+    // dataset operand — never a stand-alone dataset producer. Keep fail-loud.
     throw unsupported("functions");
   }
 
@@ -344,7 +347,8 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitRankAn(VtlParser.RankAnContext ctx) {
-    // rank(over …) has no dataset operand — not a resolvable dataset producer alone.
+    // Wave G PR-54: rank(over …) has no dataset operand — only valid inside calc / with a dataset
+    // analytic form. Keep fail-loud.
     throw unsupported("functions");
   }
 
