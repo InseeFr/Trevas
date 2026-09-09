@@ -8,6 +8,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.CheckHierarchy;
 import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
 import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
@@ -111,6 +112,10 @@ final class EdgeLinker {
       linkCheckDatapoint(outId, outStructure, check);
       return;
     }
+    if (op instanceof CheckHierarchy check) {
+      linkCheckHierarchy(outId, outStructure, check);
+      return;
+    }
     if (op instanceof Check check) {
       linkCheck(outId, outStructure, check);
       return;
@@ -208,9 +213,36 @@ final class EdgeLinker {
   }
 
   private void linkCheckDatapoint(String outId, DataStructure outStructure, CheckDatapoint check) {
-    Map<String, String> edge = opEdge("check_datapoint", "ruleset", check.ruleset());
-    Map<String, String> pass = opEdge("check_datapoint");
-    graph.addEdge(outId, check.srcId(), edge);
+    linkValidationCheck(
+        outId,
+        outStructure,
+        check.srcId(),
+        check.ruleset(),
+        check.validatedVars(),
+        "check_datapoint");
+  }
+
+  private void linkCheckHierarchy(String outId, DataStructure outStructure, CheckHierarchy check) {
+    linkValidationCheck(
+        outId,
+        outStructure,
+        check.srcId(),
+        check.ruleset(),
+        check.validatedVars(),
+        "check_hierarchy");
+  }
+
+  /** Shared check_datapoint / check_hierarchy edge pattern (validation cols ← ruleset vars). */
+  private void linkValidationCheck(
+      String outId,
+      DataStructure outStructure,
+      String srcId,
+      String ruleset,
+      List<String> validatedVars,
+      String op) {
+    Map<String, String> edge = opEdge(op, "ruleset", ruleset);
+    Map<String, String> pass = opEdge(op);
+    graph.addEdge(outId, srcId, edge);
     Set<String> validationCols = Set.of("bool_var", "errorcode", "errorlevel");
     for (Component component : outStructure.values()) {
       String name = component.getName();
@@ -219,11 +251,11 @@ final class EdgeLinker {
       }
       String outVar = outId + "." + name;
       if (validationCols.contains(name)) {
-        for (String validated : check.validatedVars()) {
-          graph.addEdge(outVar, check.srcId() + "." + validated, edge);
+        for (String validated : validatedVars) {
+          graph.addEdge(outVar, srcId + "." + validated, edge);
         }
-      } else if (require(check.srcId()).containsKey(name)) {
-        graph.addEdge(outVar, check.srcId() + "." + name, pass);
+      } else if (require(srcId).containsKey(name)) {
+        graph.addEdge(outVar, srcId + "." + name, pass);
       }
     }
   }

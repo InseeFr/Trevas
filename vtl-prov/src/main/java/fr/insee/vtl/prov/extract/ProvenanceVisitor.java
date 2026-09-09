@@ -15,6 +15,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.CheckHierarchy;
 import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
 import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
@@ -434,6 +435,28 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     pending = new Join(ctx.joinKeyword.getText(), List.copyOf(operands));
     applyJoinBody(ctx);
+    return null;
+  }
+
+  @Override
+  public Void visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
+    String srcId = datasetOperand(ctx.op);
+    if (srcId == null) {
+      throw unsupported("check");
+    }
+    String ruleset = ctx.hrName.getText();
+    if (!symbols.isHierarchicalRuleset(ruleset)) {
+      throw new IllegalStateException("unknown hierarchical ruleset " + ruleset);
+    }
+    List<String> validated = new ArrayList<>();
+    if (ctx.componentID() != null) {
+      validated.add(ctx.componentID().getText());
+    } else {
+      for (Component measure : requireStructure(srcId).getMeasures()) {
+        validated.add(measure.getName());
+      }
+    }
+    pending = new CheckHierarchy(srcId, ruleset, List.copyOf(validated));
     return null;
   }
 

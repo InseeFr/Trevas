@@ -95,6 +95,14 @@ sealed interface PendingOp {
       implements HasSrc {}
 
   /**
+   * {@code check_hierarchy(ds, ruleset …)}. Same validation-column shape as {@link CheckDatapoint};
+   * {@code validatedVars} are the RULE component (if present) or source measures.
+   */
+  record CheckHierarchy(String srcId, String ruleset, List<String> validatedVars)
+      implements HasSrc {}
+
+
+  /**
    * {@code check(ds … [imbalance imb] …)}. {@code imbalanceId} is null when the clause is omitted.
    */
   record Check(String srcId, String imbalanceId) implements HasSrc {}

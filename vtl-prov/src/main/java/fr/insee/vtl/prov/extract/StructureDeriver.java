@@ -9,6 +9,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.CheckHierarchy;
 import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
 import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
@@ -84,6 +85,9 @@ final class StructureDeriver {
       return copy(setOp.operandIds().get(0));
     }
     if (op instanceof CheckDatapoint check) {
+      return deriveCheckDatapoint(require(check.srcId()));
+    }
+    if (op instanceof CheckHierarchy check) {
       return deriveCheckDatapoint(require(check.srcId()));
     }
     if (op instanceof Check check) {

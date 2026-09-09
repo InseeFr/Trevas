@@ -638,7 +638,11 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitValidateHRruleset(VtlParser.ValidateHRrulesetContext ctx) {
-    throw unsupported("check");
+    if (!symbols.isHierarchicalRuleset(ctx.hrName.getText())) {
+      throw unsupported("check");
+    }
+    requireDatasetOperand(ctx.op, "check");
+    return null;
   }
 
   @Override
