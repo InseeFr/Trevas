@@ -10,6 +10,7 @@ import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
+import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
@@ -17,6 +18,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
+import fr.insee.vtl.prov.extract.PendingOp.External;
 import fr.insee.vtl.prov.extract.PendingOp.Filter;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
@@ -169,9 +171,128 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   @Override
   public Void visitTimeAggAtom(VtlParser.TimeAggAtomContext ctx) {
     if (ctx.op == null || ctx.op.expr() == null) {
-      throw unsupported("functions");
+      throw unsupported("scalar");
     }
     return unaryPassThrough(ctx.op.expr(), "time_agg");
+  }
+
+  @Override
+  public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
+    List<String> operands = new ArrayList<>();
+    for (VtlParser.VarIDContext varId : ctx.varID()) {
+      String id = versions.get(varId.getText());
+      if (id == null || !structures.containsKey(id)) {
+        throw unsupported("functions");
+      }
+      operands.add(id);
+    }
+    pending = new External("eval", List.copyOf(operands));
+    return null;
+  }
+
+  @Override
+  public Void visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    String srcId = datasetOperand(ctx.expr());
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    DataStructure src = requireStructure(srcId);
+    Map<String, String> aggrExprs = new LinkedHashMap<>();
+    Map<String, Class<?>> aggrTypes = new LinkedHashMap<>();
+    if (ctx.op.getType() == VtlParser.COUNT) {
+      String exprId = nextExprId();
+      addExpression(exprId, text(ctx), srcId, Set.of(), Set.of(), null);
+      aggrExprs.put(DefaultMeasureNames.INT_VAR, exprId);
+      aggrTypes.put(DefaultMeasureNames.INT_VAR, Long.class);
+    } else {
+      for (Component measure : src.getMeasures()) {
+        String exprId = nextExprId();
+        addExpression(exprId, text(ctx), srcId, Set.of(measure.getName()), Set.of(), null);
+        aggrExprs.put(measure.getName(), exprId);
+        aggrTypes.put(measure.getName(), measure.getType());
+      }
+    }
+    if (aggrExprs.isEmpty()) {
+      throw unsupported("functions");
+    }
+    List<String> havingIds = new ArrayList<>();
+    if (ctx.havingClause() != null) {
+      VtlParser.ExprContext having = ctx.havingClause().expr();
+      String havingId = nextExprId();
+      addExpression(havingId, text(having), srcId, componentRefs(having), Set.of(), null);
+      havingIds.add(havingId);
+    }
+    pending =
+        new Aggr(
+            srcId,
+            Map.copyOf(aggrExprs),
+            Map.copyOf(aggrTypes),
+            groupByColumns(src, ctx.groupingClause()),
+            List.copyOf(havingIds));
+    return null;
+  }
+
+  @Override
+  public Void visitCountAggr(VtlParser.CountAggrContext ctx) {
+    throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
+    return analyticProducer(ctx.op.getText(), ctx.expr(), ctx.partition, ctx.orderBy, ctx);
+  }
+
+  @Override
+  public Void visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
+    return analyticProducer(ctx.op.getText(), ctx.expr(), ctx.partition, ctx.orderBy, ctx);
+  }
+
+  @Override
+  public Void visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
+    return analyticProducer(ctx.op.getText(), ctx.expr(), ctx.partition, null, ctx);
+  }
+
+  @Override
+  public Void visitRankAn(VtlParser.RankAnContext ctx) {
+    throw unsupported("functions");
+  }
+
+  private Void analyticProducer(
+      String op,
+      VtlParser.ExprContext valueExpr,
+      VtlParser.PartitionByClauseContext partition,
+      VtlParser.OrderByClauseContext orderBy,
+      ParserRuleContext whole) {
+    String srcId = analyticDatasetOperand(valueExpr);
+    if (srcId == null) {
+      throw unsupported("functions");
+    }
+    List<String> conditionIds = new ArrayList<>();
+    Set<String> conditionRefs = new LinkedHashSet<>();
+    addPartitionOrder(partition, orderBy, conditionRefs);
+    if (!conditionRefs.isEmpty()) {
+      String exprId = nextExprId();
+      addExpression(exprId, text(whole), srcId, Set.of(), conditionRefs, null);
+      conditionIds.add(exprId);
+    }
+    pending = new Analytic(srcId, op, List.copyOf(conditionIds));
+    return null;
+  }
+
+  /**
+   * Dataset operand for an analytic value expression: dataset name, membership, nested producer.
+   * Bare component ids ({@code sum(m1 over …)} outside calc) are not resolvable.
+   */
+  private String analyticDatasetOperand(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.ConstantExprContext || isPureScalarExpr(current)) {
+      return null;
+    }
+    if (current instanceof VtlParser.VarIdExprContext varId
+        && !isDatasetName(varId.varID().getText())) {
+      return null;
+    }
+    return datasetOperand(expr);
   }
 
   private Void unaryPassThrough(VtlParser.ExprContext expr, String op) {
@@ -191,27 +312,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       throw unsupported("functions");
     }
     pending = new ExistsIn(leftId, rightId);
-    return null;
-  }
-
-  @Override
-  public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
-    List<String> operands = new ArrayList<>();
-    for (VtlParser.VarIDContext varId : ctx.varID()) {
-      String id = versions.get(varId.getText());
-      if (id == null || !structures.containsKey(id)) {
-        throw unsupported("functions");
-      }
-      operands.add(id);
-    }
-    if (operands.isEmpty()) {
-      throw unsupported("functions");
-    }
-    // Single operand: structure copy; several: component-wise like arithmetic.
-    pending =
-        operands.size() == 1
-            ? new PassThrough(operands.get(0), "eval")
-            : new Arithmetic("eval", List.copyOf(operands));
     return null;
   }
 
@@ -353,22 +453,163 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   @Override
   public Void visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
-    String srcId = datasetOperand(ctx.expr());
-    if (srcId == null) {
-      throw unsupported("functions");
-    }
-    pending = new Arithmetic(ctx.op.getText(), List.of(srcId));
-    return null;
+    return componentWise(ctx.op.getText(), ctx.expr());
   }
 
   @Override
   public Void visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
-    String srcId = datasetOperand(ctx.expr());
-    if (srcId == null) {
-      throw unsupported("functions");
+    List<VtlParser.ExprContext> args = new ArrayList<>();
+    args.add(ctx.expr());
+    if (ctx.optionalExpr() != null && ctx.optionalExpr().expr() != null) {
+      args.add(ctx.optionalExpr().expr());
     }
-    pending = new Arithmetic(ctx.op.getText(), List.of(srcId));
-    return null;
+    return componentWise(ctx.op.getText(), args);
+  }
+
+  @Override
+  public Void visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
+    return componentWise(ctx.op.getText(), ctx.left, ctx.right);
+  }
+
+  @Override
+  public Void visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
+    return componentWise(ctx.op.getText(), ctx.expr());
+  }
+
+  @Override
+  public Void visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
+    List<VtlParser.ExprContext> args = new ArrayList<>();
+    args.add(ctx.expr());
+    if (ctx.startParameter != null && ctx.startParameter.expr() != null) {
+      args.add(ctx.startParameter.expr());
+    }
+    if (ctx.endParameter != null && ctx.endParameter.expr() != null) {
+      args.add(ctx.endParameter.expr());
+    }
+    return componentWise("substr", args);
+  }
+
+  @Override
+  public Void visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
+    List<VtlParser.ExprContext> args = new ArrayList<>();
+    args.add(ctx.expr(0));
+    args.add(ctx.param);
+    if (ctx.optionalExpr() != null && ctx.optionalExpr().expr() != null) {
+      args.add(ctx.optionalExpr().expr());
+    }
+    return componentWise("replace", args);
+  }
+
+  @Override
+  public Void visitInstrAtom(VtlParser.InstrAtomContext ctx) {
+    List<VtlParser.ExprContext> args = new ArrayList<>();
+    args.add(ctx.expr(0));
+    args.add(ctx.pattern);
+    if (ctx.startParameter != null && ctx.startParameter.expr() != null) {
+      args.add(ctx.startParameter.expr());
+    }
+    if (ctx.occurrenceParameter != null && ctx.occurrenceParameter.expr() != null) {
+      args.add(ctx.occurrenceParameter.expr());
+    }
+    return componentWise("instr", args);
+  }
+
+  @Override
+  public Void visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+    return componentWise("nvl", ctx.left, ctx.right);
+  }
+
+  @Override
+  public Void visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {
+    return componentWise("between", ctx.op, ctx.from_, ctx.to_);
+  }
+
+  @Override
+  public Void visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
+    return componentWise("match_characters", ctx.op, ctx.pattern);
+  }
+
+  @Override
+  public Void visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
+    return componentWise("isnull", ctx.expr());
+  }
+
+  @Override
+  public Void visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {
+    return componentWise("levenshtein", ctx.left, ctx.right);
+  }
+
+  @Override
+  public Void visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
+    return componentWise("cast", ctx.expr());
+  }
+
+  @Override
+  public Void visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
+    return componentWise(ctx.op.getText(), ctx.left);
+  }
+
+  @Override
+  public Void visitPeriodAtom(VtlParser.PeriodAtomContext ctx) {
+    if (ctx.expr() == null) {
+      throw unsupported("scalar");
+    }
+    return componentWise("period_indicator", ctx.expr());
+  }
+
+  @Override
+  public Void visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
+    throw unsupported("scalar");
+  }
+
+  @Override
+  public Void visitDateDiffAtom(VtlParser.DateDiffAtomContext ctx) {
+    return componentWise("datediff", ctx.dateFrom, ctx.dateTo);
+  }
+
+  @Override
+  public Void visitDateAddAtom(VtlParser.DateAddAtomContext ctx) {
+    return componentWise("dateadd", ctx.op, ctx.shiftNumber, ctx.periodInd);
+  }
+
+  @Override
+  public Void visitYearAtom(VtlParser.YearAtomContext ctx) {
+    return componentWise("getyear", ctx.expr());
+  }
+
+  @Override
+  public Void visitMonthAtom(VtlParser.MonthAtomContext ctx) {
+    return componentWise("getmonth", ctx.expr());
+  }
+
+  @Override
+  public Void visitDayOfMonthAtom(VtlParser.DayOfMonthAtomContext ctx) {
+    return componentWise("dayofmonth", ctx.expr());
+  }
+
+  @Override
+  public Void visitDayOfYearAtom(VtlParser.DayOfYearAtomContext ctx) {
+    return componentWise("dayofyear", ctx.expr());
+  }
+
+  @Override
+  public Void visitDayToYearAtom(VtlParser.DayToYearAtomContext ctx) {
+    return componentWise("daytoyear", ctx.expr());
+  }
+
+  @Override
+  public Void visitDayToMonthAtom(VtlParser.DayToMonthAtomContext ctx) {
+    return componentWise("daytomonth", ctx.expr());
+  }
+
+  @Override
+  public Void visitYearTodayAtom(VtlParser.YearTodayAtomContext ctx) {
+    return componentWise("yeartoday", ctx.expr());
+  }
+
+  @Override
+  public Void visitMonthTodayAtom(VtlParser.MonthTodayAtomContext ctx) {
+    return componentWise("monthtoday", ctx.expr());
   }
 
   @Override
@@ -698,22 +939,29 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
             srcId,
             Map.copyOf(aggrExprs),
             Map.copyOf(aggrTypes),
-            groupByColumns(aggr.groupingClause()),
+            groupByColumns(requireStructure(srcId), aggr.groupingClause()),
             List.copyOf(havingIds));
     return null;
   }
 
-  private List<String> groupByColumns(VtlParser.GroupingClauseContext grouping) {
+  private List<String> groupByColumns(DataStructure src, VtlParser.GroupingClauseContext grouping) {
     if (grouping == null) {
       return List.of();
     }
     if (grouping instanceof VtlParser.GroupByOrExceptContext groupByOrExcept) {
-      if (groupByOrExcept.op.getType() != VtlParser.BY) {
-        throw unsupported("aggr");
+      List<String> named =
+          groupByOrExcept.componentID().stream().map(c -> c.getText()).collect(Collectors.toList());
+      if (groupByOrExcept.op.getType() == VtlParser.BY) {
+        return named;
       }
-      return groupByOrExcept.componentID().stream()
-          .map(c -> c.getText())
-          .collect(Collectors.toList());
+      if (groupByOrExcept.op.getType() == VtlParser.EXCEPT) {
+        Set<String> excepted = new LinkedHashSet<>(named);
+        return src.getIdentifiers().stream()
+            .map(Component::getName)
+            .filter(name -> !excepted.contains(name))
+            .collect(Collectors.toList());
+      }
+      throw unsupported("aggr");
     }
     throw unsupported("aggr");
   }
@@ -724,14 +972,27 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   private Void binaryArithmetic(
       VtlParser.ExprContext left, VtlParser.ExprContext right, String op) {
-    List<String> operands = new ArrayList<>(2);
-    String leftId = datasetOperand(left);
-    if (leftId != null) {
-      operands.add(leftId);
-    }
-    String rightId = datasetOperand(right);
-    if (rightId != null) {
-      operands.add(rightId);
+    return componentWise(op, left, right);
+  }
+
+  /**
+   * Dataset-level component-wise function (§5.13): collect dataset operands; scalar args are
+   * omitted from lineage (same as {@code ds + 1}).
+   */
+  private Void componentWise(String op, VtlParser.ExprContext... exprs) {
+    return componentWise(op, List.of(exprs));
+  }
+
+  private Void componentWise(String op, List<? extends VtlParser.ExprContext> exprs) {
+    List<String> operands = new ArrayList<>(exprs.size());
+    for (VtlParser.ExprContext expr : exprs) {
+      if (expr == null) {
+        continue;
+      }
+      String id = datasetOperand(expr);
+      if (id != null) {
+        operands.add(id);
+      }
     }
     if (operands.isEmpty()) {
       throw unsupported("scalar");
@@ -743,18 +1004,32 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   /**
    * Resolve a dataset-valued expression to a versioned dataset id.
    *
-   * <p>{@code null} if the operand is a scalar literal. Any other expression is visited; when the
-   * result is not already an {@link Identity}, it is materialized as an anonymous {@code #s…}
-   * dataset so nested producers work anywhere a dataset name is expected.
+   * <p>{@code null} if the operand is a scalar literal or a pure scalar expression ({@code abs(1)},
+   * …). Any other expression is visited; when the result is not already an {@link Identity}, it is
+   * materialized as an anonymous {@code #s…} dataset so nested producers work anywhere a dataset
+   * name is expected.
    */
   private String datasetOperand(VtlParser.ExprContext expr) {
     VtlParser.ExprContext current = unwrap(expr);
-    if (current instanceof VtlParser.ConstantExprContext) {
+    if (current instanceof VtlParser.ConstantExprContext || isPureScalarExpr(current)) {
       return null;
     }
     visit(current);
     ensureMaterialized();
     return ((Identity) pending).datasetId();
+  }
+
+  /** True when the expression never names a dataset (constants / prior scalars only). */
+  private boolean isPureScalarExpr(VtlParser.ExprContext expr) {
+    if (containsEval(expr) || containsDatasetUdo(expr)) {
+      return false;
+    }
+    for (String name : varIdNames(expr)) {
+      if (isDatasetName(name)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private Void assign(String out, VtlParser.ExprContext expr) {
@@ -817,7 +1092,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
    * name a dataset {@code VarId} (or {@code eval} / dataset UDO).
    */
   private boolean isScalarAssignment(VtlParser.ExprContext expr) {
-    if (containsEval(expr) || containsDatasetUdo(expr)) {
+    if (containsEval(expr) || containsDatasetUdo(expr) || containsAggregateOrAnalytic(expr)) {
       return false;
     }
     for (String name : varIdNames(expr)) {
@@ -826,6 +1101,25 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
     }
     return true;
+  }
+
+  /** Aggregate / analytic invocations are dataset producers (or fail-loud), never scalar assign. */
+  private static boolean containsAggregateOrAnalytic(VtlParser.ExprContext expr) {
+    boolean[] found = {false};
+    new VtlBaseVisitor<Void>() {
+      @Override
+      public Void visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
+        found[0] = true;
+        return null;
+      }
+
+      @Override
+      public Void visitAnalyticFunctions(VtlParser.AnalyticFunctionsContext ctx) {
+        found[0] = true;
+        return null;
+      }
+    }.visit(expr);
+    return found[0];
   }
 
   private static boolean containsEval(VtlParser.ExprContext expr) {
@@ -970,6 +1264,14 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (expr instanceof VtlParser.FunctionsExpressionContext functions) {
       if (functions.functions() instanceof VtlParser.ComparisonFunctionsContext) {
         return Boolean.class;
+      }
+      if (functions.functions() instanceof VtlParser.StringFunctionsContext string) {
+        VtlParser.StringOperatorsContext op = string.stringOperators();
+        if (op instanceof VtlParser.UnaryStringFunctionContext unary
+            && unary.op.getType() == VtlParser.LEN) {
+          return Long.class;
+        }
+        return String.class;
       }
       if (functions.functions() instanceof VtlParser.TimeFunctionsContext time) {
         VtlParser.TimeOperatorsContext op = time.timeOperators();

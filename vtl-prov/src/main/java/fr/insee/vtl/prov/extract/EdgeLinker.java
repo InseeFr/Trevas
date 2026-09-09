@@ -3,6 +3,7 @@ package fr.insee.vtl.prov.extract;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
+import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
@@ -10,6 +11,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
+import fr.insee.vtl.prov.extract.PendingOp.External;
 import fr.insee.vtl.prov.extract.PendingOp.Filter;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
@@ -62,6 +64,15 @@ final class EdgeLinker {
           graph.addEdge(outId, havingId, condition);
         }
       }
+      return;
+    }
+    if (op instanceof Analytic analytic) {
+      linkConditionClause(
+          outId, outStructure, analytic.srcId(), analytic.conditionExprIds(), analytic.op());
+      return;
+    }
+    if (op instanceof External external) {
+      linkExternal(outId, outStructure, external);
       return;
     }
     if (op instanceof Filter filter) {
@@ -384,6 +395,18 @@ final class EdgeLinker {
         graph.addEdge(outVar, operandId + "." + component.getName(), edge);
       }
     }
+  }
+
+  private void linkExternal(String outId, DataStructure outStructure, External external) {
+    List<String> operands = external.operandIds();
+    if (operands.isEmpty()) {
+      return;
+    }
+    if (operands.size() == 1) {
+      linkPassThroughAll(outId, outStructure, operands.get(0), external.op());
+      return;
+    }
+    linkComponentWise(outId, outStructure, operands, external.op());
   }
 
   private void linkPassThrough(

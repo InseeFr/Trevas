@@ -206,4 +206,26 @@ sealed interface PendingOp {
       return srcId;
     }
   }
+
+  /**
+   * Dataset-level analytic ({@code sum(ds over (partition by …))}). Structure equals the operand;
+   * partition/order keys are condition expression nodes.
+   */
+  record Analytic(String srcId, String op, List<String> conditionExprIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return srcId;
+    }
+  }
+
+  /**
+   * External black-box ({@code eval}) with zero or more dataset operands. Empty operands → empty
+   * structure (optional {@code RETURNS dataset} without components).
+   */
+  record External(String op, List<String> operandIds) implements PendingOp {
+    @Override
+    public String focusId() {
+      return operandIds.isEmpty() ? "" : operandIds.get(0);
+    }
+  }
 }

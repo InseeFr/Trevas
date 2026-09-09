@@ -15,12 +15,13 @@ import java.util.Set;
  * <p>Registers {@code define operator} / datapoint ruleset names into the shared {@link
  * ScriptSymbols}. Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for
  * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc},
- * {@code aggr}, {@code join}, {@code set}, {@code functions} (catch-all for other function
- * families), {@code check}.
+ * {@code aggr}, {@code join}, {@code set}, {@code functions} (remaining gaps: bare {@code count()},
+ * {@code rank(over …)} without a dataset, unknown UDO, …), {@code check}.
  *
  * <p><b>Dataset operands:</b> wherever a dataset is required, {@link #requireDatasetOperand}
  * rejects constants and otherwise {@code visit}s the expression — nested producers are validated by
- * their own visit methods; extraction materializes them as {@code #s…} anonymes.
+ * their own visit methods; extraction materializes them as {@code #s…} anonymes. Component-wise
+ * scalar functions (§5.13) use {@link #leafOperand} so pure-scalar assignments remain valid.
  */
 class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
@@ -225,6 +226,15 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     if (ctx.functions() instanceof VtlParser.NumericFunctionsContext numeric) {
       return visit(numeric);
     }
+    if (ctx.functions() instanceof VtlParser.StringFunctionsContext string) {
+      return visit(string);
+    }
+    if (ctx.functions() instanceof VtlParser.ConditionalFunctionsContext conditional) {
+      return visit(conditional);
+    }
+    if (ctx.functions() instanceof VtlParser.DistanceFunctionsContext distance) {
+      return visit(distance);
+    }
     if (ctx.functions() instanceof VtlParser.HierarchyFunctionsContext hierarchy) {
       return visit(hierarchy);
     }
@@ -232,10 +242,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       return visit(time);
     }
     if (ctx.functions() instanceof VtlParser.ComparisonFunctionsContext comparison) {
-      if (comparison.comparisonOperators() instanceof VtlParser.ExistInAtomContext existIn) {
-        return visit(existIn);
-      }
-      throw unsupported("functions");
+      return visit(comparison);
     }
     if (ctx.functions() instanceof VtlParser.GenericFunctionsContext generic) {
       if (generic.genericOperators() instanceof VtlParser.EvalAtomContext eval) {
@@ -244,7 +251,16 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       if (generic.genericOperators() instanceof VtlParser.CallDatasetContext call) {
         return visit(call);
       }
+      if (generic.genericOperators() instanceof VtlParser.CastExprDatasetContext cast) {
+        return visit(cast);
+      }
       throw unsupported("functions");
+    }
+    if (ctx.functions() instanceof VtlParser.AggregateFunctionsContext aggregate) {
+      return visit(aggregate);
+    }
+    if (ctx.functions() instanceof VtlParser.AnalyticFunctionsContext analytic) {
+      return visit(analytic);
     }
     throw unsupported("functions");
   }
@@ -268,11 +284,66 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
-    // Black-box: at least one dataset varID argument (constants alone unsupported).
-    if (ctx.varID().isEmpty()) {
-      throw unsupported("functions");
+    // Constants alone OK (black-box empty structure); varIDs must be dataset names when present.
+    return null;
+  }
+
+  @Override
+  public Void visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
+    return visit(ctx.aggrOperatorsGrouping());
+  }
+
+  @Override
+  public Void visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    requireDatasetOperand(ctx.expr(), "functions");
+    if (ctx.havingClause() != null) {
+      requireScalarPredicate(ctx.havingClause().expr());
     }
     return null;
+  }
+
+  @Override
+  public Void visitCountAggr(VtlParser.CountAggrContext ctx) {
+    // Bare count() is only valid inside an aggr clause, not as a dataset producer.
+    throw unsupported("functions");
+  }
+
+  @Override
+  public Void visitAnalyticFunctions(VtlParser.AnalyticFunctionsContext ctx) {
+    return visit(ctx.anFunction());
+  }
+
+  @Override
+  public Void visitAnSimpleFunction(VtlParser.AnSimpleFunctionContext ctx) {
+    requireAnalyticOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitLagOrLeadAn(VtlParser.LagOrLeadAnContext ctx) {
+    requireAnalyticOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitRatioToReportAn(VtlParser.RatioToReportAnContext ctx) {
+    requireAnalyticOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitRankAn(VtlParser.RankAnContext ctx) {
+    // rank(over …) has no dataset operand — not a resolvable dataset producer alone.
+    throw unsupported("functions");
+  }
+
+  /** Analytic window needs a dataset-valued expr (name, membership, nested producer). */
+  private void requireAnalyticOperand(VtlParser.ExprContext expr) {
+    VtlParser.ExprContext current = unwrap(expr);
+    if (current instanceof VtlParser.ConstantExprContext) {
+      throw unsupported("functions");
+    }
+    visit(current);
   }
 
   @Override
@@ -291,15 +362,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitTimeFunctions(VtlParser.TimeFunctionsContext ctx) {
-    VtlParser.TimeOperatorsContext op = ctx.timeOperators();
-    if (op instanceof VtlParser.FlowAtomContext
-        || op instanceof VtlParser.FillTimeAtomContext
-        || op instanceof VtlParser.TimeShiftAtomContext
-        || op instanceof VtlParser.TimeAggAtomContext) {
-      return visit(op);
-    }
-    // Scalar time ops (getyear, datediff, …) are calc-only, not dataset producers.
-    throw unsupported("functions");
+    return visit(ctx.timeOperators());
   }
 
   @Override
@@ -322,11 +385,88 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
   @Override
   public Void visitTimeAggAtom(VtlParser.TimeAggAtomContext ctx) {
-    // Dataset form uses optionalExpr as the operand when present.
+    // Dataset form uses optionalExpr as the operand when present; bare time_agg("A") is scalar.
     if (ctx.op == null || ctx.op.expr() == null) {
-      throw unsupported("functions");
+      return null;
     }
     requireDatasetOperand(ctx.op.expr(), "functions");
+    return null;
+  }
+
+  /** Date/time scalars as dataset producers (§5.13) or pure scalars (assignment). */
+  @Override
+  public Void visitPeriodAtom(VtlParser.PeriodAtomContext ctx) {
+    if (ctx.expr() != null) {
+      leafOperand(ctx.expr());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitCurrentDateAtom(VtlParser.CurrentDateAtomContext ctx) {
+    return null;
+  }
+
+  @Override
+  public Void visitDateDiffAtom(VtlParser.DateDiffAtomContext ctx) {
+    leafOperand(ctx.dateFrom);
+    leafOperand(ctx.dateTo);
+    return null;
+  }
+
+  @Override
+  public Void visitDateAddAtom(VtlParser.DateAddAtomContext ctx) {
+    leafOperand(ctx.op);
+    leafOperand(ctx.shiftNumber);
+    leafOperand(ctx.periodInd);
+    return null;
+  }
+
+  @Override
+  public Void visitYearAtom(VtlParser.YearAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitMonthAtom(VtlParser.MonthAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitDayOfMonthAtom(VtlParser.DayOfMonthAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitDayOfYearAtom(VtlParser.DayOfYearAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitDayToYearAtom(VtlParser.DayToYearAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitDayToMonthAtom(VtlParser.DayToMonthAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitYearTodayAtom(VtlParser.YearTodayAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitMonthTodayAtom(VtlParser.MonthTodayAtomContext ctx) {
+    leafOperand(ctx.expr());
     return null;
   }
 
@@ -336,20 +476,133 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   }
 
   @Override
+  public Void visitStringFunctions(VtlParser.StringFunctionsContext ctx) {
+    return visit(ctx.stringOperators());
+  }
+
+  @Override
+  public Void visitConditionalFunctions(VtlParser.ConditionalFunctionsContext ctx) {
+    return visit(ctx.conditionalOperators());
+  }
+
+  @Override
+  public Void visitDistanceFunctions(VtlParser.DistanceFunctionsContext ctx) {
+    return visit(ctx.distanceOperators());
+  }
+
+  @Override
+  public Void visitComparisonFunctions(VtlParser.ComparisonFunctionsContext ctx) {
+    return visit(ctx.comparisonOperators());
+  }
+
+  @Override
   public Void visitUnaryNumeric(VtlParser.UnaryNumericContext ctx) {
-    requireDatasetOperand(ctx.expr(), "functions");
+    leafOperand(ctx.expr());
     return null;
   }
 
   @Override
   public Void visitUnaryWithOptionalNumeric(VtlParser.UnaryWithOptionalNumericContext ctx) {
-    requireDatasetOperand(ctx.expr(), "functions");
+    leafOperand(ctx.expr());
+    if (ctx.optionalExpr() != null && ctx.optionalExpr().expr() != null) {
+      leafOperand(ctx.optionalExpr().expr());
+    }
     return null;
   }
 
   @Override
   public Void visitBinaryNumeric(VtlParser.BinaryNumericContext ctx) {
-    throw unsupported("functions");
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
+  }
+
+  @Override
+  public Void visitUnaryStringFunction(VtlParser.UnaryStringFunctionContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitSubstrAtom(VtlParser.SubstrAtomContext ctx) {
+    leafOperand(ctx.expr());
+    if (ctx.startParameter != null && ctx.startParameter.expr() != null) {
+      leafOperand(ctx.startParameter.expr());
+    }
+    if (ctx.endParameter != null && ctx.endParameter.expr() != null) {
+      leafOperand(ctx.endParameter.expr());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitReplaceAtom(VtlParser.ReplaceAtomContext ctx) {
+    leafOperand(ctx.expr(0));
+    leafOperand(ctx.param);
+    if (ctx.optionalExpr() != null && ctx.optionalExpr().expr() != null) {
+      leafOperand(ctx.optionalExpr().expr());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitInstrAtom(VtlParser.InstrAtomContext ctx) {
+    leafOperand(ctx.expr(0));
+    leafOperand(ctx.pattern);
+    if (ctx.startParameter != null && ctx.startParameter.expr() != null) {
+      leafOperand(ctx.startParameter.expr());
+    }
+    if (ctx.occurrenceParameter != null && ctx.occurrenceParameter.expr() != null) {
+      leafOperand(ctx.occurrenceParameter.expr());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visitNvlAtom(VtlParser.NvlAtomContext ctx) {
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
+  }
+
+  @Override
+  public Void visitBetweenAtom(VtlParser.BetweenAtomContext ctx) {
+    leafOperand(ctx.op);
+    leafOperand(ctx.from_);
+    leafOperand(ctx.to_);
+    return null;
+  }
+
+  @Override
+  public Void visitCharsetMatchAtom(VtlParser.CharsetMatchAtomContext ctx) {
+    leafOperand(ctx.op);
+    leafOperand(ctx.pattern);
+    return null;
+  }
+
+  @Override
+  public Void visitIsNullAtom(VtlParser.IsNullAtomContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitLevenshteinAtom(VtlParser.LevenshteinAtomContext ctx) {
+    leafOperand(ctx.left);
+    leafOperand(ctx.right);
+    return null;
+  }
+
+  @Override
+  public Void visitCastExprDataset(VtlParser.CastExprDatasetContext ctx) {
+    leafOperand(ctx.expr());
+    return null;
+  }
+
+  @Override
+  public Void visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
+    leafOperand(ctx.left);
+    return null;
   }
 
   @Override

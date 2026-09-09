@@ -4,6 +4,7 @@ import fr.insee.vtl.model.Dataset;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
+import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
 import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
@@ -11,6 +12,7 @@ import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
+import fr.insee.vtl.prov.extract.PendingOp.External;
 import fr.insee.vtl.prov.extract.PendingOp.Filter;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
@@ -54,6 +56,15 @@ final class StructureDeriver {
     }
     if (op instanceof Aggr aggr) {
       return deriveAggr(require(aggr.srcId()), aggr.types(), aggr.groupBy());
+    }
+    if (op instanceof Analytic analytic) {
+      return new DataStructure(require(analytic.srcId()));
+    }
+    if (op instanceof External external) {
+      if (external.operandIds().isEmpty()) {
+        return new DataStructure(List.of());
+      }
+      return new DataStructure(require(external.operandIds().get(0)));
     }
     if (op instanceof Filter filter) {
       return new DataStructure(require(filter.srcId()));
