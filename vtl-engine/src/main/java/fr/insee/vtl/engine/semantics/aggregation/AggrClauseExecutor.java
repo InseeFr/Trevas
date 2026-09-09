@@ -65,9 +65,21 @@ public final class AggrClauseExecutor {
         GroupingResolver.resolve(
             normalizedDataset, ctx.groupingClause(), componentExpressionVisitor, processingEngine);
 
-    Map<String, AggregationExpression> collectorMap =
+    Map<String, AggregationExpression> measureCollectors =
         AggregationCollectors.fromAggrClause(
             ctx, grouping.dataset().getDataStructure(), fromContext(ctx));
+
+    Positioned position = fromContext(ctx);
+    HavingClauseApplier.Plan havingPlan =
+        HavingClauseApplier.plan(
+            ctx.havingClause(),
+            grouping.dataset().getDataStructure(),
+            measureCollectors.keySet(),
+            position);
+
+    DatasetExpression groupedInput =
+        HavingClauseApplier.materializeTemporaryColumns(
+            grouping.dataset(), havingPlan, position, processingEngine);
 
     AggregationViralPropagation viralPropagation =
         grouping.groupByKeys().isEmpty()
@@ -77,10 +89,21 @@ public final class AggrClauseExecutor {
         AggregationPlan.prepare(
             grouping.dataset().getDataStructure(),
             grouping.groupByKeys(),
-            collectorMap,
+            measureCollectors,
             viralPropagation);
-    return AggregationResults.withStructure(
-        processingEngine.executeAggr(grouping.dataset(), grouping.groupByKeys(), plan.collectors()),
-        plan.structure());
+
+    Map<String, AggregationExpression> allCollectors = new LinkedHashMap<>(plan.collectors());
+    allCollectors.putAll(havingPlan.extraCollectors());
+
+    DatasetExpression aggregated =
+        processingEngine.executeAggr(groupedInput, grouping.groupByKeys(), allCollectors);
+
+    return HavingClauseApplier.apply(
+        aggregated,
+        plan.structure(),
+        ctx.havingClause(),
+        havingPlan,
+        componentExpressionVisitor,
+        processingEngine);
   }
 }

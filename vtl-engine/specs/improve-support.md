@@ -4,7 +4,8 @@ Baseline Spark 3 after CSV TimePeriod + `group except`: **123 / 183**.
 After P0 Integer/Number + set operators (`setdiff`/`intersect`/`symdiff`): **132 / 183**.
 After Join body (`filter`/`calc`/`apply`/`keep`/`drop`/`rename`, incl. unary legacy): **136 / 183**.
 After `exists_in`: **139 / 183**.
-After viral attribute nulls-first min on Spark: **141 / 183** pass, **42** fails (local Spark 3 TCK).
+After viral attribute nulls-first min on Spark: **141 / 183**.
+After aggr-clause `having` (source-group aggregates): **142 / 183** pass, **41** fails (local Spark 3 TCK).
 
 ## Method
 
@@ -96,6 +97,15 @@ skipped nulls and produced wrong values (e.g. `"A"`).
 Fixed `minNullsFirst` in Spark 3/4 `convertAggregation` for `MinAggregationExpression`.
 TCK Aggregate invocation ex_3/ex_4 green. Baseline: **141 / 183** (42 fails).
 
+### 5b. Aggr-clause `having` — done
+
+Clause Aggregation ex_3: `having` was ignored on `DS[aggr …]`. Also must evaluate
+aggregates on source groups (`avg(Me_1)` ≠ `avg` of output `sum(Me_1)`).
+
+`HavingClauseApplier` now plans temp collectors (calc copy → aggregate, Spark-safe),
+filters, projects temps away — shared by aggr clause and aggregate invocation.
+TCK Aggregation ex_3 green. Baseline: **142 / 183** (41 fails).
+
 ### 6. Validation `check` / `check_datapoint` (~3)
 
 Structure (column order, presence of `Me_1` in output, roles) and ruleid/errorcode mapping.
@@ -164,6 +174,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 - Join body clauses (`filter` / `calc` / `apply` / `keep`/`drop` / `rename`) + unary legacy join
 - `exists_in` (retain all/true/false)
 - Viral attribute aggregation: Spark `min` nulls-first (align with in-memory / TCK)
+- Aggr-clause `having` via shared `HavingClauseApplier` (temp collectors on source groups)
 
 ## Working method
 
@@ -175,7 +186,7 @@ Time aggregation ex_1: Unimplemented. Last among time ops.
 
 ## Suggested next wave (non-date only)
 
-1. Aggr-clause `having` / source-group aggregates (~1)
-2. Validation `check` / `check_datapoint` (~3)
+1. Validation `check` / `check_datapoint` (~3)
+2. Misc non-date (unpivot, if datasets, `in` valuedomain, random, median, log)
 
-Then remaining P2/P3 toward about **144 / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.
+Then remaining P2 toward about **144+ / 183**, then SDMX parser → `fill_time_series` → remaining time ops for **150+**.

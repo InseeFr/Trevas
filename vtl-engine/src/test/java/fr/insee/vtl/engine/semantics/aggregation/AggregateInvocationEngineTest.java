@@ -170,4 +170,33 @@ class AggregateInvocationEngineTest {
             Map.of("Id_1", 1L, "Id_2", "B", "Me_3", 3L),
             Map.of("Id_1", 2L, "Id_2", "A", "Me_3", 2L));
   }
+
+  @Test
+  void aggrClauseHavingFiltersOnSourceGroupAggregates() throws ScriptException {
+    // TCK Aggregation ex_3: having avg(Me_1) > 2 uses source values, not output sum(Me_1)
+    InMemoryDataset ds1 =
+        new InMemoryDataset(
+            new Structured.DataStructure(
+                List.of(
+                    new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                    new Structured.Component("Id_2", String.class, Role.IDENTIFIER),
+                    new Structured.Component("Id_3", String.class, Role.IDENTIFIER),
+                    new Structured.Component("Me_1", Long.class, Role.MEASURE))),
+            List.of(1L, "A", "XX", 0L),
+            List.of(1L, "A", "YY", 2L),
+            List.of(1L, "B", "XX", 3L),
+            List.of(1L, "B", "YY", 5L),
+            List.of(2L, "A", "XX", 7L),
+            List.of(2L, "A", "YY", 2L));
+
+    engine.getContext().setAttribute("DS_1", ds1, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "DS_r := DS_1 [ aggr Me_1:= sum( Me_1 ), Me_2 := max( Me_1) group by Id_1 , Id_2 having avg (Me_1 ) > 2 ];");
+
+    Dataset res = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(res.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("Id_1", 1L, "Id_2", "B", "Me_1", 8.0, "Me_2", 5L),
+            Map.of("Id_1", 2L, "Id_2", "A", "Me_1", 9.0, "Me_2", 7L));
+  }
 }

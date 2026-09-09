@@ -8,6 +8,7 @@ import fr.insee.vtl.engine.exceptions.VtlRuntimeException;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
 import fr.insee.vtl.model.*;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -38,6 +39,18 @@ public final class AggregateInvocationExecutor {
               fromContext(ctx)));
     }
 
+    Positioned position = fromContext(ctx);
+    HavingClauseApplier.Plan havingPlan =
+        HavingClauseApplier.plan(
+            ctx.havingClause(),
+            grouping.dataset().getDataStructure(),
+            collectors.keySet(),
+            position);
+
+    DatasetExpression groupedInput =
+        HavingClauseApplier.materializeTemporaryColumns(
+            grouping.dataset(), havingPlan, position, processingEngine);
+
     AggregationViralPropagation viralPropagation =
         grouping.groupByKeys().isEmpty()
             ? AggregationViralPropagation.INVOCATION_GLOBAL
@@ -48,13 +61,19 @@ public final class AggregateInvocationExecutor {
             grouping.groupByKeys(),
             collectors,
             viralPropagation);
-    DatasetExpression result =
-        AggregationResults.withStructure(
-            processingEngine.executeAggr(
-                grouping.dataset(), grouping.groupByKeys(), plan.collectors()),
-            plan.structure());
+
+    Map<String, AggregationExpression> allCollectors = new LinkedHashMap<>(plan.collectors());
+    allCollectors.putAll(havingPlan.extraCollectors());
+
+    DatasetExpression aggregated =
+        processingEngine.executeAggr(groupedInput, grouping.groupByKeys(), allCollectors);
 
     return HavingClauseApplier.apply(
-        result, ctx.havingClause(), expressionVisitor, processingEngine);
+        aggregated,
+        plan.structure(),
+        ctx.havingClause(),
+        havingPlan,
+        expressionVisitor,
+        processingEngine);
   }
 }

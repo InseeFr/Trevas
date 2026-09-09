@@ -25,6 +25,7 @@ import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.model.exceptions.VtlScriptException;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,6 +95,16 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
     analyticFunctionsVisitor = new AnalyticFunctionsVisitor(this, processingEngine);
     this.processingEngine = Objects.requireNonNull(processingEngine);
     this.engine = Objects.requireNonNull(engine);
+  }
+
+  /** Bind {@code having} aggregate AST nodes to temporary result columns. */
+  public void bindHavingAggregateColumns(
+      IdentityHashMap<VtlParser.AggrDatasetContext, ResolvableExpression> bindings) {
+    aggregateFunctionsVisitor.setHavingColumnBindings(bindings);
+  }
+
+  public void clearHavingAggregateColumns() {
+    aggregateFunctionsVisitor.setHavingColumnBindings(null);
   }
 
   /**
@@ -362,7 +373,7 @@ public class ExpressionVisitor extends VtlBaseVisitor<ResolvableExpression> {
   }
 
   @Override
-  public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+  public ResolvableExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
     return aggregateFunctionsVisitor.visitAggrDataset(ctx);
   }
 

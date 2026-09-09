@@ -5,11 +5,11 @@ import static fr.insee.vtl.engine.VtlScriptEngine.fromContext;
 import fr.insee.vtl.engine.semantics.aggregation.AggregateInvocationExecutor;
 import fr.insee.vtl.engine.semantics.aggregation.AggregationColumnReferences;
 import fr.insee.vtl.engine.visitors.expression.ExpressionVisitor;
-import fr.insee.vtl.model.DatasetExpression;
 import fr.insee.vtl.model.ProcessingEngine;
 import fr.insee.vtl.model.ResolvableExpression;
 import fr.insee.vtl.parser.VtlBaseVisitor;
 import fr.insee.vtl.parser.VtlParser;
+import java.util.IdentityHashMap;
 import java.util.Objects;
 
 /**
@@ -19,11 +19,18 @@ public class AggregateFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressi
 
   private final ExpressionVisitor expressionVisitor;
   private final ProcessingEngine processingEngine;
+  private IdentityHashMap<VtlParser.AggrDatasetContext, ResolvableExpression> havingColumnBindings;
 
   public AggregateFunctionsVisitor(
       ExpressionVisitor expressionVisitor, ProcessingEngine processingEngine) {
     this.expressionVisitor = Objects.requireNonNull(expressionVisitor);
     this.processingEngine = Objects.requireNonNull(processingEngine);
+  }
+
+  /** Bind {@code having} aggregate calls to temporary result columns (null to clear). */
+  public void setHavingColumnBindings(
+      IdentityHashMap<VtlParser.AggrDatasetContext, ResolvableExpression> havingColumnBindings) {
+    this.havingColumnBindings = havingColumnBindings;
   }
 
   @Override
@@ -32,7 +39,10 @@ public class AggregateFunctionsVisitor extends VtlBaseVisitor<ResolvableExpressi
   }
 
   @Override
-  public DatasetExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+  public ResolvableExpression visitAggrDataset(VtlParser.AggrDatasetContext ctx) {
+    if (havingColumnBindings != null && havingColumnBindings.containsKey(ctx)) {
+      return havingColumnBindings.get(ctx);
+    }
     return AggregateInvocationExecutor.executeAggrDataset(ctx, expressionVisitor, processingEngine);
   }
 
