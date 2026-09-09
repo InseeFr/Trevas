@@ -72,6 +72,11 @@ public class ComparisonVisitor extends VtlBaseVisitor<ResolvableExpression> {
   @Override
   public ResolvableExpression visitInNotInExpr(VtlParser.InNotInExprContext ctx) {
     try {
+      if (ctx.valueDomainID() != null) {
+        throw new UnsupportedOperationException(
+            "valuedomain membership requires code-list values, but no valuedomain registry is configured: "
+                + ctx.valueDomainID().getText());
+      }
       List<ResolvableExpression> parameters =
           List.of(exprVisitor.visit(ctx.left), visit(ctx.lists()));
       Positioned pos = fromContext(ctx);
