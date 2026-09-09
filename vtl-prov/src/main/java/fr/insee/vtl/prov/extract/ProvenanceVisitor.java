@@ -811,7 +811,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     }
     List<String> pivoted = distinctPivotValues(srcId, idComponent);
     if (pivoted.isEmpty()) {
-      throw unsupported("clause");
+      // Wave G PR-52: pivot columns come from distinct id values in $input rows.
+      throw new UnsupportedOperationException(
+          "unsupported: clause — pivot requires table $input with rows");
     }
     pending = new Pivot(srcId, idComponent, measureComponent, pivoted, "pivot");
     return null;
@@ -847,7 +849,9 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   private List<String> distinctPivotValues(String srcId, String idComponent) {
     InputDataset input = bindingsWithRows.get(srcId);
     if (input == null) {
-      throw unsupported("clause");
+      // Wave G PR-52: structure-only $input has no rows to discover pivot columns.
+      throw new UnsupportedOperationException(
+          "unsupported: clause — pivot requires table $input with rows");
     }
     int col = -1;
     for (int i = 0; i < input.columns().size(); i++) {
@@ -857,7 +861,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       }
     }
     if (col < 0) {
-      throw unsupported("clause");
+      throw new UnsupportedOperationException(
+          "unsupported: clause — pivot id '" + idComponent + "' not found in $input rows");
     }
     LinkedHashSet<String> values = new LinkedHashSet<>();
     for (List<String> row : input.rows()) {
