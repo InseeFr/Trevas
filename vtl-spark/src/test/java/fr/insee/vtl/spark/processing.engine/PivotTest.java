@@ -129,5 +129,4 @@ public class PivotTest {
             Map.of("Id_1", 1L, "Id_2", "C", "Me_1", 7L),
             Map.of("Id_1", 2L, "Id_2", "C", "Me_1", 9L));
   }
-
 }

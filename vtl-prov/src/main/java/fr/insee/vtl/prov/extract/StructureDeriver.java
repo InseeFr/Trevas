@@ -226,9 +226,12 @@ final class StructureDeriver {
     return new DataStructure(components);
   }
 
-  /** Fallback when the engine did not bind the LHS — mirrors Trevas {@code all} output. */
+  /**
+   * Fallback when the engine did not bind the LHS — mirrors Trevas {@code all} output (identifiers
+   * + validation columns; operand measures dropped).
+   */
   private static DataStructure deriveCheckDatapoint(DataStructure src) {
-    List<Component> components = new ArrayList<>(src.componentsInOrder());
+    List<Component> components = new ArrayList<>(src.getIdentifiers());
     components.add(new Component("ruleid", String.class, Dataset.Role.IDENTIFIER));
     components.add(new Component("bool_var", Boolean.class, Dataset.Role.MEASURE));
     components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
@@ -245,7 +248,8 @@ final class StructureDeriver {
 
   /**
    * Trevas simple {@code check}: keep operand structure, rename imbalance measure to {@code
-   * imbalance} when present, append {@code errorcode}/{@code errorlevel} (String when no literals).
+   * imbalance} when present, append {@code errorcode}/{@code errorlevel} ({@code Long} when no
+   * level literal — same as {@link fr.insee.vtl.engine.semantics.validation.ValidationExecutor}).
    */
   private static DataStructure deriveCheck(DataStructure src, DataStructure imbalance) {
     List<Component> components = new ArrayList<>(src.componentsInOrder());
@@ -260,7 +264,7 @@ final class StructureDeriver {
       components.add(new Component("imbalance", imbType, Dataset.Role.MEASURE));
     }
     components.add(new Component("errorcode", String.class, Dataset.Role.MEASURE));
-    components.add(new Component("errorlevel", String.class, Dataset.Role.MEASURE));
+    components.add(new Component("errorlevel", Long.class, Dataset.Role.MEASURE));
     return new DataStructure(components);
   }
 
