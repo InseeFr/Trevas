@@ -101,7 +101,6 @@ sealed interface PendingOp {
   record CheckHierarchy(String srcId, String ruleset, List<String> validatedVars)
       implements HasSrc {}
 
-
   /**
    * {@code check(ds … [imbalance imb] …)}. {@code imbalanceId} is null when the clause is omitted.
    */
