@@ -423,9 +423,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
     List<String> operands = new ArrayList<>();
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
-      if (item.AS() != null) {
-        throw unsupported("join");
-      }
       String operandId = datasetOperand(item.expr());
       if (operandId == null) {
         throw unsupported("join");

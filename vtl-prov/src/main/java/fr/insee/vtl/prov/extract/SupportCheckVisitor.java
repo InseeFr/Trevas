@@ -658,9 +658,7 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   @Override
   public Void visitJoinExpr(VtlParser.JoinExprContext ctx) {
     for (VtlParser.JoinClauseItemContext item : joinItems(ctx)) {
-      if (item.AS() != null) {
-        throw unsupported("join");
-      }
+      // {@code AS} aliases rename the join-body binding; provenance still uses item.expr().
       requireDatasetOperand(item.expr(), "join");
     }
     checkJoinBody(ctx.joinBody());
