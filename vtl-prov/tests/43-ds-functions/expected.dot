@@ -1,0 +1,59 @@
+digraph {
+  // §5.13 — remaining dataset-level component-wise functions (string, binary numeric,
+  // nvl, cast, in). Structure is pure-derive (engine may not eval the whole script).
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.m2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    [kind=dataset, src="upper(ds1)"];
+  "ds2@1.id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.m1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+  "ds2@1.m2" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "ds3@2"    [kind=dataset, src="mod(ds1, 2)"];
+  "ds3@2.id" [kind=variable, dataset="ds3@2", role=IDENTIFIER, type=STRING];
+  "ds3@2.m1" [kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
+  "ds3@2.m2" [kind=variable, dataset="ds3@2", role=MEASURE, type=INTEGER];
+
+  "ds4@3"    [kind=dataset, src="nvl(ds1, 0)"];
+  "ds4@3.id" [kind=variable, dataset="ds4@3", role=IDENTIFIER, type=STRING];
+  "ds4@3.m1" [kind=variable, dataset="ds4@3", role=MEASURE, type=INTEGER];
+  "ds4@3.m2" [kind=variable, dataset="ds4@3", role=MEASURE, type=INTEGER];
+
+  "ds5@4"    [kind=dataset, src="cast(ds1, integer)"];
+  "ds5@4.id" [kind=variable, dataset="ds5@4", role=IDENTIFIER, type=STRING];
+  "ds5@4.m1" [kind=variable, dataset="ds5@4", role=MEASURE, type=INTEGER];
+  "ds5@4.m2" [kind=variable, dataset="ds5@4", role=MEASURE, type=INTEGER];
+
+  "ds6@5"    [kind=dataset, src="ds1 in {0, 1}"];
+  "ds6@5.id" [kind=variable, dataset="ds6@5", role=IDENTIFIER, type=STRING];
+  "ds6@5.m1" [kind=variable, dataset="ds6@5", role=MEASURE, type=INTEGER];
+  "ds6@5.m2" [kind=variable, dataset="ds6@5", role=MEASURE, type=INTEGER];
+
+  "ds2@1"    -> "ds1@0"    [op=upper];
+  "ds2@1.id" -> "ds1@0.id" [op=upper];
+  "ds2@1.m1" -> "ds1@0.m1" [op=upper];
+  "ds2@1.m2" -> "ds1@0.m2" [op=upper];
+
+  "ds3@2"    -> "ds1@0"    [op=mod];
+  "ds3@2.id" -> "ds1@0.id" [op=mod];
+  "ds3@2.m1" -> "ds1@0.m1" [op=mod];
+  "ds3@2.m2" -> "ds1@0.m2" [op=mod];
+
+  "ds4@3"    -> "ds1@0"    [op=nvl];
+  "ds4@3.id" -> "ds1@0.id" [op=nvl];
+  "ds4@3.m1" -> "ds1@0.m1" [op=nvl];
+  "ds4@3.m2" -> "ds1@0.m2" [op=nvl];
+
+  "ds5@4"    -> "ds1@0"    [op=cast];
+  "ds5@4.id" -> "ds1@0.id" [op=cast];
+  "ds5@4.m1" -> "ds1@0.m1" [op=cast];
+  "ds5@4.m2" -> "ds1@0.m2" [op=cast];
+
+  "ds6@5"    -> "ds1@0"    [op=in];
+  "ds6@5.id" -> "ds1@0.id" [op=in];
+  "ds6@5.m1" -> "ds1@0.m1" [op=in];
+  "ds6@5.m2" -> "ds1@0.m2" [op=in];
+}
