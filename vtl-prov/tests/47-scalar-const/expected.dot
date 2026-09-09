@@ -1,0 +1,12 @@
+digraph {
+  // Wave G PR-46 — bare constant scalar assign + chain (stress s0114 / s0120).
+
+  "e1.1" [kind=expression, src="1"];
+  "x@1"  [kind=scalar, type=INTEGER];
+  "x@1"  -> "e1.1";
+
+  "e2.1" [kind=expression, src="x + 2"];
+  "e2.1" -> "x@1";
+  "y@2"  [kind=scalar, type=INTEGER];
+  "y@2"  -> "e2.1";
+}

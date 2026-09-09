@@ -3,14 +3,17 @@ package fr.insee.vtl.prov.extract;
 import fr.insee.vtl.model.Structured.Component;
 import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
+import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
-import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.CheckHierarchy;
+import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
+import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
-import fr.insee.vtl.prov.extract.PendingOp.Filter;
+import fr.insee.vtl.prov.extract.PendingOp.External;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
 import fr.insee.vtl.prov.extract.PendingOp.Keep;
@@ -19,7 +22,6 @@ import fr.insee.vtl.prov.extract.PendingOp.PassThrough;
 import fr.insee.vtl.prov.extract.PendingOp.Pivot;
 import fr.insee.vtl.prov.extract.PendingOp.Rename;
 import fr.insee.vtl.prov.extract.PendingOp.SetOp;
-import fr.insee.vtl.prov.extract.PendingOp.Sub;
 import fr.insee.vtl.prov.extract.PendingOp.Unpivot;
 import fr.insee.vtl.prov.ir.ProvGraph;
 import java.util.LinkedHashMap;
@@ -40,13 +42,17 @@ final class EdgeLinker {
     this.structures = structures;
   }
 
+  /**
+   * Exhaustive {@code instanceof} ladder (Java 17 — pattern {@code switch} is still preview). Add a
+   * branch when introducing a new {@link PendingOp} variant.
+   */
   void link(PendingOp op, String outId, DataStructure outStructure) {
     if (op instanceof Identity id) {
       linkComponentWise(outId, outStructure, List.of(id.datasetId()), "assign");
       return;
     }
-    if (op instanceof Arithmetic arithmetic) {
-      linkComponentWise(outId, outStructure, arithmetic.operandIds(), arithmetic.op());
+    if (op instanceof ComponentWise cw) {
+      linkComponentWise(outId, outStructure, cw.operandIds(), cw.op());
       return;
     }
     if (op instanceof Calc calc) {
@@ -64,12 +70,18 @@ final class EdgeLinker {
       }
       return;
     }
-    if (op instanceof Filter filter) {
-      linkConditionClause(outId, outStructure, filter.srcId(), filter.conditionExprIds(), "filter");
+    if (op instanceof Analytic analytic) {
+      linkConditionClause(
+          outId, outStructure, analytic.srcId(), analytic.conditionExprIds(), analytic.op());
       return;
     }
-    if (op instanceof Sub sub) {
-      linkConditionClause(outId, outStructure, sub.srcId(), sub.conditionExprIds(), "sub");
+    if (op instanceof ConditionClause clause) {
+      linkConditionClause(
+          outId, outStructure, clause.srcId(), clause.conditionExprIds(), clause.op());
+      return;
+    }
+    if (op instanceof External external) {
+      linkExternal(outId, outStructure, external);
       return;
     }
     if (op instanceof Keep keep) {
@@ -100,6 +112,10 @@ final class EdgeLinker {
       linkCheckDatapoint(outId, outStructure, check);
       return;
     }
+    if (op instanceof CheckHierarchy check) {
+      linkCheckHierarchy(outId, outStructure, check);
+      return;
+    }
     if (op instanceof Check check) {
       linkCheck(outId, outStructure, check);
       return;
@@ -128,15 +144,11 @@ final class EdgeLinker {
       linkApply(outId, outStructure, apply);
       return;
     }
-    throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
+    throw new IllegalStateException("unhandled PendingOp: " + op.getClass().getName());
   }
 
   private DataStructure require(String datasetId) {
-    DataStructure structure = structures.apply(datasetId);
-    if (structure == null) {
-      throw new IllegalStateException("unknown structure for " + datasetId);
-    }
-    return structure;
+    return Structures.require(structures, datasetId);
   }
 
   private void linkPivot(String outId, DataStructure outStructure, Pivot pivot) {
@@ -201,9 +213,36 @@ final class EdgeLinker {
   }
 
   private void linkCheckDatapoint(String outId, DataStructure outStructure, CheckDatapoint check) {
-    Map<String, String> edge = opEdge("check_datapoint", "ruleset", check.ruleset());
-    Map<String, String> pass = opEdge("check_datapoint");
-    graph.addEdge(outId, check.srcId(), edge);
+    linkValidationCheck(
+        outId,
+        outStructure,
+        check.srcId(),
+        check.ruleset(),
+        check.validatedVars(),
+        "check_datapoint");
+  }
+
+  private void linkCheckHierarchy(String outId, DataStructure outStructure, CheckHierarchy check) {
+    linkValidationCheck(
+        outId,
+        outStructure,
+        check.srcId(),
+        check.ruleset(),
+        check.validatedVars(),
+        "check_hierarchy");
+  }
+
+  /** Shared check_datapoint / check_hierarchy edge pattern (validation cols ← ruleset vars). */
+  private void linkValidationCheck(
+      String outId,
+      DataStructure outStructure,
+      String srcId,
+      String ruleset,
+      List<String> validatedVars,
+      String op) {
+    Map<String, String> edge = opEdge(op, "ruleset", ruleset);
+    Map<String, String> pass = opEdge(op);
+    graph.addEdge(outId, srcId, edge);
     Set<String> validationCols = Set.of("bool_var", "errorcode", "errorlevel");
     for (Component component : outStructure.values()) {
       String name = component.getName();
@@ -212,11 +251,11 @@ final class EdgeLinker {
       }
       String outVar = outId + "." + name;
       if (validationCols.contains(name)) {
-        for (String validated : check.validatedVars()) {
-          graph.addEdge(outVar, check.srcId() + "." + validated, edge);
+        for (String validated : validatedVars) {
+          graph.addEdge(outVar, srcId + "." + validated, edge);
         }
-      } else if (require(check.srcId()).containsKey(name)) {
-        graph.addEdge(outVar, check.srcId() + "." + name, pass);
+      } else if (require(srcId).containsKey(name)) {
+        graph.addEdge(outVar, srcId + "." + name, pass);
       }
     }
   }
@@ -384,6 +423,18 @@ final class EdgeLinker {
         graph.addEdge(outVar, operandId + "." + component.getName(), edge);
       }
     }
+  }
+
+  private void linkExternal(String outId, DataStructure outStructure, External external) {
+    List<String> operands = external.operandIds();
+    if (operands.isEmpty()) {
+      return;
+    }
+    if (operands.size() == 1) {
+      linkPassThroughAll(outId, outStructure, operands.get(0), external.op());
+      return;
+    }
+    linkComponentWise(outId, outStructure, operands, external.op());
   }
 
   private void linkPassThrough(

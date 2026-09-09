@@ -1,0 +1,9 @@
+/* $input ds1
+ * | id         | Q1      | Q2      |
+ * | STRING     | INTEGER | INTEGER |
+ * | IDENTIFIER | MEASURE | MEASURE |
+ * |------------|---------|---------|
+ * | A          | 10      | 20      |
+ * | B          | 30      | 40      |
+ */
+ds2 := ds1[unpivot id, val];

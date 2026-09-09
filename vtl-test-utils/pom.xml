@@ -7,13 +7,13 @@
     <parent>
         <groupId>fr.insee.trevas</groupId>
         <artifactId>trevas-parent</artifactId>
-        <version>2.7.1</version>
+        <version>2.7.2</version>
     </parent>
 
     <artifactId>vtl-test-utils</artifactId>
     <name>VTL Test Utils</name>
     <description>Shared VTL fixture helpers ($input directives and related)</description>
-    <version>2.7.1</version>
+    <version>2.7.2</version>
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>
