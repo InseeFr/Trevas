@@ -274,6 +274,7 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
       try {
         String expression = expressionStrings.get(name);
         if (expression == null) continue;
+        if (expression.matches("(?is).*\\blog\\s*\\(.*")) continue;
         result = result.withColumn(name, expr(expression));
       } catch (Exception e) {
         // Silently ignore expressions that Spark SQL cannot interpret directly.
