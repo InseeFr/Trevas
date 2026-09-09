@@ -51,4 +51,22 @@ class CSVDatasetTest {
     assertThat(row.get("Me_1")).isEqualTo(Instant.parse("2019-01-01T00:00:00Z"));
     assertThat(row.get("Me_2")).isEqualTo(2L);
   }
+
+  @Test
+  void followsCsvHeaderOrder() throws IOException {
+    var structure =
+        new DataStructure(
+            List.of(
+                new Structured.Component("ruleid", String.class, Dataset.Role.IDENTIFIER),
+                new Structured.Component("bool_var", Boolean.class, Dataset.Role.MEASURE),
+                new Structured.Component("Me_1", Long.class, Dataset.Role.MEASURE)));
+    Dataset dataset =
+        new CSVDataset(
+            structure,
+            new StringReader("Me_1,ruleid,bool_var\n-2,2,false\n"),
+            CsvPreference.STANDARD_PREFERENCE);
+
+    assertThat(dataset.getDataAsMap())
+        .containsExactly(java.util.Map.of("ruleid", "2", "bool_var", false, "Me_1", -2L));
+  }
 }

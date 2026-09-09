@@ -22,6 +22,7 @@ public class CSVDataset implements Dataset {
 
   private final DataStructure structure;
   private final CsvMapReader csvReader;
+  private final List<String> csvColumns;
   private ArrayList<DataPoint> data;
 
   public CSVDataset(DataStructure structure, Reader csv) throws IOException {
@@ -33,6 +34,7 @@ public class CSVDataset implements Dataset {
     this.structure = structure;
     this.csvReader = new CsvMapReader(csv, csvPreference);
     var columns = this.csvReader.getHeader(true);
+    this.csvColumns = List.of(columns);
     if (!this.structure.keySet().containsAll(List.of(columns))) {
       throw new RuntimeException("missing columns in CSV");
     }
@@ -40,7 +42,7 @@ public class CSVDataset implements Dataset {
 
   private CellProcessor[] getProcessors() {
     List<CellProcessor> processors = new ArrayList<>();
-    for (String name : this.getColumnNames()) {
+    for (String name : csvColumns) {
       // Find a valid processor for each type.
       processors.add(getProcessor(this.structure.get(name).getType()));
     }
@@ -72,7 +74,7 @@ public class CSVDataset implements Dataset {
   }
 
   private String[] getNameMapping() {
-    return this.getColumnNames().toArray(new String[] {});
+    return csvColumns.toArray(new String[] {});
   }
 
   @Override
