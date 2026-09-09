@@ -38,10 +38,26 @@ public final class Provenance {
    */
   public static Program run(ScriptEngine engine, String script, String id, String label)
       throws ScriptException {
+    ProvGraph graph = extractGraph(engine, script);
+    return SdthProgramView.toProgram(graph, id, label, script);
+  }
+
+  /**
+   * Runs {@code script} on {@code engine}, then extracts a {@link ProvGraph} without projecting to
+   * SDTH. Reuses the post-eval bindings for structure (no second eval).
+   */
+  public static ProvGraph extractGraph(ScriptEngine engine, String script) throws ScriptException {
     List<InputDataset> inputs = inputsFrom(engine.getContext());
     engine.eval(script);
-    ProvGraph graph = EXTRACTOR.extract(script, inputs);
-    return SdthProgramView.toProgram(graph, id, label, script);
+    return EXTRACTOR.extractFromEvaluatedContext(script, inputs, engine.getContext());
+  }
+
+  /**
+   * Extract a {@link ProvGraph} from script + input structures (dedicated oracle eval). Useful for
+   * corpus / tooling without a caller-owned engine.
+   */
+  public static ProvGraph extractGraph(String script, List<InputDataset> inputs) {
+    return EXTRACTOR.extract(script, inputs);
   }
 
   /** Snapshot {@link Dataset} bindings as {@link InputDataset} structures (no rows). */
