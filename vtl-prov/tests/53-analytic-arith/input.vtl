@@ -1,0 +1,2 @@
+// $input taxis: vendor_id STRING IDENTIFIER, fare INTEGER MEASURE
+ds2 := ratio_to_report(taxis over(partition by vendor_id)) * 1000000;

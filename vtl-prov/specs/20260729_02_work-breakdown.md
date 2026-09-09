@@ -149,6 +149,14 @@ Suggested order: 46 → 47 → 49 → 50 → 51 → 48 → 52 (aliases last; 53�
 Re-check: after the wave, re-run `ProvStressMain 1000` and expect only intentional
 fail-loud leftovers (53–54, pivot-without-rows if still unsupported by design).
 
+## Hotfix — analytic × scalar + classification (post-2.7.2)
+
+| Done | PR | Capability | Turns green |
+|------|----|------------|-------------|
+| [x] | — | **`ExprProbe.isPureScalar` ignored `aggregateOrAnalytic`** — probe stopped at analytic/aggr without `varIds`, so `ratio_to_report(ds …) * 1000000` looked scalar → `unsupported: scalar`. | 53-analytic-arith + `ClientRegressionTest` |
+| [x] | — | **UDO `returnsDataset` under-inferred** — body `union`/`eval`/`join`/… without `RETURNS dataset` → silent `kind=scalar` on `out := boom()`. Broaden via `ExprProbe.datasetSyntax` + free-name closure. | `ClientRegressionTest` |
+| [x] | — | **Release gate** — Desktop demo scripts + producer×scalar matrix must extract as `kind=dataset`. | `ClientRegressionTest` |
+
 ## Why this cut
 
 - **Wave A first** — BPE (and most real scripts) fail on `cast` / `substr` / `if`

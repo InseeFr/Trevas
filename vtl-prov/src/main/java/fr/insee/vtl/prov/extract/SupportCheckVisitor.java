@@ -42,6 +42,10 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   @Override
   public Void visitStart(VtlParser.StartContext ctx) {
     for (VtlParser.StatementContext statement : ctx.statement()) {
+      // Labeled alternatives are subclasses; a plain StatementContext is parse-recovery junk.
+      if (statement.getClass() == VtlParser.StatementContext.class) {
+        throw unsupported("statement");
+      }
       visit(statement);
     }
     return null;
@@ -99,22 +103,29 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
   }
 
   /**
-   * Dataset producer when {@code RETURNS dataset} is declared, or when the body is clearly a
-   * dataset expression (clause / membership / dataset formal).
+   * Dataset producer when {@code RETURNS dataset} is declared, or when the body looks like a
+   * dataset expression (join / set / clause / analytic / eval / dataset formal / free dataset
+   * closure). Must stay aligned with {@link ExprProbe} — under-inference caused silent {@code
+   * kind=scalar} on {@code out := boom()} for dataset-bodied UDOs.
    */
   private static boolean returnsDataset(
       VtlParser.DefOperatorContext ctx, Set<String> datasetParams) {
     if (ctx.outputParameterType() != null && ctx.outputParameterType().datasetType() != null) {
       return true;
     }
-    VtlParser.ExprContext body = unwrap(ctx.expr());
-    if (body instanceof VtlParser.ClauseExprContext
-        || body instanceof VtlParser.MembershipExprContext) {
+    Set<String> allParams = new LinkedHashSet<>();
+    for (VtlParser.ParameterItemContext item : ctx.parameterItem()) {
+      allParams.add(item.varID().getText());
+    }
+    ExprProbe.Findings findings = ExprProbe.probe(ctx.expr(), name -> false);
+    if (ExprProbe.looksLikeDatasetProducer(findings, datasetParams::contains)) {
       return true;
     }
-    if (body instanceof VtlParser.VarIdExprContext varId
-        && datasetParams.contains(varId.varID().getText())) {
-      return true;
+    // Closed-over names (not formals): treat as dataset to avoid silent scalar IR.
+    for (String name : findings.varIds()) {
+      if (!allParams.contains(name)) {
+        return true;
+      }
     }
     return false;
   }

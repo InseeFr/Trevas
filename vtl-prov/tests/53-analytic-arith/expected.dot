@@ -1,0 +1,27 @@
+digraph {
+  // Analytic nested under arithmetic: materialize ratio_to_report as #s… then * scalar.
+
+  "taxis@0"           [kind=dataset];
+  "taxis@0.vendor_id" [kind=variable, dataset="taxis@0", role=IDENTIFIER, type=STRING];
+  "taxis@0.fare"      [kind=variable, dataset="taxis@0", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="ratio_to_report(taxis over(partition by vendor_id))"];
+  "#s1.1"           [kind=dataset, anon=true];
+  "#s1.1.vendor_id" [kind=variable, dataset="#s1.1", role=IDENTIFIER, type=STRING];
+  "#s1.1.fare"      [kind=variable, dataset="#s1.1", role=MEASURE, type=INTEGER];
+
+  "ds2@1"           [kind=dataset, src="ratio_to_report(taxis over(partition by vendor_id)) * 1000000"];
+  "ds2@1.vendor_id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.fare"      [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" -> "taxis@0.vendor_id" [role=condition];
+
+  "#s1.1"           -> "taxis@0"           [op=ratio_to_report];
+  "#s1.1"           -> "e1.1"              [op=ratio_to_report, role=condition];
+  "#s1.1.vendor_id" -> "taxis@0.vendor_id" [op=ratio_to_report];
+  "#s1.1.fare"      -> "taxis@0.fare"      [op=ratio_to_report];
+
+  "ds2@1"           -> "#s1.1"           [op="*"];
+  "ds2@1.vendor_id" -> "#s1.1.vendor_id" [op="*"];
+  "ds2@1.fare"      -> "#s1.1.fare"      [op="*"];
+}
