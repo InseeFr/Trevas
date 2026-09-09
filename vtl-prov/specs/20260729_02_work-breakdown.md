@@ -123,6 +123,32 @@ without changing the IR / DOT contract.
 | [x] | 44 | Variable `wasDerivedFrom` / `elaborationOf` | own tests |
 | [x] | 45 | Wire entity lineage into `Provenance.run` path; NS / JSON-LD-safe ids | BPE + Desktop export still coherent |
 
+## Wave G — Stress audit (2026-09-09)
+
+Source: local one-shot run of `ProvStressMain` (1000 combinatorial scripts) →
+`specs/20260909_provenance-stress-failures.md` (keep local; re-run after this wave).
+Not a full grammar fuzzer: « ok » means no exception (not a golden graph assert).
+
+Each row is one root cause from that report. When implementing: add a corpus folder
+under `tests/` that reproduces the failing script(s), then turn it green.
+
+| Done | PR | Capability | Turns green |
+|------|----|------------|-------------|
+| [x] | 46 | **Scalar constant assignment** — `SupportCheckVisitor.visitConstantExpr` always throws `unsupported: scalar`, so `x := 1` fails while `x := 1 + 1` / `x := abs(1)` work (`leafOperand` skips constants). Allow bare constants as scalar-assignment RHS (IR `kind=scalar`, same as PR-35). | 47-scalar-const |
+| [x] | 47 | **Scalar UDO as assignment** — `y := add1(1)` hits `visitCallDataset` → `requireDatasetUdoCall` → `unsupported: functions`. Scalar UDOs are allowed inside calc (`requireKnownUdoCall`) but not as statement RHS. Treat known scalar UDO calls like other scalar producers (`abs(1)`). | 48-udo-scalar-assign |
+| [x] | 48 | **Join `AS` aliases** — `inner_join(ds1 as d1, ds2 as d2 using id)` is rejected in `visitJoinExpr`. Resolve aliases for body component refs (`d1#m1`, …), structure, and edges. Empty-body + body cases. | 49-join-as |
+| [x] | 49 | **Membership `#` in join body** — `requireScalarExpr` rejects `MembershipExpr` with `unsupported: calc`, so `filter ds1#m1 > 0` / `calc x := ds1#m1 + ds2#m1` / `apply ds1#m1 + ds2#m1` fail. Allow `ds#comp` in join-body (and other) scalar predicates; lineage via membership operand. Corpus 26 uses bare `m1` only. | 50-join-membership |
+| [x] | 50 | **`check_hierarchy`** — `visitValidateHRruleset` always throws. `hierarchy()` is green (31); implement check_hierarchy structure + edges (ruleset annotation), mirror check_datapoint / hierarchy pass-through patterns. | 51-check-hierarchy |
+| [x] | 51 | **Unpivot name collision** — `ds[unpivot id, m1]` when `id` already exists as IDENTIFIER: `deriveUnpivot` re-adds `id` → `IllegalArgumentException: duplicate column` (crash, not fail-loud). Validate / reuse existing identifier; never crash with engine `DataStructure` IAE. | 52-unpivot-collision |
+| [x] | 52 | **Pivot without `$input` rows** — `applyPivot` throws `unsupported: clause` when distinct pivot values are empty (structure-only `$input`). Keep fail-loud (pivot is data-dependent) but emit a clearer stem/message (e.g. need table `$input` with rows). Optional tiny corpus that *expects* unsupported. | clearer error + note |
+| [x] | 53 | **Keep fail-loud: bare `count()`** — not a dataset producer alone (comment in `visitCountAggr`). Stress hit is expected; no extraction change. Document in SupportCheck javadoc / this table. | — |
+| [x] | 54 | **Keep fail-loud: `rank(over …)` without dataset** — same as today (`visitRankAn`). Only valid inside calc / with a dataset operand. | — |
+
+Suggested order: 46 → 47 → 49 → 50 → 51 → 48 → 52 (aliases last; 53–54 docs only).
+
+Re-check: after the wave, re-run `ProvStressMain 1000` and expect only intentional
+fail-loud leftovers (53–54, pivot-without-rows if still unsupported by design).
+
 ## Why this cut
 
 - **Wave A first** — BPE (and most real scripts) fail on `cast` / `substr` / `if`

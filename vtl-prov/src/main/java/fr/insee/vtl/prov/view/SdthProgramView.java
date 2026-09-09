@@ -8,8 +8,10 @@ import fr.insee.vtl.prov.prov.FileInstance;
 import fr.insee.vtl.prov.prov.Program;
 import fr.insee.vtl.prov.prov.ProgramStep;
 import fr.insee.vtl.prov.prov.VariableInstance;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,6 +46,7 @@ public final class SdthProgramView {
 
     Map<String, Map<String, String>> vertices = graph.vertices();
     Map<String, List<ProvGraph.Edge>> outEdges = indexOutEdges(graph);
+    Map<String, List<String>> varsByDataset = indexVariablesByDataset(vertices);
 
     List<String> producedIds = new ArrayList<>();
     for (Map.Entry<String, Map<String, String>> entry : vertices.entrySet()) {
@@ -69,12 +72,13 @@ public final class SdthProgramView {
     int stepIndex = 1;
     for (String outId : producedIds) {
       Map<String, String> outAttrs = vertices.get(outId);
-      String outLabel = bindingName(outId);
+      String outLabel = ProvIds.bindingName(outId);
       String stepSrc = outAttrs.getOrDefault("src", outLabel);
       ProgramStep step = new ProgramStep(outLabel, stepSrc, stepIndex++);
       step.setId("step-" + outId);
 
-      DataframeInstance produced = dataframe(dataframes, variables, outId, outLabel, vertices);
+      DataframeInstance produced =
+          dataframe(dataframes, variables, outId, outLabel, vertices, varsByDataset);
       step.setProducedDataframe(produced);
 
       Set<String> consumedIds = new LinkedHashSet<>();
@@ -89,7 +93,7 @@ public final class SdthProgramView {
         }
         collectFromNode(edge.to(), vertices, outEdges, consumedIds, usedVarIds, rulesets, seen);
       }
-      for (String varId : variablesOf(outId, vertices)) {
+      for (String varId : variablesOf(outId, varsByDataset)) {
         for (ProvGraph.Edge edge : outEdges.getOrDefault(varId, List.of())) {
           String to = edge.to();
           Map<String, String> toAttrs = vertices.getOrDefault(to, Map.of());
@@ -107,8 +111,14 @@ public final class SdthProgramView {
 
       for (String consumedId : consumedIds) {
         DataframeInstance consumed =
-            dataframe(dataframes, variables, consumedId, bindingName(consumedId), vertices);
-        ensureRootFileLineage(consumed, consumedId, files, variables, vertices);
+            dataframe(
+                dataframes,
+                variables,
+                consumedId,
+                ProvIds.bindingName(consumedId),
+                vertices,
+                varsByDataset);
+        ensureRootFileLineage(consumed, consumedId, files, variables, vertices, varsByDataset);
         step.getConsumedDataframes().add(consumed);
       }
 
@@ -117,23 +127,37 @@ public final class SdthProgramView {
         String only = consumedIds.iterator().next();
         produced
             .getElaborationOfDataframes()
-            .add(dataframe(dataframes, variables, only, bindingName(only), vertices));
+            .add(
+                dataframe(
+                    dataframes,
+                    variables,
+                    only,
+                    ProvIds.bindingName(only),
+                    vertices,
+                    varsByDataset));
       } else {
         for (String consumedId : consumedIds) {
           produced
               .getWasDerivedFromDataframes()
-              .add(dataframe(dataframes, variables, consumedId, bindingName(consumedId), vertices));
+              .add(
+                  dataframe(
+                      dataframes,
+                      variables,
+                      consumedId,
+                      ProvIds.bindingName(consumedId),
+                      vertices,
+                      varsByDataset));
         }
       }
 
-      linkVariableLineage(outId, variables, vertices, outEdges);
+      linkVariableLineage(outId, variables, vertices, outEdges, varsByDataset);
 
       for (String varId : usedVarIds) {
         Map<String, String> attrs = vertices.get(varId);
         if (attrs == null) {
           continue;
         }
-        String comp = componentName(varId);
+        String comp = ProvIds.componentName(varId);
         String parentId = attrs.get("dataset");
         String parentLabel = namedParentLabel(parentId, vertices, outEdges);
         VariableInstance used = variable(variables, varId, comp, attrs);
@@ -143,7 +167,7 @@ public final class SdthProgramView {
 
       for (String varId : assignedVarIds) {
         Map<String, String> attrs = vertices.get(varId);
-        String comp = componentName(varId);
+        String comp = ProvIds.componentName(varId);
         VariableInstance assigned = variable(variables, varId, comp, attrs);
         String exprSrc = assignedExpressionSrc(varId, outEdges, vertices);
         if (exprSrc != null) {
@@ -166,8 +190,9 @@ public final class SdthProgramView {
       }
       Matcher m = STMT.matcher(id);
       if (m.matches() && Integer.parseInt(m.group(2)) == 0) {
-        DataframeInstance root = dataframe(dataframes, variables, id, bindingName(id), vertices);
-        ensureRootFileLineage(root, id, files, variables, vertices);
+        DataframeInstance root =
+            dataframe(dataframes, variables, id, ProvIds.bindingName(id), vertices, varsByDataset);
+        ensureRootFileLineage(root, id, files, variables, vertices, varsByDataset);
       }
     }
     return program;
@@ -177,10 +202,11 @@ public final class SdthProgramView {
       String outDatasetId,
       Map<String, VariableInstance> variables,
       Map<String, Map<String, String>> vertices,
-      Map<String, List<ProvGraph.Edge>> outEdges) {
-    for (String varId : variablesOf(outDatasetId, vertices)) {
+      Map<String, List<ProvGraph.Edge>> outEdges,
+      Map<String, List<String>> varsByDataset) {
+    for (String varId : variablesOf(outDatasetId, varsByDataset)) {
       VariableInstance outVar =
-          variable(variables, varId, componentName(varId), vertices.get(varId));
+          variable(variables, varId, ProvIds.componentName(varId), vertices.get(varId));
       for (ProvGraph.Edge edge : outEdges.getOrDefault(varId, List.of())) {
         String to = edge.to();
         Map<String, String> toAttrs = vertices.getOrDefault(to, Map.of());
@@ -192,11 +218,12 @@ public final class SdthProgramView {
             Map<String, String> leafAttrs = vertices.get(leafId);
             outVar
                 .getWasDerivedFromVariables()
-                .add(variable(variables, leafId, componentName(leafId), leafAttrs));
+                .add(variable(variables, leafId, ProvIds.componentName(leafId), leafAttrs));
           }
         } else if ("variable".equals(toAttrs.get("kind"))) {
-          VariableInstance parent = variable(variables, to, componentName(to), toAttrs);
-          if ("assign".equals(op) || componentName(varId).equals(componentName(to))) {
+          VariableInstance parent = variable(variables, to, ProvIds.componentName(to), toAttrs);
+          if ("assign".equals(op)
+              || ProvIds.componentName(varId).equals(ProvIds.componentName(to))) {
             outVar.getElaborationOfVariables().add(parent);
           } else {
             outVar.getWasDerivedFromVariables().add(parent);
@@ -251,7 +278,8 @@ public final class SdthProgramView {
       String versionedId,
       Map<String, FileInstance> files,
       Map<String, VariableInstance> variables,
-      Map<String, Map<String, String>> vertices) {
+      Map<String, Map<String, String>> vertices,
+      Map<String, List<String>> varsByDataset) {
     Matcher m = STMT.matcher(versionedId);
     if (!m.matches() || Integer.parseInt(m.group(2)) != 0) {
       return;
@@ -259,15 +287,16 @@ public final class SdthProgramView {
     if (!df.getWasDerivedFromFiles().isEmpty()) {
       return;
     }
-    String name = bindingName(versionedId);
+    String name = ProvIds.bindingName(versionedId);
     FileInstance file = files.get(name);
     if (file == null) {
       file = new FileInstance(name);
       file.setId("file-" + name);
-      for (String varId : variablesOf(versionedId, vertices)) {
+      for (String varId : variablesOf(versionedId, varsByDataset)) {
         Map<String, String> attrs = vertices.get(varId);
         // File shares the same variable instances as the root dataframe (same IR nodes).
-        file.getHasVariableInstances().add(variable(variables, varId, componentName(varId), attrs));
+        file.getHasVariableInstances()
+            .add(variable(variables, varId, ProvIds.componentName(varId), attrs));
       }
       files.put(name, file);
     }
@@ -338,16 +367,18 @@ public final class SdthProgramView {
       Map<String, VariableInstance> variables,
       String versionedId,
       String label,
-      Map<String, Map<String, String>> vertices) {
+      Map<String, Map<String, String>> vertices,
+      Map<String, List<String>> varsByDataset) {
     DataframeInstance existing = cache.get(versionedId);
     if (existing != null) {
       return existing;
     }
     DataframeInstance df = new DataframeInstance(label);
     df.setId(versionedId);
-    for (String varId : variablesOf(versionedId, vertices)) {
+    for (String varId : variablesOf(versionedId, varsByDataset)) {
       Map<String, String> attrs = vertices.get(varId);
-      df.getHasVariableInstances().add(variable(variables, varId, componentName(varId), attrs));
+      df.getHasVariableInstances()
+          .add(variable(variables, varId, ProvIds.componentName(varId), attrs));
     }
     cache.put(versionedId, df);
     return df;
@@ -367,16 +398,28 @@ public final class SdthProgramView {
   }
 
   private static List<String> variablesOf(
-      String datasetId, Map<String, Map<String, String>> vertices) {
-    List<String> vars = new ArrayList<>();
+      String datasetId, Map<String, List<String>> varsByDataset) {
+    return varsByDataset.getOrDefault(datasetId, List.of());
+  }
+
+  private static Map<String, List<String>> indexVariablesByDataset(
+      Map<String, Map<String, String>> vertices) {
+    Map<String, List<String>> byDataset = new LinkedHashMap<>();
     for (Map.Entry<String, Map<String, String>> entry : vertices.entrySet()) {
       Map<String, String> attrs = entry.getValue();
-      if ("variable".equals(attrs.get("kind")) && datasetId.equals(attrs.get("dataset"))) {
-        vars.add(entry.getKey());
+      if (!"variable".equals(attrs.get("kind"))) {
+        continue;
       }
+      String datasetId = attrs.get("dataset");
+      if (datasetId == null) {
+        continue;
+      }
+      byDataset.computeIfAbsent(datasetId, k -> new ArrayList<>()).add(entry.getKey());
     }
-    vars.sort(Comparator.naturalOrder());
-    return vars;
+    for (List<String> vars : byDataset.values()) {
+      vars.sort(Comparator.naturalOrder());
+    }
+    return byDataset;
   }
 
   private static void applyRoleType(VariableInstance variable, Map<String, String> attrs) {
@@ -401,13 +444,13 @@ public final class SdthProgramView {
       return null;
     }
     if (!"true".equals(vertices.getOrDefault(datasetId, Map.of()).get("anon"))) {
-      return bindingName(datasetId);
+      return ProvIds.bindingName(datasetId);
     }
     Set<String> seen = new HashSet<>();
-    List<String> queue = new ArrayList<>();
+    Deque<String> queue = new ArrayDeque<>();
     queue.add(datasetId);
     while (!queue.isEmpty()) {
-      String id = queue.remove(0);
+      String id = queue.removeFirst();
       if (!seen.add(id)) {
         continue;
       }
@@ -418,7 +461,7 @@ public final class SdthProgramView {
           if ("true".equals(attrs.get("anon"))) {
             queue.add(to);
           } else {
-            return bindingName(to);
+            return ProvIds.bindingName(to);
           }
         }
       }
@@ -437,15 +480,5 @@ public final class SdthProgramView {
   private static int statementIndex(String datasetId) {
     Matcher m = STMT.matcher(datasetId);
     return m.matches() ? Integer.parseInt(m.group(2)) : 0;
-  }
-
-  private static String bindingName(String versionedId) {
-    int at = versionedId.lastIndexOf('@');
-    return at > 0 ? versionedId.substring(0, at) : versionedId;
-  }
-
-  private static String componentName(String varId) {
-    int dot = varId.lastIndexOf('.');
-    return dot >= 0 ? varId.substring(dot + 1) : varId;
   }
 }

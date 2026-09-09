@@ -1,0 +1,2 @@
+// $input ds1: id STRING IDENTIFIER, t INTEGER IDENTIFIER, m1 INTEGER MEASURE
+ds2 := sum(ds1 over (partition by id order by t));

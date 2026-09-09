@@ -1,0 +1,5 @@
+// $input ds1: Me_1 STRING IDENTIFIER, m INTEGER MEASURE
+define hierarchical ruleset HR_1 (variable rule Me_1) is
+    A = B + C
+end hierarchical ruleset;
+ds2 := check_hierarchy(ds1, HR_1);

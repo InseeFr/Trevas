@@ -141,15 +141,13 @@ public final class RichRdfView {
   }
 
   private static String bindingLabel(String id, Map<String, String> attrs) {
-    int at = id.indexOf('@');
-    if (at > 0) {
-      return id.substring(0, at);
+    if (id.indexOf('@') > 0) {
+      return ProvIds.bindingName(id);
     }
     return attrs.getOrDefault("src", id);
   }
 
   private static String componentLabel(String varId) {
-    int dot = varId.lastIndexOf('.');
-    return dot >= 0 ? varId.substring(dot + 1) : varId;
+    return ProvIds.componentName(varId);
   }
 }

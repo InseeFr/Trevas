@@ -1,0 +1,16 @@
+digraph {
+  // Wave G PR-51 — unpivot reuses existing IDENTIFIER id (no duplicate column crash).
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.Q1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+  "ds1@0.Q2" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@1"     [kind=dataset, src="ds1[unpivot id, val]"];
+  "ds2@1.id"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.val" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "ds2@1"     -> "ds1@0"    [op=unpivot];
+  "ds2@1.val" -> "ds1@0.Q1" [op=unpivot];
+  "ds2@1.val" -> "ds1@0.Q2" [op=unpivot];
+}
