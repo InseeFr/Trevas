@@ -770,7 +770,13 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
 
       @Override
       public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
-        throw unsupported("calc");
+        // Join-body / calc qualifier {@code ds#comp}: left must be a simple name (dataset or
+        // join alias), not a nested producer. Lineage collects the component only.
+        VtlParser.ExprContext left = unwrap(ctx.expr());
+        if (!(left instanceof VtlParser.VarIdExprContext)) {
+          throw unsupported("calc");
+        }
+        return null;
       }
 
       @Override

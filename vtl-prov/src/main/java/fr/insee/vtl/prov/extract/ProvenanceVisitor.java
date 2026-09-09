@@ -1439,6 +1439,14 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
         }
         return null;
       }
+
+      @Override
+      public Void visitMembershipExpr(VtlParser.MembershipExprContext ctx) {
+        // Join-body / calc qualifier {@code ds#comp}: lineage uses the component on the
+        // enclosing dataset (after join materialize), not a Membership producer.
+        refs.add(ctx.simpleComponentId().getText());
+        return null;
+      }
     }.visit(expr);
     return refs;
   }
