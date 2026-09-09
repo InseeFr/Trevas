@@ -706,6 +706,38 @@ public class SparkProcessingEngine implements ProcessingEngine, HierarchicalVali
     return new SparkDatasetExpression(new SparkDataset(result), pos);
   }
 
+  @Override
+  public DatasetExpression executeUnpivot(
+      DatasetExpression dsExpr, String idName, String meName, Positioned pos) {
+    List<Component> identifiers = dsExpr.getDataStructure().getIdentifiers();
+    List<Component> measures = dsExpr.getDataStructure().getMeasures();
+    String valueColumn = "__vtl_unpivot_value";
+    Column[] entries =
+        measures.stream()
+            .map(
+                measure ->
+                    struct(
+                        lit(measure.getName()).alias(idName),
+                        SparkUtils.safeCol(measure.getName()).alias(meName)))
+            .toArray(Column[]::new);
+    Dataset<Row> expanded =
+        asSparkDataset(dsExpr).getSparkDataset().withColumn(valueColumn, explode(array(entries)));
+    List<Column> columns =
+        identifiers.stream()
+            .map(Component::getName)
+            .map(SparkUtils::safeCol)
+            .collect(Collectors.toList());
+    columns.add(SparkUtils.safeCol(valueColumn).getField(idName).alias(idName));
+    columns.add(SparkUtils.safeCol(valueColumn).getField(meName).alias(meName));
+    Dataset<Row> result = expanded.select(columns.toArray(Column[]::new));
+
+    List<Component> outputComponents = new ArrayList<>(identifiers);
+    outputComponents.add(new Component(idName, String.class, Role.IDENTIFIER));
+    outputComponents.add(new Component(meName, measures.get(0).getType(), Role.MEASURE));
+    Structured.DataStructure outputStructure = new Structured.DataStructure(outputComponents);
+    return new SparkDatasetExpression(new SparkDataset(result, outputStructure), pos);
+  }
+
   /**
    * The <code>Factory</code> class is an implementation of a VTL engine factory that returns Spark
    * engines.

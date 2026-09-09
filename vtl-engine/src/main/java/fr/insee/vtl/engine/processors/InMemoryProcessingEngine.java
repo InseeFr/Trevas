@@ -529,6 +529,50 @@ public class InMemoryProcessingEngine implements ProcessingEngine {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public DatasetExpression executeUnpivot(
+      DatasetExpression dataset, String idName, String meName, Positioned pos) {
+    List<Component> identifiers = dataset.getDataStructure().getIdentifiers();
+    List<Component> measures = dataset.getDataStructure().getMeasures();
+    List<Component> outputComponents = new java.util.ArrayList<>(identifiers);
+    outputComponents.add(new Component(idName, String.class, Dataset.Role.IDENTIFIER));
+    outputComponents.add(new Component(meName, measures.get(0).getType(), Dataset.Role.MEASURE));
+    DataStructure outputStructure = new DataStructure(outputComponents);
+
+    return new DatasetExpression(pos) {
+      @Override
+      public Dataset resolve(Map<String, Object> context) {
+        List<Map<String, Object>> rows = new java.util.ArrayList<>();
+        for (Map<String, Object> row : dataset.resolve(context).getDataAsMap()) {
+          for (Component measure : measures) {
+            Map<String, Object> outputRow = new LinkedHashMap<>();
+            identifiers.forEach(
+                identifier -> outputRow.put(identifier.getName(), row.get(identifier.getName())));
+            outputRow.put(idName, measure.getName());
+            outputRow.put(meName, row.get(measure.getName()));
+            rows.add(outputRow);
+          }
+        }
+        Map<String, Class<?>> types =
+            outputStructure.values().stream()
+                .collect(
+                    Collectors.toMap(
+                        Component::getName, Component::getType, (a, b) -> a, LinkedHashMap::new));
+        Map<String, Dataset.Role> roles =
+            outputStructure.values().stream()
+                .collect(
+                    Collectors.toMap(
+                        Component::getName, Component::getRole, (a, b) -> a, LinkedHashMap::new));
+        return new InMemoryDataset(rows, types, roles);
+      }
+
+      @Override
+      public DataStructure getDataStructure() {
+        return outputStructure;
+      }
+    };
+  }
+
   /**
    * The <code>Factory</code> class is an implementation of a VTL engine factory that returns
    * in-memory engines.

@@ -197,4 +197,15 @@ public interface ProcessingEngine {
    */
   DatasetExpression executePivot(
       DatasetExpression dsExpr, String idName, String meName, Positioned pos);
+
+  /**
+   * Converts all measures to rows, using their names as values of a new identifier.
+   *
+   * @param dsExpr dataset expression
+   * @param idName output identifier name
+   * @param meName output measure name
+   * @param pos script error position
+   */
+  DatasetExpression executeUnpivot(
+      DatasetExpression dsExpr, String idName, String meName, Positioned pos);
 }

@@ -10,6 +10,7 @@ import fr.insee.vtl.model.InMemoryDataset;
 import fr.insee.vtl.model.Structured;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -104,4 +105,29 @@ public class PivotTest {
     String actualMessageMe = exceptionMe.getMessage();
     assertTrue(actualMessageMe.contains(expectedMessageMe));
   }
+
+  @Test
+  public void testUnpivot() throws ScriptException {
+    InMemoryDataset ds =
+        new InMemoryDataset(
+            List.of(List.of(1L, 5L, 2L, 7L), List.of(2L, 3L, 4L, 9L)),
+            List.of(
+                new Structured.Component("Id_1", Long.class, Role.IDENTIFIER),
+                new Structured.Component("A", Long.class, Role.MEASURE),
+                new Structured.Component("B", Long.class, Role.MEASURE),
+                new Structured.Component("C", Long.class, Role.MEASURE)));
+    engine.getContext().setAttribute("DS_1", ds, ScriptContext.ENGINE_SCOPE);
+    engine.eval("DS_r := DS_1 [ unpivot Id_2, Me_1 ];");
+    Dataset result = (Dataset) engine.getContext().getAttribute("DS_r");
+    assertThat(result.getColumnNames()).containsExactly("Id_1", "Id_2", "Me_1");
+    assertThat(result.getDataAsMap())
+        .containsExactlyInAnyOrder(
+            Map.of("Id_1", 1L, "Id_2", "A", "Me_1", 5L),
+            Map.of("Id_1", 2L, "Id_2", "A", "Me_1", 3L),
+            Map.of("Id_1", 1L, "Id_2", "B", "Me_1", 2L),
+            Map.of("Id_1", 2L, "Id_2", "B", "Me_1", 4L),
+            Map.of("Id_1", 1L, "Id_2", "C", "Me_1", 7L),
+            Map.of("Id_1", 2L, "Id_2", "C", "Me_1", 9L));
+  }
+
 }

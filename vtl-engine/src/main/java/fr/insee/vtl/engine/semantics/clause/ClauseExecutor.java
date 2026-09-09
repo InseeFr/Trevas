@@ -228,16 +228,31 @@ public final class ClauseExecutor {
       DatasetExpression dataset,
       VtlParser.PivotOrUnpivotClauseContext ctx,
       ProcessingEngine engine) {
-    if (ctx.op.equals(ctx.UNPIVOT())) {
-      throw new UnsupportedOperationException("unpivot is not supported");
-    }
     String id = ctx.id_.getText();
+    String me = ctx.mea.getText();
+    if (ctx.op.getType() == VtlParser.UNPIVOT) {
+      if (dataset.getDataStructure().containsKey(id)
+          || dataset.getDataStructure().containsKey(me)) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                "unpivot output component already exists", fromContext(ctx)));
+      }
+      Set<Class<?>> measureTypes =
+          dataset.getMeasures().stream()
+              .map(Structured.Component::getType)
+              .collect(Collectors.toSet());
+      if (measureTypes.size() != 1) {
+        throw new VtlRuntimeException(
+            new InvalidArgumentException(
+                "unpivot requires measures with the same type", fromContext(ctx)));
+      }
+      return engine.executeUnpivot(dataset, id, me, fromContext(ctx));
+    }
     if (!dataset.getIdentifierNames().contains(id)) {
       throw new VtlRuntimeException(
           new InvalidArgumentException(
               id + " is not part of the dataset identifiers", fromContext(ctx.id_)));
     }
-    String me = ctx.mea.getText();
     if (!dataset.getMeasureNames().contains(me)) {
       throw new VtlRuntimeException(
           new InvalidArgumentException(
