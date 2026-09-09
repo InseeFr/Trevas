@@ -59,6 +59,19 @@ public class ConditionalExprTest {
   }
 
   @Test
+  public void testIfExprWithDifferentMeasureNames() throws ScriptException {
+    engine.getContext().setAttribute("ds_1", DatasetSamples.ds1, ScriptContext.ENGINE_SCOPE);
+    engine.eval(
+        "cond_ds := ds_1[keep long1] > 20;"
+            + "then_ds := ds_1[keep long1][rename long1 to Me_1];"
+            + "else_ds := ds_1[keep long1][rename long1 to Me_2];"
+            + "res := if cond_ds then then_ds else else_ds;");
+
+    Dataset result = (Dataset) engine.getContext().getAttribute("res");
+    assertThat(result.getMeasureNames()).containsExactly("Me_1");
+  }
+
+  @Test
   public void testCaseExpr() throws ScriptException {
     ScriptContext context = engine.getContext();
     engine.eval("s := case when true then \"no\" else \"else\";");

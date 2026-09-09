@@ -88,6 +88,13 @@ public final class DatasetScalarFunctionExecutor {
         operandDatasets.add(ds);
       }
     }
+    if ("ifThenElse".equals(funcName)
+        && parameters.size() == 3
+        && operandDatasets.size() == 3
+        && operandDatasets.stream().map(ds -> ds.getMeasures().get(0).getName()).distinct().count()
+            > 1) {
+      return invokeDatasetConditional(proc, operandDatasets, position);
+    }
     int argIndex = 0;
     for (DatasetExpression ds : operandDatasets) {
       if (Boolean.FALSE.equals(ds.isMonoMeasure())) {
@@ -116,7 +123,8 @@ public final class DatasetScalarFunctionExecutor {
       monoExprs.put(operandAlias, new ComponentExpression(renamedComponent, ds));
       dsExprs.put(operandAlias, ds);
     }
-    if (measureNames.size() != 1) {
+    boolean conditional = "ifThenElse".equals(funcName) && operandDatasets.size() >= 2;
+    if (measureNames.size() != 1 && !conditional) {
       throw new VtlRuntimeException(
           new InvalidArgumentException(
               "Variables in the mono-measure datasets are not named the same: "
@@ -145,8 +153,14 @@ public final class DatasetScalarFunctionExecutor {
     var method = engine.findMethod(funcName, parametersTypes);
     var funcExpr = new FunctionExpression(method, normalizedParams, position);
     Class<?> resultType = funcExpr.getType();
+    String sourceMeasureName =
+        conditional
+            ? operandDatasets.get(1).getMeasures().get(0).getName()
+            : measureNames.iterator().next();
     Class<?> operandMeasureType =
-        DefaultMeasureNames.operandMeasureType(parameters, measureNames, resultType);
+        conditional
+            ? operandDatasets.get(1).getMeasures().get(0).getType()
+            : DefaultMeasureNames.operandMeasureType(parameters, measureNames, resultType);
     ds =
         proc.executeCalc(
             ds, Map.of("result", funcExpr), Map.of("result", Dataset.Role.MEASURE), Map.of());
@@ -157,7 +171,7 @@ public final class DatasetScalarFunctionExecutor {
                 ds.getDataStructure(), List.of("result")));
     String outputMeasureName =
         DefaultMeasureNames.resolveOutputMeasureName(
-            measureNames.iterator().next(), operandMeasureType, resultType, monoMeasureOperands);
+            sourceMeasureName, operandMeasureType, resultType, monoMeasureOperands);
     ds = proc.executeRename(ds, Map.of("result", outputMeasureName));
     List<DatasetExpression> datasetOperands =
         parameters.stream()
@@ -169,6 +183,48 @@ public final class DatasetScalarFunctionExecutor {
       return ViralReattach.binary(proc, datasetOperands, ds, outputMeasures);
     }
     return ds;
+  }
+
+  private static DatasetExpression invokeDatasetConditional(
+      ProcessingEngine proc, List<DatasetExpression> operands, Positioned position) {
+    DatasetExpression condition = operands.get(0);
+    DatasetExpression thenDataset = operands.get(1);
+    DatasetExpression elseDataset = operands.get(2);
+    String conditionName = condition.getMeasures().get(0).getName();
+    String resultName = thenDataset.getMeasures().get(0).getName();
+    String elseName = elseDataset.getMeasures().get(0).getName();
+
+    ResolvableExpression whenTrue =
+        ResolvableExpression.withType(Boolean.class)
+            .withPosition(position)
+            .using(context -> Boolean.TRUE.equals(((Map<?, ?>) context).get(conditionName)));
+    ResolvableExpression whenFalse =
+        ResolvableExpression.withType(Boolean.class)
+            .withPosition(position)
+            .using(context -> Boolean.FALSE.equals(((Map<?, ?>) context).get(conditionName)));
+    DatasetExpression trueCondition = proc.executeFilter(condition, whenTrue, conditionName);
+    DatasetExpression falseCondition =
+        proc.executeFilter(condition, whenFalse, "not " + conditionName);
+    if (!elseName.equals(resultName)) {
+      elseDataset = proc.executeRename(elseDataset, Map.of(elseName, resultName));
+    }
+
+    DatasetExpression thenResult =
+        JoinExecutor.innerJoinInferringKeys(
+            proc, Map.of("condition", trueCondition, "result", thenDataset));
+    DatasetExpression elseResult =
+        JoinExecutor.innerJoinInferringKeys(
+            proc, Map.of("condition", falseCondition, "result", elseDataset));
+    List<String> outputColumns =
+        thenResult.getDataStructure().getIdentifiers().stream()
+            .map(Structured.Component::getName)
+            .collect(Collectors.toCollection(ArrayList::new));
+    outputColumns.add(resultName);
+    return proc.executeUnion(
+        List.of(
+            proc.executeProject(thenResult, outputColumns),
+            proc.executeProject(elseResult, outputColumns)),
+        List.of());
   }
 
   public static DatasetExpression invokePerMeasureWithViralReattach(
