@@ -141,6 +141,10 @@ public final class NumericFunctionsProvider {
     return res;
   }
 
+  public static Double random(Number left, Long right) {
+    return left == null ? null : random(left.longValue(), right);
+  }
+
   public static Double log(Number operand, Number base) {
     if (operand == null || base == null) {
       return null;
@@ -175,7 +179,11 @@ public final class NumericFunctionsProvider {
             Fun.<Long, Long>toMethod(NumericFunctionsProvider::mod),
             Fun.<Number, Number>toMethod(NumericFunctionsProvider::mod)));
     functions.put("power", List.of(Fun.toMethod(NumericFunctionsProvider::power)));
-    functions.put("random", List.of(Fun.toMethod(NumericFunctionsProvider::random)));
+    functions.put(
+        "random",
+        List.of(
+            Fun.<Long, Long>toMethod(NumericFunctionsProvider::random),
+            Fun.<Number, Long>toMethod(NumericFunctionsProvider::random)));
     functions.put("log", List.of(Fun.toMethod(NumericFunctionsProvider::log)));
     return functions;
   }

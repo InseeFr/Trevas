@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import fr.insee.vtl.engine.exceptions.FunctionNotFoundException;
+import fr.insee.vtl.engine.functions.providers.NumericFunctionsProvider;
 import fr.insee.vtl.engine.samples.DatasetSamples;
 import fr.insee.vtl.model.Dataset;
 import java.util.Map;
@@ -386,12 +387,9 @@ public class NumericFunctionsTest {
     Object res = engine.eval("res := trunc(random(ds[keep long1], 200), 1);");
     assertThat(((Dataset) res).getDataStructure().get("long1").getType()).isEqualTo(Double.class);
 
-    assertThatThrownBy(
-            () -> {
-              engine.eval("f := random(1.2, 2);");
-            })
-        .isInstanceOf(FunctionNotFoundException.class)
-        .hasMessage("function 'random(Double, Long)' not found");
+    engine.eval("randomDouble := random(16.0, 1);");
+    assertThat((Double) context.getAttribute("randomDouble"))
+        .isEqualTo(NumericFunctionsProvider.random(16L, 1L));
     assertThatThrownBy(
             () -> {
               engine.eval("f := power(2.3, \"ko\");");
