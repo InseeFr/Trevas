@@ -12,14 +12,14 @@ import fr.insee.vtl.parser.VtlParser;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
 import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
-import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
+import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
 import fr.insee.vtl.prov.extract.PendingOp.External;
-import fr.insee.vtl.prov.extract.PendingOp.Filter;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
 import fr.insee.vtl.prov.extract.PendingOp.Keep;
@@ -28,7 +28,6 @@ import fr.insee.vtl.prov.extract.PendingOp.PassThrough;
 import fr.insee.vtl.prov.extract.PendingOp.Pivot;
 import fr.insee.vtl.prov.extract.PendingOp.Rename;
 import fr.insee.vtl.prov.extract.PendingOp.SetOp;
-import fr.insee.vtl.prov.extract.PendingOp.Sub;
 import fr.insee.vtl.prov.extract.PendingOp.Unpivot;
 import fr.insee.vtl.prov.ir.ProvGraph;
 import fr.insee.vtl.prov.utils.VTLTypes;
@@ -56,7 +55,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   private final ProvGraph graph;
   private final StructureOracle oracle;
-  private final ScriptSymbols symbols;
   private final StructureDeriver deriver;
   private final EdgeLinker linker;
 
@@ -90,7 +88,6 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     super(symbols);
     this.graph = graph;
     this.oracle = oracle;
-    this.symbols = symbols;
     this.deriver = new StructureDeriver(structures::get);
     this.linker = new EdgeLinker(graph, structures::get);
     for (InputDataset input : inputs) {
@@ -402,7 +399,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operandId == null) {
       throw unsupported("scalar");
     }
-    pending = new Arithmetic(ctx.op.getText(), List.of(operandId));
+    pending = new ComponentWise(ctx.op.getText(), List.of(operandId));
     return null;
   }
 
@@ -418,7 +415,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operands.isEmpty()) {
       throw unsupported("scalar");
     }
-    pending = new Arithmetic("if", List.copyOf(operands));
+    pending = new ComponentWise("if", List.copyOf(operands));
     return null;
   }
 
@@ -871,7 +868,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     VtlParser.ExprContext predicate = filter.expr();
     String exprId = nextExprId();
     addExpression(exprId, text(predicate), srcId, componentRefs(predicate), Set.of(), null);
-    pending = new Filter(srcId, List.of(exprId));
+    pending = new ConditionClause("filter", srcId, List.of(exprId));
     return null;
   }
 
@@ -883,7 +880,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
           exprId, text(item), srcId, Set.of(item.componentID().getText()), Set.of(), null);
       conditionIds.add(exprId);
     }
-    pending = new Sub(srcId, List.copyOf(conditionIds));
+    pending = new ConditionClause("sub", srcId, List.copyOf(conditionIds));
     return null;
   }
 
@@ -997,7 +994,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
     if (operands.isEmpty()) {
       throw unsupported("scalar");
     }
-    pending = new Arithmetic(op, List.copyOf(operands));
+    pending = new ComponentWise(op, List.copyOf(operands));
     return null;
   }
 
@@ -1021,15 +1018,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
 
   /** True when the expression never names a dataset (constants / prior scalars only). */
   private boolean isPureScalarExpr(VtlParser.ExprContext expr) {
-    if (containsEval(expr) || containsDatasetUdo(expr)) {
-      return false;
-    }
-    for (String name : varIdNames(expr)) {
-      if (isDatasetName(name)) {
-        return false;
-      }
-    }
-    return true;
+    return ExprProbe.isPureScalar(probe(expr), this::isDatasetName);
   }
 
   private Void assign(String out, VtlParser.ExprContext expr) {
@@ -1087,66 +1076,20 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   /**
-   * Scalar when the RHS never touches a dataset: no {@code eval(…)} / dataset UDO, and every {@code
-   * VarId} is either a literal-free reference to a prior scalar or absent. Dataset producers always
-   * name a dataset {@code VarId} (or {@code eval} / dataset UDO).
+   * Scalar when the RHS never touches a dataset: no {@code eval(…)} / dataset UDO / aggregate /
+   * analytic, and every {@code VarId} is a prior scalar (or absent).
    */
   private boolean isScalarAssignment(VtlParser.ExprContext expr) {
-    if (containsEval(expr) || containsDatasetUdo(expr) || containsAggregateOrAnalytic(expr)) {
-      return false;
-    }
-    for (String name : varIdNames(expr)) {
-      if (isDatasetName(name)) {
-        return false;
-      }
-    }
-    return true;
+    return ExprProbe.isScalarAssignment(probe(expr), this::isDatasetName);
   }
 
-  /** Aggregate / analytic invocations are dataset producers (or fail-loud), never scalar assign. */
-  private static boolean containsAggregateOrAnalytic(VtlParser.ExprContext expr) {
-    boolean[] found = {false};
-    new VtlBaseVisitor<Void>() {
-      @Override
-      public Void visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
-        found[0] = true;
-        return null;
-      }
-
-      @Override
-      public Void visitAnalyticFunctions(VtlParser.AnalyticFunctionsContext ctx) {
-        found[0] = true;
-        return null;
-      }
-    }.visit(expr);
-    return found[0];
-  }
-
-  private static boolean containsEval(VtlParser.ExprContext expr) {
-    boolean[] found = {false};
-    new VtlBaseVisitor<Void>() {
-      @Override
-      public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
-        found[0] = true;
-        return null;
-      }
-    }.visit(expr);
-    return found[0];
-  }
-
-  private boolean containsDatasetUdo(VtlParser.ExprContext expr) {
-    boolean[] found = {false};
-    new VtlBaseVisitor<Void>() {
-      @Override
-      public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
-        ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
-        if (udo != null && udo.returnsDataset()) {
-          found[0] = true;
-        }
-        return null;
-      }
-    }.visit(expr);
-    return found[0];
+  private ExprProbe.Findings probe(VtlParser.ExprContext expr) {
+    return ExprProbe.probe(
+        expr,
+        name -> {
+          ScriptSymbols.UserOperator udo = symbols.userOperator(name);
+          return udo != null && udo.returnsDataset();
+        });
   }
 
   private boolean isDatasetName(String name) {
@@ -1457,11 +1400,7 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
   }
 
   private DataStructure requireStructure(String datasetId) {
-    DataStructure structure = structures.get(datasetId);
-    if (structure == null) {
-      throw new IllegalStateException("unknown structure for " + datasetId);
-    }
-    return structure;
+    return Structures.require(structures, datasetId);
   }
 
   private void requirePending() {

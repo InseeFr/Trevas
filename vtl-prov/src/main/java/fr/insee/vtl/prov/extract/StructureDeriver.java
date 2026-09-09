@@ -6,14 +6,14 @@ import fr.insee.vtl.model.Structured.DataStructure;
 import fr.insee.vtl.prov.extract.PendingOp.Aggr;
 import fr.insee.vtl.prov.extract.PendingOp.Analytic;
 import fr.insee.vtl.prov.extract.PendingOp.Apply;
-import fr.insee.vtl.prov.extract.PendingOp.Arithmetic;
 import fr.insee.vtl.prov.extract.PendingOp.Calc;
 import fr.insee.vtl.prov.extract.PendingOp.Check;
 import fr.insee.vtl.prov.extract.PendingOp.CheckDatapoint;
+import fr.insee.vtl.prov.extract.PendingOp.ComponentWise;
+import fr.insee.vtl.prov.extract.PendingOp.ConditionClause;
 import fr.insee.vtl.prov.extract.PendingOp.Drop;
 import fr.insee.vtl.prov.extract.PendingOp.ExistsIn;
 import fr.insee.vtl.prov.extract.PendingOp.External;
-import fr.insee.vtl.prov.extract.PendingOp.Filter;
 import fr.insee.vtl.prov.extract.PendingOp.Identity;
 import fr.insee.vtl.prov.extract.PendingOp.Join;
 import fr.insee.vtl.prov.extract.PendingOp.Keep;
@@ -22,7 +22,6 @@ import fr.insee.vtl.prov.extract.PendingOp.PassThrough;
 import fr.insee.vtl.prov.extract.PendingOp.Pivot;
 import fr.insee.vtl.prov.extract.PendingOp.Rename;
 import fr.insee.vtl.prov.extract.PendingOp.SetOp;
-import fr.insee.vtl.prov.extract.PendingOp.Sub;
 import fr.insee.vtl.prov.extract.PendingOp.Unpivot;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,6 +34,9 @@ import java.util.function.Function;
 /**
  * Derives a {@link DataStructure} from a {@link PendingOp} when the structure oracle did not bind
  * the LHS (or for anonymous clause intermediates, which are never engine-bound).
+ *
+ * <p>Dispatch is an exhaustive {@code instanceof} ladder (Java 17 — pattern {@code switch} is still
+ * preview). Add a branch when introducing a new {@link PendingOp} variant.
  */
 final class StructureDeriver {
 
@@ -46,10 +48,10 @@ final class StructureDeriver {
 
   DataStructure derive(PendingOp op) {
     if (op instanceof Identity id) {
-      return new DataStructure(require(id.datasetId()));
+      return copy(id.datasetId());
     }
-    if (op instanceof Arithmetic arithmetic) {
-      return new DataStructure(require(arithmetic.operandIds().get(0)));
+    if (op instanceof ComponentWise cw) {
+      return copy(cw.operandIds().get(0));
     }
     if (op instanceof Calc calc) {
       return deriveCalc(require(calc.srcId()), calc.types());
@@ -57,20 +59,14 @@ final class StructureDeriver {
     if (op instanceof Aggr aggr) {
       return deriveAggr(require(aggr.srcId()), aggr.types(), aggr.groupBy());
     }
+    if (op instanceof ConditionClause clause) {
+      return copy(clause.srcId());
+    }
     if (op instanceof Analytic analytic) {
-      return new DataStructure(require(analytic.srcId()));
+      return copy(analytic.srcId());
     }
-    if (op instanceof External external) {
-      if (external.operandIds().isEmpty()) {
-        return new DataStructure(List.of());
-      }
-      return new DataStructure(require(external.operandIds().get(0)));
-    }
-    if (op instanceof Filter filter) {
-      return new DataStructure(require(filter.srcId()));
-    }
-    if (op instanceof Sub sub) {
-      return new DataStructure(require(sub.srcId()));
+    if (op instanceof PassThrough pass) {
+      return copy(pass.srcId());
     }
     if (op instanceof Keep keep) {
       return deriveKeep(require(keep.srcId()), keep.columns());
@@ -85,7 +81,7 @@ final class StructureDeriver {
       return deriveJoin(join.operandIds());
     }
     if (op instanceof SetOp setOp) {
-      return new DataStructure(require(setOp.operandIds().get(0)));
+      return copy(setOp.operandIds().get(0));
     }
     if (op instanceof CheckDatapoint check) {
       return deriveCheckDatapoint(require(check.srcId()));
@@ -94,9 +90,6 @@ final class StructureDeriver {
       return deriveCheck(
           require(check.srcId()),
           check.imbalanceId() == null ? null : require(check.imbalanceId()));
-    }
-    if (op instanceof PassThrough pass) {
-      return new DataStructure(require(pass.srcId()));
     }
     if (op instanceof ExistsIn existsIn) {
       return deriveExistsIn(require(existsIn.leftId()));
@@ -118,15 +111,20 @@ final class StructureDeriver {
     if (op instanceof Apply apply) {
       return deriveApply(require(apply.srcId()), apply.measureName(), apply.measureType());
     }
-    throw new IllegalStateException("unhandled pending op " + op.getClass().getName());
+    if (op instanceof External external) {
+      return external.operandIds().isEmpty()
+          ? new DataStructure(List.of())
+          : copy(external.operandIds().get(0));
+    }
+    throw new IllegalStateException("unhandled PendingOp: " + op.getClass().getName());
+  }
+
+  private DataStructure copy(String datasetId) {
+    return new DataStructure(require(datasetId));
   }
 
   private DataStructure require(String datasetId) {
-    DataStructure structure = structures.apply(datasetId);
-    if (structure == null) {
-      throw new IllegalStateException("unknown structure for " + datasetId);
-    }
-    return structure;
+    return Structures.require(structures, datasetId);
   }
 
   private DataStructure deriveJoin(List<String> operandIds) {
