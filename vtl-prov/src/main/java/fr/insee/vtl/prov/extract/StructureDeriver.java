@@ -187,7 +187,21 @@ final class StructureDeriver {
     if (measureType == null) {
       measureType = Long.class;
     }
-    components.add(new Component(idComponent, String.class, Dataset.Role.IDENTIFIER));
+    // Wave G PR-51: reuse existing identifier named like the unpivot id (no duplicate column).
+    if (!src.containsKey(idComponent)) {
+      components.add(new Component(idComponent, String.class, Dataset.Role.IDENTIFIER));
+    } else if (!src.get(idComponent).isIdentifier()) {
+      throw new UnsupportedOperationException(
+          "unsupported: clause — unpivot id '"
+              + idComponent
+              + "' already exists as non-identifier");
+    }
+    if (src.containsKey(measureComponent)) {
+      throw new UnsupportedOperationException(
+          "unsupported: clause — unpivot measure '"
+              + measureComponent
+              + "' collides with an existing component");
+    }
     components.add(new Component(measureComponent, measureType, Dataset.Role.MEASURE));
     return new DataStructure(components);
   }
