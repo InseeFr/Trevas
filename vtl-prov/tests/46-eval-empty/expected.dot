@@ -1,0 +1,5 @@
+digraph {
+  // eval without dataset args: black-box empty structure.
+
+  "ds2@1" [kind=dataset, src="eval(ext() language \"groovy\")"];
+}

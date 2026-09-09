@@ -7,6 +7,7 @@ import fr.insee.vtl.parser.VtlParser;
 import fr.insee.vtl.prov.ir.ProvGraph;
 import fr.insee.vtl.testutils.InputDataset;
 import java.util.List;
+import javax.script.ScriptContext;
 
 /**
  * Provenance entry point: parse → grammar support check ({@link SupportCheckVisitor}) → structure
@@ -19,11 +20,27 @@ import java.util.List;
  */
 public final class ProvenanceExtractor {
 
+  /**
+   * Extract provenance: runs a dedicated structure-oracle eval. Prefer {@link
+   * #extractFromEvaluatedContext} when the caller already evaluated the script.
+   */
   public ProvGraph extract(String script, List<InputDataset> inputs) {
+    return extract(script, inputs, StructureOracle.run(script, inputs));
+  }
+
+  /**
+   * Extract provenance reusing bindings from a context that already evaluated {@code script}
+   * (avoids a second {@code engine.eval}).
+   */
+  public ProvGraph extractFromEvaluatedContext(
+      String script, List<InputDataset> inputs, ScriptContext context) {
+    return extract(script, inputs, StructureOracle.fromContext(context, true));
+  }
+
+  private ProvGraph extract(String script, List<InputDataset> inputs, StructureOracle oracle) {
     VtlParser.StartContext start = parse(script);
     ScriptSymbols symbols = new ScriptSymbols();
     new SupportCheckVisitor(symbols).visit(start);
-    StructureOracle oracle = StructureOracle.run(script, inputs);
     ProvGraph graph = new ProvGraph();
     new ProvenanceVisitor(graph, oracle, inputs, symbols).visit(start);
     return graph;

@@ -1,0 +1,5 @@
+// $input ds1: id STRING IDENTIFIER, m1 INTEGER MEASURE
+// $input ds2: id STRING IDENTIFIER, m2 INTEGER MEASURE
+ds_f := inner_join(ds1, ds2 using id filter ds1#m1 > 0);
+ds_c := inner_join(ds1, ds2 using id calc x := ds1#m1 + ds2#m2);
+ds_a := inner_join(ds1, ds2 using id apply ds1#m1 + ds2#m2);

@@ -1,0 +1,22 @@
+digraph {
+  // Wave G PR-50 — check_hierarchy mirrors check_datapoint schema + ruleset edges.
+
+  "ds1@0"      [kind=dataset];
+  "ds1@0.Me_1" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m"    [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "ds2@2"            [kind=dataset, src="check_hierarchy(ds1, HR_1)"];
+  "ds2@2.Me_1"       [kind=variable, dataset="ds2@2", role=IDENTIFIER, type=STRING];
+  "ds2@2.m"          [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
+  "ds2@2.ruleid"     [kind=variable, dataset="ds2@2", role=IDENTIFIER, type=STRING];
+  "ds2@2.bool_var"   [kind=variable, dataset="ds2@2", role=MEASURE, type=BOOLEAN];
+  "ds2@2.errorcode"  [kind=variable, dataset="ds2@2", role=MEASURE, type=STRING];
+  "ds2@2.errorlevel" [kind=variable, dataset="ds2@2", role=MEASURE, type=INTEGER];
+
+  "ds2@2"            -> "ds1@0"   [op=check_hierarchy, ruleset=HR_1];
+  "ds2@2.Me_1"       -> "ds1@0.Me_1" [op=check_hierarchy];
+  "ds2@2.m"          -> "ds1@0.m" [op=check_hierarchy];
+  "ds2@2.bool_var"   -> "ds1@0.m" [op=check_hierarchy, ruleset=HR_1];
+  "ds2@2.errorcode"  -> "ds1@0.m" [op=check_hierarchy, ruleset=HR_1];
+  "ds2@2.errorlevel" -> "ds1@0.m" [op=check_hierarchy, ruleset=HR_1];
+}

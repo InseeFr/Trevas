@@ -1,5 +1,6 @@
 digraph {
   // §5.36 — scalar assignment: kind=scalar; RHS expression node.
+  // Includes scalar functions formerly rejected as unsupported: functions.
 
   "e1.1" [kind=expression, src="1 + 1"];
   "x@1"  [kind=scalar, type=INTEGER];
@@ -9,4 +10,20 @@ digraph {
   "e2.1" -> "x@1";
   "y@2"  [kind=scalar, type=INTEGER];
   "y@2"  -> "e2.1";
+
+  "e3.1" [kind=expression, src="abs(-1)"];
+  "a@3"  [kind=scalar, type=INTEGER];
+  "a@3"  -> "e3.1";
+
+  "e4.1" [kind=expression, src="trim(\"  a  \")"];
+  "t@4"  [kind=scalar, type=STRING];
+  "t@4"  -> "e4.1";
+
+  "e5.1" [kind=expression, src="cast(1, number)"];
+  "c@5"  [kind=scalar, type=NUMBER];
+  "c@5"  -> "e5.1";
+
+  "e6.1" [kind=expression, src="time_agg(\"A\")"];
+  "p@6"  [kind=scalar, type=INTEGER];
+  "p@6"  -> "e6.1";
 }

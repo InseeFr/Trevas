@@ -26,6 +26,9 @@ import javax.script.ScriptException;
  * <p>Structure rule for a named assignment LHS: if {@link #hasDataset(String)} then use the engine
  * binding; otherwise derive from the pending op. Do not mix column types from both sources for one
  * dataset.
+ *
+ * <p>When the caller already evaluated the script ({@link fr.insee.vtl.prov.Provenance#run}), use
+ * {@link #fromContext} to avoid a second {@code engine.eval}.
  */
 final class StructureOracle {
 
@@ -37,6 +40,7 @@ final class StructureOracle {
     this.evalSucceeded = evalSucceeded;
   }
 
+  /** Bind inputs, eval {@code script}, return an oracle over the resulting context. */
   static StructureOracle run(String script, List<InputDataset> inputs) {
     ScriptEngine engine = new ScriptEngineManager().getEngineByName("vtl");
     if (engine == null) {
@@ -56,7 +60,15 @@ final class StructureOracle {
       // Bare UOE / NPE from unimplemented or half-wired ops (customPivot, …).
       succeeded = false;
     }
-    return new StructureOracle(context, succeeded);
+    return fromContext(context, succeeded);
+  }
+
+  /**
+   * Reuse a context that already holds input (and possibly output) dataset bindings — typically
+   * after the caller’s own {@code engine.eval}.
+   */
+  static StructureOracle fromContext(ScriptContext context, boolean evalSucceeded) {
+    return new StructureOracle(context, evalSucceeded);
   }
 
   /** {@code true} when {@code engine.eval} completed without throwing. */
@@ -73,7 +85,11 @@ final class StructureOracle {
     if (value instanceof Dataset dataset) {
       return dataset.getDataStructure();
     }
-    throw new UnsupportedOperationException("unsupported: scalar");
+    throw new IllegalStateException(
+        "expected Dataset binding for '"
+            + name
+            + "', got "
+            + (value == null ? "null" : value.getClass().getName()));
   }
 
   private static Dataset toDataset(InputDataset input) {

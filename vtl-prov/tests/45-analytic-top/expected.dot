@@ -1,0 +1,23 @@
+digraph {
+  // Dataset-level analytic: structure pass-through; partition/order are conditions.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.t"  [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=INTEGER];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "e1.1" [kind=expression, src="sum(ds1 over (partition by id order by t))"];
+  "ds2@1"    [kind=dataset, src="sum(ds1 over (partition by id order by t))"];
+  "ds2@1.id" [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=STRING];
+  "ds2@1.t"  [kind=variable, dataset="ds2@1", role=IDENTIFIER, type=INTEGER];
+  "ds2@1.m1" [kind=variable, dataset="ds2@1", role=MEASURE, type=INTEGER];
+
+  "e1.1" -> "ds1@0.id" [role=condition];
+  "e1.1" -> "ds1@0.t"  [role=condition];
+
+  "ds2@1"    -> "ds1@0"    [op=sum];
+  "ds2@1"    -> "e1.1"     [op=sum, role=condition];
+  "ds2@1.id" -> "ds1@0.id" [op=sum];
+  "ds2@1.t"  -> "ds1@0.t"  [op=sum];
+  "ds2@1.m1" -> "ds1@0.m1" [op=sum];
+}
