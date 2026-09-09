@@ -16,7 +16,8 @@ import java.util.Set;
  * ScriptSymbols}. Mirrors {@link ProvenanceVisitor} coverage. Message vocabulary (stable for
  * harness / ops): {@code define}, {@code scalar}, {@code arithmetic}, {@code clause}, {@code calc},
  * {@code aggr}, {@code join}, {@code set}, {@code functions} (remaining gaps: bare {@code count()},
- * {@code rank(over …)} without a dataset, unknown UDO, …), {@code check}.
+ * {@code rank(over …)} without a dataset, unknown UDO, …), {@code check}. Bare constants are
+ * allowed ({@code x := 1}); dataset contexts still reject them via {@link #requireDatasetOperand}.
  *
  * <p><b>Dataset operands:</b> wherever a dataset is required, {@link #requireDatasetOperand}
  * rejects constants and otherwise {@code visit}s the expression — nested producers are validated by
@@ -680,9 +681,14 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
     return null;
   }
 
+  /**
+   * Constants are valid in scalar contexts ({@code x := 1}, calc RHS, …). Dataset contexts reject
+   * them via {@link #requireDatasetOperand} / {@link #leafOperand} before a bare constant is
+   * visited as a producer.
+   */
   @Override
   public Void visitConstantExpr(VtlParser.ConstantExprContext ctx) {
-    throw unsupported("scalar");
+    return null;
   }
 
   /**
