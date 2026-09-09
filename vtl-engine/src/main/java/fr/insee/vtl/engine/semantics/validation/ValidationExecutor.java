@@ -225,8 +225,31 @@ public final class ValidationExecutor {
 
     DatasetExpression united = engine.executeUnion(ruleDatasets, List.of());
     DatasetExpression inverted = engine.executeRename(united, invertMap(dpr.getAlias()));
-    List<String> toKeep =
-        inverted.getColumnNames().stream().filter(name -> !toDrop.contains(name)).toList();
+    Structured.DataStructure outputStructure = inverted.getDataStructure();
+    List<String> toKeep = new ArrayList<>();
+    outputStructure.values().stream()
+        .filter(Component::isIdentifier)
+        .map(Component::getName)
+        .filter(name -> !name.equals(RULE_ID) && !toDrop.contains(name))
+        .forEach(toKeep::add);
+    toKeep.add(RULE_ID);
+    outputStructure.values().stream()
+        .filter(component -> !component.isIdentifier())
+        .map(Component::getName)
+        .filter(
+            name ->
+                !List.of(BOOL_VAR, ERROR_CODE, ERROR_LEVEL).contains(name)
+                    && !toDrop.contains(name))
+        .filter(
+            name ->
+                !ValidationOutput.ALL.value.equals(output)
+                    || !outputStructure.get(name).isMeasure())
+        .forEach(toKeep::add);
+    if (inverted.getColumnNames().contains(BOOL_VAR)) {
+      toKeep.add(BOOL_VAR);
+    }
+    toKeep.add(ERROR_CODE);
+    toKeep.add(ERROR_LEVEL);
     DatasetExpression cleaned = engine.executeProject(inverted, toKeep);
 
     if (output == null || output.equals(ValidationOutput.INVALID.value)) {
@@ -244,24 +267,27 @@ public final class ValidationExecutor {
       String output,
       Positioned pos) {
 
-    String imbalanceMeasureName =
-        imbalanceExpr.getDataStructure().values().stream()
-            .filter(Component::isMeasure)
-            .map(Component::getName)
-            .collect(Collectors.toList())
-            .get(0);
+    DatasetExpression joined = dsExpr;
+    if (imbalanceExpr != null) {
+      String imbalanceMeasureName =
+          imbalanceExpr.getDataStructure().values().stream()
+              .filter(Component::isMeasure)
+              .map(Component::getName)
+              .findFirst()
+              .orElseThrow();
 
-    DatasetExpression imbalanceRenamed =
-        engine.executeRename(imbalanceExpr, Map.of(imbalanceMeasureName, IMBALANCE));
+      DatasetExpression imbalanceRenamed =
+          engine.executeRename(imbalanceExpr, Map.of(imbalanceMeasureName, IMBALANCE));
 
-    List<Structured.Component> joinKeys =
-        dsExpr.getDataStructure().values().stream()
-            .filter(Component::isIdentifier)
-            .collect(Collectors.toList());
+      List<Structured.Component> joinKeys =
+          dsExpr.getDataStructure().values().stream()
+              .filter(Component::isIdentifier)
+              .collect(Collectors.toList());
 
-    DatasetExpression joined =
-        engine.executeLeftJoin(
-            Map.of("dsExpr", dsExpr, "imbalanceExpr", imbalanceRenamed), joinKeys);
+      joined =
+          engine.executeLeftJoin(
+              Map.of("dsExpr", dsExpr, "imbalanceExpr", imbalanceRenamed), joinKeys);
+    }
 
     DatasetExpression calculated =
         engine.executeCalc(
@@ -493,7 +519,7 @@ public final class ValidationExecutor {
                       : errorCodeType.cast(errorCodeExpr.resolve(ctx));
                 });
 
-    Class errorLevelType = errorLevelExpr == null ? String.class : errorLevelExpr.getType();
+    Class errorLevelType = errorLevelExpr == null ? Long.class : errorLevelExpr.getType();
     ResolvableExpression errorLevel =
         ResolvableExpression.withType(errorLevelType)
             .withPosition(pos)
@@ -507,7 +533,10 @@ public final class ValidationExecutor {
                       : errorLevelType.cast(errorLevelExpr.resolve(ctx));
                 });
 
-    return Map.of(ERROR_LEVEL, errorLevel, ERROR_CODE, errorCode);
+    Map<String, ResolvableExpression> expressions = new java.util.LinkedHashMap<>();
+    expressions.put(ERROR_CODE, errorCode);
+    expressions.put(ERROR_LEVEL, errorLevel);
+    return expressions;
   }
 
   private static Map<String, ResolvableExpression> hierarchicalRuleExpressions(

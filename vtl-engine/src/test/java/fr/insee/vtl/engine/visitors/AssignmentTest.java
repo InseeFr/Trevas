@@ -109,7 +109,7 @@ public class AssignmentTest {
     assertThat(dpr1.getRules()).hasSize(2);
     assertThat(dpr1.getVariables()).hasSize(2);
     assertThat(dpr1.getRules().get(0).getName()).isEqualTo("ruleA");
-    assertThat(dpr1.getRules().get(1).getName()).isEqualTo("dpr1_2");
+    assertThat(dpr1.getRules().get(1).getName()).isEqualTo("2");
     assertThat(dpr1.getRules().get(0).getErrorLevelExpression().getType()).isEqualTo(Long.class);
   }
 

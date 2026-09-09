@@ -243,14 +243,14 @@ public class ValidationTest {
                 "Me_1",
                 -2L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "errorcode",
                 "Bad debit",
                 "errorlevel",
                 1L))
         .containsExactlyInAnyOrderElementsOf(DS_r_invalidWithoutNull);
 
-    assertThat(DS_r_allWithoutNull)
+    assertThat(DS_r_all_measuresWithoutNull)
         .containsExactlyInAnyOrder(
             Map.of(
                 "Id_1",
@@ -279,7 +279,7 @@ public class ValidationTest {
                 "Me_1",
                 10L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "bool_var",
                 true,
                 "errorcode",
@@ -313,7 +313,7 @@ public class ValidationTest {
                 "Me_1",
                 -2L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "bool_var",
                 false,
                 "errorcode",
@@ -347,7 +347,7 @@ public class ValidationTest {
                 "Me_1",
                 10L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "bool_var",
                 true,
                 "errorcode",
@@ -381,7 +381,7 @@ public class ValidationTest {
                 "Me_1",
                 2L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "bool_var",
                 true,
                 "errorcode",
@@ -389,6 +389,15 @@ public class ValidationTest {
                 "errorlevel",
                 "null"))
         .containsExactlyInAnyOrderElementsOf(DS_r_all_measuresWithoutNull);
+    List<Map<String, Object>> expectedAll =
+        DS_r_all_measuresWithoutNull.stream()
+            .map(
+                row ->
+                    row.entrySet().stream()
+                        .filter(entry -> !entry.getKey().equals("Me_1"))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+            .toList();
+    assertThat(DS_r_allWithoutNull).containsExactlyInAnyOrderElementsOf(expectedAll);
   }
 
   @Test
@@ -442,7 +451,7 @@ public class ValidationTest {
                 "Me_1",
                 -2L,
                 "ruleid",
-                "dpr1_2",
+                "2",
                 "errorcode",
                 "Bad debit",
                 "errorlevel",

@@ -155,7 +155,7 @@ public class AssignmentVisitor extends VtlBaseVisitor<Object> {
                 c -> {
                   TerminalNode identifier = c.IDENTIFIER();
                   int i = index.getAndIncrement() + 1;
-                  String name = null != identifier ? identifier.getText() : rulesetName + "_" + i;
+                  String name = null != identifier ? identifier.getText() : String.valueOf(i);
 
                   VtlParser.ExprContext antecedentContiditonContext = c.antecedentContiditon;
                   VtlParser.ExprContext consequentConditionContext = c.consequentCondition;
