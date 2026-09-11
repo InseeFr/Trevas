@@ -25,6 +25,10 @@ final class ExprProbe {
       boolean datasetSyntax,
       Set<String> varIds) {}
 
+  /**
+   * @param isDatasetUdo true for known dataset UDOs and for unknown/registered calls (treated as
+   *     external dataset producers). False only for known scalar {@code define operator}s.
+   */
   static Findings probe(VtlParser.ExprContext expr, Predicate<String> isDatasetUdo) {
     boolean[] eval = {false};
     boolean[] aggrAn = {false};
@@ -157,8 +161,8 @@ final class ExprProbe {
   }
 
   /**
-   * Pure scalar expression (constants / prior scalars only): no dataset producer syntax and no
-   * dataset names.
+   * Pure scalar expression (constants / prior scalars only): no dataset producer syntax, no
+   * external/registered call, no aggregate/analytic, no dataset names.
    */
   static boolean isPureScalar(Findings findings, Predicate<String> isDatasetName) {
     return !looksLikeDatasetProducer(findings, isDatasetName);

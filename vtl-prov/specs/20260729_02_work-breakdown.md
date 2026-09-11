@@ -144,7 +144,13 @@ under `tests/` that reproduces the failing script(s), then turn it green.
 | [x] | 53 | **Keep fail-loud: bare `count()`** — not a dataset producer alone (comment in `visitCountAggr`). Stress hit is expected; no extraction change. Document in SupportCheck javadoc / this table. | — |
 | [x] | 54 | **Keep fail-loud: `rank(over …)` without dataset** — same as today (`visitRankAn`). Only valid inside calc / with a dataset operand. | — |
 
-Suggested order: 46 → 47 → 49 → 50 → 51 → 48 → 52 (aliases last; 53–54 docs only).
+## Hotfix — registered / external calls (post-Wave G)
+
+| Done | PR | Capability | Turns green |
+|------|----|------------|-------------|
+| [x] | — | **Java `registerMethod` / unknown calls** — `loadCSV("…")` was `unsupported: functions` because only `define operator` names were known. Treat unknown calls as `External` black-box: `varID` args that are datasets → operands; constants ignored; structure from oracle after eval. | 53-registered-call, 54-registered-ds-arg, `ProvenanceTest.registeredLoadCsvThenClauses` |
+
+Suggested order: 46 → 47 → 49 → 50 → 51 → 48 → 52 (aliases last); registered-call hotfixes after.
 
 Re-check: after the wave, re-run `ProvStressMain 1000` and expect only intentional
 fail-loud leftovers (53–54, pivot-without-rows if still unsupported by design).

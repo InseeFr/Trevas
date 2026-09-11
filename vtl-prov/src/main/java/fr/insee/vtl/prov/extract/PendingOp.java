@@ -158,7 +158,9 @@ sealed interface PendingOp {
   record Analytic(String srcId, String op, List<String> conditionExprIds) implements HasSrc {}
 
   /**
-   * External black-box ({@code eval}) with zero or more dataset operands. Empty → empty structure.
+   * External black-box ({@code eval}, Java {@code registerMethod} calls) with zero or more dataset
+   * operands. Empty → empty structure when the oracle has no binding; otherwise assignment uses the
+   * engine structure.
    */
   record External(String op, List<String> operandIds) implements PendingOp {
     @Override

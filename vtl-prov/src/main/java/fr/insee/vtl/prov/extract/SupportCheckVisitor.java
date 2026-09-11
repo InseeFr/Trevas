@@ -283,6 +283,10 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
    * Dataset-returning UDO call as a producer ({@code res := scale_by(ds, 3)}). Scalar UDOs as
    * statement RHS ({@code y := add1(1)}) are allowed here; inside calc they go through {@link
    * #requireKnownUdoCall}.
+   *
+   * <p>Unknown operator names (Java {@code registerMethod} / global natives not declared with
+   * {@code define operator}) are treated as external black-box producers — args must be {@code
+   * varID} or constant only (same surface as {@code eval}).
    */
   @Override
   public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
@@ -295,7 +299,11 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
       }
       return null;
     }
-    requireDatasetUdoCall(ctx);
+    if (udo != null) {
+      requireDatasetUdoCall(ctx);
+      return null;
+    }
+    requireExternalCallArgs(ctx);
     return null;
   }
 
@@ -878,6 +886,21 @@ class SupportCheckVisitor extends VtlBaseVisitor<Void> {
           throw unsupported("functions");
         }
       } else if (arg.varID() == null && arg.constant() == null) {
+        throw unsupported("functions");
+      }
+    }
+  }
+
+  /**
+   * Registered / unknown call ({@code loadCSV("…")}, …): only {@code varID} / constant args — no
+   * nested {@code _} optional.
+   */
+  private void requireExternalCallArgs(VtlParser.CallDatasetContext call) {
+    for (VtlParser.ParameterContext parameter : call.parameter()) {
+      if (parameter.OPTIONAL() != null) {
+        throw unsupported("functions");
+      }
+      if (parameter.varID() == null && parameter.constant() == null) {
         throw unsupported("functions");
       }
     }
