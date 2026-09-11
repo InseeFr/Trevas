@@ -1,0 +1,15 @@
+digraph {
+  // Unknown call with a dataset varID arg: External copies structure; op=<name>.
+
+  "ds1@0"    [kind=dataset];
+  "ds1@0.id" [kind=variable, dataset="ds1@0", role=IDENTIFIER, type=STRING];
+  "ds1@0.m1" [kind=variable, dataset="ds1@0", role=MEASURE, type=INTEGER];
+
+  "out@1"    [kind=dataset, src="myTransform(ds1, 2)"];
+  "out@1.id" [kind=variable, dataset="out@1", role=IDENTIFIER, type=STRING];
+  "out@1.m1" [kind=variable, dataset="out@1", role=MEASURE, type=INTEGER];
+
+  "out@1"    -> "ds1@0"    [op=myTransform];
+  "out@1.id" -> "ds1@0.id" [op=myTransform];
+  "out@1.m1" -> "ds1@0.m1" [op=myTransform];
+}
