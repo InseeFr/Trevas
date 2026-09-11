@@ -164,6 +164,39 @@ public class ProvenanceTest {
         .hasMessage("Dataset ds1 is part of the bindings and therefore cannot be assigned");
   }
 
+  @Test
+  public void registeredLoadCsvThenClauses() throws Exception {
+    ((VtlScriptEngine) engine)
+        .registerMethod("loadCSV", StubLoads.class.getMethod("loadCSV", String.class));
+
+    String script =
+        """
+        tmp := loadCSV("./test.csv");
+        inp := tmp[calc identifier vendor_id := vendor_id];
+        fil := inp[filter vendor_id = "VTS"];
+        out := fil[drop extra];
+        """;
+
+    Program program = Provenance.run(engine, script, "registered-load", "loadCSV chain");
+    assertThat(program.getProgramSteps()).hasSize(4);
+    assertThat(program.getProgramSteps().stream().map(ProgramStep::getLabel).toList())
+        .contains("tmp", "inp", "fil", "out");
+  }
+
+  public static final class StubLoads {
+    private StubLoads() {}
+
+    public static InMemoryDataset loadCSV(String path) {
+      return new InMemoryDataset(
+          List.of(
+              Map.of("vendor_id", "VTS", "extra", "a"), Map.of("vendor_id", "CMT", "extra", "b")),
+          Map.of("vendor_id", String.class, "extra", String.class),
+          Map.of(
+              "vendor_id", Dataset.Role.MEASURE,
+              "extra", Dataset.Role.MEASURE));
+    }
+  }
+
   private void bindStandardPair() {
     Map<String, Class<?>> types =
         Map.of("id", String.class, "var1", Long.class, "var2", Long.class);

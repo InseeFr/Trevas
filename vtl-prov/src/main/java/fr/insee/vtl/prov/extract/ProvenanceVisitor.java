@@ -317,11 +317,18 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
    * Dataset-returning UDO: alias dataset formals in {@link #versions}, skip scalar formals in
    * component refs, visit the body so {@link #pending} becomes the body's op (calc, …) — no {@code
    * op=<operatorId>}.
+   *
+   * <p>Unknown names (Java-registered methods) become {@link External}: dataset {@code varID} args
+   * are operands; constants are ignored for lineage (structure from the oracle when eval
+   * succeeded).
    */
   @Override
   public Void visitCallDataset(VtlParser.CallDatasetContext ctx) {
     ScriptSymbols.UserOperator udo = symbols.userOperator(ctx.operatorID().getText());
-    if (udo == null || !udo.returnsDataset()) {
+    if (udo == null) {
+      return externalCall(ctx);
+    }
+    if (!udo.returnsDataset()) {
       throw unsupported("functions");
     }
     List<VtlParser.ParameterContext> args = ctx.parameter();
@@ -360,6 +367,25 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
       udoScalarFormals.clear();
       udoScalarFormals.addAll(previousScalarFormals);
     }
+    return null;
+  }
+
+  /** Black-box call: {@code loadCSV("…")}, {@code myTransform(ds, 1)}, … */
+  private Void externalCall(VtlParser.CallDatasetContext ctx) {
+    List<String> operands = new ArrayList<>();
+    for (VtlParser.ParameterContext parameter : ctx.parameter()) {
+      if (parameter.OPTIONAL() != null) {
+        throw unsupported("functions");
+      }
+      if (parameter.varID() == null) {
+        continue;
+      }
+      String versioned = versions.get(parameter.varID().getText());
+      if (versioned != null && structures.containsKey(versioned)) {
+        operands.add(versioned);
+      }
+    }
+    pending = new External(ctx.operatorID().getText(), List.copyOf(operands));
     return null;
   }
 
@@ -1113,7 +1139,8 @@ final class ProvenanceVisitor extends SupportCheckVisitor {
         expr,
         name -> {
           ScriptSymbols.UserOperator udo = symbols.userOperator(name);
-          return udo != null && udo.returnsDataset();
+          // Unknown = Java-registered / external → treat as dataset producer (not scalar assign).
+          return udo == null || udo.returnsDataset();
         });
   }
 
