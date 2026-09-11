@@ -17,6 +17,10 @@ final class ExprProbe {
   record Findings(
       boolean eval, boolean aggregateOrAnalytic, boolean datasetUdo, Set<String> varIds) {}
 
+  /**
+   * @param isDatasetUdo true for known dataset UDOs and for unknown/registered calls (treated as
+   *     external dataset producers). False only for known scalar {@code define operator}s.
+   */
   static Findings probe(VtlParser.ExprContext expr, Predicate<String> isDatasetUdo) {
     boolean[] eval = {false};
     boolean[] aggrAn = {false};
@@ -26,19 +30,19 @@ final class ExprProbe {
       @Override
       public Void visitEvalAtom(VtlParser.EvalAtomContext ctx) {
         eval[0] = true;
-        return null;
+        return visitChildren(ctx);
       }
 
       @Override
       public Void visitAggregateFunctions(VtlParser.AggregateFunctionsContext ctx) {
         aggrAn[0] = true;
-        return null;
+        return visitChildren(ctx);
       }
 
       @Override
       public Void visitAnalyticFunctions(VtlParser.AnalyticFunctionsContext ctx) {
         aggrAn[0] = true;
-        return null;
+        return visitChildren(ctx);
       }
 
       @Override
@@ -64,11 +68,11 @@ final class ExprProbe {
   }
 
   /**
-   * Pure scalar expression (constants / prior scalars only): no eval, no dataset UDO, no dataset
-   * names.
+   * Pure scalar expression (constants / prior scalars only): no eval, no dataset UDO / external
+   * call, no aggregate/analytic, no dataset names.
    */
   static boolean isPureScalar(Findings findings, Predicate<String> isDatasetName) {
-    if (findings.eval() || findings.datasetUdo()) {
+    if (findings.eval() || findings.datasetUdo() || findings.aggregateOrAnalytic()) {
       return false;
     }
     for (String name : findings.varIds()) {
@@ -83,9 +87,6 @@ final class ExprProbe {
    * Assignment RHS should be treated as scalar (IR {@code kind=scalar}), not a dataset producer.
    */
   static boolean isScalarAssignment(Findings findings, Predicate<String> isDatasetName) {
-    if (findings.eval() || findings.datasetUdo() || findings.aggregateOrAnalytic()) {
-      return false;
-    }
     return isPureScalar(findings, isDatasetName);
   }
 }

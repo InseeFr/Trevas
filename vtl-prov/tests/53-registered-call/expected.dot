@@ -1,0 +1,6 @@
+digraph {
+  // Java registerMethod / unknown call with only constants: External black-box,
+  // empty structure when the oracle cannot eval (no method on the test classpath).
+
+  "tmp@1" [kind=dataset, src="loadCSV(\"./test.csv\")"];
+}
