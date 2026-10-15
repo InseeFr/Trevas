@@ -416,9 +416,8 @@ public final class SdthProgramView {
       }
       byDataset.computeIfAbsent(datasetId, k -> new ArrayList<>()).add(entry.getKey());
     }
-    for (List<String> vars : byDataset.values()) {
-      vars.sort(Comparator.naturalOrder());
-    }
+    // Keep IR insertion order (DataStructure column order). Do not sort alphabetically —
+    // Desktop preview metadata must match DatasetViewer / file column order.
     return byDataset;
   }
 

@@ -1,14 +1,14 @@
 package fr.insee.vtl.prov.prov;
 
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class DataframeInstance {
   String id;
   String label;
-  Set<VariableInstance> hasVariableInstances = new HashSet<>();
+  /** Insertion order = dataset structure order (not alphabetical). */
+  Set<VariableInstance> hasVariableInstances = new LinkedHashSet<>();
 
   /** Transform lineage (SDTH {@code wasDerivedFrom} → dataframe). */
   Set<DataframeInstance> wasDerivedFromDataframes = new LinkedHashSet<>();

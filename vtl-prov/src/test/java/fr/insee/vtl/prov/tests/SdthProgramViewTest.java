@@ -40,6 +40,23 @@ class SdthProgramViewTest {
   }
 
   @Test
+  void variableInstances_preserveStructureOrderNotAlphabetical() throws Exception {
+    String script =
+        """
+            // $input ds1: zebra STRING MEASURE, apple STRING IDENTIFIER, middle INTEGER MEASURE
+            ds2 := ds1;
+            """;
+    ProvGraph graph = EXTRACTOR.extract(script, InputDirectives.parse(script));
+    Program program = SdthProgramView.toProgram(graph, "order-test", "order", script);
+    ProgramStep step = onlyStep(program);
+
+    assertThat(componentLabelsInOrder(step.getProducedDataframe()))
+        .containsExactly("zebra", "apple", "middle");
+    assertThat(componentLabelsInOrder(step.getConsumedDataframes().iterator().next()))
+        .containsExactly("zebra", "apple", "middle");
+  }
+
+  @Test
   void calc_assignsTargetAndUsesRhsVars() throws Exception {
     Program program = programFromCorpus("03-calc");
     ProgramStep step = onlyStep(program);
@@ -125,6 +142,10 @@ class SdthProgramViewTest {
     return df.getHasVariableInstances().stream()
         .map(VariableInstance::getLabel)
         .collect(Collectors.toSet());
+  }
+
+  private static List<String> componentLabelsInOrder(DataframeInstance df) {
+    return df.getHasVariableInstances().stream().map(VariableInstance::getLabel).toList();
   }
 
   private static List<Resource> typed(Model model, String typeUri) {

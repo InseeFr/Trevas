@@ -1,14 +1,15 @@
 package fr.insee.vtl.prov.prov;
 
 import fr.insee.vtl.prov.utils.ProvenanceUtils;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /** External / catalogue source for a root {@link DataframeInstance} (SDTH {@code FileInstance}). */
 public class FileInstance {
   String id;
   String label;
-  Set<VariableInstance> hasVariableInstances = new HashSet<>();
+  /** Insertion order = file/dataset structure order (not alphabetical). */
+  Set<VariableInstance> hasVariableInstances = new LinkedHashSet<>();
 
   public FileInstance(String label) {
     this.id = ProvenanceUtils.generateUUID();
