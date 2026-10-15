@@ -8,6 +8,7 @@ import java.util.Set;
 public class FileInstance {
   String id;
   String label;
+
   /** Insertion order = file/dataset structure order (not alphabetical). */
   Set<VariableInstance> hasVariableInstances = new LinkedHashSet<>();
 

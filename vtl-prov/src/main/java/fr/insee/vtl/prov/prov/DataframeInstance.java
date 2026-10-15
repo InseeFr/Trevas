@@ -7,6 +7,7 @@ import java.util.Set;
 public class DataframeInstance {
   String id;
   String label;
+
   /** Insertion order = dataset structure order (not alphabetical). */
   Set<VariableInstance> hasVariableInstances = new LinkedHashSet<>();
 
